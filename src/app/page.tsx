@@ -1,103 +1,182 @@
+"use client";
+
 import Image from "next/image";
+import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { Play, User, Quote } from "lucide-react";
 
-export default function Home() {
+export default function YogaLandingPage() {
   return (
-    <div className="grid grid-rows-[20px_1fr_20px] items-center justify-items-center min-h-screen p-8 pb-20 gap-16 sm:p-20 font-[family-name:var(--font-geist-sans)]">
-      <main className="flex flex-col gap-[32px] row-start-2 items-center sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={180}
-          height={38}
-          priority
-        />
-        <ol className="list-inside list-decimal text-sm/6 text-center sm:text-left font-[family-name:var(--font-geist-mono)]">
-          <li className="mb-2 tracking-[-.01em]">
-            Get started by editing{" "}
-            <code className="bg-black/[.05] dark:bg-white/[.06] px-1 py-0.5 rounded font-[family-name:var(--font-geist-mono)] font-semibold">
-              src/app/page.tsx
-            </code>
-            .
-          </li>
-          <li className="tracking-[-.01em]">
-            Save and see your changes instantly.
-          </li>
-        </ol>
-
-        <div className="flex gap-4 items-center flex-col sm:flex-row">
-          <a
-            className="rounded-full border border-solid border-transparent transition-colors flex items-center justify-center bg-foreground text-background gap-2 hover:bg-[#383838] dark:hover:bg-[#ccc] font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 sm:w-auto"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={20}
-              height={20}
-            />
-            Deploy now
-          </a>
-          <a
-            className="rounded-full border border-solid border-black/[.08] dark:border-white/[.145] transition-colors flex items-center justify-center hover:bg-[#f2f2f2] dark:hover:bg-[#1a1a1a] hover:border-transparent font-medium text-sm sm:text-base h-10 sm:h-12 px-4 sm:px-5 w-full sm:w-auto md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Read our docs
-          </a>
+    <div className="bg-gray-100 min-h-screen max-h-screen overflow-auto">
+      {/* Header */}
+      <header className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
+        <div className="flex items-center space-x-2">
+          <div className="w-8 h-8 rounded-full bg-indigo-400 flex items-center justify-center">
+            <svg
+              xmlns="http://www.w3.org/2000/svg"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="currentColor"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              className="w-5 h-5 text-white"
+            >
+              <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
+            </svg>
+          </div>
+          <span className="text-2xl font-semibold text-gray-800">YogaVaidya</span>
         </div>
-      </main>
-      <footer className="row-start-3 flex gap-[24px] flex-wrap items-center justify-center">
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/file.svg"
-            alt="File icon"
-            width={16}
-            height={16}
-          />
-          Learn
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/window.svg"
-            alt="Window icon"
-            width={16}
-            height={16}
-          />
-          Examples
-        </a>
-        <a
-          className="flex items-center gap-2 hover:underline hover:underline-offset-4"
-          href="https://nextjs.org?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          <Image
-            aria-hidden
-            src="/globe.svg"
-            alt="Globe icon"
-            width={16}
-            height={16}
-          />
-          Go to nextjs.org →
-        </a>
-      </footer>
+
+        <nav className="hidden md:flex items-center space-x-10">
+          <Link
+            href="#"
+            className="text-gray-800 hover:text-indigo-600 transition-colors"
+          >
+            Home
+          </Link>
+          <Link
+            href="#"
+            className="text-gray-800 hover:text-indigo-600 transition-colors"
+          >
+            Classes
+          </Link>
+          <Link
+            href="#"
+            className="text-gray-800 hover:text-indigo-600 transition-colors"
+          >
+            Gallary
+          </Link>
+          <Link
+            href="#"
+            className="text-gray-800 hover:text-indigo-600 transition-colors"
+          >
+            Services
+          </Link>
+        </nav>
+
+        <div className="flex items-center space-x-4">
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <User className="h-5 w-5" />
+          </Button>
+          <Button className="rounded-full bg-white text-gray-800 hover:bg-gray-100 border border-gray-200">
+            Register Now
+          </Button>
+        </div>
+      </header>
+
+      {/* Hero Section */}
+      <section className="max-w-7xl mx-auto px-4 pt-10 pb-0 relative">
+        <div className="absolute top-10 left-20">
+          <svg
+            width="24"
+            height="24"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M3.55 19.09L3.54 19.08C3.18 18.72 3 18.25 3 17.77C3 17.29 3.18 16.82 3.55 16.45L16.45 3.55C16.82 3.18 17.29 3 17.77 3C18.25 3 18.72 3.18 19.08 3.54L19.09 3.55C19.45 3.91 19.63 4.38 19.63 4.86C19.63 5.34 19.45 5.81 19.08 6.18L6.18 19.08C5.81 19.45 5.34 19.63 4.86 19.63C4.38 19.63 3.91 19.45 3.55 19.09Z"
+              fill="black"
+            />
+            <path
+              d="M13.89 21.5C13.59 21.5 13.29 21.41 13.04 21.24C12.79 21.07 12.61 20.83 12.5 20.56C12.4 20.29 12.39 19.99 12.47 19.71C12.55 19.43 12.71 19.18 12.93 18.99L18.99 12.93C19.18 12.71 19.43 12.55 19.71 12.47C19.99 12.39 20.29 12.4 20.56 12.5C20.83 12.61 21.07 12.79 21.24 13.04C21.41 13.29 21.5 13.59 21.5 13.89C21.5 14.29 21.34 14.68 21.06 14.96L15.01 21.01C14.73 21.34 14.32 21.5 13.89 21.5Z"
+              fill="black"
+            />
+            <path
+              d="M4.89 12.5C4.59 12.5 4.29 12.41 4.04 12.24C3.79 12.07 3.61 11.83 3.5 11.56C3.4 11.29 3.39 10.99 3.47 10.71C3.55 10.43 3.71 10.18 3.93 9.99L9.99 3.93C10.18 3.71 10.43 3.55 10.71 3.47C10.99 3.39 11.29 3.4 11.56 3.5C11.83 3.61 12.07 3.79 12.24 4.04C12.41 4.29 12.5 4.59 12.5 4.89C12.5 5.29 12.34 5.68 12.06 5.96L6.01 12.01C5.73 12.34 5.32 12.5 4.89 12.5Z"
+              fill="black"
+            />
+          </svg>
+        </div>
+
+        {/* Main Heading */}
+        <div className="text-center mb-10">
+          <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6">
+            Get better peace <br />
+            of{" "}
+            <span className="inline-block bg-green-400 px-4 py-1 rounded-md text-white">
+              mind
+            </span>
+          </h1>
+          <Button className="rounded-full bg-gray-900 hover:bg-gray-800 text-white px-8 py-6">
+            Book Now
+          </Button>
+        </div>
+
+        {/* Stats and Images */}
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 md:gap-6 lg:gap-12 pt-10 relative">
+          {/* Left Quote Section */}
+          <div className="relative mx-auto md:mx-0 md:-mt-32">
+            <div className="bg-gray-900 rounded-2xl p-8 shadow-lg">
+              <p className="text-purple-300 italic mb-5">Awaken. Transform. Inspire.</p>
+              <h3 className="text-4xl font-bold mb-6">
+                <span className="text-white">Yoga And</span><br />
+                <span className="text-white">Meditation</span>
+                <span className="text-purple-300 italic"> Elevating</span><br />
+                <span className="text-white">The Body,</span>
+                <span className="font-extrabold text-purple-400"> Mind</span>
+                <span className="text-purple-300 italic">, And</span><br />
+                <span className="text-white font-extrabold">Soul</span><span className="text-white">.</span>
+              </h3>
+            </div>
+          </div>
+
+          {/* Center Image */}
+          <div className="relative mx-auto md:mx-0 flex items-center justify-center">
+            <div className="absolute w-[450px] h-[450px] rounded-full bg-purple-100/40"></div>
+            <div className="absolute w-[380px] h-[380px] rounded-full bg-purple-200/50"></div>
+            <div className="absolute w-[310px] h-[310px] rounded-full bg-purple-300/60"></div>
+            <div className="absolute w-[240px] h-[240px] rounded-full bg-purple-400/70"></div>
+            <div className="relative z-10 w-[400px] h-[400px] flex items-center justify-center">
+              <Image
+                src="/assets/yoga-meditation-2.png"
+                alt="Yoga meditation"
+                width={380}
+                height={380}
+                className="object-contain scale-110"
+              />
+            </div>
+          </div>
+
+          {/* Right Stats */}
+          <div className="mx-auto md:mx-0 md:w-full md:-mt-32">
+            <div className="relative">
+              <div className="absolute -inset-2 bg-pink-400/20 rounded-3xl blur-sm"></div>
+              <div className="bg-pink-200 rounded-3xl overflow-hidden shadow-lg hover:shadow-xl transition-shadow">
+                <div className="flex">
+                  {/* Vertical Pink Image */}
+                  <div className="w-1/3">
+                    <Image
+                      src="/assets/yoga-mat.jpg"
+                      alt="Yoga with mat"
+                      width={200}
+                      height={300}
+                      className="object-cover h-full min-h-[250px]"
+                    />
+                  </div>
+                  
+                  {/* Stats Container */}
+                  <div className="w-2/3 p-4">
+                    {/* Stats with white background */}
+                    <div className="bg-white rounded-xl p-4 shadow-md">
+                      <div className="mb-4">
+                        <h3 className="text-4xl font-bold text-green-600">80+</h3>
+                        <p className="text-gray-700 font-medium">Yoga classes</p>
+                      </div>
+                      
+                      <div>
+                        <h3 className="text-4xl font-bold text-indigo-600">400+</h3>
+                        <p className="text-gray-700 font-medium">Participant</p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
     </div>
   );
 }
