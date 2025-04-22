@@ -103,7 +103,7 @@ export default function PricingPlans() {
               <div className="space-y-4 mt-4 mb-8 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">2 classes per week</span>
+                  <span className="text-white">1 yoga class</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
@@ -166,20 +166,20 @@ export default function PricingPlans() {
               <div className="space-y-4 mt-4 mb-8 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">All Basic features</span>
+                  <span className="text-white">Live yoga sessions (General)</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">Unlimited classes</span>
+                  <span className="text-white">Generalized diet plans</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">Personal diet plans</span>
+                  <span className="text-white">Chat with AI</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
                   <span className="text-white">
-                    Analytics & progress tracking
+                    Meditation sessions (Coming soon)
                   </span>
                 </div>
               </div>
@@ -219,26 +219,26 @@ export default function PricingPlans() {
                     / {billingPeriod === "monthly" ? "mo" : "yr"}
                   </span>
                 </div>
-                <p className="text-white mt-2">Perfect for families</p>
+                <p className="text-white mt-2">Perfect for special needs</p>
               </div>
 
               {/* Features */}
               <div className="space-y-4 mt-4 mb-8 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">All Premium features</span>
+                  <span className="text-white">Live yoga sessions (Individual)</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">Up to 5 family members</span>
+                  <span className="text-white">Personalized diet plans</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">50% off per member</span>
+                  <span className="text-white">Chat with AI</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">Real-time collaboration</span>
+                  <span className="text-white">Meditation sessions (Coming soon)</span>
                 </div>
               </div>
 
