@@ -1,13 +1,11 @@
 "use client";
 
 import React, { useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { signIn } from "@/lib/auth-client";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -15,6 +13,7 @@ export default function SignupPage() {
   const [formState, setFormState] = useState({
     fullName: "",
     email: "",
+    phoneNumber: "",
     password: "",
     confirmPassword: "",
   });
@@ -36,7 +35,7 @@ export default function SignupPage() {
     
     try {
       // Form validation
-      if (!formState.fullName || !formState.email || !formState.password || !formState.confirmPassword) {
+      if (!formState.fullName || !formState.email || !formState.phoneNumber || !formState.password || !formState.confirmPassword) {
         throw new Error("Please fill in all required fields");
       }
       
@@ -48,26 +47,15 @@ export default function SignupPage() {
         throw new Error("Passwords do not match");
       }
 
-      // Sign up with Better Auth
-      const result = await signIn.signUp({
-        email: formState.email,
-        password: formState.password,
-        userData: {
-          name: formState.fullName,
-        }
-      });
+      // Here you would typically make an API call to register the user
+      // For demonstration purposes, we'll simulate a successful registration
+      await new Promise(resolve => setTimeout(resolve, 1000));
       
-      if (!result.success) {
-        throw new Error(result.error || "Registration failed");
-      }
+      // Store authentication token or user info in localStorage/cookies
+      localStorage.setItem('isAuthenticated', 'true');
       
-      // On successful signup, redirect to verification page or homepage
-      if (result.emailVerificationRequired) {
-        router.push('/verify-email');
-      } else {
-        router.push('/');
-        router.refresh();
-      }
+      // Redirect to dashboard or homepage after successful registration
+      router.push('/');
     } catch (error) {
       if (error instanceof Error) {
         setError(error.message);
@@ -76,20 +64,6 @@ export default function SignupPage() {
       }
     } finally {
       setIsLoading(false);
-    }
-  };
-
-  const handleGoogleSignIn = async () => {
-    try {
-      await signIn.social({
-        provider: "google",
-      });
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
     }
   };
 
@@ -189,6 +163,24 @@ export default function SignupPage() {
                 />
               </div>
 
+              {/* Phone Number Input */}
+              <div>
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
+                  Phone Number
+                </label>
+                <Input
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  type="tel"
+                  value={formState.phoneNumber}
+                  onChange={handleInputChange}
+                  placeholder="Your phone number"
+                  required
+                  className="w-full"
+                  disabled={isLoading}
+                />
+              </div>
+
               {/* Password Input */}
               <div>
                 <label 
@@ -254,43 +246,6 @@ export default function SignupPage() {
                 disabled={isLoading}
               >
                 {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-              
-              {/* Social Sign-in Options */}
-              <div className="relative my-6">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300"></div>
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-white text-gray-500">Or continue with</span>
-                </div>
-              </div>
-
-              <Button 
-                type="button" 
-                onClick={handleGoogleSignIn}
-                className="w-full bg-white border border-gray-300 text-gray-700 hover:bg-gray-50 py-6 flex items-center justify-center"
-                disabled={isLoading}
-              >
-                <svg className="w-5 h-5 mr-2" viewBox="0 0 24 24">
-                  <path
-                    fill="#4285F4"
-                    d="M12 5c1.6173 0 3.0854.4762 4.3076 1.2422l3.193-3.193C17.3084 1.1422 14.7304 0 12 0 7.3924 0 3.3976 2.6966 1.3858 6.5856l3.7236 2.907C6.4182 6.4066 9.0248 5 12 5z"
-                  />
-                  <path
-                    fill="#34A853"
-                    d="M23.49 12.275c0-.8006-.0736-1.5684-.2088-2.3094H12v4.5158h6.4756c-.2784 1.5026-1.1232 2.7744-2.3958 3.6252l3.6764 2.858c2.1506-1.9878 3.3918-4.915 3.3918-8.6896z"
-                  />
-                  <path
-                    fill="#FBBC05"
-                    d="M5.1094 14.1394c-.315-.9466-.4956-1.9566-.4956-3 0-1.0434.1806-2.0534.4956-3L1.3858 5.2324C.5022 7.3344 0 9.6156 0 12c0 2.3844.5022 4.6656 1.3858 6.7676l3.7236-2.9076z"
-                  />
-                  <path
-                    fill="#EA4335"
-                    d="M12 24c3.3408 0 6.1458-1.116 8.196-3.0294l-3.6764-2.858c-1.0182.6836-2.3196 1.0874-4.5196 1.0874-3.4596 0-6.3864-2.3328-7.4292-5.4692L1.3592 16.7676C3.3592 20.9756 7.3782 24 12 24z"
-                  />
-                </svg>
-                Sign up with Google
               </Button>
 
               {/* Sign In Link */}
