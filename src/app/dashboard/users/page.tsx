@@ -1,14 +1,9 @@
-import { auth } from "@/lib/auth";
-import { headers } from "next/headers";
-import { redirect } from "next/navigation";
-export default async function UsersPage() {
-    const session = await auth.api.getSession({headers: await headers()});
-    if (!session) {
-        redirect("/signin");
-    }
+import { Button } from "@/components/ui/button";
+
+export default function UsersPage() {
     return (
         <div>
-            <h1>Users</h1>
+            <Button>Button</Button>
         </div>
     )
 }
