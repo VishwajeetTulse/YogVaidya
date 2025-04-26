@@ -6,69 +6,100 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
+import { z } from "zod";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import {
+  Form,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormControl,
+  FormMessage,
+} from "@/components/ui/form";
+import { authClient } from "@/lib/auth-client";
+import { toast } from "sonner";
+
+const signupSchema = z
+  .object({
+    fullName: z.string().min(1, "Full name is required"),
+    email: z.string().email("Invalid email address"),
+    phoneNumber: z.string().min(1, "Phone number is required"),
+    password: z.string().min(8, "Password must be at least 8 characters long"),
+    confirmPassword: z.string(),
+  })
+  .refine((data) => data.password === data.confirmPassword, {
+    message: "Passwords do not match",
+    path: ["confirmPassword"],
+  });
+
+type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
-  const [formState, setFormState] = useState({
-    fullName: "",
-    email: "",
-    phoneNumber: "",
-    password: "",
-    confirmPassword: "",
-  });
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
+  const [pending, setPending] = useState(false);
 
-  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setFormState({
-      ...formState,
-      [name]: value,
-    });
+  const form = useForm<SignupFormValues>({
+    resolver: zodResolver(signupSchema),
+    defaultValues: {
+      fullName: "",
+      email: "",
+      phoneNumber: "",
+      password: "",
+      confirmPassword: "",
+    },
+  });
+
+  const onSubmit = async (data: SignupFormValues) => {
+    form.reset();
+    await authClient.signUp.email(
+      {
+        email: data.email,
+        password: data.password,
+        name: data.fullName,
+        phone: data.phoneNumber,
+        role: "USER",
+      },
+      {
+        onRequest: () => {
+          setPending(true);
+        },
+        onSuccess: () => {
+          toast.message("Account created", {
+            description:
+              "your account has been created check your email for confirmation",
+          });
+          console.log("success");
+        },
+        onError: (ctx) => {
+          console.log("error", ctx);
+          toast.error("something went wrong", {
+            description: ctx.error.message ?? "something went wrong.",
+          });
+          console.log("error", ctx.error.message);
+        },
+      }
+    );
+    setPending(false);
   };
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setError("");
-    setIsLoading(true);
-    
-    try {
-      // Form validation
-      if (!formState.fullName || !formState.email || !formState.phoneNumber || !formState.password || !formState.confirmPassword) {
-        throw new Error("Please fill in all required fields");
-      }
-      
-      if (formState.password.length < 8) {
-        throw new Error("Password must be at least 8 characters long");
-      }
-      
-      if (formState.password !== formState.confirmPassword) {
-        throw new Error("Passwords do not match");
-      }
-
-      // Here you would typically make an API call to register the user
-      // For demonstration purposes, we'll simulate a successful registration
-      await new Promise(resolve => setTimeout(resolve, 1000));
-      
-      // Store authentication token or user info in localStorage/cookies
-      localStorage.setItem('isAuthenticated', 'true');
-      
-      // Redirect to dashboard or homepage after successful registration
-      router.push('/');
-    } catch (error) {
-      if (error instanceof Error) {
-        setError(error.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // setError("");
+  // setIsLoading(true);
+  // try {
+  //   // Simulate API call
+  //   await new Promise((resolve) => setTimeout(resolve, 1000));
+  //   localStorage.setItem("isAuthenticated", "true");
+  //   router.push("/");
+  // } catch (err) {
+  //   setError("An unexpected error occurred");
+  // } finally {
+  //   setIsLoading(false);
+  // }
 
   const togglePasswordVisibility = () => {
-    setShowPassword(!showPassword);
+    setShowPassword((prev) => !prev);
   };
 
   return (
@@ -97,7 +128,10 @@ export default function SignupPage() {
           </Link>
         </div>
 
-        <Link href="/" className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center">
+        <Link
+          href="/"
+          className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Link>
@@ -107,157 +141,151 @@ export default function SignupPage() {
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-20">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Create Your Account
+            </h1>
             <p className="text-gray-600">
               Join YogaVaidya to start your wellness journey
             </p>
           </div>
-
           <div className="bg-white rounded-2xl p-8 shadow-lg">
             {error && (
               <div className="mb-4 p-3 bg-red-50 border border-red-200 text-red-600 rounded-md text-sm">
                 {error}
               </div>
             )}
-            
-            <form onSubmit={handleSubmit} className="space-y-6">
-              {/* Full Name Input */}
-              <div>
-                <label 
-                  htmlFor="fullName" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Full Name
-                </label>
-                <Input
-                  id="fullName"
-                  name="fullName"
-                  type="text"
-                  value={formState.fullName}
-                  onChange={handleInputChange}
-                  placeholder="Your full name"
-                  required
-                  className="w-full"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Email Input */}
-              <div>
-                <label 
-                  htmlFor="email" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Email Address
-                </label>
-                <Input
-                  id="email"
-                  name="email"
-                  type="email"
-                  value={formState.email}
-                  onChange={handleInputChange}
-                  placeholder="your.email@example.com"
-                  required
-                  className="w-full"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Phone Number Input */}
-              <div>
-                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
-                <Input
-                  id="phoneNumber"
-                  name="phoneNumber"
-                  type="tel"
-                  value={formState.phoneNumber}
-                  onChange={handleInputChange}
-                  placeholder="Your phone number"
-                  required
-                  className="w-full"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Password Input */}
-              <div>
-                <label 
-                  htmlFor="password" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Password
-                </label>
-                <div className="relative">
-                  <Input
-                    id="password"
-                    name="password"
-                    type={showPassword ? "text" : "password"}
-                    value={formState.password}
-                    onChange={handleInputChange}
-                    placeholder="Create a password"
-                    required
-                    className="w-full pr-10"
-                    disabled={isLoading}
-                  />
-                  <button
-                    type="button"
-                    className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
-                    onClick={togglePasswordVisibility}
-                  >
-                    {showPassword ? (
-                      <EyeOff className="h-5 w-5" aria-hidden="true" />
-                    ) : (
-                      <Eye className="h-5 w-5" aria-hidden="true" />
-                    )}
-                  </button>
-                </div>
-                <p className="text-sm text-gray-500 mt-1">
-                  Must be at least 8 characters long
-                </p>
-              </div>
-
-              {/* Confirm Password Input */}
-              <div>
-                <label 
-                  htmlFor="confirmPassword" 
-                  className="block text-sm font-medium text-gray-700 mb-1"
-                >
-                  Confirm Password
-                </label>
-                <Input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type={showPassword ? "text" : "password"}
-                  value={formState.confirmPassword}
-                  onChange={handleInputChange}
-                  placeholder="Confirm your password"
-                  required
-                  className="w-full"
-                  disabled={isLoading}
-                />
-              </div>
-
-              {/* Submit Button */}
-              <Button 
-                type="submit" 
-                className="w-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
-                disabled={isLoading}
+            <Form {...form}>
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
               >
-                {isLoading ? "Creating Account..." : "Create Account"}
-              </Button>
-
-              {/* Sign In Link */}
-              <div className="text-center mt-6">
-                <p className="text-gray-600">
-                  Already have an account?{" "}
-                  <Link href="/signin" className="text-[#76d2fa] hover:text-[#5a9be9] font-medium">
-                    Sign in
-                  </Link>
-                </p>
-              </div>
-            </form>
+                <FormField
+                  control={form.control}
+                  name="fullName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Full Name</FormLabel>
+                      <FormControl>
+                        <Input
+                          placeholder="Your full name"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="email"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Email Address</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="email"
+                          placeholder="your.email@example.com"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="phoneNumber"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Phone Number</FormLabel>
+                      <FormControl>
+                        <Input
+                          type="tel"
+                          placeholder="Your phone number"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="password"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Password</FormLabel>
+                      <FormControl>
+                        <div className="relative">
+                          <Input
+                            type={showPassword ? "text" : "password"}
+                            placeholder="Create a password"
+                            className="w-full pr-10"
+                            disabled={isLoading}
+                            {...field}
+                          />
+                          <button
+                            type="button"
+                            className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-400 hover:text-gray-500"
+                            onClick={togglePasswordVisibility}
+                            tabIndex={-1}
+                          >
+                            {showPassword ? (
+                              <EyeOff className="h-5 w-5" aria-hidden="true" />
+                            ) : (
+                              <Eye className="h-5 w-5" aria-hidden="true" />
+                            )}
+                          </button>
+                        </div>
+                      </FormControl>
+                      <p className="text-sm text-gray-500 mt-1">
+                        Must be at least 8 characters long
+                      </p>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <FormField
+                  control={form.control}
+                  name="confirmPassword"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Confirm Password</FormLabel>
+                      <FormControl>
+                        <Input
+                          type={showPassword ? "text" : "password"}
+                          placeholder="Confirm your password"
+                          disabled={isLoading}
+                          {...field}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+                <Button
+                  type="submit"
+                  className="w-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Creating Account..." : "Create Account"}
+                </Button>
+                <div className="text-center mt-6">
+                  <p className="text-gray-600">
+                    Already have an account?{" "}
+                    <Link
+                      href="/signin"
+                      className="text-[#76d2fa] hover:text-[#5a9be9] font-medium"
+                    >
+                      Sign in
+                    </Link>
+                  </p>
+                </div>
+              </form>
+            </Form>
           </div>
         </div>
       </section>
@@ -269,4 +297,4 @@ export default function SignupPage() {
       </div>
     </div>
   );
-} 
+}

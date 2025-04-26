@@ -103,7 +103,7 @@ export default function PricingPlans() {
               <div className="space-y-4 mt-4 mb-8 flex-grow">
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
-                  <span className="text-white">1 yoga class</span>
+                  <span className="text-white">One yoga session</span>
                 </div>
                 <div className="flex items-center">
                   <Check className="h-5 w-5 text-white mr-3" />
