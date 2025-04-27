@@ -32,6 +32,7 @@ export default function SigninPage() {
   const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
+  const [pendingGoogle, setPendingGoogle] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
 
   const form = useForm<SigninFormValues>({
@@ -73,21 +74,28 @@ export default function SigninPage() {
   };
 
   const handleGoogleAuth = async () => {
-    setIsLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-      });
-      toast.success("Signed in with Google");
-      window.location.href = "/dashboard/users";
-    } catch (err: any) {
-      toast.error("Google sign in failed", {
-        description: err?.message ?? "Something went wrong.",
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+		await authClient.signIn.social(
+			{
+				provider: "google",
+			},
+			{
+				onRequest: () => {
+					setPendingGoogle(true);
+				},
+				onSuccess: async () => {
+					router.push("/dashboard/users");
+          toast.success("Signed in with Google");
+					router.refresh();
+				},
+				onError: (ctx) => {
+					toast("Something went wrong",{
+						description: ctx.error.message ?? "Something went wrong.",
+					});
+				},
+			}
+		);
+		setPendingGoogle(false);
+	};
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -115,7 +123,10 @@ export default function SigninPage() {
           </Link>
         </div>
 
-        <Link href="/" className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center">
+        <Link
+          href="/"
+          className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Home
         </Link>
@@ -125,7 +136,9 @@ export default function SigninPage() {
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-20">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Welcome Back
+            </h1>
             <p className="text-gray-600">
               Sign in to continue your wellness journey
             </p>
@@ -137,19 +150,12 @@ export default function SigninPage() {
                 {error}
               </div>
             )}
-            <Button
-              type="button"
-              onClick={handleGoogleAuth}
-              className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
-              disabled={isLoading}
-            >
-              <svg className="h-5 w-5" viewBox="0 0 48 48">
-                <g><path fill="#4285F4" d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.68 2.7 30.74 0 24 0 14.82 0 6.71 5.8 2.69 14.09l7.98 6.2C12.13 13.6 17.62 9.5 24 9.5z"/><path fill="#34A853" d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.59C43.99 37.13 46.1 31.3 46.1 24.55z"/><path fill="#FBBC05" d="M10.67 28.29c-1.13-3.36-1.13-6.97 0-10.33l-7.98-6.2C.99 15.1 0 19.41 0 24c0 4.59.99 8.9 2.69 12.24l7.98-6.2z"/><path fill="#EA4335" d="M24 48c6.74 0 12.68-2.22 17.04-6.04l-7.19-5.59c-2.01 1.35-4.59 2.15-7.85 2.15-6.38 0-11.87-4.1-13.33-9.59l-7.98 6.2C6.71 42.2 14.82 48 24 48z"/><path fill="none" d="M0 0h48v48H0z"/></g>
-              </svg>
-              Continue with Google
-            </Button>
+
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-6"
+              >
                 <FormField
                   control={form.control}
                   name="email"
@@ -216,12 +222,18 @@ export default function SigninPage() {
                             checked={field.value}
                             onChange={field.onChange}
                           />
-                          <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
+                          <label
+                            htmlFor="rememberMe"
+                            className="ml-2 block text-sm text-gray-700"
+                          >
                             Remember me
                           </label>
                         </div>
                         <div className="text-sm">
-                          <Link href="/forgot-password" className="text-[#76d2fa] hover:text-[#5a9be9] font-medium">
+                          <Link
+                            href="/forgot-password"
+                            className="text-[#76d2fa] hover:text-[#5a9be9] font-medium"
+                          >
                             Forgot your password?
                           </Link>
                         </div>
@@ -229,6 +241,44 @@ export default function SigninPage() {
                     </FormItem>
                   )}
                 />
+                <div className="mt-4">
+            <Button
+                          type="button"
+                          disabled={pendingGoogle}
+                          onClick={handleGoogleAuth}
+                          className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
+                        >
+                          {pendingGoogle ? (
+                            <svg className="animate-spin h-5 w-5 mr-2 text-gray-400" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
+                            </svg>
+                          ) : (
+                            <svg className="h-5 w-5" viewBox="0 0 48 48">
+                              <g>
+                                <path
+                                  fill="#4285F4"
+                                  d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.68 2.7 30.74 0 24 0 14.82 0 6.71 5.8 2.69 14.09l7.98 6.2C12.13 13.6 17.62 9.5 24 9.5z"
+                                />
+                                <path
+                                  fill="#34A853"
+                                  d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.59C43.99 37.13 46.1 31.3 46.1 24.55z"
+                                />
+                                <path
+                                  fill="#FBBC05"
+                                  d="M10.67 28.29c-1.13-3.36-1.13-6.97 0-10.33l-7.98-6.2C.99 15.1 0 19.41 0 24c0 4.59.99 8.9 2.69 12.24l7.98-6.2z"
+                                />
+                                <path
+                                  fill="#EA4335"
+                                  d="M24 48c6.74 0 12.68-2.22 17.04-6.04l-7.19-5.59c-2.01 1.35-4.59 2.15-7.85 2.15-6.38 0-11.87-4.1-13.33-9.59l-7.98 6.2C6.71 42.2 14.82 48 24 48z"
+                                />
+                                <path fill="none" d="M0 0h48v48H0z" />
+                              </g>
+                            </svg>
+                          )}
+                          Continue with Google
+                        </Button>
+                </div>
                 <Button
                   type="submit"
                   className="w-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
@@ -239,7 +289,10 @@ export default function SigninPage() {
                 <div className="text-center mt-6">
                   <p className="text-gray-600">
                     Don&apos;t have an account?{" "}
-                    <Link href="/signup" className="text-[#76d2fa] hover:text-[#5a9be9] font-medium">
+                    <Link
+                      href="/signup"
+                      className="text-[#76d2fa] hover:text-[#5a9be9] font-medium"
+                    >
                       Create an account
                     </Link>
                   </p>

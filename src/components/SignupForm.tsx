@@ -101,9 +101,13 @@ export default function SignupPage() {
       });
       toast.success("Signed up with Google");
       window.location.href = "/dashboard/users";
-    } catch (err: any) {
+    } catch (err: unknown) {
+      let message = "Something went wrong.";
+      if (err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string") {
+        message = (err as { message: string }).message;
+      }
       toast.error("Google sign up failed", {
-        description: err?.message ?? "Something went wrong.",
+        description: message,
       });
     } finally {
       setIsLoading(false);
