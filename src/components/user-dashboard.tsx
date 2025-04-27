@@ -2,15 +2,12 @@
 import { Button } from "./ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { useState } from "react";
 import { signOut } from "@/lib/auth-client";
 
 export default function UserDashboard() {
-  const [isSigningOut, setIsSigningOut] = useState(false);
   const router = useRouter();
 
   const handleSignOut = async () => {
-    setIsSigningOut(true);
     try {
       await signOut();
       toast.message("Signed out successfully", {
@@ -21,8 +18,7 @@ export default function UserDashboard() {
       toast.error("Error Signing Out", {
         description: "There is a problem in signing out",
       });
-    } finally {
-      setIsSigningOut(false);
+      console.log("Sign out error", error);
     }
   };
   return (

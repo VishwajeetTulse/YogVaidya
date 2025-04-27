@@ -1,9 +1,9 @@
+"use client";
 import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import {
-  Globe,
   Facebook,
   Twitter,
   Linkedin,
@@ -144,7 +144,7 @@ export default function Footer() {
             </div>
 
             <p className="mb-1">
-              Don't know where to start your yoga journey?
+              Don&apos;t know where to start your yoga journey?
               <br />
               YogaVaidya — practical, safe, and affordable.
             </p>

@@ -1,6 +1,7 @@
+"use client";
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Check, IndianRupeeIcon, Sparkles } from "lucide-react";
+import { Check, IndianRupeeIcon } from "lucide-react";
 
 export default function PricingPlans() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">(
