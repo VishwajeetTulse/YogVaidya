@@ -90,29 +90,22 @@ export default function SignupPage() {
     setShowPassword((prev) => !prev);
   };
 
-  const handleGoogleAuth = async () => {
-    setIsLoading(true);
-    try {
-      await authClient.signIn.social({
-        provider: "google",
-        options: {
-          prompt: "select_account"
-        }
-      });
-      toast.success("Signed up with Google");
-      window.location.href = "/dashboard/users";
-    } catch (err: unknown) {
-      let message = "Something went wrong.";
-      if (err && typeof err === "object" && "message" in err && typeof (err as { message?: unknown }).message === "string") {
-        message = (err as { message: string }).message;
-      }
-      toast.error("Google sign up failed", {
-        description: message,
-      });
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  // const handleGoogleAuth = async () => {
+  //   setIsLoading(true);
+  //   try {
+  //     await authClient.signIn.social({
+  //       provider: "google",
+  //     });
+  //     toast.success("Signed up with Google");
+  //     window.location.href = "/dashboard/users";
+  //   } catch (err: any) {
+  //     toast.error("Google sign up failed", {
+  //       description: err?.message ?? "Something went wrong.",
+  //     });
+  //   } finally {
+  //     setIsLoading(false);
+  //   }
+  // };
 
   return (
     <div className="bg-gray-100">
@@ -163,7 +156,7 @@ export default function SignupPage() {
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
             <Button
               type="button"
-              onClick={handleGoogleAuth}
+              // onClick={handleGoogleAuth}
               className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
               disabled={isLoading || pending}
             >
