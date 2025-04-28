@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Check, IndianRupeeIcon } from "lucide-react";
+import Link from "next/link";
 
 export default function PricingPlans() {
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">(
@@ -121,9 +122,12 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#5a9be9] hover:bg-white/90 transition-all duration-300 font-medium">
-                GET STARTED
-              </Button>
+              <Link href="/signin?from=pricing" passHref>
+                <Button 
+                  className="mt-auto w-full py-6 rounded-xl bg-white text-[#5a9be9] hover:bg-white/90 transition-all duration-300 font-medium">
+                  GET STARTED
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -186,9 +190,11 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#876aff] hover:bg-white/90 transition-all duration-300 font-medium">
-                GET STARTED
-              </Button>
+              <Link href="/signin?from=pricing" passHref>
+                <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#876aff] hover:bg-white/90 transition-all duration-300 font-medium">
+                  GET STARTED
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -244,9 +250,11 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#ff7dac] hover:bg-white/90 transition-all duration-300 font-medium">
-                GET STARTED
-              </Button>
+              <Link href="/signin?from=pricing" passHref>
+                <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#ff7dac] hover:bg-white/90 transition-all duration-300 font-medium">
+                  GET STARTED
+                </Button>
+              </Link>
             </div>
           </div>
         </div>

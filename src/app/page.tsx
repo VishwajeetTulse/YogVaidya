@@ -10,7 +10,7 @@ import { redirect } from "next/navigation";
 export default async function YogaLandingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
   if (session) {
-    redirect("/dashboard/users");
+    redirect("/dashboard");
   }
   const navItems = [
     { label: "Home", href: "#" },

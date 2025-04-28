@@ -23,7 +23,7 @@ export default function Hero() {
           </span>
         </h1>
         <div className="flex justify-center gap-4 flex-wrap">
-          <Link href="/signup">
+          <Link href="/signup?from=hero">
             <Button className="rounded-full bg-gray-900 hover:bg-gray-800 text-white px-8 py-6">
               Get Started
             </Button>
@@ -118,4 +118,4 @@ export default function Hero() {
       </div>
     </section>
   );
-} 
+}

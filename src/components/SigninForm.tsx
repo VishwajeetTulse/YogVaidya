@@ -19,6 +19,7 @@ import {
 } from "@/components/ui/form";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
+import { useSearchParams } from "next/navigation";
 
 const signinSchema = z.object({
   email: z.string().email("Invalid email address"),
@@ -34,6 +35,7 @@ export default function SigninPage() {
   const [error, setError] = useState("");
   const [pendingGoogle, setPendingGoogle] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
+  const searchParams = useSearchParams();
 
   const form = useForm<SigninFormValues>({
     resolver: zodResolver(signinSchema),
@@ -44,6 +46,14 @@ export default function SigninPage() {
     },
   });
 
+  let redirect_url = "/dashboard";
+  if (searchParams.get("from") === "pricing") {
+    redirect_url = "/pricing";
+  }
+  if (searchParams.get("from") === "mentor") {
+    redirect_url = "/mentors/apply";
+  }
+
   const onSubmit = async (data: SigninFormValues) => {
     setError("");
     setIsLoading(true);
@@ -51,11 +61,13 @@ export default function SigninPage() {
       {
         email: data.email,
         password: data.password,
+        callbackURL: redirect_url,
       },
       {
         rememberMe: data.rememberMe, // Pass rememberMe to auth logic
         onSuccess: () => {
-          router.push("/dashboard/users");
+          // Redirect based on 'from' query param
+          router.push(redirect_url);
           toast.success("Signed in successfully");
         },
         onError: (ctx) => {
@@ -77,13 +89,15 @@ export default function SigninPage() {
     await authClient.signIn.social(
       {
         provider: "google",
+        callbackURL: redirect_url,
       },
       {
         onRequest: () => {
           setPendingGoogle(true);
         },
         onSuccess: async () => {
-          router.push("/dashboard/users");
+          console.log(redirect_url);
+          router.push(redirect_url);
           toast.success("Signed in with Google");
           router.refresh();
         },
@@ -311,7 +325,7 @@ export default function SigninPage() {
                   <p className="text-gray-600">
                     Don&apos;t have an account?{" "}
                     <Link
-                      href="/signup"
+                      href={`/signup?from=${searchParams.get("from") || "signin"}`}
                       className="text-[#76d2fa] hover:text-[#5a9be9] font-medium"
                     >
                       Create an account

@@ -5,7 +5,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { z } from "zod";
+import { set, z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+import { redirect, useRouter, useSearchParams } from "next/navigation";
 
 const signupSchema = z
   .object({
@@ -40,9 +40,14 @@ export default function SignupPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [pendingGoogle, setPendingGoogle] = useState(false);
   const router = useRouter();
-  useEffect(() => {
-    setIsLoading(false);
-  }, []);
+  const searchParams = useSearchParams();
+    let redirect_url = "/dashboard";
+    if (searchParams.get("from") === "pricing") {
+      redirect_url = "/pricing";
+    }
+    if (searchParams.get("from") === "mentor") {
+      redirect_url = "/mentors/apply";
+    }
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -56,6 +61,7 @@ export default function SignupPage() {
 
   const onSubmit = async (data: SignupFormValues) => {
     form.reset();
+    setIsLoading(true);
     await authClient.signUp.email(
       {
         email: data.email,
@@ -63,28 +69,28 @@ export default function SignupPage() {
         name: data.fullName,
         phone: data.phoneNumber,
         role: "USER",
+        callbackURL: redirect_url,
       },
       {
         onRequest: () => {
           setPendingGoogle(true);
         },
         onSuccess: () => {
-          toast.message("Account created", {
-            description:
-              "your account has been created check your email for confirmation",
+          toast.success("Signed up successfully", {
+            description: "Welcome to YogaVaidya!",
           });
-          console.log("success");
+          router.refresh();
         },
         onError: (ctx) => {
           console.log("error", ctx);
-          toast.error("something went wrong", {
-            description: ctx.error.message ?? "something went wrong.",
+          toast.error("Sign up failed", {
+            description: ctx.error.message ?? "Something went wrong.",
           });
           console.log("error", ctx.error.message);
         },
       }
     );
-    setPendingGoogle(false);
+    setIsLoading(false);
   };
 
   const togglePasswordVisibility = () => {
@@ -95,13 +101,13 @@ export default function SignupPage() {
     await authClient.signIn.social(
       {
         provider: "google",
+        callbackURL: redirect_url,
       },
       {
         onRequest: () => {
           setPendingGoogle(true);
         },
         onSuccess: async () => {
-          router.push("/dashboard/users");
           toast.success("Signed in with Google");
           router.refresh();
         },
@@ -151,7 +157,7 @@ export default function SignupPage() {
       </header>
 
       {/* Sign Up Form Section */}
-      <section className="max-w-7xl mx-auto px-4 pt-3 pb-16">
+      <section className="max-w-7xl mx-auto px-4 pt-3 pb-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">
@@ -364,11 +370,11 @@ export default function SignupPage() {
                 >
                   {isLoading ? "Signing Up..." : "Sign Up"}
                 </Button>
-                <div className="text-center mt-6">
+                <div className="text-center">
                   <p className="text-gray-600">
                     Already have an account?{" "}
                     <Link
-                      href="/signin"
+                      href={`/signin?from=${searchParams.get("from") || "signup"}`}
                       className="text-[#76d2fa] hover:text-[#5a9be9] font-medium"
                     >
                       Sign in

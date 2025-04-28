@@ -1,9 +1,10 @@
 "use client";
 
-import React from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
+import { useSession } from "@/lib/auth-client";
+import { useState } from "react";
 
 interface NavItem {
   label: string;
@@ -21,6 +22,9 @@ export default function Navbar({
   navItems = [],
   currentPath = "",
 }: NavbarProps) {
+  
+  const { data: session } = useSession();
+
   return (
     <header className="max-w-7xl mx-auto px-4 py-6 flex items-center justify-between">
       <div className="flex items-center space-x-2">
@@ -70,17 +74,22 @@ export default function Navbar({
             Back to Home
           </Link>
         )}
-        <Link href="/signin">
-          <Button variant="outline" className="rounded-full border-2 border-gray-900 hover:bg-gray-100 text-gray-900">
-            Sign In
-          </Button>
-        </Link>
-        <Link href="/signup">
-          <Button className="rounded-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white">
-            Sign Up
-          </Button>
-        </Link>
+        {/* Only show Sign In/Sign Up if not signed in and not loading */}
+        {!session && (
+          <>
+            <Link href="/signin?from=navbar">
+              <Button variant="outline" className="rounded-full border-2 border-gray-900 hover:bg-gray-100 text-gray-900">
+                Sign In
+              </Button>
+            </Link>
+            <Link href="/signup?from=navbar">
+              <Button className="rounded-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white">
+                Sign Up
+              </Button>
+            </Link>
+          </>
+        )}
       </div>
     </header>
   );
-} 
+}

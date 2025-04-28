@@ -1,5 +1,5 @@
 "use client";
-import { Button } from "./ui/button";
+import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut } from "@/lib/auth-client";
@@ -23,7 +23,7 @@ export default function UserDashboard() {
   };
   return (
     <div>
-      <h1>User Dashboard</h1>
+      <h1>Dashboard</h1>
       <p>Welcome to the user dashboard!</p>
       <Button onClick={handleSignOut}>Log Out</Button>
     </div>
