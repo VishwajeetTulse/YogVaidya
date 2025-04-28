@@ -95,7 +95,6 @@ export default function SigninPage() {
       }
     );
     setPendingGoogle(false);
-    console.log("Redirect URI we are sending:", process.env.GOOGLE_CALLBACK_URL);
   };
 
   return (

@@ -357,7 +357,13 @@ export default function SignupPage() {
                     Continue with Google
                   </Button>
                 </div>
-
+                <Button
+                  type="submit"
+                  className="w-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
+                  disabled={isLoading}
+                >
+                  {isLoading ? "Signing Up..." : "Sign Up"}
+                </Button>
                 <div className="text-center mt-6">
                   <p className="text-gray-600">
                     Already have an account?{" "}

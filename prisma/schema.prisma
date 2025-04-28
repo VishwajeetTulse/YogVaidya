@@ -20,7 +20,7 @@ model User {
   role          Role      @default(USER)
   email         String
   name          String?
-  phone         String
+  phone         String?
   emailVerified Boolean?
   image         String?
   createdAt     DateTime
