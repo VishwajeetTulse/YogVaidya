@@ -74,28 +74,29 @@ export default function SigninPage() {
   };
 
   const handleGoogleAuth = async () => {
-		await authClient.signIn.social(
-			{
-				provider: "google",
-			},
-			{
-				onRequest: () => {
-					setPendingGoogle(true);
-				},
-				onSuccess: async () => {
-					router.push("/dashboard/users");
+    await authClient.signIn.social(
+      {
+        provider: "google",
+      },
+      {
+        onRequest: () => {
+          setPendingGoogle(true);
+        },
+        onSuccess: async () => {
+          router.push("/dashboard/users");
           toast.success("Signed in with Google");
-					router.refresh();
-				},
-				onError: (ctx) => {
-					toast("Something went wrong",{
-						description: ctx.error.message ?? "Something went wrong.",
-					});
-				},
-			}
-		);
-		setPendingGoogle(false);
-	};
+          router.refresh();
+        },
+        onError: (ctx) => {
+          toast("Something went wrong", {
+            description: ctx.error.message ?? "Something went wrong.",
+          });
+        },
+      }
+    );
+    setPendingGoogle(false);
+    console.log("Redirect URI we are sending:", process.env.GOOGLE_CALLBACK_URL);
+  };
 
   return (
     <div className="bg-gray-100 min-h-screen">
@@ -241,43 +242,64 @@ export default function SigninPage() {
                     </FormItem>
                   )}
                 />
+                {/* Seperator */}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-px bg-gray-300 flex-grow mr-2"></div>
+                  <span className="text-gray-900 text-sm">OR</span>
+                  <div className="h-px bg-gray-300 flex-grow ml-2"></div>
+                </div>
                 <div className="mt-4">
-            <Button
-                          type="button"
-                          disabled={pendingGoogle}
-                          onClick={handleGoogleAuth}
-                          className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
-                        >
-                          {pendingGoogle ? (
-                            <svg className="animate-spin h-5 w-5 mr-2 text-gray-400" viewBox="0 0 24 24">
-                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
-                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                            </svg>
-                          ) : (
-                            <svg className="h-5 w-5" viewBox="0 0 48 48">
-                              <g>
-                                <path
-                                  fill="#4285F4"
-                                  d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.68 2.7 30.74 0 24 0 14.82 0 6.71 5.8 2.69 14.09l7.98 6.2C12.13 13.6 17.62 9.5 24 9.5z"
-                                />
-                                <path
-                                  fill="#34A853"
-                                  d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.59C43.99 37.13 46.1 31.3 46.1 24.55z"
-                                />
-                                <path
-                                  fill="#FBBC05"
-                                  d="M10.67 28.29c-1.13-3.36-1.13-6.97 0-10.33l-7.98-6.2C.99 15.1 0 19.41 0 24c0 4.59.99 8.9 2.69 12.24l7.98-6.2z"
-                                />
-                                <path
-                                  fill="#EA4335"
-                                  d="M24 48c6.74 0 12.68-2.22 17.04-6.04l-7.19-5.59c-2.01 1.35-4.59 2.15-7.85 2.15-6.38 0-11.87-4.1-13.33-9.59l-7.98 6.2C6.71 42.2 14.82 48 24 48z"
-                                />
-                                <path fill="none" d="M0 0h48v48H0z" />
-                              </g>
-                            </svg>
-                          )}
-                          Continue with Google
-                        </Button>
+                  <Button
+                    type="button"
+                    disabled={pendingGoogle}
+                    onClick={handleGoogleAuth}
+                    className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
+                  >
+                    {pendingGoogle ? (
+                      <svg
+                        className="animate-spin h-5 w-5 mr-2 text-gray-400"
+                        viewBox="0 0 24 24"
+                      >
+                        <circle
+                          className="opacity-25"
+                          cx="12"
+                          cy="12"
+                          r="10"
+                          stroke="currentColor"
+                          strokeWidth="4"
+                          fill="none"
+                        />
+                        <path
+                          className="opacity-75"
+                          fill="currentColor"
+                          d="M4 12a8 8 0 018-8v8z"
+                        />
+                      </svg>
+                    ) : (
+                      <svg className="h-5 w-5" viewBox="0 0 48 48">
+                        <g>
+                          <path
+                            fill="#4285F4"
+                            d="M24 9.5c3.54 0 6.7 1.22 9.19 3.23l6.85-6.85C36.68 2.7 30.74 0 24 0 14.82 0 6.71 5.8 2.69 14.09l7.98 6.2C12.13 13.6 17.62 9.5 24 9.5z"
+                          />
+                          <path
+                            fill="#34A853"
+                            d="M46.1 24.55c0-1.64-.15-3.22-.42-4.74H24v9.01h12.42c-.54 2.9-2.18 5.36-4.65 7.01l7.19 5.59C43.99 37.13 46.1 31.3 46.1 24.55z"
+                          />
+                          <path
+                            fill="#FBBC05"
+                            d="M10.67 28.29c-1.13-3.36-1.13-6.97 0-10.33l-7.98-6.2C.99 15.1 0 19.41 0 24c0 4.59.99 8.9 2.69 12.24l7.98-6.2z"
+                          />
+                          <path
+                            fill="#EA4335"
+                            d="M24 48c6.74 0 12.68-2.22 17.04-6.04l-7.19-5.59c-2.01 1.35-4.59 2.15-7.85 2.15-6.38 0-11.87-4.1-13.33-9.59l-7.98 6.2C6.71 42.2 14.82 48 24 48z"
+                          />
+                          <path fill="none" d="M0 0h48v48H0z" />
+                        </g>
+                      </svg>
+                    )}
+                    Continue with Google
+                  </Button>
                 </div>
                 <Button
                   type="submit"
