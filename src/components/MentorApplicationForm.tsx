@@ -1,38 +1,16 @@
 "use client";
 import React, { useState } from "react";
-import { CheckCircle, User, Briefcase, FileText, Link as LinkIcon } from "lucide-react";
-import { Checkbox } from "@/components/ui/checkbox";
 import { z } from "zod";
 import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
-import { zodResolver } from "@hookform/resolvers/zod";
-
-const steps = [
-  {
-    label: "Personal Info",
-    description: "Tell us about yourself.",
-    icon: <User className="w-5 h-5" />,
-  },
-  {
-    label: "Experience",
-    description: "Share your teaching background and expertise.",
-    icon: <Briefcase className="w-5 h-5" />,
-  },
-  {
-    label: "Certification",
-    description: "Upload your certifications and proof of work.",
-    icon: <FileText className="w-5 h-5" />,
-  },
-  {
-    label: "Review",
-    description: "Review your application before submitting.",
-    icon: <CheckCircle className="w-5 h-5" />,
-  },
-];
+import { Checkbox } from "@/components/ui/checkbox";
+import { toast } from "sonner";
+import { authClient } from "@/lib/auth-client";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   name: z.string().min(2, "Full name is required"),
@@ -49,10 +27,15 @@ const formSchema = z.object({
 type FormValues = z.infer<typeof formSchema>;
 
 export default function MentorApplicationForm() {
-  const [step, setStep] = useState(0);
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
   const [fileName, setFileName] = useState<string | null>(null);
+  const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [existingApplication, setExistingApplication] = useState<any>(null);
+  const [fetching, setFetching] = useState(true);
+  const router = useRouter();
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -65,9 +48,68 @@ export default function MentorApplicationForm() {
       expertise: "",
       certifications: "",
       pow: undefined,
-      consent: true,
     },
   });
+
+  React.useEffect(() => {
+    async function fetchApplication() {
+      setFetching(true);
+      try {
+        // Get user session to extract email
+        const session = await authClient.getSession();
+        const userEmail = session && 'data' in session && session.data?.user?.email;
+        if (!userEmail) {
+          setExistingApplication(null);
+          setFetching(false);
+          return;
+        }
+        const res = await fetch(`/api/mentor-application?email=${encodeURIComponent(userEmail)}`, { method: "GET" });
+        const data = await res.json();
+        if (data.success && data.applications && data.applications.length > 0) {
+          setExistingApplication(data.applications[0]);
+          setSubmittedEmail(data.applications[0].email); // Set submittedEmail from loaded application
+        } else {
+          setExistingApplication(null);
+          setSubmittedEmail(null);
+        }
+      } catch (e) {
+        setExistingApplication(null);
+      } finally {
+        setFetching(false);
+      }
+    }
+    fetchApplication();
+    // Prefill user info
+    async function prefillUser() {
+      try {
+        const session = await authClient.getSession();
+        if (session && 'data' in session && session.data?.user) {
+          if (session.data.user.name) form.setValue("name", session.data.user.name);
+          if (session.data.user.email) form.setValue("email", session.data.user.email);
+        }
+      } catch {}
+    }
+    prefillUser();
+  }, []);
+
+  // Poll for application approval and redirect if approved
+  React.useEffect(() => {
+    if (!existingApplication) return;
+    if (existingApplication.status === "approved") {
+      router.replace("/dashboard?role=mentor");
+      return;
+    }
+    const interval = setInterval(async () => {
+      try {
+        const res = await fetch(`/api/mentor-application?email=${encodeURIComponent(existingApplication.email)}`);
+        const data = await res.json();
+        if (data.success && data.applications && data.applications[0]?.status === "approved") {
+          router.replace("/dashboard?role=mentor");
+        }
+      } catch {}
+    }, 5000);
+    return () => clearInterval(interval);
+  }, [existingApplication, router]);
 
   function handleFileChange(e: React.ChangeEvent<HTMLInputElement>) {
     const file = e.target.files?.[0];
@@ -79,241 +121,250 @@ export default function MentorApplicationForm() {
     setFileName(null);
   }
 
-  function nextStep() {
-    setStep((s) => Math.min(s + 1, steps.length - 1));
-  }
-  function prevStep() {
-    setStep((s) => Math.max(s - 1, 0));
-  }
-
-  function onSubmit(data: FormValues) {
+  async function onSubmit(data: FormValues) {
     setLoading(true);
-    setTimeout(() => {
+    setDeleteError(null);
+    try {
+      const formData = new FormData();
+      formData.append("name", data.name);
+      formData.append("email", data.email);
+      formData.append("phone", data.phone);
+      formData.append("profile", data.profile || "");
+      formData.append("experience", data.experience);
+      formData.append("expertise", data.expertise);
+      formData.append("certifications", data.certifications);
+      if (data.pow instanceof File) {
+        formData.append("pow", data.pow);
+      }
+      const res = await fetch("/api/mentor-application", {
+        method: "POST",
+        body: formData,
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSubmittedEmail(data.email);
+        setSubmitted(true);
+        // Fetch the latest application so the form is not shown again
+        try {
+          const res = await fetch("/api/mentor-application", { method: "GET" });
+          const data = await res.json();
+          if (data.success && data.applications && data.applications.length > 0) {
+            setExistingApplication(data.applications[0]);
+            console.log("Existing application", existingApplication);
+          }
+        } catch {}
+      } else {
+        setDeleteError(result.error || "Submission failed");
+      }
+    } catch (e: any) {
+      setDeleteError(e.message || "Submission failed");
+    } finally {
       setLoading(false);
-      setSubmitted(true);
-    }, 1800);
-    // TODO: Submit form data to backend
+    }
   }
 
-  if (submitted) {
+  async function handleDelete() {
+    if (!submittedEmail) return;
+    setDeleteLoading(true);
+    setDeleteError(null);
+    try {
+      const res = await fetch("/api/mentor-application", {
+        method: "DELETE",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: submittedEmail }),
+      });
+      const result = await res.json();
+      if (result.success) {
+        setSubmitted(false);
+        setSubmittedEmail(null);
+        setExistingApplication(null);
+        toast.success("Application deleted successfully");
+        // Redirect to mentors page after delete
+        window.location.href = "/mentors/apply";
+      } else {
+        setDeleteError(result.error || "Delete failed");
+        toast.error(result.error || "Delete failed");
+      }
+    } catch (e: any) {
+      setDeleteError(e.message || "Delete failed");
+      toast.error(e.message || "Delete failed");
+    } finally {
+      setDeleteLoading(false);
+    }
+  }
+
+  if (fetching) {
+    return <div className="text-center mt-10">Loading...</div>;
+  }
+  if (submitted || existingApplication) {
     return (
       <div className="max-w-2xl mx-auto bg-white rounded-2xl p-10 shadow-lg border border-gray-100 mt-10 mb-10 text-center">
         <h2 className="text-2xl font-bold mb-4 text-green-700">Application Submitted!</h2>
         <p className="text-gray-700">Thank you for applying as a mentor. We will review your application and contact you soon.</p>
+        <div className="mt-8 flex flex-col items-center gap-4">
+          <Button onClick={handleDelete} variant="destructive" disabled={deleteLoading}>
+            {deleteLoading ? "Deleting..." : "Delete Application"}
+          </Button>
+          {deleteError && <p className="text-red-500 text-sm mt-2">{deleteError}</p>}
+        </div>
       </div>
     );
   }
 
   return (
-    <Card className="max-w-2xl mx-auto mt-10 mb-10 animate-fade-in">
-      <CardHeader>
-        <CardTitle>Mentor Application Form</CardTitle>
-        <CardDescription>Apply to become a certified YogaVaidya mentor.</CardDescription>
-        <div className="flex items-center gap-2 mt-4">
-          {steps.map((s, idx) => (
-            <div key={s.label} className="flex items-center">
-              <div className={`rounded-full w-8 h-8 flex items-center justify-center text-sm font-bold border-2 transition-all duration-300 ${idx === step ? 'bg-blue-600 text-white border-blue-600 scale-110 shadow-lg' : 'bg-gray-100 text-gray-400 border-gray-300'}`}>{s.icon}</div>
-              {idx < steps.length - 1 && <div className="w-8 h-1 bg-gray-200 mx-1 rounded transition-all duration-300" />}
-            </div>
-          ))}
-        </div>
-        <div className="mt-2 text-sm text-gray-600 min-h-[24px]">{steps[step].description}</div>
-      </CardHeader>
-      <CardContent>
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {step === 0 && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="name"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Full Name</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your full name" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="email"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Email</FormLabel>
-                      <FormControl>
-                        <Input type="email" placeholder="your@email.com" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="phone"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Phone Number</FormLabel>
-                      <FormControl>
-                        <Input placeholder="Your phone number" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="profile"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>LinkedIn / Profile URL <span className="text-xs text-gray-400">(optional)</span></FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input placeholder="https://linkedin.com/in/yourprofile" {...field} />
-                          <LinkIcon className="w-4 h-4 text-gray-400" />
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            {step === 1 && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="experience"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Teaching Experience</FormLabel>
-                      <FormControl>
-                        <Textarea placeholder="Describe your teaching experience" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="expertise"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Areas of Expertise</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. Hatha Yoga, Meditation" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            {step === 2 && (
-              <>
-                <FormField
-                  control={form.control}
-                  name="certifications"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Certifications</FormLabel>
-                      <FormControl>
-                        <Input placeholder="e.g. RYT 200, RYT 500" {...field} />
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-                <FormField
-                  control={form.control}
-                  name="pow"
-                  render={() => (
-                    <FormItem>
-                      <FormLabel>Proof of Work (certificate/portfolio)</FormLabel>
-                      <FormControl>
-                        <div className="flex items-center gap-2">
-                          <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full" />
-                          {fileName && (
-                            <>
-                              <span className="text-xs text-gray-600 truncate max-w-[120px]">{fileName}</span>
-                              <Button type="button" size="sm" variant="outline" onClick={removeFile}>Remove</Button>
-                            </>
-                          )}
-                        </div>
-                      </FormControl>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </>
-            )}
-            {step === 3 && (
-              <div className="space-y-4">
-                <div>
-                  <span className="font-semibold">Full Name:</span> {form.getValues("name")}
-                </div>
-                <div>
-                  <span className="font-semibold">Email:</span> {form.getValues("email")}
-                </div>
-                <div>
-                  <span className="font-semibold">Phone:</span> {form.getValues("phone")}
-                </div>
-                {form.getValues("profile") && (
-                  <div>
-                    <span className="font-semibold">Profile URL:</span> <a href={form.getValues("profile")} className="text-blue-600 underline" target="_blank" rel="noopener noreferrer">{form.getValues("profile")}</a>
+    <div className="bg-gray-100 min-h-screen">
+      <section className="max-w-7xl mx-auto px-4 pt-3 pb-10">
+        <div className="max-w-4xl mx-auto">
+          <div className="text-center mb-8">
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Mentor Application</h1>
+            <p className="text-gray-600">Apply to become a certified YogaVaidya mentor</p>
+          </div>
+          <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
+            <Form {...form}>
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+                {/* Personal Information Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Personal Information</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <FormField
+                      control={form.control}
+                      name="name"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Full Name</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your full name" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="email"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                          <FormControl>
+                            <Input type="email" placeholder="your@email.com" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="phone"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
+                          <FormControl>
+                            <Input placeholder="Your phone number" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
                   </div>
-                )}
-                <div>
-                  <span className="font-semibold">Experience:</span> {form.getValues("experience")}
                 </div>
-                <div>
-                  <span className="font-semibold">Expertise:</span> {form.getValues("expertise")}
+                <div className="flex items-center justify-between mb-4">
+                  <div className="h-px bg-gray-300 flex-grow mr-2"></div>
                 </div>
-                <div>
-                  <span className="font-semibold">Certifications:</span> {form.getValues("certifications")}
+                {/* Professional Details Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Professional Details</h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
+                    <FormField
+                      control={form.control}
+                      name="experience"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="text-gray-700 font-medium">Teaching Experience</FormLabel>
+                          <FormControl>
+                            <Textarea placeholder="Describe your teaching experience" className="h-24 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="expertise"
+                      render={({ field }) => (
+                        <FormItem className="md:col-span-2">
+                          <FormLabel className="text-gray-700 font-medium">Areas of Expertise</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. Hatha Yoga, Meditation" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="certifications"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Certifications</FormLabel>
+                          <FormControl>
+                            <Input placeholder="e.g. RYT 200, RYT 500" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={form.control}
+                      name="pow"
+                      render={() => (
+                        <FormItem>
+                          <FormLabel className="text-gray-700 font-medium">Proof of Work (certificate/portfolio)</FormLabel>
+                          <FormControl>
+                            <div className="flex items-center gap-2">
+                              <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" />
+                              {fileName && (
+                                <>
+                                  <span className="text-xs text-gray-600 truncate max-w-[120px]">{fileName}</span>
+                                  <Button type="button" size="sm" variant="outline" onClick={removeFile}>Remove</Button>
+                                </>
+                              )}
+                            </div>
+                          </FormControl>
+                          <FormMessage className="text-red-500" />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
                 </div>
-                <div>
-                  <span className="font-semibold">Proof of Work:</span> {fileName || "Not uploaded"}
+                {/* Agreements Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Agreements</h3>
+                  <FormField
+                    control={form.control}
+                    name="consent"
+                    render={({ field }) => (
+                      <FormItem className="flex items-center gap-2 mt-4">
+                        <FormControl>
+                          <Checkbox checked={field.value} onCheckedChange={field.onChange} id="consent" />
+                        </FormControl>
+                        <FormLabel htmlFor="consent" className="!mt-0 cursor-pointer">
+                          I agree to the <a href="/terms" className="underline text-blue-600" target="_blank">terms</a> and <a href="/privacy" className="underline text-blue-600" target="_blank">privacy policy</a>.
+                        </FormLabel>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
                 </div>
-              </div>
-            )}
-            {/* Consent Checkbox always visible on last step */}
-            {step === steps.length - 1 && (
-              <FormField
-                control={form.control}
-                name="consent"
-                render={({ field }) => (
-                  <FormItem className="flex items-center gap-2 mt-4">
-                    <FormControl>
-                      <Checkbox checked={field.value} onCheckedChange={field.onChange} id="consent" />
-                    </FormControl>
-                    <FormLabel htmlFor="consent" className="!mt-0 cursor-pointer">
-                      I agree to the <a href="/terms" className="underline text-blue-600" target="_blank">terms</a> and <a href="/privacy" className="underline text-blue-600" target="_blank">privacy policy</a>.
-                    </FormLabel>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
-            )}
-            <CardFooter className="flex justify-between pt-6">
-              <Button type="button" variant="outline" onClick={prevStep} disabled={step === 0 || loading}>
-                Back
-              </Button>
-              {step < steps.length - 1 ? (
-                <Button type="button" onClick={nextStep} disabled={loading}>
-                  Next
-                </Button>
-              ) : (
-                <Button type="submit" variant="default" disabled={loading}>
-                  {loading ? "Submitting..." : "Submit Application"}
-                </Button>
-              )}
-            </CardFooter>
-          </form>
-        </Form>
-      </CardContent>
-    </Card>
+                <div className="flex justify-end pt-6">
+                  <Button type="submit" className="bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6" disabled={loading}>
+                    {loading ? "Submitting..." : "Submit Application"}
+                  </Button>
+                </div>
+              </form>
+            </Form>
+          </div>
+        </div>
+      </section>
+    </div>
   );
 }

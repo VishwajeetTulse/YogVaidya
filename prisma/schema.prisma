@@ -1,4 +1,3 @@
-
 datasource db {
   provider = "mongodb"
   url      = env("DATABASE_URL")
@@ -75,4 +74,22 @@ model Verification {
   updatedAt  DateTime?
 
   @@map("verification")
+}
+
+model MentorApplication {
+  id             String   @id @map("_id")
+  name           String
+  email          String
+  phone          String
+  profile        String?
+  experience     String
+  expertise      String
+  certifications String
+  powUrl         String?
+  createdAt      DateTime @default(now())
+  updatedAt      DateTime @updatedAt
+  userId         String?
+  status         String?  // <-- Add this line for application status
+
+  @@map("mentor_application")
 }
