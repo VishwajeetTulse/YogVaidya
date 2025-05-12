@@ -6,11 +6,19 @@ import { toast } from "sonner";
 
 const roles = ["USER", "MENTOR"];
 
+type User = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  role: string;
+};
+
 export default function ModeratorUserManagement() {
-  const [users, setUsers] = useState<any[]>([]);
+  const [users, setUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [editId, setEditId] = useState<string | null>(null);
-  const [editData, setEditData] = useState<any>({});
+  const [editData, setEditData] = useState<Partial<User>>({});
   const [actionLoading, setActionLoading] = useState(false);
 
   useEffect(() => {
@@ -24,16 +32,22 @@ export default function ModeratorUserManagement() {
       const data = await res.json();
       if (data.success) {
         // Only show users with role USER or MENTOR
-        setUsers(data.users.filter((u: any) => roles.includes(u.role)));
+        setUsers(data.users.filter((u:User) => roles.includes(u.role)).map((u: User) => ({
+          id: u.id,
+          name: u.name,
+          email: u.email,
+          phone: u.phone,
+          role: u.role,
+        })));
       } else toast.error("Failed to load users");
-    } catch (e: any) {
-      toast.error(e.message || "Failed to load users");
+    } catch (e) {
+      toast.error((e as Error)?.message || "Failed to load users");
     } finally {
       setLoading(false);
     }
   }
 
-  function startEdit(user: any) {
+  function startEdit(user: User) {
     setEditId(user.id);
     setEditData({ ...user });
   }
@@ -63,8 +77,8 @@ export default function ModeratorUserManagement() {
       } else {
         toast.error(data.error || "Failed to update user");
       }
-    } catch (e: any) {
-      toast.error(e.message || "Failed to update user");
+    } catch (e) {
+      toast.error((e as Error)?.message || "Failed to update user");
     } finally {
       setActionLoading(false);
     }
@@ -86,8 +100,8 @@ export default function ModeratorUserManagement() {
       } else {
         toast.error(data.error || "Failed to delete user");
       }
-    } catch (e: any) {
-      toast.error(e.message || "Failed to delete user");
+    } catch (e) {
+      toast.error((e as Error)?.message || "Failed to delete user");
     } finally {
       setActionLoading(false);
     }

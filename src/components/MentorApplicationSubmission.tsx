@@ -1,8 +1,20 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
 
+type MentorApplication = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience: string;
+  expertise: string;
+  certifications: string;
+  powUrl?: string | null;
+  status: string;
+};
+
 interface MentorApplicationSubmissionProps {
-  application: any;
+  application: MentorApplication;
   onDelete: () => void;
   deleteLoading: boolean;
   deleteError: string | null;

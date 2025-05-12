@@ -6,9 +6,21 @@ import { signOut } from "@/lib/auth-client";
 import React, { useEffect, useState } from "react";
 import ModeratorUserManagement from "@/components/dashboard/moderator-user-management";
 
+type MentorApplication = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience: string;
+  expertise: string;
+  certifications: string;
+  proofOfWorkUrl?: string | null;
+  status: string;
+};
+
 export default function ModeratorDashboard() {
   const router = useRouter();
-  const [applications, setApplications] = useState<any[]>([]);
+  const [applications, setApplications] = useState<MentorApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState<string | null>(null);
   const [error, setError,] = useState<string | null>(null);
@@ -25,8 +37,8 @@ export default function ModeratorDashboard() {
         } else {
           setError("Failed to load applications");
         }
-      } catch (e: any) {
-        setError(e.message || "Failed to load applications");
+      } catch (e ) {
+        setError((e as Error)?.message || "Failed to load applications");
       } finally {
         setLoading(false);
       }
@@ -70,9 +82,9 @@ export default function ModeratorDashboard() {
         setError(result.error || `Failed to ${status}`);
         toast.error(result.error || `Failed to ${status}`);
       }
-    } catch (e: any) {
-      setError(e.message || `Failed to ${status}`);
-      toast.error(e.message || `Failed to ${status}`);
+    } catch (e) {
+      setError((e as Error)?.message || `Failed to ${status}`);
+      toast.error((e as Error)?.message || `Failed to ${status}`);
     } finally {
       setActionLoading(null);
     }

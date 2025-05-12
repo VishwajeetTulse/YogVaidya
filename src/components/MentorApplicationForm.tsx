@@ -26,6 +26,18 @@ const formSchema = z.object({
 
 type FormValues = z.infer<typeof formSchema>;
 
+type MentorApplication = {
+  id: string;
+  name: string;
+  email: string;
+  phone: string;
+  experience: string;
+  expertise: string;
+  certifications: string;
+  proofOfWorkUrl?: string | null;
+  status: string;
+};
+
 export default function MentorApplicationForm() {
   const [submitted, setSubmitted] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -33,7 +45,7 @@ export default function MentorApplicationForm() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [existingApplication, setExistingApplication] = useState<any>(null);
+  const [existingApplication, setExistingApplication] = useState<MentorApplication | null>(null);
   const [fetching, setFetching] = useState(true);
   const router = useRouter();
 
@@ -73,6 +85,7 @@ export default function MentorApplicationForm() {
           setSubmittedEmail(null);
         }
       } catch (e) {
+        console.error("Error fetching application", e);
         setExistingApplication(null);
       } finally {
         setFetching(false);
@@ -156,8 +169,8 @@ export default function MentorApplicationForm() {
       } else {
         setDeleteError(result.error || "Submission failed");
       }
-    } catch (e: any) {
-      setDeleteError(e.message || "Submission failed");
+    } catch (e) {
+      setDeleteError((e as Error)?.message || "Submission failed");
     } finally {
       setLoading(false);
     }
@@ -185,9 +198,9 @@ export default function MentorApplicationForm() {
         setDeleteError(result.error || "Delete failed");
         toast.error(result.error || "Delete failed");
       }
-    } catch (e: any) {
-      setDeleteError(e.message || "Delete failed");
-      toast.error(e.message || "Delete failed");
+    } catch (e) {
+      setDeleteError((e as Error)?.message || "Delete failed");
+      toast.error((e as Error)?.message || "Delete failed");
     } finally {
       setDeleteLoading(false);
     }

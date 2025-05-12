@@ -17,7 +17,7 @@ export async function POST(req: NextRequest) {
   const certifications = data.get("certifications") as string;
   const powFile = data.get("pow") as File | null;
 
-  let proofOfWorkUrl: string | null = null;
+  let powUrl: string | null = null;
   if (powFile && powFile.name) {
     const proofsDir = path.join(process.cwd(), "public", "proofs");
     // Ensure the directory exists
@@ -26,7 +26,7 @@ export async function POST(req: NextRequest) {
       path.join(proofsDir, powFile.name),
       Buffer.from(await powFile.arrayBuffer())
     );
-    proofOfWorkUrl = `/proofs/${powFile.name}`;
+    powUrl = `/proofs/${powFile.name}`;
   }
 
   try {
@@ -39,7 +39,7 @@ export async function POST(req: NextRequest) {
         experience,
         expertise,
         certifications,
-        proofOfWorkUrl,
+        powUrl,
         status: "pending", // Set default status on creation
       },
     });

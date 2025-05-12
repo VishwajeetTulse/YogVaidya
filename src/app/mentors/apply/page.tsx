@@ -1,6 +1,5 @@
 import { headers } from "next/headers";
 import Navbar from "@/components/Navbar";
-import Footer from "@/components/Footer";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import MentorApplicationForm from "@/components/MentorApplicationForm";

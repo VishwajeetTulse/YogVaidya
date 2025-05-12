@@ -1,8 +1,11 @@
 import SigninPage from "@/components/SigninForm";
+import { Suspense } from "react";
 const forgetPasswordPage = () => {
   return (
     <>
-      <SigninPage />
+      <Suspense fallback={<div>Loading...</div>}>
+        <SigninPage />
+      </Suspense>
     </>
   );
 };

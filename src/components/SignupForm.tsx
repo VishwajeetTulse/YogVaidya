@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { set, z } from "zod";
+import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import {
@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { redirect, useRouter, useSearchParams } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const signupSchema = z
   .object({

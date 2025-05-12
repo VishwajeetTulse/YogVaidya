@@ -4,7 +4,6 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
-import { useState } from "react";
 
 interface NavItem {
   label: string;
