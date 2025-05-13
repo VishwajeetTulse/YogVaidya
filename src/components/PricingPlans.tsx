@@ -122,7 +122,7 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Link href="/signin?from=pricing" passHref>
+              <Link href="/checkout?plan=seed" passHref>
                 <Button 
                   className="mt-auto w-full py-6 rounded-xl bg-white text-[#5a9be9] hover:bg-white/90 transition-all duration-300 font-medium">
                   GET STARTED
@@ -190,7 +190,7 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Link href="/signin?from=pricing" passHref>
+              <Link href="/checkout?plan=bloom" passHref>
                 <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#876aff] hover:bg-white/90 transition-all duration-300 font-medium">
                   GET STARTED
                 </Button>
@@ -250,7 +250,7 @@ export default function PricingPlans() {
               </div>
 
               {/* Button */}
-              <Link href="/signin?from=pricing" passHref>
+              <Link href="/checkout?plan=flourish" passHref>
                 <Button className="mt-auto w-full py-6 rounded-xl bg-white text-[#ff7dac] hover:bg-white/90 transition-all duration-300 font-medium">
                   GET STARTED
                 </Button>

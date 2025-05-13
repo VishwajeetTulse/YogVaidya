@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
 import UserDashboard from "@/components/dashboard/user-dashboard";
 import MentorDashboard from "@/components/dashboard/mentor-dashboard";
+import YogaMentorDashboard from "@/components/dashboard/yoga-mentor-dashboard";
 import ModeratorDashboard from "@/components/dashboard/moderator-dashboard";
 import AdminDashboard from "@/components/dashboard/admin-dashboard";
 
@@ -15,7 +16,11 @@ const dashboardPage = async () => {
   // Role-based rendering
   switch (session.user?.role) {
     case "MENTOR":
-      return <MentorDashboard />;
+      if (session.user?.mentorType === "YOGAMENTOR") {
+        return <YogaMentorDashboard />;
+      } else {
+        return <MentorDashboard />;
+      }
     case "MODERATOR":
       return <ModeratorDashboard />;
     case "ADMIN":

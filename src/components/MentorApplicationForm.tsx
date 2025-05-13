@@ -22,6 +22,7 @@ const formSchema = z.object({
   certifications: z.string().min(2, "Please enter your certifications"),
   pow: z.any().optional(),
   consent: z.literal(true, { errorMap: () => ({ message: "You must agree to the terms." }) }),
+  mentorType: z.enum(["YOGAMENTOR", "DIETPLANNER"], { required_error: "Mentor type is required" }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -60,6 +61,7 @@ export default function MentorApplicationForm() {
       expertise: "",
       certifications: "",
       pow: undefined,
+      mentorType: undefined,
     },
   });
 
@@ -146,6 +148,7 @@ export default function MentorApplicationForm() {
       formData.append("experience", data.experience);
       formData.append("expertise", data.expertise);
       formData.append("certifications", data.certifications);
+      formData.append("mentorType", data.mentorType);
       if (data.pow instanceof File) {
         formData.append("pow", data.pow);
       }
@@ -348,6 +351,30 @@ export default function MentorApplicationForm() {
                       )}
                     />
                   </div>
+                </div>
+                {/* Mentor Type Section */}
+                <div className="mb-6">
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Mentor Type</h3>
+                  <FormField
+                    control={form.control}
+                    name="mentorType"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel className="text-gray-700 font-medium">Select Mentor Type</FormLabel>
+                        <FormControl>
+                          <select
+                            {...field}
+                            className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent w-full"
+                          >
+                            <option value="" disabled>Select type</option>
+                            <option value="YOGAMENTOR">Yoga Mentor</option>
+                            <option value="DIETPLANNER">Diet Planner</option>
+                          </select>
+                        </FormControl>
+                        <FormMessage className="text-red-500" />
+                      </FormItem>
+                    )}
+                  />
                 </div>
                 {/* Agreements Section */}
                 <div className="mb-6">

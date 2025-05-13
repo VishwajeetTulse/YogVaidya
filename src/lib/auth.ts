@@ -71,6 +71,12 @@ export const auth = betterAuth({
                 defaultValue: "USER",
                 input: false,
             },
+            mentorType: {
+                type: "string",
+                required: false,
+                defaultValue: "",
+                input: false,
+            },
         },
     },
 });

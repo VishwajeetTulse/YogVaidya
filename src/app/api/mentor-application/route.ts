@@ -6,6 +6,8 @@ import { sendEmail } from "@/lib/email";
 
 const prisma = new PrismaClient();
 
+type MentorType = "YOGAMENTOR" | "DIETPLANNER";
+
 // Create mentor application
 export async function POST(req: NextRequest) {
   const data = await req.formData();
@@ -16,6 +18,7 @@ export async function POST(req: NextRequest) {
   const expertise = data.get("expertise") as string;
   const certifications = data.get("certifications") as string;
   const powFile = data.get("pow") as File | null;
+  const mentorType = data.get("mentorType") as string;
 
   let powUrl: string | null = null;
   if (powFile && powFile.name) {
@@ -41,6 +44,7 @@ export async function POST(req: NextRequest) {
         certifications,
         powUrl,
         status: "pending", // Set default status on creation
+        mentorType: mentorType as MentorType,
       },
     });
 

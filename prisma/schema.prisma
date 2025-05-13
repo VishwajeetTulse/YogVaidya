@@ -13,10 +13,15 @@ enum Role {
   MODERATOR
   ADMIN
 }
+enum MentorType{
+  YOGAMENTOR
+  DIETPLANNER
+}
 
 model User {
   id            String    @id @map("_id")
   role          Role      @default(USER)
+  mentorType    MentorType?
   email         String
   name          String?
   phone         String?
@@ -90,6 +95,7 @@ model MentorApplication {
   updatedAt      DateTime @updatedAt
   userId         String?
   status         String?  // <-- Add this line for application status
+  mentorType     MentorType?
 
   @@map("mentor_application")
 }

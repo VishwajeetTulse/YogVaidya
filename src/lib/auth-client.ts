@@ -14,6 +14,10 @@ export const authClient = createAuthClient({
             type: "string",
             required: true,
           },
+          mentorType: {
+            type: "string",
+            required: false,
+          },
         }
     })],
 }) 
