@@ -1,4 +1,4 @@
-import MentorsPage from "@/components/mentor-section";
+import MentorsPage from "@/components/mentor/mentor-section";
 
 const Mentorsection = () => {
   return (

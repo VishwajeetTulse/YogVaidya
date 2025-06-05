@@ -1,4 +1,4 @@
-import PricingPlans from "@/components/PricingPlans";
+import PricingPlans from "@/components/landing/PricingPlans";
 
 export default function PricingPage() {
   return (

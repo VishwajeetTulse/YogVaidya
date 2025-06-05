@@ -1,4 +1,4 @@
-import SigninPage from "@/components/SigninForm";
+import SigninPage from "@/components/forms/SigninForm";
 import { Suspense } from "react";
 const forgetPasswordPage = () => {
   return (

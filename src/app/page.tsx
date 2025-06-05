@@ -1,8 +1,8 @@
-import OurServices from "@/components/OurServices";
-import PricingPlans from "@/components/PricingPlans";
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
-import Hero from "@/components/Hero";
+import OurServices from "@/components/landing/OurServices";
+import PricingPlans from "@/components/landing/PricingPlans";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import Hero from "@/components/landing/Hero";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";

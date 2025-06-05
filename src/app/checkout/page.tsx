@@ -1,5 +1,5 @@
 import { Suspense } from "react";
-import Checkout from "../../components/Checkout";
+import Checkout from "@/components/checkout/Checkout";
 
 export default function Page() {
   return (

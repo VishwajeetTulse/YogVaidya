@@ -1,8 +1,8 @@
 import { headers } from "next/headers";
-import Navbar from "@/components/Navbar";
+import Navbar from "@/components/layout/Navbar";
 import { redirect } from "next/navigation";
 import { auth } from "@/lib/auth";
-import MentorApplicationForm from "@/components/MentorApplicationForm";
+import MentorApplicationForm from "@/components/mentor/MentorApplicationForm";
 
 export default async function MentorApplyPage() {
   const session = await auth.api.getSession({ headers: await headers() });

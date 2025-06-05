@@ -4,9 +4,9 @@ import React from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Check } from "lucide-react";
-import Footer from "@/components/Footer";
-import Navbar from "@/components/Navbar";
-import MentorCarousel from "@/components/MentorCarousel";
+import Footer from "@/components/layout/Footer";
+import Navbar from "@/components/layout/Navbar";
+import MentorCarousel from "@/components/mentor/MentorCarousel";
 import Link from "next/link";
 
 // Sample mentor data by category

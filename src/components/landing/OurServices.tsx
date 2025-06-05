@@ -1,5 +1,5 @@
 import React from 'react';
-import ServiceCard from './ServiceCard';
+import ServiceCard from '@/components/common/ServiceCard';
 import { Sparkles } from 'lucide-react';
 
 // Custom image URLs for the service cards using publicly available icons
