@@ -18,19 +18,50 @@ enum MentorType{
   DIETPLANNER
 }
 
+enum SubscriptionPlan {
+  SEED
+  BLOOM
+  FLOURISH
+}
+
+enum SubscriptionStatus {
+  ACTIVE
+  INACTIVE
+  CANCELLED
+  EXPIRED
+  PENDING
+}
+
 model User {
-  id            String    @id @map("_id")
-  role          Role      @default(USER)
-  mentorType    MentorType?
-  email         String
-  name          String?
-  phone         String?
-  emailVerified Boolean?
-  image         String?
-  createdAt     DateTime
-  updatedAt     DateTime
-  sessions      Session[]
-  accounts      Account[]
+  id                    String            @id @map("_id")
+  role                  Role              @default(USER)
+  mentorType            MentorType?
+  email                 String
+  name                  String?
+  phone                 String?
+  emailVerified         Boolean?
+  image                 String?
+  createdAt             DateTime
+  updatedAt             DateTime
+  
+  // Subscription Details
+  subscriptionPlan      SubscriptionPlan  @default(SEED)
+  subscriptionStatus    SubscriptionStatus @default(INACTIVE)
+  subscriptionStartDate DateTime?
+  subscriptionEndDate   DateTime?
+  billingPeriod         String?           // "monthly" or "annual"
+  razorpaySubscriptionId String?
+  razorpayCustomerId    String?
+  lastPaymentDate       DateTime?
+  nextBillingDate       DateTime?
+  paymentAmount         Float?
+  isTrialActive         Boolean           @default(true)
+  trialEndDate          DateTime?
+  autoRenewal           Boolean           @default(true)
+  
+  sessions              Session[]
+  accounts              Account[]
+  
   
   @@unique([email])
   @@map("user")
