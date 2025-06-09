@@ -165,13 +165,13 @@ export default function UserDashboard() {
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Email</label>
-                  <p className="text-gray-900 flex items-center gap-2">
+                  <div className="text-gray-900 flex items-center gap-2">
                     <Mail className="w-4 h-4" />
                     {userDetails.email}
                     {userDetails.emailVerified && (
                       <Badge variant="secondary" className="text-xs">Verified</Badge>
                     )}
-                  </p>
+                  </div>
                 </div>
                 <div>
                   <label className="text-sm font-medium text-gray-500">Phone</label>

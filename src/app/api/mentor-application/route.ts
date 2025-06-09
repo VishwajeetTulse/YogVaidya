@@ -19,17 +19,23 @@ export async function POST(req: NextRequest) {
   const certifications = data.get("certifications") as string;
   const powFile = data.get("pow") as File | null;
   const mentorType = data.get("mentorType") as string;
-
   let powUrl: string | null = null;
   if (powFile && powFile.name) {
     const proofsDir = path.join(process.cwd(), "public", "proofs");
     // Ensure the directory exists
     await mkdir(proofsDir, { recursive: true });
+    
+    // Generate unique filename to avoid conflicts
+    const fileExtension = path.extname(powFile.name);
+    const timestamp = Date.now();
+    const randomString = Math.random().toString(36).substring(2, 8);
+    const uniqueFileName = `${email.replace(/[@.]/g, '_')}_${timestamp}_${randomString}${fileExtension}`;
+    
     await writeFile(
-      path.join(proofsDir, powFile.name),
+      path.join(proofsDir, uniqueFileName),
       Buffer.from(await powFile.arrayBuffer())
     );
-    powUrl = `/proofs/${powFile.name}`;
+    powUrl = `/proofs/${uniqueFileName}`;
   }
 
   try {

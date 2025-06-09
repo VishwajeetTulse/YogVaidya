@@ -11,6 +11,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
+import MentorApplicationSubmission from "./MentorApplicationSubmission";
 
 const formSchema = z.object({
   name: z.string().min(2, "Full name is required"),
@@ -32,10 +33,9 @@ type MentorApplication = {
   name: string;
   email: string;
   phone: string;
-  experience: string;
-  expertise: string;
+  experience: string;  expertise: string;
   certifications: string;
-  proofOfWorkUrl?: string | null;
+  powUrl?: string | null;
   status: string;
 };
 
@@ -208,22 +208,29 @@ export default function MentorApplicationForm() {
       setDeleteLoading(false);
     }
   }
-
   if (fetching) {
     return <div className="text-center mt-10">Loading...</div>;
   }
   if (submitted || existingApplication) {
+    const applicationData = existingApplication || {
+      id: crypto.randomUUID(),
+      name: form.getValues("name"),
+      email: submittedEmail || form.getValues("email"),
+      phone: form.getValues("phone"),
+      experience: form.getValues("experience"),
+      expertise: form.getValues("expertise"),
+      certifications: form.getValues("certifications"),
+      powUrl: null,
+      status: "pending"
+    };
+
     return (
-      <div className="max-w-2xl mx-auto bg-white rounded-2xl p-10 shadow-lg border border-gray-100 mt-10 mb-10 text-center">
-        <h2 className="text-2xl font-bold mb-4 text-green-700">Application Submitted!</h2>
-        <p className="text-gray-700">Thank you for applying as a mentor. We will review your application and contact you soon.</p>
-        <div className="mt-8 flex flex-col items-center gap-4">
-          <Button onClick={handleDelete} variant="destructive" disabled={deleteLoading}>
-            {deleteLoading ? "Deleting..." : "Delete Application"}
-          </Button>
-          {deleteError && <p className="text-red-500 text-sm mt-2">{deleteError}</p>}
-        </div>
-      </div>
+      <MentorApplicationSubmission
+        application={applicationData}
+        onDelete={handleDelete}
+        deleteLoading={deleteLoading}
+        deleteError={deleteError}
+      />
     );
   }
 
