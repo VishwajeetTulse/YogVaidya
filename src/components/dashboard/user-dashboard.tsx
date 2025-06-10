@@ -105,34 +105,32 @@ export default function UserDashboard() {
       minute: "2-digit",
     });
   };
-
   const getStatusColor = (status: string) => {
     switch (status) {
       case "ACTIVE":
-        return "bg-green-500 text-white";
+        return "bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] text-white";
       case "INACTIVE":
-        return "bg-gray-500 text-white";
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
       case "CANCELLED":
-        return "bg-red-500 text-white";
+        return "bg-gradient-to-r from-red-400 to-red-500 text-white";
       case "EXPIRED":
-        return "bg-orange-500 text-white";
+        return "bg-gradient-to-r from-orange-400 to-orange-500 text-white";
       case "PENDING":
-        return "bg-yellow-500 text-white";
+        return "bg-gradient-to-r from-yellow-400 to-yellow-500 text-white";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
     }
   };
-
   const getPlanColor = (plan: string) => {
     switch (plan) {
       case "SEED":
-        return "bg-gray-500 text-white";
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
       case "BLOOM":
-        return "bg-purple-500 text-white";
+        return "bg-gradient-to-r from-[#876aff] to-[#a792fb] text-white";
       case "FLOURISH":
-        return "bg-pink-500 text-white";
+        return "bg-gradient-to-r from-[#ffa6c5] to-[#ff7dac] text-white";
       default:
-        return "bg-gray-500 text-white";
+        return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
     }
   };
 
@@ -243,14 +241,12 @@ export default function UserDashboard() {
         <p className="text-gray-600 mt-2">
           Continue your wellness journey with personalized yoga sessions.
         </p>
-      </div>
-
-      {/* Quick Stats */}
+      </div>      {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-blue-100 rounded-lg">
-              <Calendar className="w-5 h-5 text-blue-600" />
+            <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
+              <Calendar className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Classes This Week</p>
@@ -258,10 +254,10 @@ export default function UserDashboard() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-green-100 rounded-lg">
-              <Clock className="w-5 h-5 text-green-600" />
+            <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
+              <Clock className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Practice</p>
@@ -269,10 +265,10 @@ export default function UserDashboard() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-purple-100 rounded-lg">
-              <Target className="w-5 h-5 text-purple-600" />
+            <div className="p-2 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
+              <Target className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Goals Achieved</p>
@@ -280,10 +276,10 @@ export default function UserDashboard() {
             </div>
           </div>
         </Card>
-        <Card className="p-4">
+        <Card className="p-4 bg-gradient-to-br from-orange-100 to-yellow-100 border border-orange-200">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-orange-100 rounded-lg">
-              <Award className="w-5 h-5 text-orange-600" />
+            <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-lg">
+              <Award className="w-5 h-5 text-white" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Streak</p>
@@ -298,11 +294,10 @@ export default function UserDashboard() {
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           Today's Schedule
-        </h2>
-        <div className="space-y-3">
-          <div className="flex items-center justify-between p-3 bg-blue-50 rounded-lg">
+        </h2>        <div className="space-y-3">
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 rounded-lg border border-[#76d2fa]/30">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-blue-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-[#76d2fa] rounded-full"></div>
               <div>
                 <p className="font-medium">Morning Hatha Yoga</p>
                 <p className="text-sm text-gray-500">
@@ -310,11 +305,11 @@ export default function UserDashboard() {
                 </p>
               </div>
             </div>
-            <Button size="sm">Join</Button>
+            <Button size="sm" className="bg-[#76d2fa] hover:bg-[#5a9be9]">Join</Button>
           </div>
-          <div className="flex items-center justify-between p-3 bg-green-50 rounded-lg">
+          <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 rounded-lg border border-[#FFCCEA]/30">
             <div className="flex items-center gap-3">
-              <div className="w-2 h-2 bg-green-500 rounded-full"></div>
+              <div className="w-2 h-2 bg-[#ff7dac] rounded-full"></div>
               <div>
                 <p className="font-medium">Meditation Session</p>
                 <p className="text-sm text-gray-500">
@@ -322,7 +317,7 @@ export default function UserDashboard() {
                 </p>
               </div>
             </div>
-            <Button size="sm" variant="outline">
+            <Button size="sm" variant="outline" className="border-[#ff7dac] text-[#ff7dac] hover:bg-[#ff7dac] hover:text-white">
               Reschedule
             </Button>
           </div>
@@ -330,13 +325,12 @@ export default function UserDashboard() {
       </Card>
 
       {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">        <Card
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30"
           onClick={() => setActiveSection("classes")}
         >
           <div className="flex items-center gap-3">
-            <PlayCircle className="w-8 h-8 text-blue-600" />
+            <PlayCircle className="w-8 h-8 text-[#76d2fa]" />
             <div>
               <p className="font-medium">Start Practice</p>
               <p className="text-sm text-gray-500">Begin your session</p>
@@ -345,11 +339,11 @@ export default function UserDashboard() {
           </div>
         </Card>
         <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30"
           onClick={() => setActiveSection("mentors")}
         >
           <div className="flex items-center gap-3">
-            <Users className="w-8 h-8 text-green-600" />
+            <Users className="w-8 h-8 text-[#ff7dac]" />
             <div>
               <p className="font-medium">Book Session</p>
               <p className="text-sm text-gray-500">Schedule with mentor</p>
@@ -358,11 +352,11 @@ export default function UserDashboard() {
           </div>
         </Card>
         <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow"
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#876aff]/5 to-[#a792fb]/5 border border-[#876aff]/30"
           onClick={() => setActiveSection("progress")}
         >
           <div className="flex items-center gap-3">
-            <TrendingUp className="w-8 h-8 text-purple-600" />
+            <TrendingUp className="w-8 h-8 text-[#876aff]" />
             <div>
               <p className="font-medium">View Progress</p>
               <p className="text-sm text-gray-500">Track your journey</p>
@@ -381,16 +375,14 @@ export default function UserDashboard() {
         <p className="text-gray-600 mt-2">
           Manage your scheduled and completed yoga sessions.
         </p>
-      </div>
-
-      <div className="flex gap-4 border-b">
-        <button className="pb-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
+      </div>      <div className="flex gap-4 border-b">
+        <button className="pb-2 px-1 border-b-2 border-[#76d2fa] text-[#76d2fa] font-medium">
           Upcoming
         </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-gray-700">
+        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
           Completed
         </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-gray-700">
+        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
           Cancelled
         </button>
       </div>
@@ -398,9 +390,8 @@ export default function UserDashboard() {
       <div className="grid gap-4">
         {[1, 2, 3].map((item) => (
           <Card key={item} className="p-6">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
-                <div className="w-16 h-16 bg-gradient-to-br from-blue-400 to-purple-500 rounded-lg flex items-center justify-center">
+            <div className="flex items-center justify-between">              <div className="flex items-center gap-4">
+                <div className="w-16 h-16 bg-gradient-to-br from-[#76d2fa] to-[#876aff] rounded-lg flex items-center justify-center">
                   <PlayCircle className="w-8 h-8 text-white" />
                 </div>
                 <div>
@@ -419,10 +410,9 @@ export default function UserDashboard() {
                     </span>
                   </div>
                 </div>
-              </div>
-              <div className="flex gap-2">
-                <Button variant="outline">Reschedule</Button>
-                <Button>Join Class</Button>
+              </div>              <div className="flex gap-2">
+                <Button variant="outline" className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">Reschedule</Button>
+                <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">Join Class</Button>
               </div>
             </div>
           </Card>
@@ -440,8 +430,7 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">
             This Month's Achievements
           </h3>
@@ -452,7 +441,7 @@ export default function UserDashboard() {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className="bg-blue-500 h-2 rounded-full"
+                className="bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] h-2 rounded-full"
                 style={{ width: "80%" }}
               ></div>
             </div>
@@ -462,17 +451,15 @@ export default function UserDashboard() {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-2">
               <div
-                className="bg-green-500 h-2 rounded-full"
+                className="bg-gradient-to-r from-[#ffa6c5] to-[#ff7dac] h-2 rounded-full"
                 style={{ width: "84%" }}
               ></div>
             </div>
           </div>
-        </Card>
-
-        <Card className="p-6">
+        </Card>        <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Streak & Badges</h3>
           <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-orange-400 to-red-500 rounded-full flex items-center justify-center mx-auto mb-3">
+            <div className="w-20 h-20 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full flex items-center justify-center mx-auto mb-3">
               <Award className="w-10 h-10 text-white" />
             </div>
             <p className="text-2xl font-bold">7 Days</p>
@@ -482,9 +469,9 @@ export default function UserDashboard() {
             {[1, 2, 3, 4, 5, 6].map((badge) => (
               <div
                 key={badge}
-                className="w-12 h-12 bg-gray-100 rounded-lg flex items-center justify-center"
+                className="w-12 h-12 bg-gradient-to-br from-[#FFCCEA]/30 to-[#ffa6c5]/20 border border-[#FFCCEA]/50 rounded-lg flex items-center justify-center"
               >
-                <Star className="w-6 h-6 text-yellow-500" />
+                <Star className="w-6 h-6 text-[#876aff]" />
               </div>
             ))}
           </div>
@@ -502,11 +489,10 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3].map((mentor) => (
-          <Card key={mentor} className="p-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">        {[1, 2, 3].map((mentor) => (
+          <Card key={mentor} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors">
             <div className="text-center">
-              <div className="w-20 h-20 bg-gradient-to-br from-purple-400 to-pink-500 rounded-full mx-auto mb-4"></div>
+              <div className="w-20 h-20 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full mx-auto mb-4"></div>
               <h3 className="font-semibold text-lg">Sarah Johnson</h3>
               <p className="text-gray-500 text-sm">
                 Hatha & Vinyasa Specialist
@@ -515,16 +501,16 @@ export default function UserDashboard() {
                 {[1, 2, 3, 4, 5].map((star) => (
                   <Star
                     key={star}
-                    className="w-4 h-4 fill-yellow-400 text-yellow-400"
+                    className="w-4 h-4 fill-[#876aff] text-[#876aff]"
                   />
                 ))}
                 <span className="text-sm text-gray-500 ml-1">(4.9)</span>
               </div>
               <div className="flex gap-2 mt-4">
-                <Button size="sm" variant="outline" className="flex-1">
+                <Button size="sm" variant="outline" className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">
                   Message
                 </Button>
-                <Button size="sm" className="flex-1">
+                <Button size="sm" className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]">
                   Book Session
                 </Button>
               </div>
@@ -544,39 +530,38 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/20">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5" />
+            <Activity className="w-5 h-5 text-[#76d2fa]" />
             Health Metrics
           </h3>
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span>Flexibility Score</span>
-              <span className="font-semibold">7.2/10</span>
+              <span className="font-semibold text-[#76d2fa]">7.2/10</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Stress Level</span>
-              <span className="font-semibold text-green-600">Low</span>
+              <span className="font-semibold text-[#ff7dac]">Low</span>
             </div>
             <div className="flex justify-between items-center">
               <span>Sleep Quality</span>
-              <span className="font-semibold">8.5/10</span>
+              <span className="font-semibold text-[#876aff]">8.5/10</span>
             </div>
           </div>
         </Card>
 
-        <Card className="p-6">
+        <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
           <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Heart className="w-5 h-5" />
+            <Heart className="w-5 h-5 text-[#ff7dac]" />
             Mindfulness
           </h3>
           <div className="space-y-4">
             <div className="text-center">
-              <div className="text-3xl font-bold text-purple-600">15</div>
+              <div className="text-3xl font-bold text-[#876aff]">15</div>
               <div className="text-sm text-gray-500">minutes today</div>
             </div>
-            <Button className="w-full">Start Meditation</Button>
+            <Button className="w-full bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Start Meditation</Button>
           </div>
         </Card>
       </div>
@@ -590,27 +575,24 @@ export default function UserDashboard() {
         <p className="text-gray-600 mt-2">
           Explore our collection of yoga videos, articles, and resources.
         </p>
-      </div>
-
-      <div className="flex gap-4 border-b">
-        <button className="pb-2 px-1 border-b-2 border-blue-500 text-blue-600 font-medium">
+      </div>      <div className="flex gap-4 border-b">
+        <button className="pb-2 px-1 border-b-2 border-[#76d2fa] text-[#76d2fa] font-medium">
           Videos
         </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-gray-700">
+        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
           Articles
         </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-gray-700">
+        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
           Courses
         </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-gray-700">
+        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
           Favorites
         </button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((video) => (
-          <Card key={video} className="overflow-hidden">
-            <div className="aspect-video bg-gradient-to-br from-blue-400 to-purple-500 flex items-center justify-center">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">        {[1, 2, 3, 4, 5, 6].map((video) => (
+          <Card key={video} className="overflow-hidden border border-purple-100 hover:border-purple-200 transition-colors">
+            <div className="aspect-video bg-gradient-to-br from-[#76d2fa] to-[#876aff] flex items-center justify-center">
               <PlayCircle className="w-12 h-12 text-white" />
             </div>
             <div className="p-4">
@@ -620,10 +602,10 @@ export default function UserDashboard() {
               </p>
               <div className="flex items-center justify-between mt-3">
                 <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
+                  <Star className="w-4 h-4 fill-[#876aff] text-[#876aff]" />
                   <span className="text-sm">4.8</span>
                 </div>
-                <Button size="sm">Watch</Button>
+                <Button size="sm" className="bg-[#76d2fa] hover:bg-[#5a9be9]">Watch</Button>
               </div>
             </div>
           </Card>
@@ -647,9 +629,8 @@ export default function UserDashboard() {
             <h3 className="text-lg font-semibold mb-4">Recent Posts</h3>
             <div className="space-y-4">
               {[1, 2, 3].map((post) => (
-                <div key={post} className="border-b pb-4 last:border-b-0">
-                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-green-400 to-blue-500 rounded-full"></div>
+                <div key={post} className="border-b pb-4 last:border-b-0">                  <div className="flex items-start gap-3">
+                    <div className="w-10 h-10 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-full"></div>
                     <div className="flex-1">
                       <div className="flex items-center gap-2">
                         <span className="font-medium">Alex Johnson</span>
@@ -660,9 +641,9 @@ export default function UserDashboard() {
                         amazing 🧘‍♀️
                       </p>
                       <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        <button className="hover:text-blue-600">❤️ 12</button>
-                        <button className="hover:text-blue-600">💬 3</button>
-                        <button className="hover:text-blue-600">Share</button>
+                        <button className="hover:text-[#ff7dac]">❤️ 12</button>
+                        <button className="hover:text-[#76d2fa]">💬 3</button>
+                        <button className="hover:text-[#876aff]">Share</button>
                       </div>
                     </div>
                   </div>
@@ -674,11 +655,10 @@ export default function UserDashboard() {
 
         <div>
           <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Active Groups</h3>
-            <div className="space-y-3">
+            <h3 className="text-lg font-semibold mb-4">Active Groups</h3>            <div className="space-y-3">
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-purple-600" />
+                <div className="w-8 h-8 bg-gradient-to-br from-[#876aff]/20 to-[#a792fb]/20 rounded-full flex items-center justify-center">
+                  <Users className="w-4 h-4 text-[#876aff]" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">Beginner's Circle</p>
@@ -686,8 +666,8 @@ export default function UserDashboard() {
                 </div>
               </div>
               <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-green-600" />
+                <div className="w-8 h-8 bg-gradient-to-br from-[#FFCCEA]/30 to-[#ffa6c5]/20 rounded-full flex items-center justify-center">
+                  <Heart className="w-4 h-4 text-[#ff7dac]" />
                 </div>
                 <div>
                   <p className="font-medium text-sm">Meditation Masters</p>
@@ -710,10 +690,9 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/20">
           <div className="flex items-center gap-3 mb-4">
-            <CreditCard className="w-5 h-5 text-green-600" />
+            <CreditCard className="w-5 h-5 text-[#76d2fa]" />
             <h2 className="text-xl font-semibold">Current Plan</h2>
           </div>
           <div className="space-y-3">
@@ -763,12 +742,11 @@ export default function UserDashboard() {
                 ₹{userDetails?.paymentAmount || 0}
               </p>
             </div>
-          </div>
-          <div className="flex gap-2 mt-6">
-            <Button variant="outline" className="flex-1">
+          </div>          <div className="flex gap-2 mt-6">
+            <Button variant="outline" className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">
               Change Plan
             </Button>
-            <Button className="flex-1">Upgrade</Button>
+            <Button className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]">Upgrade</Button>
           </div>
         </Card>
 
@@ -804,10 +782,9 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        <Card className="p-6">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/20">
           <div className="flex items-center gap-3 mb-4">
-            <User className="w-5 h-5 text-indigo-600" />
+            <User className="w-5 h-5 text-[#76d2fa]" />
             <h2 className="text-xl font-semibold">Basic Information</h2>
           </div>
           <div className="space-y-3">
@@ -837,19 +814,16 @@ export default function UserDashboard() {
             <div>
               <label className="text-sm font-medium text-gray-500">Role</label>
               <div className="flex items-center gap-2">
-                <Shield className="w-4 h-4" />
-                <Badge className="bg-indigo-100 text-indigo-800">
+                <Shield className="w-4 h-4" />                <Badge className="bg-gradient-to-r from-[#876aff] to-[#a792fb] text-white">
                   {userDetails?.role}
                 </Badge>
               </div>
             </div>
           </div>
-          <Button className="w-full mt-6">Edit Profile</Button>
-        </Card>
-
-        <Card className="p-6">
+          <Button className="w-full mt-6 bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] hover:from-[#5a9be9] hover:to-[#76d2fa]">Edit Profile</Button>
+        </Card>        <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
           <div className="flex items-center gap-3 mb-4">
-            <Calendar className="w-5 h-5 text-blue-600" />
+            <Calendar className="w-5 h-5 text-[#ff7dac]" />
             <h2 className="text-xl font-semibold">Account Activity</h2>
           </div>
           <div className="space-y-3">
@@ -899,15 +873,14 @@ export default function UserDashboard() {
       <div className="grid gap-6">
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Notifications</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4">            <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Class Reminders</p>
                 <p className="text-sm text-gray-500">
                   Get notified before your scheduled classes
                 </p>
               </div>
-              <div className="w-12 h-6 bg-blue-500 rounded-full relative">
+              <div className="w-12 h-6 bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] rounded-full relative">
                 <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5"></div>
               </div>
             </div>
@@ -927,15 +900,14 @@ export default function UserDashboard() {
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Privacy</h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
+          <div className="space-y-4">            <div className="flex items-center justify-between">
               <div>
                 <p className="font-medium">Profile Visibility</p>
                 <p className="text-sm text-gray-500">
                   Allow other users to see your profile
                 </p>
               </div>
-              <div className="w-12 h-6 bg-blue-500 rounded-full relative">
+              <div className="w-12 h-6 bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] rounded-full relative">
                 <div className="w-5 h-5 bg-white rounded-full absolute top-0.5 right-0.5"></div>
               </div>
             </div>
@@ -992,45 +964,42 @@ export default function UserDashboard() {
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Contact Us</h3>
-          <div className="space-y-4">
-            <div className="flex items-center gap-3">
-              <Mail className="w-5 h-5 text-blue-600" />
+          <div className="space-y-4">            <div className="flex items-center gap-3">
+              <Mail className="w-5 h-5 text-[#76d2fa]" />
               <div>
                 <p className="font-medium">Email Support</p>
                 <p className="text-sm text-gray-500">support@yogavaidya.com</p>
               </div>
             </div>
             <div className="flex items-center gap-3">
-              <MessageSquare className="w-5 h-5 text-green-600" />
+              <MessageSquare className="w-5 h-5 text-[#ff7dac]" />
               <div>
                 <p className="font-medium">Live Chat</p>
                 <p className="text-sm text-gray-500">Available 24/7</p>
               </div>
             </div>
-            <Button className="w-full mt-4">Start Chat</Button>
+            <Button className="w-full mt-4 bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Start Chat</Button>
           </div>
         </Card>
       </div>
     </div>
   );
-
   if (loading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-[#76d2fa] mx-auto"></div>
           <span className="ml-3 text-gray-600">Loading user details...</span>
         </div>
       </div>
     );
-  }
-  return (
-      <div className="flex h-screen bg-gray-50">
+  }  return (
+      <div className="flex h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50">
         {/* Sidebar */}
-        <Sidebar className="w-64 bg-white shadow-lg">
+        <Sidebar className="w-64 bg-white shadow-lg border-r border-purple-100">
           <SidebarHeader>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 bg-gradient-to-br from-purple-500 to-pink-500 rounded-lg flex items-center justify-center">
+              <div className="w-8 h-8 bg-gradient-to-br from-[#76d2fa] to-[#876aff] rounded-lg flex items-center justify-center">
                 <span className="text-white font-bold text-sm">{userDetails?.name?.substring(0,2) || "YV"}</span>
               </div>
               <div>
