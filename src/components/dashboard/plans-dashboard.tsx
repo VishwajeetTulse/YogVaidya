@@ -19,17 +19,15 @@ export default function PlansDashboard() {
     {
       id: "seed",
       name: "Seed",
-      price: 0,
+      price: 1999,
       originalPrice: 0,
-      description: "Best for beginners",
+      description: "Perfect for meditation enthusiasts",
       gradient: "from-[#76d2fa] to-[#5a9be9]",
       textColor: "text-[#5a9be9]",
-      icon: <Star className="w-7 h-7 text-white" />,
-      features: [
-        "One yoga session",
-        "Basic yoga poses", 
-        "Online support",
-        "Email assistance"
+      icon: <Star className="w-7 h-7 text-white" />,      features: [
+        "Live meditation sessions",
+        "Basic meditation guides", 
+        "Online support"
       ],
       isPopular: false
     },
@@ -38,15 +36,13 @@ export default function PlansDashboard() {
       name: "Bloom",
       price: 1999,
       originalPrice: 1999,
-      description: "Most popular plan",
+      description: "Perfect for yoga enthusiasts",
       gradient: "from-[#CDC1FF] to-[#876aff]",
       textColor: "text-[#876aff]",
-      icon: <Crown className="w-7 h-7 text-white" />,
-      features: [
-        "Live yoga sessions (General)",
-        "Generalized diet plans",
-        "Chat with AI", 
-        "Meditation sessions (Coming soon)"
+      icon: <Crown className="w-7 h-7 text-white" />,      features: [
+        "Live yoga sessions",
+        "Pose guidance and corrections",
+        "Online Support"
       ],
       isPopular: true
     },
@@ -55,22 +51,20 @@ export default function PlansDashboard() {
       name: "Flourish", 
       price: 4999,
       originalPrice: 4999,
-      description: "Perfect for special needs",
+      description: "Complete wellness journey",
       gradient: "from-[#ffa6c5] to-[#ff7dac]",
       textColor: "text-[#ff7dac]",
-      icon: <Sparkles className="w-7 h-7 text-white" />,
-      features: [
-        "Live yoga sessions (Individual)",
-        "Personalized diet plans",
-        "Chat with AI",
-        "Meditation sessions (Coming soon)"
+      icon: <Sparkles className="w-7 h-7 text-white" />,      features: [
+        "Live yoga sessions",
+        "Live meditation sessions",
+        "Personalized diet plan"
       ],
       isPopular: false
     }
   ];
 
   return (
-    <section className="py-12 relative overflow-hidden">
+    <section className="py-12 relative overflow-hidden" id="plans">
       {/* Background elements */}
       <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white -z-10"></div>
       <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl"></div>

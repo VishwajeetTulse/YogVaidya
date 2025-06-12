@@ -737,7 +737,7 @@ export default function MentorDashboard() {
               <Mail className="w-5 h-5 text-[#76d2fa]" />
               <div>
                 <p className="font-medium">Mentor Support</p>
-                <p className="text-sm text-gray-500">mentors@yogavaidya.com</p>
+                <p className="text-sm text-gray-500">mentors@yogvaidya.com</p>
               </div>
             </div>
             <Button className="w-full bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Contact Support</Button>
@@ -770,7 +770,7 @@ export default function MentorDashboard() {
             <div>
               <h2 className="font-semibold">{userDetails?.name || "Yoga Mentor"}</h2>
               <p className="text-xs text-gray-500">
-                YogaVaidya Mentor
+                YogVaidya Mentor
               </p>
             </div>
           </div>

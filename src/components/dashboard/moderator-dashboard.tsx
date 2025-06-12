@@ -534,7 +534,7 @@ export default function ModeratorDashboard() {
               <Mail className="w-5 h-5 text-[#76d2fa]" />
               <div>
                 <p className="font-medium">Admin Support</p>
-                <p className="text-sm text-gray-500">admin@yogavaidya.com</p>
+                <p className="text-sm text-gray-500">admin@yogvaidya.com</p>
               </div>
             </div>
             <Button className="w-full bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Contact Admin</Button>
@@ -566,7 +566,7 @@ export default function ModeratorDashboard() {
             <div>
               <h2 className="font-semibold">Moderator</h2>
               <p className="text-xs text-gray-500">
-                YogaVaidya Platform
+                YogVaidya Platform
               </p>
             </div>
           </div>

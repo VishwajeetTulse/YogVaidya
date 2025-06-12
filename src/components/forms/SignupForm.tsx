@@ -77,7 +77,7 @@ export default function SignupPage() {
         },
         onSuccess: () => {
           toast.success("Signed up successfully", {
-            description: "Welcome to YogaVaidya!",
+            description: "Welcome to YogVaidya!",
           });
           router.refresh();
         },
@@ -142,7 +142,7 @@ export default function SignupPage() {
               </svg>
             </div>
             <span className="text-2xl font-semibold text-gray-800">
-              YogaVaidya
+              YogVaidya
             </span>
           </Link>
         </div>
@@ -164,7 +164,7 @@ export default function SignupPage() {
               Create Your Account
             </h1>
             <p className="text-gray-600">
-              Join YogaVaidya to start your wellness journey
+              Join YogVaidya to start your wellness journey
             </p>
           </div>
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">

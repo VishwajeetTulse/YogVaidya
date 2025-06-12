@@ -1,11 +1,11 @@
 import OurServices from "@/components/landing/OurServices";
-import PricingPlans from "@/components/landing/PricingPlans";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/landing/Hero";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
+import PlansDashboard from "@/components/dashboard/plans-dashboard";
 
 export default async function YogaLandingPage() {
   const session = await auth.api.getSession({ headers: await headers() });
@@ -31,7 +31,7 @@ export default async function YogaLandingPage() {
       <OurServices />
 
       {/* Pricing Plans Section */}
-      <PricingPlans />
+      <PlansDashboard />
 
       {/* Footer */}
       <Footer />

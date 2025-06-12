@@ -8,6 +8,13 @@ import { getUserDetails, UserDetails } from "@/lib/userDetails";
 import { cancelUserSubscription } from "@/lib/subscriptions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import Link from "next/link";
+import {
+  Check,
+  Crown,
+  IndianRupee as IndianRupeeIcon,
+  Sparkles
+} from "lucide-react";
 import {
   Calendar,
   CreditCard,
@@ -111,7 +118,7 @@ export default function UserDashboard() {
 
     setCancellingSubscription(true);
     try {
-      const result = await cancelUserSubscription(session.user.id, false);
+      const result = await cancelUserSubscription(session.user.id);
       
       if (result.success) {
         toast.success("Subscription Cancelled", {
@@ -171,7 +178,6 @@ export default function UserDashboard() {
         return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
     }
   };
-
   const SidebarMenuItems = [
     {
       id: "overview",
@@ -186,40 +192,33 @@ export default function UserDashboard() {
       description: "Scheduled and past classes",
     },
     {
-      id: "progress",
-      title: "Progress",
-      icon: TrendingUp,
-      description: "Track your yoga journey",
-    },
-    {
       id: "mentors",
       title: "My Mentors",
       icon: Users,
       description: "Connect with your guides",
     },
     {
-      id: "wellness",
-      title: "Wellness Hub",
-      icon: Heart,
-      description: "Health and wellness tracking",
-    },
-    {
       id: "library",
       title: "Content Library",
       icon: BookOpen,
       description: "Videos, articles, and resources",
-    },
-    {
-      id: "community",
-      title: "Community",
-      icon: MessageSquare,
-      description: "Connect with fellow yogis",
-    },
-    {
+    },    {
       id: "subscription",
       title: "Subscription",
       icon: CreditCard,
       description: "Manage your plan",
+    },
+    {
+      id: "plans",
+      title: "Upgrade Plans",
+      icon: Target,
+      description: "Explore premium plans",
+    },
+    {
+      id: "explore-mentors",
+      title: "Explore Mentors",
+      icon: Users,
+      description: "Find more mentors",
     },
     {
       id: "profile",
@@ -246,19 +245,16 @@ export default function UserDashboard() {
       case "overview":
         return renderOverview();
       case "classes":
-        return renderClasses();
-      case "progress":
-        return renderProgress();
-      case "mentors":
+        return renderClasses();      case "mentors":
         return renderMentors();
-      case "wellness":
-        return renderWellness();
+      case "explore-mentors":
+        return renderExploreMentors();
       case "library":
         return renderLibrary();
-      case "community":
-        return renderCommunity();
       case "subscription":
         return renderSubscription();
+      case "plans":
+        return renderPlans();
       case "profile":
         return renderProfile();
       case "settings":
@@ -360,10 +356,8 @@ export default function UserDashboard() {
             </Button>
           </div>
         </div>
-      </Card>
-
-      {/* Quick Actions */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">        <Card
+      </Card>      {/* Quick Actions */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">        <Card
           className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30"
           onClick={() => setActiveSection("classes")}
         >
@@ -385,19 +379,6 @@ export default function UserDashboard() {
             <div>
               <p className="font-medium">Book Session</p>
               <p className="text-sm text-gray-500">Schedule with mentor</p>
-            </div>
-            <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
-          </div>
-        </Card>
-        <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#876aff]/5 to-[#a792fb]/5 border border-[#876aff]/30"
-          onClick={() => setActiveSection("progress")}
-        >
-          <div className="flex items-center gap-3">
-            <TrendingUp className="w-8 h-8 text-[#876aff]" />
-            <div>
-              <p className="font-medium">View Progress</p>
-              <p className="text-sm text-gray-500">Track your journey</p>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
           </div>
@@ -459,65 +440,6 @@ export default function UserDashboard() {
     </div>
   );
 
-  const renderProgress = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Your Progress</h1>
-        <p className="text-gray-600 mt-2">
-          Track your yoga journey and celebrate your achievements.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">
-            This Month's Achievements
-          </h3>
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <span>Classes Completed</span>
-              <span className="font-semibold">12/15</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-[#76d2fa] to-[#5a9be9] h-2 rounded-full"
-                style={{ width: "80%" }}
-              ></div>
-            </div>
-            <div className="flex items-center justify-between">
-              <span>Meditation Minutes</span>
-              <span className="font-semibold">420/500</span>
-            </div>
-            <div className="w-full bg-gray-200 rounded-full h-2">
-              <div
-                className="bg-gradient-to-r from-[#ffa6c5] to-[#ff7dac] h-2 rounded-full"
-                style={{ width: "84%" }}
-              ></div>
-            </div>
-          </div>
-        </Card>        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Streak & Badges</h3>
-          <div className="text-center">
-            <div className="w-20 h-20 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full flex items-center justify-center mx-auto mb-3">
-              <Award className="w-10 h-10 text-white" />
-            </div>
-            <p className="text-2xl font-bold">7 Days</p>
-            <p className="text-gray-500">Current Streak</p>
-          </div>
-          <div className="grid grid-cols-3 gap-2 mt-6">
-            {[1, 2, 3, 4, 5, 6].map((badge) => (
-              <div
-                key={badge}
-                className="w-12 h-12 bg-gradient-to-br from-[#FFCCEA]/30 to-[#ffa6c5]/20 border border-[#FFCCEA]/50 rounded-lg flex items-center justify-center"
-              >
-                <Star className="w-6 h-6 text-[#876aff]" />
-              </div>
-            ))}
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-
   const renderMentors = () => (
     <div className="space-y-6">
       <div>
@@ -527,7 +449,8 @@ export default function UserDashboard() {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">        {[1, 2, 3].map((mentor) => (
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3].map((mentor) => (
           <Card key={mentor} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors">
             <div className="text-center">
               <div className="w-20 h-20 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full mx-auto mb-4"></div>
@@ -556,94 +479,84 @@ export default function UserDashboard() {
           </Card>
         ))}
       </div>
-    </div>
-  );
 
-  const renderWellness = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Wellness Hub</h1>
-        <p className="text-gray-600 mt-2">
-          Monitor your physical and mental wellness journey.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/20">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Activity className="w-5 h-5 text-[#76d2fa]" />
-            Health Metrics
-          </h3>
-          <div className="space-y-4">
-            <div className="flex justify-between items-center">
-              <span>Flexibility Score</span>
-              <span className="font-semibold text-[#76d2fa]">7.2/10</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Stress Level</span>
-              <span className="font-semibold text-[#ff7dac]">Low</span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span>Sleep Quality</span>
-              <span className="font-semibold text-[#876aff]">8.5/10</span>
-            </div>
-          </div>
-        </Card>
-
-        <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
-          <h3 className="text-lg font-semibold mb-4 flex items-center gap-2">
-            <Heart className="w-5 h-5 text-[#ff7dac]" />
-            Mindfulness
-          </h3>
-          <div className="space-y-4">
-            <div className="text-center">
-              <div className="text-3xl font-bold text-[#876aff]">15</div>
-              <div className="text-sm text-gray-500">minutes today</div>
-            </div>
-            <Button className="w-full bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Start Meditation</Button>
-          </div>
-        </Card>
-      </div>
-    </div>
-  );
-
-  const renderLibrary = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Content Library</h1>
-        <p className="text-gray-600 mt-2">
-          Explore our collection of yoga videos, articles, and resources.
-        </p>
-      </div>      <div className="flex gap-4 border-b">
-        <button className="pb-2 px-1 border-b-2 border-[#76d2fa] text-[#76d2fa] font-medium">
-          Videos
-        </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
-          Articles
-        </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
-          Courses
-        </button>
-        <button className="pb-2 px-1 text-gray-500 hover:text-[#876aff]">
-          Favorites
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">        {[1, 2, 3, 4, 5, 6].map((video) => (
-          <Card key={video} className="overflow-hidden border border-purple-100 hover:border-purple-200 transition-colors">
-            <div className="aspect-video bg-gradient-to-br from-[#76d2fa] to-[#876aff] flex items-center justify-center">
-              <PlayCircle className="w-12 h-12 text-white" />
-            </div>
-            <div className="p-4">
-              <h3 className="font-semibold">Morning Sun Salutation</h3>
-              <p className="text-sm text-gray-500 mt-1">
-                15 minutes • Beginner
-              </p>
-              <div className="flex items-center justify-between mt-3">
-                <div className="flex items-center gap-1">
-                  <Star className="w-4 h-4 fill-[#876aff] text-[#876aff]" />
-                  <span className="text-sm">4.8</span>
+      <div className="mt-8">
+        <div className="flex items-center justify-between mb-4">
+          <h2 className="text-xl font-semibold text-gray-900">Recommended Mentors</h2>
+          <Button
+            variant="outline"
+            className="text-[#876aff] border-[#876aff]"
+            onClick={() => setActiveSection("explore-mentors")}
+          >
+            View All Mentors
+          </Button>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[1, 2, 3].map((mentor) => (
+            <Card key={mentor} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors bg-gradient-to-br from-purple-50/50">
+              <div className="text-center">
+                <div className="w-20 h-20 bg-gradient-to-br from-[#ff7dac] to-[#ffa6c5] rounded-full mx-auto mb-4"></div>
+                <h3 className="font-semibold text-lg">Recommended Mentor {mentor}</h3>
+                <p className="text-gray-500 text-sm">
+                  {mentor === 1 ? "Meditation Expert" : mentor === 2 ? "Power Yoga Specialist" : "Prenatal Yoga Expert"}
+                </p>
+                <div className="flex items-center justify-center gap-1 mt-2">
+                  {[1, 2, 3, 4, 5].map((star) => (
+                    <Star
+                      key={star}
+                      className="w-4 h-4 fill-[#ff7dac] text-[#ff7dac]"
+                    />
+                  ))}
+                  <span className="text-sm text-gray-500 ml-1">(5.0)</span>
                 </div>
-                <Button size="sm" className="bg-[#76d2fa] hover:bg-[#5a9be9]">Watch</Button>
+                <div className="flex gap-2 mt-4">
+                  <Button size="sm" className="flex-1 bg-gradient-to-r from-[#ff7dac] to-[#ffa6c5]">
+                    Book Trial
+                  </Button>
+                </div>
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  const renderExploreMentors = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Explore Mentors</h1>
+        <p className="text-gray-600 mt-2">
+          Discover more yoga mentors and expand your practice with different styles and approaches.
+        </p>
+      </div>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {[1, 2, 3, 4, 5, 6].map((mentor) => (
+          <Card key={mentor} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors">
+            <div className="text-center">
+              <div className="w-20 h-20 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full mx-auto mb-4"></div>
+              <h3 className="font-semibold text-lg">New Mentor {mentor}</h3>
+              <p className="text-gray-500 text-sm">
+                Specializes in {mentor % 2 === 0 ? "Vinyasa & Power Yoga" : "Meditation & Yin Yoga"}
+              </p>
+              <div className="flex items-center justify-center gap-1 mt-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <Star
+                    key={star}
+                    className="w-4 h-4 fill-[#876aff] text-[#876aff]"
+                  />
+                ))}
+                <span className="text-sm text-gray-500 ml-1">(5.0)</span>
+              </div>
+              <p className="text-sm text-gray-600 mt-2">200+ sessions conducted</p>
+              <div className="flex gap-2 mt-4">
+                <Button size="sm" variant="outline" className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">
+                  View Profile
+                </Button>
+                <Button size="sm" className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]">
+                  Book Trial
+                </Button>
               </div>
             </div>
           </Card>
@@ -652,288 +565,209 @@ export default function UserDashboard() {
     </div>
   );
 
-  const renderCommunity = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Community</h1>
-        <p className="text-gray-600 mt-2">
-          Connect with fellow yogis and share your journey.
-        </p>
-      </div>
+  const renderPlans = () => {
+    const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <div className="lg:col-span-2">
-          <Card className="p-6 mb-6">
-            <h3 className="text-lg font-semibold mb-4">Recent Posts</h3>
-            <div className="space-y-4">
-              {[1, 2, 3].map((post) => (
-                <div key={post} className="border-b pb-4 last:border-b-0">                  <div className="flex items-start gap-3">
-                    <div className="w-10 h-10 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-full"></div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-2">
-                        <span className="font-medium">Alex Johnson</span>
-                        <span className="text-sm text-gray-500">2h ago</span>
+    // Apply discount for annual billing
+    const applyDiscount = (price: number) => {
+      if (billingPeriod === "annual") {
+        return Math.round(price * 0.8); // 20% discount for annual billing
+      }
+      return price;
+    };
+
+    const plans = [
+      {
+        id: "seed",
+        name: "Seed",
+        price: 1999,
+        description: "Perfect for meditation enthusiasts",
+        gradient: "from-[#76d2fa] to-[#5a9be9]",
+        textColor: "text-[#5a9be9]",
+        icon: <Crown className="w-7 h-7 text-white" />,
+        features: [
+          "Live meditation sessions",
+          "Basic meditation guides",
+          "Online support"
+        ],
+        isPopular: false
+      },
+      {
+        id: "bloom",
+        name: "Bloom",
+        price: 1999,
+        description: "Perfect for yoga enthusiasts",
+        gradient: "from-[#CDC1FF] to-[#876aff]",
+        textColor: "text-[#876aff]",
+        icon: <Crown className="w-7 h-7 text-white" />,
+        features: [
+          "Live yoga sessions",
+          "Pose guidance and corrections",
+          "Online Support"
+        ],
+        isPopular: true
+      },
+      {
+        id: "flourish",
+        name: "Flourish",
+        price: 4999,
+        description: "Complete wellness journey",
+        gradient: "from-[#ffa6c5] to-[#ff7dac]",
+        textColor: "text-[#ff7dac]",
+        icon: <Sparkles className="w-7 h-7 text-white" />,
+        features: [
+          "Live meditation sessions",
+          "Live yoga sessions", 
+          "Personalized diet plan"
+        ],
+        isPopular: false
+      }
+    ];
+
+    return (
+      <section className="py-12 relative overflow-hidden">
+        {/* Background elements */}
+        <div className="absolute inset-0 bg-gradient-to-b from-gray-50 to-white -z-10"></div>
+        <div className="absolute -top-20 -right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl"></div>
+        <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-[#FFCCEA]/10 rounded-full blur-3xl"></div>
+
+        <div className="space-y-6">
+          {/* Heading */}
+          <div className="text-center mb-12 relative">
+            <span className="inline-block px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium mb-4">
+              Your Plans
+            </span>
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-800 mb-6">
+              Choose the perfect plan
+              <br />
+              for your wellness journey
+            </h2>
+
+            {/* Billing period toggle */}
+            <div className="inline-flex items-center bg-gray-200 p-1 rounded-full">
+              <button
+                onClick={() => setBillingPeriod("monthly")}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  billingPeriod === "monthly"
+                    ? "bg-[#76d2fa] text-white shadow-md"
+                    : "bg-transparent text-gray-600 hover:bg-gray-300/50"
+                }`}
+              >
+                MONTHLY
+              </button>
+              <button
+                onClick={() => setBillingPeriod("annual")}
+                className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                  billingPeriod === "annual"
+                    ? "bg-[#76d2fa] text-white shadow-md"
+                    : "bg-transparent text-gray-600 hover:bg-gray-300/50"
+                }`}
+              >
+                ANNUAL
+              </button>
+            </div>
+
+            {billingPeriod === "annual" && (
+              <div className="mt-4 text-green-600 font-medium animate-pulse">
+                Save 20% with annual billing
+              </div>
+            )}
+          </div>
+
+          {/* Pricing cards */}
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-center">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className={`bg-gradient-to-b ${plan.gradient} rounded-3xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl hover:translate-y-[-8px] h-full ${
+                  plan.isPopular ? "transform md:scale-105 relative z-10" : ""
+                }`}
+              >
+                {plan.isPopular && (
+                  <div className="absolute -right-12 top-6 bg-white text-[#876aff] text-xs font-bold px-12 py-1 transform rotate-45">
+                    POPULAR
+                  </div>
+                )}
+
+                <div className="p-8 flex flex-col h-full">
+                  {/* Plan header */}
+                  <div className="mb-8 flex items-center justify-between">
+                    <div className="flex items-center space-x-4">
+                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                        {plan.icon}
                       </div>
-                      <p className="text-gray-700 mt-1">
-                        Just completed my first advanced vinyasa class! Feeling
-                        amazing 🧘‍♀️
-                      </p>
-                      <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
-                        <button className="hover:text-[#ff7dac]">❤️ 12</button>
-                        <button className="hover:text-[#76d2fa]">💬 3</button>
-                        <button className="hover:text-[#876aff]">Share</button>
-                      </div>
+                      <span className="text-xs font-semibold bg-white/20 text-white px-4 py-1 rounded-full uppercase">
+                        {plan.name}
+                      </span>
                     </div>
                   </div>
-                </div>
-              ))}
-            </div>
-          </Card>
-        </div>
 
-        <div>
-          <Card className="p-6">
-            <h3 className="text-lg font-semibold mb-4">Active Groups</h3>            <div className="space-y-3">
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-[#876aff]/20 to-[#a792fb]/20 rounded-full flex items-center justify-center">
-                  <Users className="w-4 h-4 text-[#876aff]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Beginner's Circle</p>
-                  <p className="text-xs text-gray-500">245 members</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="w-8 h-8 bg-gradient-to-br from-[#FFCCEA]/30 to-[#ffa6c5]/20 rounded-full flex items-center justify-center">
-                  <Heart className="w-4 h-4 text-[#ff7dac]" />
-                </div>
-                <div>
-                  <p className="font-medium text-sm">Meditation Masters</p>
-                  <p className="text-xs text-gray-500">189 members</p>
-                </div>
-              </div>
-            </div>
-          </Card>
-        </div>
-      </div>
-    </div>
-  );
+                  {/* Price */}
+                  <div className="mb-6">
+                    <div className="flex items-end">
+                      <span className="text-5xl font-bold text-white flex items-center">
+                        <IndianRupeeIcon className="w-8 h-8" />
+                        <span className="text-5xl font-bold text-white">
+                          {applyDiscount(plan.price)}
+                        </span>
+                      </span>
+                      <span className="text-white/70 ml-2 mb-1">
+                        / {billingPeriod === "monthly" ? "mo" : "yr"}
+                      </span>
+                    </div>
+                    <p className="text-white mt-2">{plan.description}</p>
+                  </div>                  {/* Features */}
+                  <div className="space-y-4 mt-4 mb-8 flex-grow">
+                    {plan.features.map((feature, index) => (
+                      <div key={index} className="flex items-center">
+                        <Check className="h-5 w-5 text-white mr-3 flex-shrink-0" />
+                        <span className="text-white">{feature}</span>
+                      </div>
+                    ))}
+                  </div>
 
-  const renderSubscription = () => (
-    <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Subscription</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your subscription plan and billing information.
-        </p>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/20">
-          <div className="flex items-center gap-3 mb-4">
-            <CreditCard className="w-5 h-5 text-[#76d2fa]" />
-            <h2 className="text-xl font-semibold">Current Plan</h2>
-          </div>
-          <div className="space-y-3">
-            <div>
-              <label className="text-sm font-medium text-gray-500">Plan</label>
-              <div className="flex items-center gap-2">
-                <Badge
-                  className={getPlanColor(userDetails?.subscriptionPlan || "")}
-                >
-                  {userDetails?.subscriptionPlan || "SEED"}
-                </Badge>
-                {userDetails?.isTrialActive && (
-                  <Badge
-                    variant="outline"
-                    className="text-orange-600 border-orange-600"
-                  >
-                    Trial
-                  </Badge>
-                )}
-              </div>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">
-                Status
-              </label>
-              <Badge
-                className={getStatusColor(
-                  userDetails?.subscriptionStatus || ""
-                )}
-              >
-                {userDetails?.subscriptionStatus || "INACTIVE"}
-              </Badge>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">
-                Billing Period
-              </label>
-              <p className="text-gray-900">
-                {userDetails?.billingPeriod || "Not set"}
-              </p>
-            </div>            <div>
-              <label className="text-sm font-medium text-gray-500">
-                Payment Amount
-              </label>
-              <p className="text-gray-900 font-semibold">
-                ₹{userDetails?.paymentAmount || 0}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">
-                Subscription End Date
-              </label>
-              <p className="text-gray-900">
-                {formatDate(userDetails?.subscriptionEndDate)}
-              </p>
-            </div>
-            <div>
-              <label className="text-sm font-medium text-gray-500">
-                Auto Renewal
-              </label>
-              <Badge
-                variant="outline"
-                className={userDetails?.autoRenewal ? "text-green-600 border-green-600" : "text-red-600 border-red-600"}
-              >
-                {userDetails?.autoRenewal ? "Enabled" : "Disabled"}
-              </Badge>
-            </div>
-          </div>          <div className="flex gap-2 mt-6">
-            <Button 
-              variant="outline" 
-              className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
-              onClick={() => setActiveSection("plans")}
-            >
-              Change Plan
-            </Button>
-            {userDetails?.subscriptionPlan === "BLOOM" && (
-              <Button 
-                className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]"
-                // onClick={() => handleUpgradeSubscription("FLOURISH")}
-                disabled={upgradingSubscription}
-              >
-                {upgradingSubscription ? "Upgrading..." : "Upgrade to Flourish"}
-              </Button>
-            )}
-            {userDetails?.subscriptionPlan === "FLOURISH" && (
-              <Button 
-                className="flex-1 bg-[#876aff] hover:bg-[#a792fb]" 
-                disabled
-              >
-                Highest Plan
-              </Button>
-            )}
-          </div>
-          
-          {/* Cancel Subscription Section */}
-          {userDetails?.subscriptionStatus === "ACTIVE" && userDetails?.subscriptionPlan !== "SEED" && (
-            <div className="mt-6 pt-6 border-t border-gray-200">
-              <h3 className="text-lg font-semibold mb-3 text-gray-900">Cancel Subscription</h3>
-              <p className="text-sm text-gray-600 mb-4">
-                You can cancel your subscription at any time. Choose when you'd like the cancellation to take effect.
-              </p>              <div className="flex flex-col gap-3">
-                <Button
-                  variant="outline"
-                  className="w-full border-orange-300 text-orange-600 hover:bg-orange-50"
-                  onClick={() => handleCancelSubscription()}
-                  disabled={cancellingSubscription}
-                >
-                  {cancellingSubscription ? "Cancelling..." : "Cancel Subscription"}
-                </Button>
-              </div>
-              <p className="text-xs text-gray-500 mt-2">
-                Your subscription will remain active until {formatDate(userDetails?.subscriptionEndDate)}
-              </p>
-            </div>
-          )}        </Card>
-
-        {/* Upgrade Section - Only show for BLOOM users */}
-        {userDetails?.subscriptionPlan === "BLOOM" && (
-          <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
-            <div className="flex items-center gap-3 mb-4">
-              <TrendingUp className="w-5 h-5 text-[#ff7dac]" />
-              <h2 className="text-xl font-semibold">Upgrade to Flourish</h2>
-            </div>
-            <div className="space-y-4">
-              <p className="text-gray-600">
-                Take your yoga journey to the next level with our premium Flourish plan!
-              </p>
-              
-              <div className="bg-white/50 p-4 rounded-lg">
-                <h4 className="font-semibold text-[#ff7dac] mb-2">Flourish Plan Benefits:</h4>
-                <ul className="space-y-1 text-sm text-gray-700">
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
-                    Individual 1-on-1 sessions with certified instructors
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
-                    Personalized diet plans tailored to your goals
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
-                    Priority customer support
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
-                    Access to exclusive premium content
-                  </li>
-                  <li className="flex items-center gap-2">
-                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
-                    All features from your current Bloom plan
-                  </li>
-                </ul>
-              </div>
-              
-              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#ff7dac]/10 to-[#ffa6c5]/10 rounded-lg">
-                <div>
-                  <p className="text-sm text-gray-600">Monthly Price</p>
-                  <p className="text-2xl font-bold text-[#ff7dac]">₹1,999</p>
+                  {/* Button */}
+                  <Link href={`/checkout?plan=${plan.id}`} passHref>
+                    <Button
+                      className={`mt-auto w-full py-6 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-medium`}
+                    >
+                      UPGRADE NOW
+                    </Button>
+                  </Link>
                 </div>
-                <div>
-                  <p className="text-sm text-gray-600">Annual Price</p>
-                  <p className="text-2xl font-bold text-[#ff7dac]">₹19,999</p>
-                  <p className="text-xs text-green-600 font-medium">Save ₹4,000</p>
-                </div>
-              </div>
-              
-              <Button 
-                className="w-full bg-gradient-to-r from-[#ff7dac] to-[#ffa6c5] hover:from-[#ffa6c5] hover:to-[#ff7dac] text-white font-semibold"
-                // onClick={() => handleUpgradeSubscription("FLOURISH")}
-                disabled={upgradingSubscription}
-              >
-                {upgradingSubscription ? "Upgrading..." : "Upgrade to Flourish Plan"}
-              </Button>
-              
-              <p className="text-xs text-gray-500 text-center">
-                You'll be charged the difference for the remaining billing period and your plan will be updated immediately.
-              </p>
-            </div>
-          </Card>
-        )}
-
-        <Card className="p-6">
-          <h3 className="text-lg font-semibold mb-4">Billing History</h3>
-          <div className="space-y-3">
-            {[1, 2, 3].map((bill) => (
-              <div
-                key={bill}
-                className="flex items-center justify-between py-2 border-b last:border-b-0"
-              >
-                <div>
-                  <p className="font-medium">₹999</p>
-                  <p className="text-sm text-gray-500">March 2024</p>
-                </div>
-                <Badge variant="outline" className="text-green-600">
-                  Paid
-                </Badge>
               </div>
             ))}
           </div>
-        </Card>
-      </div>
-    </div>
-  );
+
+          {/* Additional info */}
+          <div className="text-center mt-16 max-w-2xl mx-auto">
+            <h3 className="text-xl font-semibold text-gray-800 mb-4">
+              Why choose Yoga Vaidya?
+            </h3>
+            <p className="text-gray-600">
+              All plans include access to our mobile app, progress tracking, and
+              community support. Not sure which plan is right for you? Try our
+              7-day free trial on any plan.
+            </p>
+            <div className="mt-6 flex flex-wrap items-center justify-center gap-4">
+              <span className="flex items-center text-sm text-gray-600">
+                <Check className="h-4 w-4 text-green-500 mr-2" />
+                No credit card required
+              </span>
+              <span className="flex items-center text-sm text-gray-600">
+                <Check className="h-4 w-4 text-green-500 mr-2" />
+                Cancel anytime
+              </span>
+              <span className="flex items-center text-sm text-gray-600">
+                <Check className="h-4 w-4 text-green-500 mr-2" />
+                Secure payments
+              </span>
+            </div>
+          </div>
+        </div>
+      </section>
+    );
+  };
 
   const renderProfile = () => (
     <div className="space-y-6">
@@ -1146,6 +980,223 @@ export default function UserDashboard() {
       </div>
     </div>
   );
+
+  const renderLibrary = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Content Library</h1>
+        <p className="text-gray-600 mt-2">
+          Access our collection of yoga and meditation resources.
+        </p>
+      </div>
+
+      {/* Categories */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <Card className="p-6 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20">
+          <div className="flex flex-col h-full">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Yoga Tutorials</h3>
+              <p className="text-sm text-gray-500">Step-by-step pose guides and sequences</p>
+            </div>
+            <div className="space-y-3 flex-grow">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-shadow">
+                  <PlayCircle className="w-8 h-8 text-[#76d2fa]" />
+                  <div>
+                    <p className="font-medium">Basic Yoga Flow {item}</p>
+                    <p className="text-sm text-gray-500">15 minutes • Beginner</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button className="mt-4 w-full bg-[#76d2fa] hover:bg-[#5a9be9]">
+              View All Tutorials
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/10 border border-[#FFCCEA]/20">
+          <div className="flex flex-col h-full">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Meditation Sessions</h3>
+              <p className="text-sm text-gray-500">Guided meditation and mindfulness</p>
+            </div>
+            <div className="space-y-3 flex-grow">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-shadow">
+                  <PlayCircle className="w-8 h-8 text-[#ff7dac]" />
+                  <div>
+                    <p className="font-medium">Mindful Meditation {item}</p>
+                    <p className="text-sm text-gray-500">10 minutes • All levels</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button className="mt-4 w-full bg-gradient-to-r from-[#ffa6c5] to-[#ff7dac]">
+              View All Sessions
+            </Button>
+          </div>
+        </Card>
+
+        <Card className="p-6 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20">
+          <div className="flex flex-col h-full">
+            <div className="mb-4">
+              <h3 className="text-lg font-semibold">Wellness Articles</h3>
+              <p className="text-sm text-gray-500">Expert insights and tips</p>
+            </div>
+            <div className="space-y-3 flex-grow">
+              {[1, 2, 3].map((item) => (
+                <div key={item} className="flex items-center gap-3 p-3 bg-white rounded-lg hover:shadow-md transition-shadow">
+                  <BookOpen className="w-8 h-8 text-[#876aff]" />
+                  <div>
+                    <p className="font-medium">Yoga Benefits {item}</p>
+                    <p className="text-sm text-gray-500">5 min read</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+            <Button className="mt-4 w-full bg-gradient-to-r from-[#876aff] to-[#a792fb]">
+              View All Articles
+            </Button>
+          </div>
+        </Card>
+      </div>
+    </div>
+  );
+
+  const renderSubscription = () => (
+    <div className="space-y-6">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Subscription</h1>
+        <p className="text-gray-600 mt-2">
+          Manage your subscription and billing details.
+        </p>
+      </div>
+
+      {/* Current Plan */}
+      <Card className="p-6 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20">
+        <div className="flex items-center justify-between mb-6">
+          <div className="flex items-center gap-4">
+            <div className="p-3 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
+              <Crown className="w-6 h-6 text-white" />
+            </div>
+            <div>
+              <h2 className="text-xl font-semibold">Current Plan</h2>
+              <p className="text-sm text-gray-500">Your active subscription</p>
+            </div>
+          </div>
+          <Badge
+            className={`${getStatusColor(userDetails?.subscriptionStatus || "INACTIVE")}`}
+          >
+            {userDetails?.subscriptionStatus || "INACTIVE"}
+          </Badge>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-6">
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-500">Plan</label>
+              <p className="text-lg font-semibold">{userDetails?.subscriptionPlan || "Free Plan"}</p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Billing Period</label>
+              <p className="text-lg font-semibold">
+                {userDetails?.billingPeriod || "N/A"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Next Billing</label>
+              <p className="text-lg font-semibold">
+                {formatDate(userDetails?.nextBillingDate) || "N/A"}
+              </p>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <div>
+              <label className="text-sm font-medium text-gray-500">Amount</label>
+              <p className="text-lg font-semibold flex items-center">
+                <IndianRupeeIcon className="w-4 h-4 mr-1" />
+                {userDetails?.paymentAmount || "0"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">Start Date</label>
+              <p className="text-lg font-semibold">
+                {formatDate(userDetails?.subscriptionStartDate) || "N/A"}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">End Date</label>
+              <p className="text-lg font-semibold">
+                {formatDate(userDetails?.subscriptionEndDate) || "N/A"}
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex gap-4">
+          {userDetails?.subscriptionStatus === "ACTIVE" ? (
+            <>
+              <Button 
+                variant="outline" 
+                className="flex-1 border-red-500 text-red-500 hover:bg-red-50"
+                onClick={handleCancelSubscription}
+                disabled={cancellingSubscription}
+              >
+                {cancellingSubscription ? "Cancelling..." : "Cancel Subscription"}
+              </Button>
+              <Button 
+                className="flex-1 bg-[#876aff] hover:bg-[#7b5cff]"
+                onClick={() => setActiveSection("plans")}
+              >
+                Change Plan
+              </Button>
+            </>
+          ) : (
+            <Button 
+              className="w-full bg-[#876aff] hover:bg-[#7b5cff]"
+              onClick={() => setActiveSection("plans")}
+            >
+              Upgrade Now
+            </Button>
+          )}
+        </div>
+      </Card>
+
+      {/* Payment History */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Payment History</h3>
+        <div className="space-y-4">
+          {[1, 2, 3].map((item) => (
+            <div 
+              key={item}
+              className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:bg-gray-50"
+            >
+              <div className="flex items-center gap-4">
+                <div className="p-2 bg-[#876aff]/10 rounded-lg">
+                  <CreditCard className="w-5 h-5 text-[#876aff]" />
+                </div>
+                <div>
+                  <p className="font-medium">Payment #{item}</p>
+                  <p className="text-sm text-gray-500">
+                    {new Date(2025, 5, 12 - item).toLocaleDateString()}
+                  </p>
+                </div>
+              </div>
+              <div className="text-right">
+                <p className="font-medium flex items-center">
+                  <IndianRupeeIcon className="w-4 h-4 mr-1" />1,999
+                </p>
+                <Badge variant="secondary">Successful</Badge>
+              </div>
+            </div>
+          ))}
+        </div>
+      </Card>
+    </div>
+  );
+
   if (loading) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-purple-50 via-blue-50 to-pink-50 flex items-center justify-center">

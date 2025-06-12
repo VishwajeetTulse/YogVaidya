@@ -56,7 +56,7 @@ export default function Footer() {
                 {/* Placeholder for information that might be on the right */}
                 <Image
                   src="/assets/meditation.svg"
-                  alt="YogaVaidya Logo"
+                  alt="YogVaidya Logo"
                   width={80}
                   height={80}
                   className="rounded-full"
@@ -123,10 +123,10 @@ export default function Footer() {
             {/* Email */}
             <div className="mb-1 text-sm uppercase">EMAIL</div>
             <a
-              href="mailto:hello@yogavaidya.com"
+              href="mailto:hello@yogvaidya.com"
               className="text-lg font-medium hover:opacity-80"
             >
-              hello@yogavaidya.com
+              hello@yogvaidya.com
             </a>
           </div>
 
@@ -136,7 +136,7 @@ export default function Footer() {
             <div className="flex justify-end mb-4">
               <Image
                 src="/assets/footer.png"
-                alt="YogaVaidya Logo"
+                alt="YogVaidya Logo"
                 width={200}
                 height={200}
                 className="rounded-full"
@@ -146,7 +146,7 @@ export default function Footer() {
             <p className="mb-1">
               Don&apos;t know where to start your yoga journey?
               <br />
-              YogaVaidya — practical, safe, and affordable.
+              YogVaidya — practical, safe, and affordable.
             </p>
             <p>&copy; 2025 — Copyright</p>
           </div>

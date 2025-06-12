@@ -57,8 +57,8 @@ export async function POST(req: NextRequest) {
     // Send confirmation email to mentor
     await sendEmail({
       to: email,
-      subject: "YogaVaidya Mentor Application Received",
-      text: `Dear ${name},\n\nThank you for applying to become a YogaVaidya mentor! We have received your application and will review it soon.\n\nWarm regards,\nYogaVaidya Team`,
+      subject: "YogVaidya Mentor Application Received",
+      text: `Dear ${name},\n\nThank you for applying to become a YogVaidya mentor! We have received your application and will review it soon.\n\nWarm regards,\nYogVaidya Team`,
     });
 
     return NextResponse.json({ success: true, application });

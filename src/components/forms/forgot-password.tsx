@@ -63,7 +63,7 @@ const ForgotPassword = () => {
               </svg>
             </div>
             <span className="text-2xl font-semibold text-gray-800">
-              YogaVaidya
+              YogVaidya
             </span>
           </Link>
         </div>

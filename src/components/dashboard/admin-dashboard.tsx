@@ -170,7 +170,7 @@ export default function AdminDashboard() {
           Welcome, Administrator!
         </h1>
         <p className="text-gray-600 mt-2">
-          Complete system overview and administrative controls for YogaVaidya platform.
+          Complete system overview and administrative controls for YogVaidya platform.
         </p>
       </div>
 
@@ -507,7 +507,7 @@ export default function AdminDashboard() {
               <Mail className="w-5 h-5 text-[#76d2fa]" />
               <div>
                 <p className="font-medium">System Administrator</p>
-                <p className="text-sm text-gray-500">admin@yogavaidya.com</p>
+                <p className="text-sm text-gray-500">admin@yogvaidya.com</p>
               </div>
             </div>
             <Button className="w-full bg-gradient-to-r from-[#876aff] to-[#a792fb] hover:from-[#a792fb] hover:to-[#876aff]">Emergency Support</Button>

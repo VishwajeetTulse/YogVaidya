@@ -240,7 +240,7 @@ export default function MentorApplicationForm() {
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Mentor Application</h1>
-            <p className="text-gray-600">Apply to become a certified YogaVaidya mentor</p>
+            <p className="text-gray-600">Apply to become a certified YogVaidya mentor</p>
           </div>
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
             <Form {...form}>
