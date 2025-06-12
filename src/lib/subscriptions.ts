@@ -1,8 +1,15 @@
 'use server';
 
 import { PrismaClient } from "@prisma/client";
+import Razorpay from 'razorpay';
 
 const prisma = new PrismaClient();
+
+// Initialize Razorpay instance
+const razorpay = new Razorpay({
+  key_id: process.env.RAZORPAY_KEY_ID!,
+  key_secret: process.env.RAZORPAY_KEY_SECRET!,
+});
 
 // Define subscription types manually to avoid dependency on generated types
 export type SubscriptionPlan = "SEED" | "BLOOM" | "FLOURISH";
@@ -107,14 +114,14 @@ async function createUserSubscription(data: CreateSubscriptionData) {
         subscriptionEndDate,
         billingPeriod: data.billingPeriod,
         razorpaySubscriptionId: data.razorpaySubscriptionId || null,
-        razorpayCustomerId: data.razorpayCustomerId || null,
+        razorpayCustomerId: (await razorpay.subscriptions.fetch(data.razorpaySubscriptionId!)).customer_id || null,
         lastPaymentDate: now,
         nextBillingDate,
         paymentAmount,
         isTrialActive: false,
         trialEndDate: null,
         autoRenewal: data.autoRenewal ?? true,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       }
     });
 
@@ -159,21 +166,42 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
   }
 }
 
+
 /**
- * Cancel a user's subscription
+ * Cancel a user's subscription at the end of their billing period
  */
-async function cancelUserSubscription(userId: string, immediate: boolean = false) {
+async function cancelUserSubscription(userId: string) {
   try {
+    // First, get the user to check if they have a Razorpay subscription ID
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    const razorpaySubscriptionId = (user as any).razorpaySubscriptionId;
+    // Cancel the Razorpay subscription if it exists
+    if (razorpaySubscriptionId) {
+      try {
+        // Cancel at end of billing cycle
+        const response = await razorpay.subscriptions.cancel(razorpaySubscriptionId, true);
+        console.log("cancelation response: ", response);
+        console.log(`Razorpay subscription ${razorpaySubscriptionId} will be cancelled at the end of billing period`);
+      } catch (razorpayError) {
+        console.error("Error cancelling Razorpay subscription:", razorpayError);
+        // Continue with local cancellation even if Razorpay fails
+        // You might want to handle this differently based on your business logic
+      }
+    }
+
+    // Update the local database - keep subscription active until end date
     const updateData: any = {
-      subscriptionStatus: immediate ? "CANCELLED" : "ACTIVE",
+      subscriptionStatus: "ACTIVE",
       autoRenewal: false,
       updatedAt: new Date()
     };
-
-    if (immediate) {
-      updateData.subscriptionEndDate = new Date();
-      updateData.isTrialActive = false;
-    }
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -317,33 +345,98 @@ async function renewUserSubscription(userId: string, paymentAmount?: number) {
 }
 
 /**
- * Update Razorpay details for a user
+ * Calculate upgrade pricing for BLOOM to FLOURISH upgrade
  */
-// async function updateRazorpayDetails(
-//   userId: string, 
-//   razorpaySubscriptionId?: string, 
-//   razorpayCustomerId?: string
-// ) {
-//   try {
-//     const updateData: any = {
-//       updatedAt: new Date()
-//     };
+async function calculateUpgradePrice(userId: string, newPlan: SubscriptionPlan) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
 
-//     if (razorpaySubscriptionId) updateData.razorpaySubscriptionId = razorpaySubscriptionId;
-//     if (razorpayCustomerId) updateData.razorpayCustomerId = razorpayCustomerId;
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
 
-//     const updatedUser = await prisma.user.update({
-//       where: { id: userId },
-//       data: updateData
-//     });
+    const currentPlan = (user as any).subscriptionPlan || "SEED";
+    const currentBillingPeriod = (user as any).billingPeriod || "monthly";
+    const subscriptionEndDate = (user as any).subscriptionEndDate;
 
-//     return { success: true, user: updatedUser };
-//   } catch (error) {
-//     console.error("Error updating Razorpay details:", error);
-//     return { success: false, error: "Failed to update payment details" };
-//   }
-// }
+    // Validate upgrade path
+    const planHierarchy = { "SEED": 0, "BLOOM": 1, "FLOURISH": 2 };
+    if (planHierarchy[newPlan] <= planHierarchy[currentPlan as SubscriptionPlan]) {
+      return { success: false, error: "Can only upgrade to a higher plan" };
+    }
 
+    if (!subscriptionEndDate) {
+      return { success: false, error: "No active subscription found" };
+    }
+
+    const now = new Date();
+    const endDate = new Date(subscriptionEndDate);
+    const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
+
+    // Calculate prorated amount
+    const currentAmount = PLAN_PRICING[currentPlan as SubscriptionPlan][currentBillingPeriod as "monthly" | "annual"];
+    const newAmount = PLAN_PRICING[newPlan][currentBillingPeriod as "monthly" | "annual"];
+    const totalDays = currentBillingPeriod === "annual" ? 365 : 30;
+    
+    const unusedAmount = (currentAmount / totalDays) * daysRemaining;
+    const proratedNewAmount = (newAmount / totalDays) * daysRemaining;
+    const upgradeAmount = Math.max(0, Math.round(proratedNewAmount - unusedAmount));
+
+    return {
+      success: true,
+      upgradePrice: upgradeAmount,
+      currentPlan,
+      newPlan,
+      billingPeriod: currentBillingPeriod,
+      daysRemaining,
+      fullNewPlanPrice: newAmount
+    };
+  } catch (error) {
+    console.error("Error calculating upgrade price:", error);
+    return { success: false, error: "Failed to calculate upgrade price" };
+  }
+}
+
+/**
+ * Schedule a subscription upgrade for the next billing cycle
+ */
+async function scheduleUpgrade(userId: string, newPlan: SubscriptionPlan) {
+  try {
+    const user = await prisma.user.findUnique({
+      where: { id: userId }
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    const currentPlan = (user as any).subscriptionPlan || "SEED";
+    
+    // Validate upgrade path
+    const planHierarchy = { "SEED": 0, "BLOOM": 1, "FLOURISH": 2 };
+    if (planHierarchy[newPlan] <= planHierarchy[currentPlan as SubscriptionPlan]) {
+      return { success: false, error: "Can only upgrade to a higher plan" };
+    }
+
+    // For now, we'll store the scheduled upgrade in a custom field
+    // In a production system, you might want a separate table for this
+    const updatedUser = await prisma.user.update({
+      where: { id: userId },
+      data: {
+        // Store the scheduled upgrade plan (you might need to add this field to your schema)
+        // scheduledUpgradePlan: newPlan,
+        updatedAt: new Date()
+      }
+    });
+
+    return { success: true, user: updatedUser, scheduledPlan: newPlan };
+  } catch (error) {
+    console.error("Error scheduling upgrade:", error);
+    return { success: false, error: "Failed to schedule upgrade" };
+  }
+}
 /**
  * Check if user's subscription is expired and update status
  */
@@ -496,4 +589,13 @@ export {
   createUserSubscription,
   updateUserSubscription,
   startTrialSubscription,
+  cancelUserSubscription,
+  reactivateUserSubscription,
+  getUserSubscription,
+  renewUserSubscription,
+  checkAndUpdateExpiredSubscriptions,
+  getSubscriptionAnalytics,
+  hasFeatureAccess,
+  calculateUpgradePrice,
+  scheduleUpgrade
 };

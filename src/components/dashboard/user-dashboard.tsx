@@ -5,6 +5,7 @@ import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
 import { useState, useEffect } from "react";
 import { getUserDetails, UserDetails } from "@/lib/userDetails";
+import { cancelUserSubscription } from "@/lib/subscriptions";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -47,10 +48,11 @@ import {
 
 export default function UserDashboard() {
   const router = useRouter();
-  const { data: session } = useSession();
-  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
+  const { data: session } = useSession();  const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState("overview");
+  const [cancellingSubscription, setCancellingSubscription] = useState(false);
+  const [upgradingSubscription, setUpgradingSubscription] = useState(false);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -79,8 +81,7 @@ export default function UserDashboard() {
     } finally {
       setLoading(false);
     }
-  };
-  const handleSignOut = async () => {
+  };  const handleSignOut = async () => {
     try {
       await signOut();
       toast.message("Signed out successfully", {
@@ -92,6 +93,43 @@ export default function UserDashboard() {
         description: "There is a problem in signing out",
       });
       console.log("Sign out error", error);
+    }
+  };
+  const handleCancelSubscription = async () => {
+    if (!session?.user?.id) {
+      toast.error("Error", {
+        description: "User session not found",
+      });
+      return;
+    }
+
+    const confirmMessage = "Are you sure you want to cancel your subscription? It will remain active until the end of your current billing period.";
+    
+    if (!window.confirm(confirmMessage)) {
+      return;
+    }
+
+    setCancellingSubscription(true);
+    try {
+      const result = await cancelUserSubscription(session.user.id, false);
+      
+      if (result.success) {
+        toast.success("Subscription Cancelled", {
+          description: "Your subscription will be cancelled at the end of your billing period.",
+        });
+        // Refresh user details to show updated subscription status
+        fetchUserDetails();
+      } else {
+        toast.error("Cancellation Failed", {
+          description: result.error || "Failed to cancel subscription",
+        });
+      }
+    } catch (error) {
+      console.error("Error cancelling subscription:", error);
+      toast.error("Error", {
+        description: "An unexpected error occurred while cancelling subscription",
+      });    } finally {
+      setCancellingSubscription(false);
     }
   };
 
@@ -733,8 +771,7 @@ export default function UserDashboard() {
               <p className="text-gray-900">
                 {userDetails?.billingPeriod || "Not set"}
               </p>
-            </div>
-            <div>
+            </div>            <div>
               <label className="text-sm font-medium text-gray-500">
                 Payment Amount
               </label>
@@ -742,13 +779,138 @@ export default function UserDashboard() {
                 ₹{userDetails?.paymentAmount || 0}
               </p>
             </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">
+                Subscription End Date
+              </label>
+              <p className="text-gray-900">
+                {formatDate(userDetails?.subscriptionEndDate)}
+              </p>
+            </div>
+            <div>
+              <label className="text-sm font-medium text-gray-500">
+                Auto Renewal
+              </label>
+              <Badge
+                variant="outline"
+                className={userDetails?.autoRenewal ? "text-green-600 border-green-600" : "text-red-600 border-red-600"}
+              >
+                {userDetails?.autoRenewal ? "Enabled" : "Disabled"}
+              </Badge>
+            </div>
           </div>          <div className="flex gap-2 mt-6">
-            <Button variant="outline" className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">
+            <Button 
+              variant="outline" 
+              className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
+              onClick={() => setActiveSection("plans")}
+            >
               Change Plan
             </Button>
-            <Button className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]">Upgrade</Button>
+            {userDetails?.subscriptionPlan === "BLOOM" && (
+              <Button 
+                className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]"
+                // onClick={() => handleUpgradeSubscription("FLOURISH")}
+                disabled={upgradingSubscription}
+              >
+                {upgradingSubscription ? "Upgrading..." : "Upgrade to Flourish"}
+              </Button>
+            )}
+            {userDetails?.subscriptionPlan === "FLOURISH" && (
+              <Button 
+                className="flex-1 bg-[#876aff] hover:bg-[#a792fb]" 
+                disabled
+              >
+                Highest Plan
+              </Button>
+            )}
           </div>
-        </Card>
+          
+          {/* Cancel Subscription Section */}
+          {userDetails?.subscriptionStatus === "ACTIVE" && userDetails?.subscriptionPlan !== "SEED" && (
+            <div className="mt-6 pt-6 border-t border-gray-200">
+              <h3 className="text-lg font-semibold mb-3 text-gray-900">Cancel Subscription</h3>
+              <p className="text-sm text-gray-600 mb-4">
+                You can cancel your subscription at any time. Choose when you'd like the cancellation to take effect.
+              </p>              <div className="flex flex-col gap-3">
+                <Button
+                  variant="outline"
+                  className="w-full border-orange-300 text-orange-600 hover:bg-orange-50"
+                  onClick={() => handleCancelSubscription()}
+                  disabled={cancellingSubscription}
+                >
+                  {cancellingSubscription ? "Cancelling..." : "Cancel Subscription"}
+                </Button>
+              </div>
+              <p className="text-xs text-gray-500 mt-2">
+                Your subscription will remain active until {formatDate(userDetails?.subscriptionEndDate)}
+              </p>
+            </div>
+          )}        </Card>
+
+        {/* Upgrade Section - Only show for BLOOM users */}
+        {userDetails?.subscriptionPlan === "BLOOM" && (
+          <Card className="p-6 bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
+            <div className="flex items-center gap-3 mb-4">
+              <TrendingUp className="w-5 h-5 text-[#ff7dac]" />
+              <h2 className="text-xl font-semibold">Upgrade to Flourish</h2>
+            </div>
+            <div className="space-y-4">
+              <p className="text-gray-600">
+                Take your yoga journey to the next level with our premium Flourish plan!
+              </p>
+              
+              <div className="bg-white/50 p-4 rounded-lg">
+                <h4 className="font-semibold text-[#ff7dac] mb-2">Flourish Plan Benefits:</h4>
+                <ul className="space-y-1 text-sm text-gray-700">
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
+                    Individual 1-on-1 sessions with certified instructors
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
+                    Personalized diet plans tailored to your goals
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
+                    Priority customer support
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
+                    Access to exclusive premium content
+                  </li>
+                  <li className="flex items-center gap-2">
+                    <span className="w-1.5 h-1.5 bg-[#ff7dac] rounded-full"></span>
+                    All features from your current Bloom plan
+                  </li>
+                </ul>
+              </div>
+              
+              <div className="flex items-center justify-between p-4 bg-gradient-to-r from-[#ff7dac]/10 to-[#ffa6c5]/10 rounded-lg">
+                <div>
+                  <p className="text-sm text-gray-600">Monthly Price</p>
+                  <p className="text-2xl font-bold text-[#ff7dac]">₹1,999</p>
+                </div>
+                <div>
+                  <p className="text-sm text-gray-600">Annual Price</p>
+                  <p className="text-2xl font-bold text-[#ff7dac]">₹19,999</p>
+                  <p className="text-xs text-green-600 font-medium">Save ₹4,000</p>
+                </div>
+              </div>
+              
+              <Button 
+                className="w-full bg-gradient-to-r from-[#ff7dac] to-[#ffa6c5] hover:from-[#ffa6c5] hover:to-[#ff7dac] text-white font-semibold"
+                // onClick={() => handleUpgradeSubscription("FLOURISH")}
+                disabled={upgradingSubscription}
+              >
+                {upgradingSubscription ? "Upgrading..." : "Upgrade to Flourish Plan"}
+              </Button>
+              
+              <p className="text-xs text-gray-500 text-center">
+                You'll be charged the difference for the remaining billing period and your plan will be updated immediately.
+              </p>
+            </div>
+          </Card>
+        )}
 
         <Card className="p-6">
           <h3 className="text-lg font-semibold mb-4">Billing History</h3>

@@ -71,24 +71,19 @@ export default function Checkout({ plan }: { plan: string }) {
     }
   };
 
-  const selectedPlan = planDetails[plan as keyof typeof planDetails];
-  // Redirect if plan not found or is seed
+  const selectedPlan = planDetails[plan as keyof typeof planDetails];  // Redirect if plan not found or is seed
   useEffect(() => {
     if (!selectedPlan || plan === "seed") {
       router.push("/dashboard/plans");
     }
   }, [selectedPlan, plan, router]);
 
-  // Redirect if user is not authenticated
-  useEffect(() => {
-    if (session === null) {
-      router.push("/signin");
-    }
-  }, [session, router]);
-
+  // Note: Authentication check is handled server-side in the page component
+  // No need for client-side redirect as server already ensures user is authenticated
   const handleCheckout = async () => {
     // Check if user is authenticated before proceeding
     if (!session?.user?.id) {
+      console.log("Session state:", session);
       alert("Please sign in to complete your purchase.");
       router.push("/signin");
       return;

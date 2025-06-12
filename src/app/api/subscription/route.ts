@@ -21,9 +21,9 @@ export async function POST(req: NextRequest) {
         plan_id: process.env.PLAN_ID!,
         customer_notify: true,
         // quantity: 1,
-        total_count: 1,
+        total_count: 12,
         // start_at: 1495995837,
-        expire_by: Math.floor(Date.now() / 1000) + 2592000,
+        expire_by: Math.floor(Date.now() / 1000) + 31536000,
 
     });
     console.log(subscription);
