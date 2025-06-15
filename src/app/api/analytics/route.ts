@@ -81,13 +81,18 @@ export async function GET(request: NextRequest) {
     ).length;    // Calculate user growth for the last 3 months
     const now = new Date();
     const userGrowth = [];
-    
-    for (let i = 0; i < 3; i++) {
-      const monthStart = subMonths(now, i);
-      const monthEnd = i === 0 ? now : subMonths(now, i - 1);
+      for (let i = 0; i < 3; i++) {
+      // Get the current month being analyzed
+      const currentMonth = subMonths(now, i);
       
-      // Ensure we're using the correct month name for the period we're counting
-      const monthToDisplay = format(monthStart, 'MMM');
+      // Set start date to beginning of the current month
+      const monthStart = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), 1);
+      
+      // Set end date to beginning of next month
+      const monthEnd = new Date(currentMonth.getFullYear(), currentMonth.getMonth() + 1, 1);
+      
+      // Use the current month name for display
+      const monthToDisplay = format(currentMonth, 'MMM');
         const usersInMonth = allUsers.filter(user => 
         user.createdAt >= monthStart && 
         user.createdAt < monthEnd &&
@@ -130,9 +135,8 @@ export async function GET(request: NextRequest) {
       mentorApplications: {
         total: mentorApplications.length,
         pending: pendingApplications
-      },
-      // Send the months chronologically (oldest first) for clearer visualization
-      userGrowth: userGrowth.reverse() 
+      },      // Send the months chronologically (oldest first) for clearer visualization
+      userGrowth: userGrowth.reverse()
     });
 
   } catch (error) {

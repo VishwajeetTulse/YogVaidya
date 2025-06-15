@@ -9,10 +9,8 @@ import { OverviewSection } from '../moderator/sections/overview-section';
 import { ApplicationsSection } from '../moderator/sections/applications-section';
 import { UsersSection } from '../moderator/sections/users-management-section';
 import { AnalyticsSection } from '../moderator/sections/analytics-section';
-import {  
-  SettingsSection, 
-  SupportSection 
-} from '../moderator/sections/users-section';
+import { SettingsSection } from '../moderator/sections/settings-section';
+import { SupportSection } from '../moderator/sections/support-section';
 
 // Create a mapping of section IDs to components
 const MODERATOR_SECTION_COMPONENTS = {

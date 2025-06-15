@@ -127,6 +127,17 @@ model MentorApplication {
   userId         String?
   status         String?  // <-- Add this line for application status
   mentorType     MentorType?
-
   @@map("mentor_application")
+}
+
+// Moderator settings for storing user preferences
+model ModeratorSettings {
+  id                    String    @id @default(auto()) @map("_id") @db.ObjectId
+  userId                String    @unique
+  mentorApplicationAlerts Boolean @default(true)
+  userSignupAlerts      Boolean   @default(false)
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
+
+  @@map("moderator_settings")
 }
