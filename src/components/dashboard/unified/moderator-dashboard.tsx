@@ -7,9 +7,9 @@ import { MODERATOR_SIDEBAR_MENU_ITEMS } from '../moderator/constants';
 // Import all moderator section components
 import { OverviewSection } from '../moderator/sections/overview-section';
 import { ApplicationsSection } from '../moderator/sections/applications-section';
-import { 
-  UsersSection, 
-  AnalyticsSection, 
+import { UsersSection } from '../moderator/sections/users-management-section';
+import { AnalyticsSection } from '../moderator/sections/analytics-section';
+import {  
   SettingsSection, 
   SupportSection 
 } from '../moderator/sections/users-section';

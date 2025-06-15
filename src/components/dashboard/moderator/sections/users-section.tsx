@@ -1,16 +1,5 @@
+"use client";import { useState, useEffect } from "react";
 import { ModeratorSectionProps } from "../types";
-
-export const UsersSection = ({ userDetails }: ModeratorSectionProps) => (
-  <div className="space-y-6">
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-      <p className="text-gray-600 mt-2">Manage platform users and their activities.</p>
-    </div>
-    <div className="text-center py-20">
-      <p className="text-gray-500">User management coming soon...</p>
-    </div>
-  </div>
-);
 
 export const AnalyticsSection = ({ userDetails }: ModeratorSectionProps) => (
   <div className="space-y-6">
