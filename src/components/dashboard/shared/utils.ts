@@ -1,3 +1,10 @@
+/**
+ * Shared utility functions for dashboard components
+ */
+
+/**
+ * Format a date into a readable string
+ */
 export const formatDate = (date: Date | null | undefined): string => {
   if (!date) return "Not set";
   return new Date(date).toLocaleDateString("en-IN", {
@@ -9,6 +16,9 @@ export const formatDate = (date: Date | null | undefined): string => {
   });
 };
 
+/**
+ * Get CSS classes for status badges based on status value
+ */
 export const getStatusColor = (status: string): string => {
   switch (status) {
     case "ACTIVE":

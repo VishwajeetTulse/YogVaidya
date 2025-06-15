@@ -151,7 +151,7 @@ export default function PlansDashboard() {
                       </span>
                     </span>
                     <span className="text-white/70 ml-2 mb-1">
-                      / {billingPeriod === "monthly" ? "mo" : "yr"}
+                      / mo
                     </span>
                   </div>
                   <p className="text-white mt-2">{plan.description}</p>

@@ -3,13 +3,14 @@ import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
 import { getUserDetails, UserDetails } from "@/lib/userDetails";
+import { BaseHookResult } from "./types";
 
-export const useAdminDashboard = () => {
+export const useDashboard = (initialActiveSection = "overview"): BaseHookResult => {
   const router = useRouter();
   const { data: session } = useSession();
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
-  const [activeSection, setActiveSection] = useState("overview");
+  const [activeSection, setActiveSection] = useState(initialActiveSection);
 
   useEffect(() => {
     if (session?.user?.id) {
@@ -48,18 +49,18 @@ export const useAdminDashboard = () => {
       });
       router.push("/");
     } catch (error) {
-      toast.error("Error Signing Out", {
-        description: "There is a problem in signing out",
+      console.error("Error signing out:", error);
+      toast.error("Error", {
+        description: "Failed to sign out",
       });
-      console.log("Sign out error", error);
     }
   };
-
   return {
     userDetails,
     loading,
     activeSection,
     setActiveSection,
     handleSignOut,
+    fetchUserDetails,
   };
 };

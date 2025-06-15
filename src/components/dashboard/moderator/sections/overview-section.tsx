@@ -51,7 +51,7 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
             </div>
           </div>
         </Card>
-        <Card className="p-4 bg-gradient-to-br from-orange-100 to-yellow-100 border border-orange-200">
+        {/* <Card className="p-4 bg-gradient-to-br from-orange-100 to-yellow-100 border border-orange-200">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-lg">
               <TrendingUp className="w-5 h-5 text-white" />
@@ -61,7 +61,7 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
               <p className="text-xl font-semibold">+12%</p>
             </div>
           </div>
-        </Card>
+        </Card> */}
       </div>
 
       {/* Recent Activity */}
