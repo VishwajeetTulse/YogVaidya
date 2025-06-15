@@ -46,30 +46,40 @@ export const AnalyticsSection = ({ userDetails }: ModeratorSectionProps) => {
           const errorMessage = data?.details || data?.error || 'Failed to fetch analytics data';
           throw new Error(errorMessage);
         }
-        
-        // Ensure all expected properties exist, providing fallbacks as needed
-        const sanitizedData = {
-          users: {
+          // Ensure all expected properties exist, providing fallbacks as needed
+        const sanitizedData = {          users: {
             total: data.users?.total || 0,
             recentSignups: data.users?.recentSignups || 0,
-            byRole: data.users?.byRole || { USER: 0, MENTOR: 0, MODERATOR: 0, ADMIN: 0 }
+            byRole: {
+              USER: data.users?.byRole?.USER || 0,
+              MENTOR: data.users?.byRole?.MENTOR || 0,
+              // Only include USER and MENTOR roles
+            }
           },
           subscriptions: {
             total: data.subscriptions?.total || 0,
-            byPlan: data.subscriptions?.byPlan || { SEED: 0, BLOOM: 0, FLOURISH: 0 }
+            byPlan: {
+              SEED: data.subscriptions?.byPlan?.SEED || 0,
+              BLOOM: data.subscriptions?.byPlan?.BLOOM || 0,
+              FLOURISH: data.subscriptions?.byPlan?.FLOURISH || 0,
+              ...data.subscriptions?.byPlan
+            }
           },
           mentorApplications: {
             total: data.mentorApplications?.total || 0,
             pending: data.mentorApplications?.pending || 0
           },
-          userGrowth: data.userGrowth || [
-            { month: "Jun", count: 0 },
-            { month: "May", count: 0 },
-            { month: "Apr", count: 0 }
-          ]
+          userGrowth: Array.isArray(data.userGrowth) && data.userGrowth.length === 3 
+            ? data.userGrowth 
+            : [
+                { month: "Jun", count: 0 },
+                { month: "May", count: 0 },
+                { month: "Apr", count: 0 }
+              ]
         };
-        
-        setAnalyticsData(sanitizedData);      } catch (err) {
+          setAnalyticsData(sanitizedData);
+        setLoading(false); // Success! Stop loading
+      } catch (err) {
         console.error("Analytics error:", err);
         
         // If we haven't reached max retries, try again
@@ -81,11 +91,7 @@ export const AnalyticsSection = ({ userDetails }: ModeratorSectionProps) => {
         
         // If we've reached max retries, show error
         setError(err instanceof Error ? err.message : 'An unknown error occurred');
-      } finally {
-        // Only set loading to false if we're not retrying
-        if (retryCount >= MAX_RETRIES) {
-          setLoading(false);
-        }
+        setLoading(false); // Stop loading even on error if max retries reached
       }
     };
 
@@ -279,14 +285,19 @@ const RoleDistribution = ({ usersByRole, total }: { usersByRole: Record<string, 
   const roleColors: Record<string, string> = {
     USER: "bg-blue-500",
     MENTOR: "bg-purple-500",
-    MODERATOR: "bg-amber-500",
-    ADMIN: "bg-red-500",
   };
+
+  // Calculate total of only displayed roles (USER and MENTOR)
+  const displayTotal = (usersByRole.USER || 0) + (usersByRole.MENTOR || 0);
 
   return (
     <div className="w-full flex flex-col space-y-2">
       {Object.entries(usersByRole).map(([role, count]) => {
-        const percentage = Math.round((count / total) * 100) || 0;
+        // Skip roles other than USER and MENTOR
+        if (role !== "USER" && role !== "MENTOR") return null;
+        
+        // Calculate percentage based on the sum of displayed roles
+        const percentage = Math.round((count / displayTotal) * 100) || 0;
         
         return (
           <div key={role} className="flex flex-col">
