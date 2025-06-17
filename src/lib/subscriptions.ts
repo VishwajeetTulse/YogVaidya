@@ -592,6 +592,114 @@ async function createPlan(planType: SubscriptionPlan, billingPeriod: "monthly" |
   }
 }
 
+/**
+ * Get analytics data related to subscriptions
+ * Returns information about total active subscriptions and breakdown by plan
+ */
+export async function getSubscriptionAnalytics() {
+  try {
+    // Get all users with subscription data
+    const users = await prisma.user.findMany({
+      select: {
+        id: true,
+        subscriptionPlan: true,
+        subscriptionStatus: true,
+        billingPeriod: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true
+      }
+    });
+
+    // Count active subscriptions
+    const activeSubscriptions = users.filter(user => 
+      user.subscriptionStatus === 'ACTIVE'
+    );
+    
+    // Calculate total active subscriptions
+    const totalActiveSubscriptions = activeSubscriptions.length;
+    
+    // Initialize plan breakdown with all possible status combinations
+    const planBreakdown: Record<string, Record<string, number>> = {
+      'SEED': {
+        'ACTIVE': 0,
+        'INACTIVE': 0,
+        'CANCELLED': 0,
+        'EXPIRED': 0,
+        'PENDING': 0
+      },
+      'BLOOM': {
+        'ACTIVE': 0,
+        'INACTIVE': 0,
+        'CANCELLED': 0,
+        'EXPIRED': 0,
+        'PENDING': 0
+      },
+      'FLOURISH': {
+        'ACTIVE': 0,
+        'INACTIVE': 0,
+        'CANCELLED': 0,
+        'EXPIRED': 0,
+        'PENDING': 0
+      }
+    };
+    
+    // Calculate breakdown by plan and status
+    users.forEach(user => {
+      if (user.subscriptionPlan && user.subscriptionStatus) {
+        // Increment the counter for this plan and status
+        planBreakdown[user.subscriptionPlan][user.subscriptionStatus] = 
+          (planBreakdown[user.subscriptionPlan][user.subscriptionStatus] || 0) + 1;
+      }
+    });
+    
+    // Calculate billing period breakdown (monthly vs annual)
+    const billingPeriodBreakdown = {
+      monthly: 0,
+      annual: 0
+    };
+    
+    activeSubscriptions.forEach(user => {
+      if (user.billingPeriod === 'monthly') {
+        billingPeriodBreakdown.monthly++;
+      } else if (user.billingPeriod === 'annual') {
+        billingPeriodBreakdown.annual++;
+      }
+    });
+    
+    // Calculate retention metrics
+    const currentDate = new Date();
+    const lastMonth = new Date();
+    lastMonth.setMonth(lastMonth.getMonth() - 1);
+    
+    // Count users whose subscription has been active for more than a month
+    const retainedUsers = activeSubscriptions.filter(user => 
+      user.subscriptionStartDate && user.subscriptionStartDate < lastMonth
+    ).length;
+    
+    // Retention rate (percentage of active users who have subscribed for more than a month)
+    const retentionRate = totalActiveSubscriptions > 0 
+      ? (retainedUsers / totalActiveSubscriptions) * 100 
+      : 0;
+    
+    return {
+      success: true,
+      analytics: {
+        totalActiveSubscriptions,
+        planBreakdown,
+        billingPeriodBreakdown,
+        retentionRate: Math.round(retentionRate * 100) / 100, // Round to 2 decimal places
+      }
+    };
+    
+  } catch (error) {
+    console.error('Error getting subscription analytics:', error);
+    return {
+      success: false,
+      error: (error as Error).message
+    };
+  }
+}
+
 // Export only async functions and helper functions
 export {
   createUserSubscription,
