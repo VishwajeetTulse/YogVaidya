@@ -43,9 +43,8 @@ model User {
   image                 String?
   createdAt             DateTime
   updatedAt             DateTime
-  
-  // Subscription Details
-  subscriptionPlan      SubscriptionPlan  @default(SEED)
+    // Subscription Details
+  subscriptionPlan      SubscriptionPlan?  // Optional field, will be null by default
   subscriptionStatus    SubscriptionStatus @default(INACTIVE)
   subscriptionStartDate DateTime?
   subscriptionEndDate   DateTime?

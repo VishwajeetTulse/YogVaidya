@@ -2,6 +2,15 @@
 
 import { PrismaClient } from "@prisma/client";
 import Razorpay from 'razorpay';
+import type { 
+  SubscriptionPlan, 
+  SubscriptionStatus,
+  UpdateSubscriptionData,
+  CreateSubscriptionData
+} from './types';
+
+// Re-export types for backwards compatibility
+export type { SubscriptionPlan, SubscriptionStatus, UpdateSubscriptionData, CreateSubscriptionData };
 
 const prisma = new PrismaClient();
 
@@ -11,44 +20,71 @@ const razorpay = new Razorpay({
   key_secret: process.env.RAZORPAY_KEY_SECRET!,
 });
 
-// Define subscription types manually to avoid dependency on generated types
-export type SubscriptionPlan = "SEED" | "BLOOM" | "FLOURISH";
-export type SubscriptionStatus = "ACTIVE" | "INACTIVE" | "CANCELLED" | "EXPIRED" | "PENDING";
+// Get Razorpay plan IDs
+async function getPlanIds() {
+  const allPlans = ["SEED", "BLOOM", "FLOURISH"] as const;
+  const allBillingPeriods = ["monthly", "annual"] as const;
+  
+  // Initialize plan IDs object
+  const planIds = {
+    SEED: {
+      monthly: process.env.SEED_MONTHLY_PLAN_ID,
+      annual: process.env.SEED_ANNUAL_PLAN_ID
+    },
+    BLOOM: {
+      monthly: process.env.BLOOM_MONTHLY_PLAN_ID,
+      annual: process.env.BLOOM_ANNUAL_PLAN_ID
+    },
+    FLOURISH: {
+      monthly: process.env.FLOURISH_MONTHLY_PLAN_ID,
+      annual: process.env.FLOURISH_ANNUAL_PLAN_ID
+    }
+  } as const;
 
-// Types for subscription update operations
-export interface UpdateSubscriptionData {
-  userId: string;
-  subscriptionPlan?: SubscriptionPlan;
-  subscriptionStatus?: SubscriptionStatus;
-  subscriptionStartDate?: Date;
-  subscriptionEndDate?: Date;
-  billingPeriod?: "monthly" | "annual";
-  razorpaySubscriptionId?: string;
-  razorpayCustomerId?: string;
-  lastPaymentDate?: Date;
-  nextBillingDate?: Date;
-  paymentAmount?: number;
-  isTrialActive?: boolean;
-  trialEndDate?: Date;
-  autoRenewal?: boolean;
-}
+  // Validate that all plan IDs are set
+  for (const plan of allPlans) {
+    for (const period of allBillingPeriods) {
+      if (!planIds[plan][period]) {
+        console.error(`Missing Razorpay plan ID for ${plan} ${period} in environment variables`);
+      }
+    }
+  }
 
-export interface CreateSubscriptionData {
-  userId: string;
-  subscriptionPlan: SubscriptionPlan;
-  billingPeriod: "monthly" | "annual";
-  razorpaySubscriptionId?: string;
-  razorpayCustomerId?: string;
-  paymentAmount?: number;
-  autoRenewal?: boolean;
+  return planIds;
 }
 
 // Plan pricing configuration
-const PLAN_PRICING = {
-  SEED: { monthly: 0, annual: 0 },
-  BLOOM: { monthly: 1999, annual: 1599 }, // 20% discount on annual
-  FLOURISH: { monthly: 4999, annual: 3999 } // 20% discount on annual
-} as const;
+async function getPlanPricing() {
+  const monthlyPrices = {
+    SEED: 1999,
+    BLOOM: 1999,
+    FLOURISH: 4999
+  };
+
+  // Calculate annual prices with 20% discount
+  const annualPrices = Object.fromEntries(
+    Object.entries(monthlyPrices).map(([plan, price]) => [
+      plan,
+      Math.round(price * 12 * 0.8) // 20% discount on annual plans
+    ])
+  );
+
+  return {
+    SEED: { 
+      monthly: monthlyPrices.SEED,
+      annual: annualPrices.SEED 
+    },
+    BLOOM: { 
+      monthly: monthlyPrices.BLOOM,
+      annual: annualPrices.BLOOM 
+    },
+    FLOURISH: { 
+      monthly: monthlyPrices.FLOURISH,
+      annual: annualPrices.FLOURISH 
+    }
+  } as const;
+}
+
 
 // Trial period configuration (in days)
 const TRIAL_PERIOD_DAYS = 7;
@@ -58,10 +94,20 @@ const TRIAL_PERIOD_DAYS = 7;
  */
 async function updateUserSubscription(data: UpdateSubscriptionData) {
   try {
+    // First, get the current user data to check Razorpay subscription
+    const user = await prisma.user.findUnique({
+      where: { id: data.userId }
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
     const updateData: any = {
       updatedAt: new Date()
     };
 
+    
     // Only include fields that are defined
     if (data.subscriptionPlan !== undefined) updateData.subscriptionPlan = data.subscriptionPlan;
     if (data.subscriptionStatus !== undefined) updateData.subscriptionStatus = data.subscriptionStatus;
@@ -77,6 +123,45 @@ async function updateUserSubscription(data: UpdateSubscriptionData) {
     if (data.trialEndDate !== undefined) updateData.trialEndDate = data.trialEndDate;
     if (data.autoRenewal !== undefined) updateData.autoRenewal = data.autoRenewal;
 
+    
+    // Update Razorpay subscription if it exists and plan or amount has changed
+    const razorpaySubId = (user as any).razorpaySubscriptionId;
+    if (razorpaySubId && (data.subscriptionPlan !== undefined || data.paymentAmount !== undefined)) {
+      try {
+        const currentSub = await razorpay.subscriptions.fetch(razorpaySubId);
+        
+        // Only update if the subscription is active
+        if (currentSub.status === 'active') {          // Calculate the new plan amount in paisa
+          const newAmount = data.paymentAmount ? Math.round(data.paymentAmount * 100) : undefined;
+          
+          // Create a new plan if amount is changing
+          let planId = currentSub.plan_id;
+          if (newAmount) {
+            const newPlan = await razorpay.plans.create({
+              period: data.billingPeriod === 'annual' ? 'yearly' : 'monthly',
+              interval: 1,
+              item: {
+                name: `${data.subscriptionPlan || currentSub.plan_id} Plan`,
+                amount: newAmount,
+                currency: 'INR'
+              }
+            });
+            planId = newPlan.id;
+          }
+          
+          // Update the subscription
+          await razorpay.subscriptions.update(razorpaySubId, {
+            plan_id: planId,
+            quantity: 1,
+            total_count: data.billingPeriod === 'annual' ? 12 : 1,
+            customer_notify: 1
+          });
+        }
+      } catch (razorpayError) {
+        console.error("Error updating Razorpay subscription:", razorpayError);
+        // Continue with local update even if Razorpay update fails
+      }
+    }
     const updatedUser = await prisma.user.update({
       where: { id: data.userId },
       data: updateData
@@ -101,9 +186,10 @@ async function createUserSubscription(data: CreateSubscriptionData) {
 
     const nextBillingDate = new Date(subscriptionEndDate);
 
-    // Calculate payment amount based on plan and billing period
+    // Get pricing and calculate payment amount
+    const planPricing = await getPlanPricing();
     const paymentAmount = data.paymentAmount || 
-      PLAN_PRICING[data.subscriptionPlan][data.billingPeriod];
+      planPricing[data.subscriptionPlan][data.billingPeriod];
 
     const updatedUser = await prisma.user.update({
       where: { id: data.userId },
@@ -215,48 +301,6 @@ async function cancelUserSubscription(userId: string) {
   }
 }
 
-/**
- * Reactivate a cancelled subscription
- */
-async function reactivateUserSubscription(userId: string, billingPeriod: "monthly" | "annual" = "monthly") {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
-
-    const now = new Date();
-    const billingCycleMonths = billingPeriod === "annual" ? 12 : 1;
-    const subscriptionEndDate = new Date(now);
-    subscriptionEndDate.setMonth(subscriptionEndDate.getMonth() + billingCycleMonths);
-
-    // Get user's current plan, default to BLOOM if not set
-    const currentPlan = (user as any).subscriptionPlan || "BLOOM";
-    const paymentAmount = PLAN_PRICING[currentPlan as SubscriptionPlan][billingPeriod];
-
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionStatus: "ACTIVE",
-        subscriptionStartDate: now,
-        subscriptionEndDate,
-        billingPeriod,
-        nextBillingDate: subscriptionEndDate,
-        paymentAmount,
-        autoRenewal: true,
-        updatedAt: new Date()
-      }
-    });
-
-    return { success: true, user: updatedUser };
-  } catch (error) {
-    console.error("Error reactivating user subscription:", error);
-    return { success: false, error: "Failed to reactivate subscription" };
-  }
-}
 
 /**
  * Get user subscription details
@@ -264,83 +308,69 @@ async function reactivateUserSubscription(userId: string, billingPeriod: "monthl
 async function getUserSubscription(userId: string) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        subscriptionPlan: true,
+        subscriptionStatus: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
+        billingPeriod: true,
+        razorpaySubscriptionId: true,
+        razorpayCustomerId: true,
+        lastPaymentDate: true,
+        nextBillingDate: true,
+        paymentAmount: true,
+        isTrialActive: true,
+        trialEndDate: true,
+        autoRenewal: true
+      }
     });
 
     if (!user) {
-      return { success: false, error: "User not found" };
+      return { success: false, error: "User not found", code: "USER_NOT_FOUND" };
     }
 
-    // Extract subscription-related fields
+    // Check Razorpay subscription status if available
+    let razorpayStatus: string | undefined;
+    if (user.razorpaySubscriptionId) {
+      try {
+        const razorpaySub = await razorpay.subscriptions.fetch(user.razorpaySubscriptionId);
+        razorpayStatus = razorpaySub.status;
+        
+        // Update local status if Razorpay status indicates subscription is no longer active
+        if (razorpayStatus === 'cancelled' || razorpayStatus === 'expired') {
+          await updateUserSubscription({
+            userId: user.id,
+            subscriptionStatus: 'INACTIVE'
+          });
+          user.subscriptionStatus = 'INACTIVE';
+        }
+      } catch (razorpayError) {
+        console.error('Error fetching Razorpay subscription:', razorpayError);
+        // Don't fail the request, just log the error
+      }
+    }
+
     const subscriptionData = {
-      id: user.id,
-      email: user.email,
-      name: user.name,
-      subscriptionPlan: (user as any).subscriptionPlan || "SEED",
-      subscriptionStatus: (user as any).subscriptionStatus || "INACTIVE",
-      subscriptionStartDate: (user as any).subscriptionStartDate,
-      subscriptionEndDate: (user as any).subscriptionEndDate,
-      billingPeriod: (user as any).billingPeriod,
-      razorpaySubscriptionId: (user as any).razorpaySubscriptionId,
-      razorpayCustomerId: (user as any).razorpayCustomerId,
-      lastPaymentDate: (user as any).lastPaymentDate,
-      nextBillingDate: (user as any).nextBillingDate,
-      paymentAmount: (user as any).paymentAmount,
-      isTrialActive: (user as any).isTrialActive || false,
-      trialEndDate: (user as any).trialEndDate,
-      autoRenewal: (user as any).autoRenewal || true
+      ...user,
+      subscriptionStatus: user.subscriptionStatus || "INACTIVE",
+      isTrialActive: user.isTrialActive || false,
+      autoRenewal: user.autoRenewal ?? true,
+      razorpayStatus
     };
 
     return { success: true, subscription: subscriptionData };
   } catch (error) {
     console.error("Error getting user subscription:", error);
-    return { success: false, error: "Failed to get subscription details" };
-  }
-}
-
-/**
- * Process subscription renewal
- */
-async function renewUserSubscription(userId: string, paymentAmount?: number) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
-
-    const now = new Date();
-    const currentBillingPeriod = (user as any).billingPeriod || "monthly";
-    const billingCycleMonths = currentBillingPeriod === "annual" ? 12 : 1;
-    
-    const currentEndDate = (user as any).subscriptionEndDate || now;
-    const newEndDate = new Date(currentEndDate);
-    newEndDate.setMonth(newEndDate.getMonth() + billingCycleMonths);
-
-    const nextBillingDate = new Date(newEndDate);
-    const currentPlan = (user as any).subscriptionPlan || "BLOOM";
-    const amount = paymentAmount || (user as any).paymentAmount || 
-      PLAN_PRICING[currentPlan as SubscriptionPlan][currentBillingPeriod as "monthly" | "annual"];
-
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        subscriptionStatus: "ACTIVE",
-        subscriptionEndDate: newEndDate,
-        lastPaymentDate: now,
-        nextBillingDate,
-        paymentAmount: amount,
-        isTrialActive: false,
-        updatedAt: new Date()
-      }
-    });
-
-    return { success: true, user: updatedUser };
-  } catch (error) {
-    console.error("Error renewing user subscription:", error);
-    return { success: false, error: "Failed to renew subscription" };
+    const errorMessage = error instanceof Error ? error.message : "Failed to get subscription details";
+    return { 
+      success: false, 
+      error: errorMessage,
+      code: "SUBSCRIPTION_FETCH_ERROR"
+    };
   }
 }
 
@@ -350,20 +380,51 @@ async function renewUserSubscription(userId: string, paymentAmount?: number) {
 async function calculateUpgradePrice(userId: string, newPlan: SubscriptionPlan) {
   try {
     const user = await prisma.user.findUnique({
-      where: { id: userId }
+      where: { id: userId },
+      select: {
+        id: true,
+        subscriptionPlan: true,
+        billingPeriod: true,
+        subscriptionEndDate: true,
+        subscriptionStatus: true,
+        razorpaySubscriptionId: true
+      }
     });
 
     if (!user) {
-      return { success: false, error: "User not found" };
+      return { success: false, error: "User not found", code: "USER_NOT_FOUND" };
     }
 
-    const currentPlan = (user as any).subscriptionPlan || "SEED";
-    const currentBillingPeriod = (user as any).billingPeriod || "monthly";
-    const subscriptionEndDate = (user as any).subscriptionEndDate;
+    const currentPlan = user.subscriptionPlan;
+    if (!currentPlan) {
+      return { success: false, error: "No subscription plan found", code: "NO_PLAN_FOUND" };
+    }
 
-    // Validate upgrade path
-    const planHierarchy = { "SEED": 0, "BLOOM": 1, "FLOURISH": 2 };
-    if (planHierarchy[newPlan] <= planHierarchy[currentPlan as SubscriptionPlan]) {
+    // Validate subscription status
+    if (user.subscriptionStatus !== "ACTIVE") {
+      return { success: false, error: "Subscription is not active", code: "INACTIVE_SUBSCRIPTION" };
+    }
+
+    const currentBillingPeriod = user.billingPeriod || "monthly";
+    const subscriptionEndDate = user.subscriptionEndDate;
+
+    // Validate upgrade path with SEED and BLOOM at same level
+    const planHierarchy = { "SEED": 0, "BLOOM": 0, "FLOURISH": 1 };
+    
+    // For same tier plans (SEED<->BLOOM), no price difference
+    if (currentPlan === newPlan || (planHierarchy[currentPlan as keyof typeof planHierarchy] === planHierarchy[newPlan])) {
+      return {
+        success: true,
+        upgradePrice: 0,
+        isPlanSwitch: true,
+        currentPlan,
+        newPlan,
+        billingPeriod: currentBillingPeriod
+      };
+    }
+
+    // Only allow upgrades to higher tier
+    if (planHierarchy[newPlan] <= planHierarchy[currentPlan as keyof typeof planHierarchy]) {
       return { success: false, error: "Can only upgrade to a higher plan" };
     }
 
@@ -375,22 +436,34 @@ async function calculateUpgradePrice(userId: string, newPlan: SubscriptionPlan) 
     const endDate = new Date(subscriptionEndDate);
     const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
-    // Calculate prorated amount
-    const currentAmount = PLAN_PRICING[currentPlan as SubscriptionPlan][currentBillingPeriod as "monthly" | "annual"];
-    const newAmount = PLAN_PRICING[newPlan][currentBillingPeriod as "monthly" | "annual"];
+    // Get current pricing
+    const planPricing = await getPlanPricing();
+    const currentAmount = planPricing[currentPlan as SubscriptionPlan][currentBillingPeriod as "monthly" | "annual"];
+    const newAmount = planPricing[newPlan][currentBillingPeriod as "monthly" | "annual"];
     const totalDays = currentBillingPeriod === "annual" ? 365 : 30;
-    
-    const unusedAmount = (currentAmount / totalDays) * daysRemaining;
-    const proratedNewAmount = (newAmount / totalDays) * daysRemaining;
+
+    // Calculate daily rates
+    const currentPlanDailyRate = currentAmount / totalDays;
+    const newPlanDailyRate = newAmount / totalDays;
+
+    // Calculate unused amount from current plan that will be credited
+    const unusedAmount = currentPlanDailyRate * daysRemaining;
+
+    // Calculate prorated amount for the new plan
+    const proratedNewAmount = newPlanDailyRate * daysRemaining;
+
+    // Final upgrade amount is the difference, with credit for unused current plan
     const upgradeAmount = Math.max(0, Math.round(proratedNewAmount - unusedAmount));
 
     return {
       success: true,
       upgradePrice: upgradeAmount,
+      unusedCredit: Math.round(unusedAmount),
+      proratedNewAmount: Math.round(proratedNewAmount),
+      remainingDays: daysRemaining,
       currentPlan,
       newPlan,
       billingPeriod: currentBillingPeriod,
-      daysRemaining,
       fullNewPlanPrice: newAmount
     };
   } catch (error) {
@@ -399,149 +472,6 @@ async function calculateUpgradePrice(userId: string, newPlan: SubscriptionPlan) 
   }
 }
 
-/**
- * Schedule a subscription upgrade for the next billing cycle
- */
-async function scheduleUpgrade(userId: string, newPlan: SubscriptionPlan) {
-  try {
-    const user = await prisma.user.findUnique({
-      where: { id: userId }
-    });
-
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
-
-    const currentPlan = (user as any).subscriptionPlan || "SEED";
-    
-    // Validate upgrade path
-    const planHierarchy = { "SEED": 0, "BLOOM": 1, "FLOURISH": 2 };
-    if (planHierarchy[newPlan] <= planHierarchy[currentPlan as SubscriptionPlan]) {
-      return { success: false, error: "Can only upgrade to a higher plan" };
-    }
-
-    // For now, we'll store the scheduled upgrade in a custom field
-    // In a production system, you might want a separate table for this
-    const updatedUser = await prisma.user.update({
-      where: { id: userId },
-      data: {
-        // Store the scheduled upgrade plan (you might need to add this field to your schema)
-        // scheduledUpgradePlan: newPlan,
-        updatedAt: new Date()
-      }
-    });
-
-    return { success: true, user: updatedUser, scheduledPlan: newPlan };
-  } catch (error) {
-    console.error("Error scheduling upgrade:", error);
-    return { success: false, error: "Failed to schedule upgrade" };
-  }
-}
-/**
- * Check if user's subscription is expired and update status
- */
-async function checkAndUpdateExpiredSubscriptions() {
-  try {
-    const now = new Date();
-    
-    // Get all users first and filter manually (until Prisma client is regenerated)
-    const allUsers = await prisma.user.findMany();
-    
-    const expiredUsers = allUsers.filter(user => {
-      const subscriptionStatus = (user as any).subscriptionStatus;
-      const subscriptionEndDate = (user as any).subscriptionEndDate;
-      
-      return subscriptionStatus === "ACTIVE" && 
-             subscriptionEndDate && 
-             new Date(subscriptionEndDate) < now;
-    });
-
-    // Update expired subscriptions one by one
-    const updatePromises = expiredUsers.map(user => 
-      prisma.user.update({
-        where: { id: user.id },
-        data: {
-          subscriptionStatus: "EXPIRED",
-          isTrialActive: false,
-          updatedAt: now
-        }
-      })
-    );
-
-    await Promise.all(updatePromises);
-
-    return { 
-      success: true, 
-      expiredCount: expiredUsers.length,
-      expiredUsers: expiredUsers.map(user => ({ id: user.id, email: user.email }))
-    };
-  } catch (error) {
-    console.error("Error checking expired subscriptions:", error);
-    return { success: false, error: "Failed to check expired subscriptions" };
-  }
-}
-
-/**
- * Get subscription analytics
- */
-async function getSubscriptionAnalytics() {
-  try {
-    const allUsers = await prisma.user.findMany();
-    
-    // Manual aggregation until Prisma client is regenerated
-    const analytics = {
-      planBreakdown: {} as Record<string, Record<string, number>>,
-      totalActiveSubscriptions: 0,
-      totalTrialUsers: 0,
-      monthlyRevenue: 0,
-      annualRevenue: 0
-    };
-
-    allUsers.forEach(user => {
-      const plan = (user as any).subscriptionPlan || "SEED";
-      const status = (user as any).subscriptionStatus || "INACTIVE";
-      const billingPeriod = (user as any).billingPeriod;
-      const paymentAmount = (user as any).paymentAmount || 0;
-      const isTrialActive = (user as any).isTrialActive;
-
-      // Plan breakdown
-      if (!analytics.planBreakdown[plan]) {
-        analytics.planBreakdown[plan] = {};
-      }
-      if (!analytics.planBreakdown[plan][status]) {
-        analytics.planBreakdown[plan][status] = 0;
-      }
-      analytics.planBreakdown[plan][status]++;
-
-      // Active subscriptions
-      if (status === "ACTIVE") {
-        analytics.totalActiveSubscriptions++;
-      }
-
-      // Trial users
-      if (isTrialActive) {
-        analytics.totalTrialUsers++;
-      }
-
-      // Revenue calculation
-      if (status === "ACTIVE" && paymentAmount > 0) {
-        if (billingPeriod === "monthly") {
-          analytics.monthlyRevenue += paymentAmount;
-        } else if (billingPeriod === "annual") {
-          analytics.annualRevenue += paymentAmount;
-        }
-      }
-    });
-
-    return {
-      success: true,
-      analytics
-    };
-  } catch (error) {
-    console.error("Error getting subscription analytics:", error);
-    return { success: false, error: "Failed to get analytics" };
-  }
-}
 
 /**
  * Helper function to check if a user has access to a specific feature based on their plan
@@ -569,14 +499,15 @@ function calculateNextBillingDate(subscriptionEndDate: Date, billingPeriod: "mon
 /**
  * Calculate prorated amount for plan changes
  */
-function calculateProratedAmount(
+async function calculateProratedAmount(
   currentPlan: SubscriptionPlan,
   newPlan: SubscriptionPlan,
   billingPeriod: "monthly" | "annual",
   daysRemaining: number
-): number {
-  const currentAmount = PLAN_PRICING[currentPlan][billingPeriod];
-  const newAmount = PLAN_PRICING[newPlan][billingPeriod];
+) {
+  const planPricing = await getPlanPricing();
+  const currentAmount = planPricing[currentPlan][billingPeriod];
+  const newAmount = planPricing[newPlan][billingPeriod];
   const totalDays = billingPeriod === "annual" ? 365 : 30;
   
   const unusedAmount = (currentAmount / totalDays) * daysRemaining;
@@ -585,17 +516,92 @@ function calculateProratedAmount(
   return Math.max(0, proratedNewAmount - unusedAmount);
 }
 
+// Define User type with subscription fields
+interface User {
+  id: string;
+  email: string;
+  name: string;
+  subscriptionPlan?: SubscriptionPlan;
+  subscriptionStatus?: SubscriptionStatus;
+  subscriptionStartDate?: Date;
+  subscriptionEndDate?: Date;
+  billingPeriod?: "monthly" | "annual";
+  razorpaySubscriptionId?: string;
+  razorpayCustomerId?: string;
+  lastPaymentDate?: Date;
+  nextBillingDate?: Date;
+  paymentAmount?: number;
+  isTrialActive?: boolean;
+  trialEndDate?: Date;
+  autoRenewal?: boolean;
+  updatedAt: Date;
+}
+
+// Razorpay error handling
+interface RazorpayError extends Error {
+  statusCode?: number;
+  error?: {
+    description?: string;
+    code?: string;
+  };
+}
+
+function handleRazorpayError(error: RazorpayError): { message: string; code: string } {
+  if (error.statusCode === 400) {
+    return { 
+      message: "Invalid request to payment gateway",
+      code: "RAZORPAY_INVALID_REQUEST"
+    };
+  } else if (error.statusCode === 401) {
+    return {
+      message: "Payment gateway authentication failed",
+      code: "RAZORPAY_AUTH_ERROR"
+    };
+  } else if (error.error?.description) {
+    return {
+      message: error.error.description,
+      code: error.error.code || "RAZORPAY_ERROR"
+    };
+  }
+  return {
+    message: error.message || "Payment gateway error",
+    code: "RAZORPAY_UNKNOWN_ERROR"
+  };
+}
+
+// Create a Razorpay plan
+async function createPlan(planType: SubscriptionPlan, billingPeriod: "monthly" | "annual") {
+  try {
+    const planPricing = await getPlanPricing();
+    const planAmount = planPricing[planType][billingPeriod];
+    
+    const plan = await razorpay.plans.create({
+      period: billingPeriod === "annual" ? "yearly" : "monthly",
+      interval: 1,
+      item: {
+        name: `${planType} Plan (${billingPeriod})`,
+        amount: planAmount * 100, // Convert to paisa
+        currency: "INR",
+        description: `${planType} subscription plan - ${billingPeriod} billing`
+      }
+    });
+    return { success: true, plan };
+  } catch (error) {
+    console.error("Error creating Razorpay plan:", error);
+    return { success: false, error: "Failed to create plan" };
+  }
+}
+
+// Export only async functions and helper functions
 export {
   createUserSubscription,
   updateUserSubscription,
   startTrialSubscription,
   cancelUserSubscription,
-  reactivateUserSubscription,
   getUserSubscription,
-  renewUserSubscription,
-  checkAndUpdateExpiredSubscriptions,
-  getSubscriptionAnalytics,
   hasFeatureAccess,
   calculateUpgradePrice,
-  scheduleUpgrade
+  createPlan,
+  getPlanIds,
+  getPlanPricing
 };

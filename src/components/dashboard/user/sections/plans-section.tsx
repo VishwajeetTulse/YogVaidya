@@ -18,17 +18,150 @@ import {
   Activity,
   Check,
   IndianRupee as IndianRupeeIcon,
+  Loader2,
 } from "lucide-react";
 import { SectionProps } from "../types";
+import { toast } from "sonner";
+import { useState, useEffect } from "react";
+import { getUserSubscription } from "@/lib/subscriptions";
+import { useSession } from "@/lib/auth-client";
 
-interface PlansSectionProps extends SectionProps {}
+
+interface PlansSectionProps extends SectionProps {
+}
 
 export const PlansSection = ({ 
   billingPeriod, 
   setBillingPeriod, 
   viewMode, 
-  setViewMode 
+  setViewMode,
 }: PlansSectionProps) => {
+  const { data: session } = useSession();
+  const [isUpgrading, setIsUpgrading] = useState(false);
+  const [subscription, setSubscription] = useState<{
+    subscriptionStatus: string;
+    subscriptionPlan?: string;
+    billingPeriod?: string;
+    email?: string;
+    name?: string;
+  } | null>(null);
+  const [isLoading, setIsLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchSubscription = async () => {
+      try {
+        const result = await getUserSubscription(session?.user.id!);
+        if (result.success && result.subscription) {
+          setSubscription({
+            subscriptionStatus: result.subscription.subscriptionStatus || "INACTIVE",
+            subscriptionPlan: result.subscription.subscriptionPlan,
+            billingPeriod: result.subscription.billingPeriod!,
+            email: result.subscription.email,
+            name: result.subscription.name!
+          });
+        } else {
+          setSubscription(null);
+        }
+      } catch (error) {
+        console.error("Error fetching subscription:", error);
+        toast.error("Failed to load subscription details");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchSubscription();
+  }, [session?.user.id]);
+
+  const handleUpgrade = async (planId: string) => {
+    if (isUpgrading) return;
+
+    // If no active subscription or subscription status is not active, redirect to checkout
+    if (!subscription?.subscriptionStatus || subscription.subscriptionStatus !== "ACTIVE") {
+      window.location.href = `/checkout?plan=${planId}&billing=${billingPeriod}`;
+      return;
+    }
+
+    try {
+      setIsUpgrading(true);
+      
+      const response = await fetch('/api/subscription/upgrade', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          newPlan: planId.toUpperCase(),
+          billingPeriod
+        }),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        throw new Error(data.error || 'Failed to process upgrade');
+      }
+
+      if (data.success) {
+        if (data.priceDetails.isPlanSwitch) {
+          // For same-price plan switches, no payment needed          toast.success("Plan Updated Successfully", {
+            description: "Your subscription has been updated to the new plan."
+          }
+          window.location.reload();
+        } else {
+          // Initialize Razorpay for paid upgrades
+          const options = {
+            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
+            amount: data.order.amount,
+            currency: data.order.currency,
+            name: "YogaVaidya",
+            description: `Upgrade to ${data.priceDetails.newPlan} Plan`,
+            order_id: data.order.id,
+            handler: async function (response: any) {
+              const verifyResponse = await fetch('/api/subscription/payment/verify', {
+                method: 'POST',
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({
+                  razorpay_payment_id: response.razorpay_payment_id,
+                  razorpay_order_id: response.razorpay_order_id,
+                  razorpay_signature: response.razorpay_signature
+                })
+              });
+
+              const verifyResult = await verifyResponse.json();
+              
+              if (verifyResult.success) {                toast.success("Upgrade Successful", {
+                  description: "Your plan has been upgraded successfully."
+                });
+                window.location.reload();
+              } else {
+                toast.error("Upgrade Failed", {
+                  description: verifyResult.error || "Failed to verify payment"
+                });
+              }
+            },
+            prefill: {              name: subscription?.name || '',
+              email: subscription?.email || ''
+            },
+            theme: {
+              color: '#876aff'
+            }
+          };
+
+          const razorpay = new (window as any).Razorpay(options);
+          razorpay.open();
+        }
+      }
+    catch (error) {
+      console.error('Upgrade error:', error);      toast.error("Upgrade Failed", {
+        description: error instanceof Error ? error.message : "Something went wrong"
+      });
+    } finally {
+      setIsUpgrading(false);
+    }
+  };
   // Apply discount for annual billing
   const applyDiscount = (price: number) => {
     if (billingPeriod === "annual") {
@@ -92,14 +225,23 @@ export const PlansSection = ({
     }
   ];
 
+  console.log("subscription:", subscription); 
+  console.log("user id:", session?.user.id); 
+  
   return (
     <div className="space-y-6">
-      <div>
-        <h1 className="text-3xl font-bold text-gray-900">Upgrade Plans</h1>
-        <p className="text-gray-600 mt-2">
-          Choose the perfect plan for your wellness journey.
-        </p>
-      </div>
+      {isLoading ? (
+        <div className="flex items-center justify-center py-8">
+          <Loader2 className="h-8 w-8 animate-spin text-primary" />
+        </div>
+      ) : (
+        <>
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900">Upgrade Plans</h1>
+            <p className="text-gray-600 mt-2">
+              Choose the perfect plan for your wellness journey.
+            </p>
+          </div>
 
       {/* View Mode Toggle */}
       <div className="flex justify-center">
@@ -226,8 +368,7 @@ export const PlansSection = ({
                   ))}
                 </div>
 
-                {/* Button */}
-                {plan.price === 0 ? (
+                {/* Button */}                {plan.price === 0 ? (
                   <Link href="/dashboard" passHref>
                     <Button 
                       className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
@@ -236,13 +377,20 @@ export const PlansSection = ({
                     </Button>
                   </Link>
                 ) : (
-                  <Link href={`/checkout?plan=${plan.id}&billing=${billingPeriod}`} passHref>
-                    <Button
-                      className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
-                    >
-                      UPGRADE NOW
-                    </Button>
-                  </Link>
+                  <Button
+                    className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
+                    onClick={() => handleUpgrade(plan.id)}
+                    disabled={isUpgrading}
+                  >
+                    {isUpgrading ? (
+                      <>
+                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        UPGRADING...
+                      </>
+                    ) : (
+                      "UPGRADE NOW"
+                    )}
+                  </Button>
                 )}
               </div>
             </div>
@@ -294,19 +442,27 @@ export const PlansSection = ({
                 <tr className="bg-gray-50">
                   <td className="p-6 font-semibold text-gray-900">Choose Plan</td>
                   {plans.map((plan) => (
-                    <td key={plan.id} className="p-6 text-center">
-                      {plan.price === 0 ? (
+                    <td key={plan.id} className="p-6 text-center">                      {plan.price === 0 ? (
                         <Link href="/dashboard" passHref>
                           <Button className="w-full bg-gray-600 hover:bg-gray-700 text-white">
                             GET STARTED
                           </Button>
                         </Link>
                       ) : (
-                        <Link href={`/checkout?plan=${plan.id}&billing=${billingPeriod}`} passHref>
-                          <Button className={`w-full bg-gradient-to-r ${plan.gradient} text-white hover:opacity-90`}>
-                            UPGRADE
-                          </Button>
-                        </Link>
+                        <Button 
+                          className={`w-full bg-gradient-to-r ${plan.gradient} text-white hover:opacity-90`}
+                          onClick={() => handleUpgrade(plan.id)}
+                          disabled={isUpgrading}
+                        >
+                          {isUpgrading ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              UPGRADING...
+                            </>
+                          ) : (
+                            "UPGRADE"
+                          )}
+                        </Button>
                       )}
                     </td>
                   ))}
@@ -314,7 +470,8 @@ export const PlansSection = ({
               </tbody>
             </table>
           </div>
-        </div>
+        </div>      )}
+        </>
       )}
     </div>
   );

@@ -23,14 +23,8 @@ export default async function Page({
   if (!session) {
     redirect("/signin");
   }
-
-  // Handle seed plan - redirect to dashboard since it's free
-  if (plan?.toLowerCase() === "seed") {
-    redirect("/dashboard");
-  }
-
-  // Only allow bloom and flourish plans for checkout
-  if (!plan || !["bloom", "flourish"].includes(plan.toLowerCase())) {
+  // Validate plan
+  if (!plan || !["seed", "bloom", "flourish"].includes(plan.toLowerCase())) {
     redirect("/dashboard/plans");
   }
 

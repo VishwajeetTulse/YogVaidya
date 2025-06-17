@@ -36,11 +36,14 @@ export const auth = betterAuth({
             text: `Click the link to reset your password: ${url}`,
           });
         },
-    },
-    socialProviders: {
+    },    socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
+            signIn: {
+                enabled: true,
+                createUserIfNotExists: false,
+            },
         },
     },  
     cookies: {
@@ -58,10 +61,9 @@ export const auth = betterAuth({
       nextCookies(),
     ],
     user: {
-        additionalFields: {
-            phone: {
+        additionalFields: {            phone: {
                 type: "string",
-                required: true,
+                required: false,  // Changed to false since it's not provided by Google
                 defaultValue: "",
                 input: true,
             },

@@ -20,7 +20,7 @@ export default function PlansDashboard() {
       id: "seed",
       name: "Seed",
       price: 1999,
-      originalPrice: 0,
+      originalPrice: 1999,
       description: "Perfect for meditation enthusiasts",
       gradient: "from-[#76d2fa] to-[#5a9be9]",
       textColor: "text-[#5a9be9]",
@@ -166,23 +166,13 @@ export default function PlansDashboard() {
                     </div>
                   ))}
                 </div>                {/* Button */}
-                {plan.price === 0 ? (
-                  <Link href="/dashboard" passHref>
-                    <Button 
-                      className={`mt-auto w-full py-6 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-medium`}
-                    >
-                      GET STARTED FREE
-                    </Button>
-                  </Link>
-                ) : (
-                  <Link href={`/checkout?plan=${plan.id}`} passHref>
-                    <Button 
-                      className={`mt-auto w-full py-6 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-medium`}
-                    >
-                      UPGRADE NOW
-                    </Button>
-                  </Link>
-                )}
+                <Link href={`/checkout?plan=${plan.id}&billing=${billingPeriod}`} passHref>
+                  <Button 
+                    className={`mt-auto w-full py-6 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-medium`}
+                  >
+                    {plan.id === 'seed' ? 'GET STARTED' : 'UPGRADE NOW'}
+                  </Button>
+                </Link>
               </div>
             </div>
           ))}

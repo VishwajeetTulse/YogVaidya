@@ -2,7 +2,7 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import verify from "@/lib/rzp/verify";
-import { Check, Crown, Sparkles, IndianRupeeIcon, Shield, Clock, Users } from "lucide-react";
+import { Check, Crown, Sparkles, IndianRupeeIcon, Shield, Clock, Users, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import Script from "next/script";
 import { createUserSubscription } from "@/lib/subscriptions";
@@ -23,6 +23,29 @@ export default function Checkout({ plan }: { plan: string }) {
   };
 
   const planDetails = {
+    seed: {
+      name: "Seed",
+      price: 1999,
+      originalPrice: 1999,
+      description: "Perfect for meditation enthusiasts",
+      gradient: "from-[#76d2fa] to-[#5a9be9]",
+      textColor: "text-[#5a9be9]",
+      bgColor: "bg-[#5a9be9]",
+      icon: <Star className="w-8 h-8 text-white" />,
+      features: [
+        "Live meditation sessions",
+        "Basic meditation guides",
+        "Online support",
+        "Guided relaxation techniques",
+        "Progress tracking",
+        "Community access"
+      ],
+      benefits: [
+        { icon: <Users className="w-5 h-5" />, text: "Group meditation sessions" },
+        { icon: <Clock className="w-5 h-5" />, text: "Flexible scheduling" },
+        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" }
+      ]
+    },
     bloom: {
       name: "Bloom",
       price: 1999,
@@ -70,10 +93,9 @@ export default function Checkout({ plan }: { plan: string }) {
       ]
     }
   };
-
-  const selectedPlan = planDetails[plan as keyof typeof planDetails];  // Redirect if plan not found or is seed
+  const selectedPlan = planDetails[plan as keyof typeof planDetails];  // Redirect if plan not found
   useEffect(() => {
-    if (!selectedPlan || plan === "seed") {
+    if (!selectedPlan) {
       router.push("/dashboard/plans");
     }
   }, [selectedPlan, plan, router]);
@@ -102,7 +124,7 @@ export default function Checkout({ plan }: { plan: string }) {
           amount: applyDiscount(selectedPlan.price)
         }),
       });
-      
+
       const data = await response.json();
       console.log("API response:", data);
 
@@ -110,12 +132,12 @@ export default function Checkout({ plan }: { plan: string }) {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         subscription_id: data.subscription.id,
         name: "Yoga Vaidya",
-        description: `${selectedPlan.name} Plan Subscription`,        handler: async function (response: any) {
+        description: `${selectedPlan.name} Plan Subscription`, handler: async function (response: any) {
           try {
             if (!(await verify(response.razorpay_subscription_id, response.razorpay_payment_id, response.razorpay_signature))) {
               throw new Error("Payment verification failed");
             }
-            
+
             // Payment verified successfully - now update user subscription in database
             if (!session?.user?.id) {
               throw new Error("User session not found");
@@ -126,7 +148,7 @@ export default function Checkout({ plan }: { plan: string }) {
             // Create/update subscription using server action
             const subscriptionResult = await createUserSubscription({
               userId: session.user.id,
-              subscriptionPlan: plan.toUpperCase() as "BLOOM" | "FLOURISH",
+              subscriptionPlan: plan.toUpperCase() as "SEED" | "BLOOM" | "FLOURISH",
               billingPeriod: billingPeriod,
               razorpaySubscriptionId: response.razorpay_subscription_id,
               razorpayCustomerId: data.customer?.id,
@@ -142,14 +164,14 @@ export default function Checkout({ plan }: { plan: string }) {
             } else {
               console.log("Subscription updated successfully:", subscriptionResult.user);
             }
-            
+
             // Success - redirect to dashboard with success message
             router.push("/dashboard?payment=success");
           } catch (error) {
             console.error("Payment processing error:", error);
             alert("Payment verification failed. Please contact support.");
           }
-        },        prefill: {
+        }, prefill: {
           name: session?.user?.name || "User",
           email: session?.user?.email || "user@example.com",
         },
@@ -157,7 +179,7 @@ export default function Checkout({ plan }: { plan: string }) {
           color: selectedPlan.bgColor.replace('bg-[', '').replace(']', ''),
         },
       };
-      
+
       const razorpay = new (window as any).Razorpay(options);
       razorpay.on("payment.failed", function (response: any) {
         alert("Payment failed. Please try again.");
@@ -188,7 +210,7 @@ export default function Checkout({ plan }: { plan: string }) {
     );
   }
 
-  
+
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-4">
@@ -235,21 +257,19 @@ export default function Checkout({ plan }: { plan: string }) {
                   <div className="inline-flex items-center bg-white/20 p-1 rounded-full">
                     <button
                       onClick={() => setBillingPeriod("monthly")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                        billingPeriod === "monthly"
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingPeriod === "monthly"
                           ? "bg-white text-gray-800 shadow-md"
                           : "text-white/80 hover:bg-white/10"
-                      }`}
+                        }`}
                     >
                       Monthly
                     </button>
                     <button
                       onClick={() => setBillingPeriod("annual")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
-                        billingPeriod === "annual"
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingPeriod === "annual"
                           ? "bg-white text-gray-800 shadow-md"
                           : "text-white/80 hover:bg-white/10"
-                      }`}
+                        }`}
                     >
                       Annual
                     </button>
@@ -308,7 +328,7 @@ export default function Checkout({ plan }: { plan: string }) {
             {/* Checkout Form */}
             <div className="bg-white rounded-2xl shadow-xl p-8">
               <h2 className="text-2xl font-bold text-gray-800 mb-6">Payment Summary</h2>
-              
+
               {/* Order Summary */}
               <div className="space-y-4 mb-8">
                 <div className="flex justify-between items-center py-3 border-b border-gray-100">
