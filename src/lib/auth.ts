@@ -61,17 +61,18 @@ export const auth = betterAuth({
       nextCookies(),
     ],
     user: {
-        additionalFields: {            phone: {
+        additionalFields: {            
+          phone: {
                 type: "string",
                 required: false,  // Changed to false since it's not provided by Google
                 defaultValue: "",
                 input: true,
-            },
+            },            
             role: {
                 type: "string",
                 required: true,
                 defaultValue: "USER",
-                input: false,
+                input: true,  // Changed to true so the role can be specified during signup
             },
             mentorType: {
                 type: "string",

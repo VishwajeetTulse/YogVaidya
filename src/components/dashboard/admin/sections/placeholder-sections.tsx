@@ -1,28 +1,6 @@
+"use client";
+
 import { AdminSectionProps } from "../types";
-
-export const UsersSection = ({ userDetails }: AdminSectionProps) => (
-  <div className="space-y-6">
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
-      <p className="text-gray-600 mt-2">Comprehensive user administration and account management.</p>
-    </div>
-    <div className="text-center py-20">
-      <p className="text-gray-500">User management coming soon...</p>
-    </div>
-  </div>
-);
-
-export const ModeratorsSection = ({ userDetails }: AdminSectionProps) => (
-  <div className="space-y-6">
-    <div>
-      <h1 className="text-3xl font-bold text-gray-900">Moderator Management</h1>
-      <p className="text-gray-600 mt-2">Manage platform moderators and their permissions.</p>
-    </div>
-    <div className="text-center py-20">
-      <p className="text-gray-500">Moderator management coming soon...</p>
-    </div>
-  </div>
-);
 
 export const SystemSection = ({ userDetails }: AdminSectionProps) => (
   <div className="space-y-6">
@@ -83,3 +61,4 @@ export const SupportSection = ({ userDetails }: AdminSectionProps) => (
     </div>
   </div>
 );
+
