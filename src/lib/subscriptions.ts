@@ -153,7 +153,8 @@ async function updateUserSubscription(data: UpdateSubscriptionData) {
           await razorpay.subscriptions.update(razorpaySubId, {
             plan_id: planId,
             quantity: 1,
-            total_count: data.billingPeriod === 'annual' ? 12 : 1,
+            total_count: 12,
+            expire_by: Math.floor(Date.now() / 1000) +31536000, // 1 year or 30 days
             customer_notify: 1
           });
         }

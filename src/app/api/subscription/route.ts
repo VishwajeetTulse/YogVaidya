@@ -49,8 +49,8 @@ export async function POST(req: NextRequest) {
         const subscription: Subscriptions.RazorpaySubscription = await razorpay.subscriptions.create({
             plan_id: planId,
             customer_notify: true,
-            total_count: billingPeriod === 'annual' ? 12 : 1,
-            expire_by: Math.floor(Date.now() / 1000) + (billingPeriod === 'annual' ? 31536000 : 2592000), // 1 year or 30 days
+            total_count: 12,
+            expire_by: Math.floor(Date.now() / 1000) +31536000, // 1 year or 30 days
             notes: {
                 plan_type: plan,
                 billing_period: billingPeriod,

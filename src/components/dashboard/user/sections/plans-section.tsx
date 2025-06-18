@@ -54,7 +54,7 @@ export const PlansSection = ({
         if (result.success && result.subscription) {
           setSubscription({
             subscriptionStatus: result.subscription.subscriptionStatus || "INACTIVE",
-            subscriptionPlan: result.subscription.subscriptionPlan,
+            subscriptionPlan: result.subscription.subscriptionPlan || "",
             billingPeriod: result.subscription.billingPeriod!,
             email: result.subscription.email,
             name: result.subscription.name!
@@ -96,72 +96,98 @@ export const PlansSection = ({
         }),
       });
 
-      const data = await response.json();
+      const responseData = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || 'Failed to process upgrade');
+        throw new Error(responseData.error || 'Failed to process upgrade');
       }
 
-      if (data.success) {
-        if (data.priceDetails.isPlanSwitch) {
-          // For same-price plan switches, no payment needed          toast.success("Plan Updated Successfully", {
-            description: "Your subscription has been updated to the new plan."
-          }
-          window.location.reload();
-        } else {
-          // Initialize Razorpay for paid upgrades
+      if (responseData.success) {
+        if (responseData.priceDetails.requiresPayment && responseData.paymentDetails) {
+          // For paid upgrades, initialize Razorpay payment
           const options = {
-            key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-            amount: data.order.amount,
-            currency: data.order.currency,
-            name: "YogaVaidya",
-            description: `Upgrade to ${data.priceDetails.newPlan} Plan`,
-            order_id: data.order.id,
-            handler: async function (response: any) {
-              const verifyResponse = await fetch('/api/subscription/payment/verify', {
-                method: 'POST',
-                headers: {
-                  'Content-Type': 'application/json',
-                },
-                body: JSON.stringify({
-                  razorpay_payment_id: response.razorpay_payment_id,
-                  razorpay_order_id: response.razorpay_order_id,
-                  razorpay_signature: response.razorpay_signature
-                })
-              });
-
-              const verifyResult = await verifyResponse.json();
-              
-              if (verifyResult.success) {                toast.success("Upgrade Successful", {
-                  description: "Your plan has been upgraded successfully."
+            ...responseData.paymentDetails,
+            handler: async function (paymentResponse: any) {
+              try {
+                // After successful payment, call the upgrade API again with payment verification
+                const upgradeResponse = await fetch('/api/subscription/upgrade', {
+                  method: 'POST',
+                  headers: {
+                    'Content-Type': 'application/json',
+                  },
+                  body: JSON.stringify({
+                    newPlan: planId.toUpperCase(),
+                    billingPeriod,
+                    paymentVerified: true,
+                    paymentId: paymentResponse.razorpay_payment_id,
+                    orderId: paymentResponse.razorpay_order_id,
+                    signature: paymentResponse.razorpay_signature
+                  }),
                 });
-                window.location.reload();
-              } else {
+
+                const upgradeData = await upgradeResponse.json();
+                
+                if (upgradeData.success) {
+                  toast.success("Plan Upgraded Successfully", {
+                    description: "Your subscription has been updated to the new plan."
+                  });
+                  window.location.reload();
+                } else {
+                  throw new Error(upgradeData.error || 'Failed to upgrade plan');
+                }
+              } catch (error) {
+                console.error('Error completing upgrade:', error);
                 toast.error("Upgrade Failed", {
-                  description: verifyResult.error || "Failed to verify payment"
+                  description: error instanceof Error ? error.message : "Failed to complete the upgrade"
                 });
               }
             },
-            prefill: {              name: subscription?.name || '',
-              email: subscription?.email || ''
+            modal: {
+              ondismiss: function() {
+                setIsUpgrading(false);
+              }
             },
             theme: {
               color: '#876aff'
             }
           };
 
-          const razorpay = new (window as any).Razorpay(options);
-          razorpay.open();
+          // Load Razorpay script if not already loaded
+          if (!(window as any).Razorpay) {
+            await loadRazorpayScript();
+          }
+
+          const rzp = new (window as any).Razorpay(options);
+          rzp.open();
+          
+        } else if (responseData.priceDetails.isPlanSwitch) {
+          // For same-tier switches or free upgrades
+          toast.success("Plan Updated Successfully", {
+            description: "Your subscription has been updated to the new plan."
+          });
+          window.location.reload();
         }
       }
-    catch (error) {
-      console.error('Upgrade error:', error);      toast.error("Upgrade Failed", {
+    } catch (error) {
+      console.error('Upgrade error:', error);
+      toast.error("Upgrade Failed", {
         description: error instanceof Error ? error.message : "Something went wrong"
       });
-    } finally {
       setIsUpgrading(false);
     }
   };
+
+  // Helper function to load Razorpay script
+  const loadRazorpayScript = () => {
+    return new Promise((resolve, reject) => {
+      const script = document.createElement('script');
+      script.src = 'https://checkout.razorpay.com/v1/checkout.js';
+      script.onload = resolve;
+      script.onerror = reject;
+      document.body.appendChild(script);
+    });
+  };
+
   // Apply discount for annual billing
   const applyDiscount = (price: number) => {
     if (billingPeriod === "annual") {
@@ -470,6 +496,7 @@ export const PlansSection = ({
               </tbody>
             </table>
           </div>
+          <script src="https://checkout.razorpay.com/v1/checkout.js"></script>
         </div>      )}
         </>
       )}
