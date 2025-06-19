@@ -31,6 +31,22 @@ enum SubscriptionStatus {
   EXPIRED
   PENDING
 }
+enum LogLevel {
+  INFO
+  WARNING
+  ERROR
+}
+
+enum LogCategory {
+  AUTHENTICATION
+  SYSTEM
+  USER
+  SUBSCRIPTION
+  PAYMENT
+  MENTOR
+  MODERATOR
+  ADMIN
+}
 
 model User {
   id                    String            @id @map("_id")
@@ -60,6 +76,7 @@ model User {
   
   sessions              Session[]
   accounts              Account[]
+  systemLogs            SystemLog[]
   
   
   @@unique([email])
@@ -129,3 +146,23 @@ model MentorApplication {
   @@map("mentor_application")
 }
 
+model SystemLog {
+  id        String      @id @map("_id") 
+  timestamp DateTime    @default(now())
+  userId    String?
+  user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
+  action    String
+  category  LogCategory
+  details   String?
+  level     LogLevel
+  metadata  Json?
+  ipAddress String?
+  userAgent String?
+  createdAt DateTime    @default(now())
+
+  @@index([timestamp(sort: Desc)])
+  @@index([userId])
+  @@index([category])
+  @@index([level])
+  @@map("systemLog")
+}

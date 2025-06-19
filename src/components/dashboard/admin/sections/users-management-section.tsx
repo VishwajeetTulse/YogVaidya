@@ -7,6 +7,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useLogger } from "@/hooks/use-logger";
 import { 
   Search, 
   UserCog, 
@@ -36,6 +37,7 @@ interface User {
 }
 
 export const UserManagementSection = () => {
+  const { logInfo, logError } = useLogger();
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -141,7 +143,6 @@ export const UserManagementSection = () => {
       role: value,
     });
   };
-
   const submitUserEdit = async () => {
     if (!editingUser) return;
     
@@ -164,6 +165,25 @@ export const UserManagementSection = () => {
       
       if (data.success) {
         toast.success("User updated successfully");
+        
+        // Log the successful user update
+        logInfo(
+          "USER_UPDATED",
+          "ADMIN",
+          `User ${editingUser.email} updated by admin`,
+          {
+            userId: editingUser.id,
+            previousRole: editingUser.role,
+            newRole: formData.role,
+            changedFields: {
+              name: editingUser.name !== formData.name,
+              email: editingUser.email !== formData.email,
+              phone: editingUser.phone !== formData.phone,
+              role: editingUser.role !== formData.role,
+            }
+          }
+        );
+        
         setUsers(users.map(u => 
           u.id === editingUser.id 
             ? { ...u, name: formData.name, email: formData.email, phone: formData.phone, role: formData.role } 
@@ -172,13 +192,34 @@ export const UserManagementSection = () => {
         setIsEditDialogOpen(false);
       } else {
         toast.error(`Failed to update user: ${data.error || "Unknown error"}`);
+        
+        // Log the failed update
+        logError(
+          "USER_UPDATE_FAILED",
+          "ADMIN",
+          `Failed to update user ${editingUser.email}: ${data.error || "Unknown error"}`,
+          {
+            userId: editingUser.id,
+            error: data.error
+          }
+        );
       }
     } catch (error) {
       console.error("Error updating user:", error);
       toast.error("An error occurred while updating user");
+      
+      // Log the error
+      logError(
+        "USER_UPDATE_ERROR",
+        "ADMIN", 
+        `Error updating user ${editingUser.email}`,
+        {
+          userId: editingUser.id,
+          error: error instanceof Error ? error.message : "Unknown error"
+        }
+      );
     }
   };
-
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
     
@@ -193,18 +234,49 @@ export const UserManagementSection = () => {
         }),
       });
       
-      const data = await res.json();
-      
-      if (data.success) {
+      const data = await res.json();        if (data.success) {
         toast.success("User deleted successfully");
+        
+        // Log successful user deletion via useLogger hook
+        logInfo(
+          "USER_DELETED",
+          "ADMIN",
+          `User ${userToDelete.email} deleted by admin`,
+          {
+            deletedUserId: userToDelete.id,
+            userEmail: userToDelete.email,
+            userRole: userToDelete.role
+          }
+        );
+        
         setUsers(users.filter(u => u.id !== userToDelete.id));
-        setIsDeleteDialogOpen(false);
-      } else {
+        setIsDeleteDialogOpen(false);      } else {
         toast.error(`Failed to delete user: ${data.error || "Unknown error"}`);
-      }
-    } catch (error) {
+        
+        // Log failed deletion via useLogger hook
+        logError(
+          "USER_DELETE_FAILED",
+          "ADMIN",
+          `Failed to delete user ${userToDelete.email}: ${data.error || "Unknown error"}`,
+          {
+            userId: userToDelete.id,
+            error: data.error
+          }
+        );
+      }    } catch (error) {
       console.error("Error deleting user:", error);
       toast.error("An error occurred while deleting user");
+      
+      // Log deletion error via useLogger hook
+      logError(
+        "USER_DELETE_ERROR",
+        "ADMIN",
+        `Error deleting user ${userToDelete.email}`,
+        {
+          userId: userToDelete.id,
+          error: error instanceof Error ? error.message : "Unknown error"
+        }
+      );
     }
   };
 

@@ -7,23 +7,21 @@ import { ADMIN_SIDEBAR_MENU_ITEMS } from "../admin/constants";
 // Import all admin section components
 import { OverviewSection } from "../admin/sections/overview-section";
 import {
-  SystemSection,
-  AnalyticsSection,
-  DatabaseSection,
   SettingsSection,
   SupportSection,
 } from "../admin/sections/placeholder-sections";
 import { UserManagementSection } from "../admin/sections/users-management-section";
 import { ModeratorManagementSection } from "../admin/sections/mod-management-section";
+import { LogsSection } from "../admin/sections/logs-section";
+import { AnalyticsSection } from "../admin/sections/analytics-section";
 
 // Create a mapping of section IDs to components
 const ADMIN_SECTION_COMPONENTS = {
   overview: OverviewSection,
   users: UserManagementSection, // Assuming UserManagementSection is imported correctly
   moderators: ModeratorManagementSection,
-  system: SystemSection,
+  logs: LogsSection,
   analytics: AnalyticsSection,
-  database: DatabaseSection,
   settings: SettingsSection,
   support: SupportSection,
 };

@@ -30,22 +30,16 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     description: "Manage moderators",
   },
   {
-    id: "system",
-    title: "System Health",
-    icon: Server,
-    description: "Monitor system status",
+    id: "logs",
+    title: "Logs",
+    icon: Database,
+    description: "View system & user logs",
   },
   {
     id: "analytics",
     title: "Analytics",
     icon: TrendingUp,
     description: "Platform analytics",
-  },
-  {
-    id: "database",
-    title: "Database",
-    icon: Database,
-    description: "Database management",
   },
   {
     id: "settings",
