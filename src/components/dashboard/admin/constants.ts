@@ -47,10 +47,4 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     icon: Settings,
     description: "System configuration",
   },
-  {
-    id: "support",
-    title: "Help & Support",
-    icon: HelpCircle,
-    description: "Admin documentation",
-  },
 ];

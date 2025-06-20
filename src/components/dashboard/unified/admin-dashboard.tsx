@@ -6,15 +6,11 @@ import { ADMIN_SIDEBAR_MENU_ITEMS } from "../admin/constants";
 
 // Import all admin section components
 import { OverviewSection } from "../admin/sections/overview-section";
-import {
-  SettingsSection,
-  SupportSection,
-} from "../admin/sections/placeholder-sections";
 import { UserManagementSection } from "../admin/sections/users-management-section";
 import { ModeratorManagementSection } from "../admin/sections/mod-management-section";
 import { LogsSection } from "../admin/sections/logs-section";
 import { AnalyticsSection } from "../admin/sections/analytics-section";
-
+import { SettingsSection } from "../admin/sections/settings-section";
 // Create a mapping of section IDs to components
 const ADMIN_SECTION_COMPONENTS = {
   overview: OverviewSection,
@@ -23,7 +19,6 @@ const ADMIN_SECTION_COMPONENTS = {
   logs: LogsSection,
   analytics: AnalyticsSection,
   settings: SettingsSection,
-  support: SupportSection,
 };
 
 export default function AdminDashboard() {

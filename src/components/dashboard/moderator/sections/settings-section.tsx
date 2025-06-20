@@ -6,16 +6,15 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Checkbox } from "@/components/ui/checkbox";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Bell, User } from "lucide-react";
-
+import { authClient } from "@/lib/auth-client"; // Adjust the import based on your project structure
 interface ModeratorSettings {
   mentorApplicationAlerts: boolean;
   userSignupAlerts: boolean;
 }
-
+  
 export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -26,6 +25,7 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
   const [displayName, setDisplayName] = useState(userDetails?.name || "");
   const [phoneNumber, setPhoneNumber] = useState(userDetails?.phone || "");
 
+  
   useEffect(() => {
     const fetchSettings = async () => {
       setIsLoading(true);
@@ -49,35 +49,17 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
     fetchSettings();
   }, []);
 
-  const saveSettings = async () => {
-    setIsSaving(true);
-    try {
-      const response = await fetch("/api/moderator/settings", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(settings),
-      });
-
-      if (!response.ok) {
-        throw new Error("Failed to save settings");
-      }
-
-      const data = await response.json();
-      if (data.success) {
-        toast.success("Settings saved successfully");
-      } else {
-        toast.error(data.error || "Failed to save settings");
-      }
-    } catch (error) {
-      console.error("Error saving settings:", error);
-      toast.error("Failed to save settings");
-    } finally {
-      setIsSaving(false);
+  const handlechangePassword = async () => {
+        const { error } = await authClient.forgetPassword({
+          email: userDetails.email,
+          redirectTo: "/reset-password",
+        });
+    if (!error) {
+      toast.success("Password reset link sent to your email");
+    } else {
+      toast.error("Failed to send password reset link");
     }
-  };
-
+      }
   const updateProfile = async () => {
     setIsSaving(true);
     try {
@@ -252,6 +234,9 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
           {isSaving ? "Saving..." : "Save Settings"}
         </Button>
       </div> */}
+      <Button onClick={handlechangePassword}>
+        Reset Password
+      </Button>
     </div>
   );
 };
