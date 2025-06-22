@@ -43,7 +43,7 @@ export async function POST(req: NextRequest) {
 
     const data = await req.json();
     console.log('Received request data:', data);
-    const { newPlan, billingPeriod, paymentVerified } = data;
+    const { newPlan, billingPeriod } = data;
 
     // Validate required fields
     if (!newPlan || typeof newPlan !== 'string') {
@@ -106,31 +106,7 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Calculate price difference if needed
-    const priceCalcResult = isSameTier 
-      ? { success: true, upgradePrice: 0, isPlanSwitch: true }
-      : await calculateUpgradePrice(session.user.id, newPlan as SubscriptionPlan);
-
-    console.log('Price calculation result:', priceCalcResult);
-
-    // Validate price calculation result
-    if (!priceCalcResult.success || 
-        (typeof priceCalcResult.upgradePrice !== 'number' && !isSameTier)) {
-      return errorResponse(
-        'Failed to calculate upgrade price',
-        'PRICE_CALCULATION_FAILED',
-        400
-      );
-    }
-
-    const priceCalculation = {
-      success: true as const,
-      upgradePrice: isSameTier ? 0 : (priceCalcResult.upgradePrice || 0),
-      isPlanSwitch: isSameTier
-    };
-
     try {
-      let orderResponse = null;
       const planIds = await getPlanIds();
       const planId = planIds[newPlan.toUpperCase() as keyof typeof planIds]?.[finalBillingPeriod];
 
@@ -144,155 +120,114 @@ export async function POST(req: NextRequest) {
 
       console.log('Using plan ID:', planId);
 
-      // Handle initial request for paid upgrade
-      if (!paymentVerified && priceCalculation.upgradePrice > 0) {
-        console.log('Creating order for upgrade payment');
-        const shortTimestamp = Math.floor(Date.now() / 1000).toString(36);
-        const receiptId = `up_${shortTimestamp}`;
-        
-        orderResponse = await razorpay.orders.create({
-          amount: Math.round(priceCalculation.upgradePrice * 100),
-          currency: "INR",
-          receipt: receiptId,
-          notes: {
-            userId: session.user.id,
-            previousPlan: currentSubscription.subscriptionPlan,
-            newPlan: newPlan,
-            billingPeriod: finalBillingPeriod,
-            currentSubscriptionId: currentSubscription.razorpaySubscriptionId,
-            type: "upgrade_payment"
-          }
-        });
+      // Calculate price and equivalent days for the new plan
+      const priceCalcResult = isSameTier 
+        ? { success: true, upgradePrice: 0, isPlanSwitch: true, equivalentDaysInNewPlan: 0 }
+        : await calculateUpgradePrice(session.user.id, newPlan as SubscriptionPlan);
 
-        console.log('Created order:', orderResponse);
+      console.log('Price calculation result:', priceCalcResult);
 
-        return Response.json({
-          success: true,
-          priceDetails: {
-            upgradePrice: priceCalculation.upgradePrice,
-            orderId: orderResponse.id,
-            isPlanSwitch: false,
-            requiresPayment: true
-          },
-          paymentDetails: {
-            key: process.env.RAZORPAY_KEY_ID,
-            amount: Math.round(priceCalculation.upgradePrice * 100),
-            currency: "INR",
-            name: "YogVaidya",
-            description: `Upgrade to ${newPlan} plan`,
-            order_id: orderResponse.id,
-            prefill: {
-              email: session.user.email,
-              name: session.user.name
-            },
-            notes: {
-              userId: session.user.id,
-              type: "upgrade_payment"
-            }
-          }
-        });
+      if (!priceCalcResult.success) {
+        return errorResponse(
+          'Failed to calculate upgrade details',
+          'CALCULATION_FAILED',
+          400
+        );
       }
 
-      // Proceed with subscription change if payment is verified or no payment needed
-      if (paymentVerified || priceCalculation.upgradePrice === 0) {
-        console.log('Proceeding with subscription change');
-        
-        // Get current subscription details from Razorpay
-        let currentRazorpaySubscription = null;
-        let nextBillingDate = null;
+      // Get current subscription details from Razorpay
+      let currentRazorpaySubscription = null;
+      let nextBillingDate = null;
 
-        if (currentSubscription.razorpaySubscriptionId) {
-          try {
-            currentRazorpaySubscription = await razorpay.subscriptions.fetch(currentSubscription.razorpaySubscriptionId);
-            console.log('Current Razorpay subscription:', currentRazorpaySubscription);
+      if (currentSubscription.razorpaySubscriptionId) {
+        try {
+          currentRazorpaySubscription = await razorpay.subscriptions.fetch(currentSubscription.razorpaySubscriptionId);
+          console.log('Current Razorpay subscription:', currentRazorpaySubscription);
 
-            // Calculate next billing date
-            if (currentRazorpaySubscription.current_start && currentRazorpaySubscription.current_end) {
+          // Calculate next billing date
+          if (currentRazorpaySubscription.current_start && currentRazorpaySubscription.current_end) {
+            nextBillingDate = currentRazorpaySubscription.current_end;
+            
+            // If we're close to the current_end (within 1 hour), use the next cycle
+            const now = Math.floor(Date.now() / 1000);
+            if (nextBillingDate - now < 3600) { // less than 1 hour until current_end
               const cycleLength = currentRazorpaySubscription.current_end - currentRazorpaySubscription.current_start;
-              nextBillingDate = currentRazorpaySubscription.current_end;
-              
-              // If we're close to the current_end (within 1 hour), use the next cycle
-              const now = Math.floor(Date.now() / 1000);
-              if (nextBillingDate - now < 3600) { // less than 1 hour until current_end
-                nextBillingDate += cycleLength;
-              }
+              nextBillingDate += cycleLength;
             }
-          } catch (error) {
-            console.warn('Error fetching current subscription:', error);
           }
+        } catch (error) {
+          console.warn('Error fetching current subscription:', error);
         }
+      }      // Calculate start time based on plan type
+      const now = Math.floor(Date.now() / 1000);
+      let startAt;
 
-        // Calculate the start time for the new subscription
-        const now = Math.floor(Date.now() / 1000);
-        const startAt = nextBillingDate || now;
-        
-        console.log('Creating new subscription starting at:', new Date(startAt * 1000).toISOString());
-
-        // Create new subscription
-        console.log('Creating new subscription with plan:', planId);
-        const newSubscription = await razorpay.subscriptions.create({
-          plan_id: planId,
-          customer_notify: 1,
-          quantity: 1,
-          total_count: finalBillingPeriod === 'monthly' ? 12 : 1,
-          addons: [],
-          start_at: startAt, // Always set the start time to next billing date
-          notes: {
-            userId: session.user.id,
-            previousPlan: currentSubscription.subscriptionPlan,
-            newPlan: newPlan,
-            billingPeriod: finalBillingPeriod,
-            type: isSameTier ? "plan_switch" : "upgrade",
-            previousSubscriptionId: currentSubscription.razorpaySubscriptionId || null,
-            startAt: startAt.toString(),
-            nextBillingDate: nextBillingDate ? new Date(nextBillingDate * 1000).toISOString() : null
-          }
-        });
-
-        console.log('Created new subscription:', newSubscription);
-
-        // Only cancel the old subscription if we successfully created the new one
-        if (currentSubscription.razorpaySubscriptionId && newSubscription.id) {
-          try {
-            const cancelParams = startAt > now ? { schedule_change_at: "cycle_end" } : undefined;
-            console.log('Cancelling old subscription:', currentSubscription.razorpaySubscriptionId, cancelParams);
-            await razorpay.subscriptions.cancel(currentSubscription.razorpaySubscriptionId);
-          } catch (error) {
-            console.warn('Error cancelling existing subscription:', error);
-          }
-        }
-
-        // Update user's subscription in database
-        console.log('Updating subscription in database');
-        await updateUserSubscription({
-          userId: session.user.id,
-          subscriptionPlan: newPlan as SubscriptionPlan,
-          billingPeriod: finalBillingPeriod,
-          razorpaySubscriptionId: newSubscription.id,
-          autoRenewal: true
-        });
-
-        return Response.json({
-          success: true,
-          subscription: newSubscription,
-          priceDetails: {
-            upgradePrice: priceCalculation.upgradePrice,
-            orderId: null,
-            isPlanSwitch: priceCalculation.isPlanSwitch,
-            subscriptionId: newSubscription.id,
-            paymentCompleted: true,
-            nextBillingDate: startAt,
-            startDate: new Date(startAt * 1000).toISOString()
-          }
-        });
+      if (isSameTier) {
+        // For plan switches (SEED <-> BLOOM), use the current subscription's billing date
+        startAt = nextBillingDate || currentRazorpaySubscription?.current_end || now;
+        console.log('Plan switch: Using current billing date:', new Date(startAt * 1000).toISOString());
+      } else {
+        // For upgrades to higher tier, use calculated equivalent days
+        const equivalentSeconds = (priceCalcResult.equivalentDaysInNewPlan || 0) * 24 * 60 * 60;
+        startAt = now + equivalentSeconds;
+        console.log('Plan upgrade: Using calculated start date:', new Date(startAt * 1000).toISOString());
       }
 
-      // If we reach here, something went wrong
-      return errorResponse(
-        'Invalid request state',
-        'INVALID_STATE',
-        400
-      );
+      // Create new subscription with calculated start time
+      console.log('Creating new subscription with plan:', planId);
+      const subscriptionCreateParams = {
+        plan_id: planId,
+        customer_notify: true,
+        quantity: 1,
+        total_count: 12,
+        addons: [],
+        start_at: startAt,
+        notes: {
+          userId: session.user.id,
+          previousPlan: currentSubscription.subscriptionPlan,
+          newPlan: newPlan,
+          billingPeriod: finalBillingPeriod,
+          type: isSameTier ? "plan_switch" : "upgrade",
+          previousSubscriptionId: currentSubscription.razorpaySubscriptionId || null,
+          equivalentDaysInNewPlan: priceCalcResult.equivalentDaysInNewPlan?.toString() || "0"
+        }
+      };
+
+      console.log('Creating subscription with params:', subscriptionCreateParams);      
+      const newSubscription = await razorpay.subscriptions.create(subscriptionCreateParams) as any;
+      console.log('Created new subscription:', newSubscription);
+
+      // Cancel the old subscription at the end of the current billing cycle
+      if (currentSubscription.razorpaySubscriptionId && newSubscription) {
+        try {
+          console.log('Scheduling old subscription cancellation at cycle end');
+          // Schedule cancellation at cycle end by passing true
+          await razorpay.subscriptions.cancel(currentSubscription.razorpaySubscriptionId, true);
+        } catch (error) {
+          console.warn('Error cancelling existing subscription:', error);
+        }
+      }
+
+      // Update user's subscription in database
+      console.log('Updating subscription in database');
+      await updateUserSubscription({
+        userId: session.user.id,
+        subscriptionPlan: newPlan as SubscriptionPlan,
+        billingPeriod: finalBillingPeriod,
+        razorpaySubscriptionId: newSubscription?.id,
+        autoRenewal: true
+      });
+
+      return Response.json({
+        success: true,
+        subscription: newSubscription,
+        priceDetails: {
+          isPlanSwitch: isSameTier,
+          subscriptionId: newSubscription?.id,
+          nextBillingDate: nextBillingDate || newSubscription?.start_at,
+          startDate: new Date((nextBillingDate || newSubscription?.start_at || Math.floor(Date.now() / 1000)) * 1000).toISOString()
+        }
+      });
     } catch (error: any) {
       console.error('Error processing upgrade:', error);
       return errorResponse(

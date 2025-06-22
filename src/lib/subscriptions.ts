@@ -123,46 +123,7 @@ async function updateUserSubscription(data: UpdateSubscriptionData) {
     if (data.trialEndDate !== undefined) updateData.trialEndDate = data.trialEndDate;
     if (data.autoRenewal !== undefined) updateData.autoRenewal = data.autoRenewal;
 
-    
-    // Update Razorpay subscription if it exists and plan or amount has changed
-    const razorpaySubId = (user as any).razorpaySubscriptionId;
-    if (razorpaySubId && (data.subscriptionPlan !== undefined || data.paymentAmount !== undefined)) {
-      try {
-        const currentSub = await razorpay.subscriptions.fetch(razorpaySubId);
-        
-        // Only update if the subscription is active
-        if (currentSub.status === 'active') {          // Calculate the new plan amount in paisa
-          const newAmount = data.paymentAmount ? Math.round(data.paymentAmount * 100) : undefined;
-          
-          // Create a new plan if amount is changing
-          let planId = currentSub.plan_id;
-          if (newAmount) {
-            const newPlan = await razorpay.plans.create({
-              period: data.billingPeriod === 'annual' ? 'yearly' : 'monthly',
-              interval: 1,
-              item: {
-                name: `${data.subscriptionPlan || currentSub.plan_id} Plan`,
-                amount: newAmount,
-                currency: 'INR'
-              }
-            });
-            planId = newPlan.id;
-          }
-          
-          // Update the subscription
-          await razorpay.subscriptions.update(razorpaySubId, {
-            plan_id: planId,
-            quantity: 1,
-            total_count: 12,
-            expire_by: Math.floor(Date.now() / 1000) +31536000, // 1 year or 30 days
-            customer_notify: 1
-          });
-        }
-      } catch (razorpayError) {
-        console.error("Error updating Razorpay subscription:", razorpayError);
-        // Continue with local update even if Razorpay update fails
-      }
-    }
+      // No need to update Razorpay subscription anymore as it will be handled by the upgrade route
     const updatedUser = await prisma.user.update({
       where: { id: data.userId },
       data: updateData
@@ -435,33 +396,37 @@ async function calculateUpgradePrice(userId: string, newPlan: SubscriptionPlan) 
 
     const now = new Date();
     const endDate = new Date(subscriptionEndDate);
+    const totalDays = currentBillingPeriod === "annual" ? 365 : 30;
     const daysRemaining = Math.max(0, Math.ceil((endDate.getTime() - now.getTime()) / (1000 * 60 * 60 * 24)));
 
     // Get current pricing
     const planPricing = await getPlanPricing();
     const currentAmount = planPricing[currentPlan as SubscriptionPlan][currentBillingPeriod as "monthly" | "annual"];
     const newAmount = planPricing[newPlan][currentBillingPeriod as "monthly" | "annual"];
-    const totalDays = currentBillingPeriod === "annual" ? 365 : 30;
 
-    // Calculate daily rates
+    // Calculate daily rates for both plans
     const currentPlanDailyRate = currentAmount / totalDays;
     const newPlanDailyRate = newAmount / totalDays;
 
-    // Calculate unused amount from current plan that will be credited
-    const unusedAmount = currentPlanDailyRate * daysRemaining;
+    // Calculate how many days in the new plan the unused amount would buy
+    // This maintains the value proportion between plans
+    const unusedCurrentValue = currentPlanDailyRate * daysRemaining;
+    const equivalentDaysInNewPlan = unusedCurrentValue / newPlanDailyRate;
+    
+    // Calculate the credit amount based on the equivalent days in new plan
+    const unusedCredit = newPlanDailyRate * equivalentDaysInNewPlan;
 
-    // Calculate prorated amount for the new plan
-    const proratedNewAmount = newPlanDailyRate * daysRemaining;
-
-    // Final upgrade amount is the difference, with credit for unused current plan
-    const upgradeAmount = Math.max(0, Math.round(proratedNewAmount - unusedAmount));
+    // Final upgrade amount is new plan's full price minus the equivalent unused credit
+    const upgradeAmount = Math.max(0, Math.round(newAmount - unusedCredit));
 
     return {
       success: true,
       upgradePrice: upgradeAmount,
-      unusedCredit: Math.round(unusedAmount),
-      proratedNewAmount: Math.round(proratedNewAmount),
+      unusedCredit: Math.round(unusedCredit),
+      equivalentDaysInNewPlan: Math.round(equivalentDaysInNewPlan),
       remainingDays: daysRemaining,
+      currentPlanDailyRate: Math.round(currentPlanDailyRate),
+      newPlanDailyRate: Math.round(newPlanDailyRate),
       currentPlan,
       newPlan,
       billingPeriod: currentBillingPeriod,

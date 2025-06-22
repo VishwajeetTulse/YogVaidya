@@ -72,11 +72,34 @@ export const PlansSection = ({
 
     fetchSubscription();
   }, [session?.user.id]);
+  // Helper to format the next payment date
+  const formatNextPaymentDate = (timestamp: string | number) => {
+    console.log('Formatting timestamp:', timestamp, typeof timestamp);
+    
+    // If timestamp is a string that looks like an ISO date
+    if (typeof timestamp === 'string' && timestamp.includes('T')) {
+      return new Date(timestamp).toLocaleDateString('en-IN', {
+        day: 'numeric',
+        month: 'long',
+        year: 'numeric'
+      });
+    }
+    
+    // If timestamp is a Unix timestamp (either string or number)
+    const unixTimestamp = typeof timestamp === 'string' ? parseInt(timestamp, 10) : timestamp;
+    const date = new Date(unixTimestamp * 1000);
+    console.log('Converted date:', date);
+    
+    return date.toLocaleDateString('en-IN', {
+      day: 'numeric',
+      month: 'long',
+      year: 'numeric'
+    });
+  };
 
   const handleUpgrade = async (planId: string) => {
     if (isUpgrading) return;
 
-    // If no active subscription or subscription status is not active, redirect to checkout
     if (!subscription?.subscriptionStatus || subscription.subscriptionStatus !== "ACTIVE") {
       window.location.href = `/checkout?plan=${planId}&billing=${billingPeriod}`;
       return;
@@ -97,6 +120,7 @@ export const PlansSection = ({
       });
 
       const responseData = await response.json();
+      console.log('Upgrade response:', responseData);
 
       if (!response.ok) {
         throw new Error(responseData.error || 'Failed to process upgrade');
@@ -109,7 +133,6 @@ export const PlansSection = ({
             ...responseData.paymentDetails,
             handler: async function (paymentResponse: any) {
               try {
-                // After successful payment, call the upgrade API again with payment verification
                 const upgradeResponse = await fetch('/api/subscription/upgrade', {
                   method: 'POST',
                   headers: {
@@ -126,17 +149,53 @@ export const PlansSection = ({
                 });
 
                 const upgradeData = await upgradeResponse.json();
+                console.log('Payment verification response:', upgradeData);
                 
-                if (upgradeData.success) {
-                  toast.success("Plan Upgraded Successfully", {
-                    description: "Your subscription has been updated to the new plan."
+                if (upgradeData.success) {                  const planType = planId.toUpperCase();
+                  const amount = upgradeData.priceDetails.paymentAmount || plans.find(p => p.id.toUpperCase() === planType)?.price || 0;
+                  const formattedAmount = formatCurrency(amount);
+
+                  console.log('Raw upgrade data:', upgradeData.priceDetails);
+                  console.log('Next payment date from API:', upgradeData.priceDetails.nextPaymentDate);
+                  
+                  let nextPaymentDate;
+                  if (upgradeData.priceDetails.startDate) {
+                    nextPaymentDate = formatNextPaymentDate(upgradeData.priceDetails.startDate);
+                  } else if (upgradeData.priceDetails.nextPaymentDate) {
+                    nextPaymentDate = formatNextPaymentDate(upgradeData.priceDetails.nextPaymentDate);
+                  } else {
+                    // Fallback to current date plus one billing period
+                    const now = new Date();
+                    now.setMonth(now.getMonth() + (billingPeriod === 'annual' ? 12 : 1));
+                    nextPaymentDate = now.toLocaleDateString('en-IN', {
+                      day: 'numeric',
+                      month: 'long',
+                      year: 'numeric'
+                    });
+                  }
+                  
+                  const toastMessage = upgradeData.priceDetails.type === "plan_switch"
+                    ? <div>Your plan has been switched to <strong>{planType}</strong>. Your next billing date is <strong>{nextPaymentDate}</strong> when you'll need to pay <strong>{formattedAmount}</strong></div>
+                    : <div>Your plan has been upgraded to <strong>{planType}</strong>. The higher rate of <strong>{formattedAmount}</strong> will be charged on your next billing date: <strong>{nextPaymentDate}</strong></div>;
+                  
+
+                  toast.success("Plan Updated Successfully", {
+                    description: toastMessage,
+                    duration: 6000
                   });
-                  window.location.reload();
+                  
+                  setSubscription(prev => ({
+                    ...prev!,
+                    subscriptionPlan: planType,
+                    billingPeriod: billingPeriod,
+                  }));
+                  setIsUpgrading(false);
                 } else {
                   throw new Error(upgradeData.error || 'Failed to upgrade plan');
                 }
               } catch (error) {
                 console.error('Error completing upgrade:', error);
+                setIsUpgrading(false);
                 toast.error("Upgrade Failed", {
                   description: error instanceof Error ? error.message : "Failed to complete the upgrade"
                 });
@@ -152,7 +211,6 @@ export const PlansSection = ({
             }
           };
 
-          // Load Razorpay script if not already loaded
           if (!(window as any).Razorpay) {
             await loadRazorpayScript();
           }
@@ -160,21 +218,68 @@ export const PlansSection = ({
           const rzp = new (window as any).Razorpay(options);
           rzp.open();
           
-        } else if (responseData.priceDetails.isPlanSwitch) {
-          // For same-tier switches or free upgrades
-          toast.success("Plan Updated Successfully", {
-            description: "Your subscription has been updated to the new plan."
+        } else {          // For plan switches or immediate upgrades
+          const planType = planId.toUpperCase();
+          const amount = responseData.priceDetails.paymentAmount || plans.find(p => p.id.toUpperCase() === planType)?.price || 0;
+          const formattedAmount = formatCurrency(amount);          console.log('Raw response data:', responseData.priceDetails);
+          console.log('Next payment date from API:', responseData.priceDetails.nextPaymentDate);
+          
+          let nextPaymentDate;
+          if (responseData.priceDetails.startDate) {
+            nextPaymentDate = formatNextPaymentDate(responseData.priceDetails.startDate);
+          } else if (responseData.priceDetails.nextPaymentDate) {
+            nextPaymentDate = formatNextPaymentDate(responseData.priceDetails.nextPaymentDate);
+          } else {
+            // Fallback to current date plus one billing period
+            const now = new Date();
+            now.setMonth(now.getMonth() + (billingPeriod === 'annual' ? 12 : 1));
+            nextPaymentDate = now.toLocaleDateString('en-IN', {
+              day: 'numeric',
+              month: 'long',
+              year: 'numeric'
+            });
+          }
+
+          console.log('Formatted data:', { 
+            rawTimestamp: responseData.priceDetails.nextPaymentDate,
+            nextPaymentDate,
+            planType,
+            amount,
+            formattedAmount
           });
-          window.location.reload();
+
+          const toastMessage = responseData.priceDetails.type === "plan_switch" 
+            ? <div>Your plan has been switched to <strong>{planType}</strong>. Your next billing date is <strong>{nextPaymentDate}</strong> when you'll need to pay <strong>{formattedAmount}</strong></div>
+            : <div>Your plan has been upgraded to <strong>{planType}</strong>. The higher rate of <strong>{formattedAmount}</strong> will be charged on your next billing date: <strong>{nextPaymentDate}</strong></div>;
+
+          toast.success("Plan Updated Successfully", {
+            description: toastMessage,
+            duration: 6000
+          });
+          
+          setSubscription(prev => ({
+            ...prev!,
+            subscriptionPlan: planType,
+            billingPeriod: billingPeriod,
+          }));
+          setIsUpgrading(false);
         }
       }
     } catch (error) {
       console.error('Upgrade error:', error);
+      setIsUpgrading(false);
       toast.error("Upgrade Failed", {
         description: error instanceof Error ? error.message : "Something went wrong"
       });
-      setIsUpgrading(false);
     }
+  };
+
+  // Apply discount for annual billing
+  const applyDiscount = (price: number) => {
+    if (billingPeriod === "annual") {
+      return Math.round(price * 0.8); // 20% discount for annual billing
+    }
+    return price;
   };
 
   // Helper function to load Razorpay script
@@ -188,12 +293,14 @@ export const PlansSection = ({
     });
   };
 
-  // Apply discount for annual billing
-  const applyDiscount = (price: number) => {
-    if (billingPeriod === "annual") {
-      return Math.round(price * 0.8); // 20% discount for annual billing
-    }
-    return price;
+  // Format currency helper
+  const formatCurrency = (amount: number) => {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0
+    }).format(amount);
   };
 
   const plans = [
