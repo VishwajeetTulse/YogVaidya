@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { format, formatDistance, subDays, subHours, subMinutes, parseISO } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { date } from "zod";
 
 interface OverviewSectionProps extends ModeratorSectionProps {}
 
@@ -15,14 +16,17 @@ interface AnalyticsData {
     total: number;
     recentSignups: number;
     byRole: Record<string, number>;
+    createdAt: Date[];
   };
   subscriptions: {
     total: number;
     byPlan: Record<string, number>;
+    createdAt: Date[];
   };
   mentorApplications: {
     total: number;
     pending: number;
+    created: Date[];
   };
   userGrowth: Array<{
     month: string;
@@ -65,6 +69,7 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
           throw new Error('Failed to fetch analytics data');
         }
         const analyticsResult = await analyticsResponse.json();
+        console.log('Analytics data:', analyticsResult); // For debugging
 
         // Fetch recent mentor applications
         const applicationsResponse = await fetch('/api/mentor-application');
@@ -72,7 +77,9 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
           throw new Error('Failed to fetch mentor applications');
         }
         const applicationsResult = await applicationsResponse.json();
+        console.log('Applications data:', applicationsResult); // For debugging
         
+        // Make sure we set analyticsData before using it
         setAnalyticsData(analyticsResult);
         
         // Only take the 5 most recent applications
@@ -89,71 +96,78 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
         const generatedActivities: Activity[] = [];
         
         // Add application activities
-        applications.forEach((app: MentorApplication, index: number) => {
-          // Try to parse the timestamp from the createdAt string
-          let appTimestamp;
-          try {
-            // First try to parse as ISO string
-            appTimestamp = parseISO(app.createdAt);
-            
-            // If the timestamp is invalid or far in the past, create a more recent one
-            const now = new Date();
-            const oneMonthAgo = subDays(now, 30);
-            
-            if (isNaN(appTimestamp.getTime()) || appTimestamp < oneMonthAgo) {
-              // Create staggered timestamps for applications - most recent ones first
-              appTimestamp = subDays(now, index + 1);
-              // Add some random hours to make them look more natural
-              appTimestamp = subHours(appTimestamp, Math.floor(Math.random() * 12));
-            }
-          } catch (error) {
-            // If parsing fails, create a timestamp (older applications get older timestamps)
-            appTimestamp = subDays(new Date(), index + 1);
-          }
-          
+        applications.forEach((app: MentorApplication) => {
+          // Use the actual application createdAt timestamp
           generatedActivities.push({
             id: `app-${app.id}`,
             type: 'application',
             title: 'New mentor application received',
             description: `${app.name} applied to become a ${app.mentorType?.toLowerCase() === 'yogamentor' ? 'yoga mentor' : 'diet planner'}`,
-            timestamp: appTimestamp,
+            timestamp: new Date(app.createdAt), // Use the actual timestamp from the application
             gradientClass: 'from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
           });
         });
         
         // Add user signup activity if there were recent signups
         if (analyticsResult.users?.recentSignups > 0) {
-          // Create a timestamp between 2-5 days ago for user signups activity
-          const signupTimestamp = subDays(new Date(), Math.floor(Math.random() * 3) + 2);
+          // Get the most recent user creation date from analytics
+          const recentUserCreatedAt = analyticsResult.users?.createdAt;
+          
+          // Find the most recent date
+          let mostRecentDate = new Date();
+          if (recentUserCreatedAt && recentUserCreatedAt.length > 0) {
+            // Sort dates in descending order to get the most recent one
+            const sortedDates = [...recentUserCreatedAt].sort((a, b) => 
+              new Date(b).getTime() - new Date(a).getTime()
+            );
+            mostRecentDate = new Date(sortedDates[0]);
+          }
           
           generatedActivities.push({
             id: 'recent-signups',
             type: 'signup',
             title: 'New user registrations',
             description: `${analyticsResult.users.recentSignups} new users joined in the last month`,
-            timestamp: signupTimestamp,
+            timestamp: mostRecentDate,
             gradientClass: 'from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
           });
         }
         
         // Add subscription activity if there are active subscriptions
         if (analyticsResult.subscriptions?.total > 0) {
-          // Create randomized timestamps for subscription activity - between 6-24 hours ago
-          const hoursAgo = Math.floor(Math.random() * 18) + 6;
-          const subscriptionTimestamp = subHours(new Date(), hoursAgo);
+          // Get subscription creation dates
+          const subscriptionCreatedAt = analyticsResult.subscriptions?.createdAt;
           
+          // Find the most recent subscription date
+          let mostRecentSubDate = new Date();
+          if (subscriptionCreatedAt && subscriptionCreatedAt.length > 0) {
+            const sortedDates = [...subscriptionCreatedAt].sort((a, b) => 
+              new Date(b).getTime() - new Date(a).getTime()
+            );
+            mostRecentSubDate = new Date(sortedDates[0]);
+            console.log(sortedDates);
+          }
           generatedActivities.push({
             id: 'subscriptions',
             type: 'subscription',
             title: 'Subscription update',
             description: `${analyticsResult.subscriptions.total} active subscriptions`,
-            timestamp: subscriptionTimestamp,
+            timestamp: mostRecentSubDate,
             gradientClass: 'from-[#a3e635]/20 to-[#65a30d]/10 border-[#a3e635]/30'
           });
         }
         
-        // Sort activities by timestamp (newest first)
-        const sortedActivities = generatedActivities
+        // Validate timestamps and sort activities by timestamp (newest first)
+        const validatedActivities = generatedActivities.map(activity => {
+          // Ensure timestamp is a valid date
+          if (!(activity.timestamp instanceof Date) || isNaN(activity.timestamp.getTime())) {
+            console.warn(`Invalid timestamp for activity: ${activity.id}. Using current date.`);
+            activity.timestamp = new Date();
+          }
+          return activity;
+        });
+        
+        const sortedActivities = validatedActivities
           .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
           .slice(0, 5);
           
@@ -308,10 +322,24 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
                 </div>
                 <div className="flex flex-col items-end">
                   <span className="text-xs text-gray-500 font-medium">
-                    {formatDistance(activity.timestamp, new Date(), { addSuffix: true })}
+                    {(() => {
+                      try {
+                        return formatDistance(activity.timestamp, new Date(), { addSuffix: true });
+                      } catch (e) {
+                        console.error("Error formatting distance:", e);
+                        return "recently";
+                      }
+                    })()}
                   </span>
                   <span className="text-xs text-gray-400 mt-1">
-                    {format(activity.timestamp, "MMM d, yyyy h:mm a")}
+                    {(() => {
+                      try {
+                        return format(activity.timestamp, "MMM d, yyyy h:mm a");
+                      } catch (e) {
+                        console.error("Error formatting date:", e);
+                        return format(new Date(), "MMM d, yyyy h:mm a");
+                      }
+                    })()}
                   </span>
                 </div>
               </div>

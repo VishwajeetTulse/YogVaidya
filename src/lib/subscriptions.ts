@@ -8,6 +8,7 @@ import type {
   UpdateSubscriptionData,
   CreateSubscriptionData
 } from './types';
+import subscriptions from "razorpay/dist/types/subscriptions";
 
 // Re-export types for backwards compatibility
 export type { SubscriptionPlan, SubscriptionStatus, UpdateSubscriptionData, CreateSubscriptionData };
@@ -654,7 +655,8 @@ export async function getSubscriptionAnalytics() {
         planBreakdown,
         billingPeriodBreakdown,
         retentionRate: Math.round(retentionRate * 100) / 100, // Round to 2 decimal places
-      }
+      },
+      createdAt : users.map(user => user.subscriptionStartDate?.toISOString()),
     };
     
   } catch (error) {

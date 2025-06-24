@@ -8,13 +8,14 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Bell, User } from "lucide-react";
+import { Bell, User, Lock } from "lucide-react";
+
 import { authClient } from "@/lib/auth-client"; // Adjust the import based on your project structure
 interface ModeratorSettings {
   mentorApplicationAlerts: boolean;
   userSignupAlerts: boolean;
 }
-  
+
 export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
   const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
@@ -24,8 +25,7 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
   });
   const [displayName, setDisplayName] = useState(userDetails?.name || "");
   const [phoneNumber, setPhoneNumber] = useState(userDetails?.phone || "");
-
-  
+console.log("User Details:", userDetails);
   useEffect(() => {
     const fetchSettings = async () => {
       setIsLoading(true);
@@ -50,16 +50,16 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
   }, []);
 
   const handlechangePassword = async () => {
-        const { error } = await authClient.forgetPassword({
-          email: userDetails.email,
-          redirectTo: "/reset-password",
-        });
+    const { error } = await authClient.forgetPassword({
+      email: userDetails.email,
+      redirectTo: "/reset-password",
+    });
     if (!error) {
       toast.success("Password reset link sent to your email");
     } else {
       toast.error("Failed to send password reset link");
     }
-      }
+  };
   const updateProfile = async () => {
     setIsSaving(true);
     try {
@@ -162,6 +162,22 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
           </Button>
         </div>
       </Card>
+      {/* Update Password card */}
+      {userDetails.authtype === "credential" && (
+        <Card className="p-6">
+          <div className="flex items-center space-x-2 mb-4">
+            <Lock className="h-5 w-5 text-primary" />
+            <h2 className="text-xl font-semibold">Change Password</h2>
+          </div>
+          <Separator className="mb-6" />
+          <Button
+            onClick={handlechangePassword}
+            className="w-1/3 bg-gray-800 hover:bg-gray-700 text-white"
+          >
+            Change/Reset Password
+          </Button>
+        </Card>
+      )}
 
       <Card className="p-6">
         <div className="flex items-center space-x-2 mb-4">
@@ -171,50 +187,6 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
         <Separator className="mb-4" />
 
         <div className="space-y-4">
-          {/* <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="mentorApplicationAlerts" 
-              checked={settings.mentorApplicationAlerts}
-              onCheckedChange={(checked) => {
-                setSettings({
-                  ...settings,
-                  mentorApplicationAlerts: checked === true
-                });
-              }}
-              disabled={isLoading || isSaving}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label htmlFor="mentorApplicationAlerts" className="text-sm font-medium">
-                Mentor Application Alerts
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Get notified when new mentor applications are submitted
-              </p>
-            </div>
-          </div>
-          
-          <div className="flex items-center space-x-2">
-            <Checkbox 
-              id="userSignupAlerts" 
-              checked={settings.userSignupAlerts}
-              onCheckedChange={(checked) => {
-                setSettings({
-                  ...settings,
-                  userSignupAlerts: checked === true
-                });
-              }}
-              disabled={isLoading || isSaving}
-            />
-            <div className="grid gap-1.5 leading-none">
-              <Label htmlFor="userSignupAlerts" className="text-sm font-medium">
-                User Signup Alerts
-              </Label>
-              <p className="text-sm text-muted-foreground">
-                Get notified when new users register on the platform
-              </p>
-            </div>
-          </div> */}
-
           {/* Notification section is under Construction */}
           <div className="text-gray-500 text-sm">
             <p className="mb-2">
@@ -224,19 +196,6 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
           </div>
         </div>
       </Card>
-
-      {/* <div className="flex justify-end">
-        <Button
-          onClick={saveSettings}
-          disabled={isLoading || isSaving}
-          className="min-w-[120px]"
-        >
-          {isSaving ? "Saving..." : "Save Settings"}
-        </Button>
-      </div> */}
-      <Button onClick={handlechangePassword}>
-        Reset Password
-      </Button>
     </div>
   );
 };

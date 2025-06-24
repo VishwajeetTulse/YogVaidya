@@ -121,24 +121,28 @@ export async function GET(request: NextRequest) {
       }
     }    // Calculate total of only displayed roles (USER and MENTOR)
     const roleTotal = Object.values(usersByRole).reduce((sum, count) => sum + count, 0);
-    console.log("Role total:", userGrowth);
+
     return NextResponse.json({
       users: {
         total: roleTotal, // Only count users and mentors in total
         recentSignups,
-        byRole: usersByRole
+        byRole: usersByRole,
+        createdAt: allUsers.map(user => user.createdAt.toISOString())
       },
       subscriptions: {
         total: subscriptionData.success ? subscriptionData.analytics?.totalActiveSubscriptions || 0 : 0,
-        byPlan: subscriptionsByPlan
+        byPlan: subscriptionsByPlan,
+        createdAt: subscriptionData.success ? subscriptionData.createdAt : []
       },
       mentorApplications: {
         total: mentorApplications.length,
-        pending: pendingApplications
+        pending: pendingApplications,
+        createdAt: mentorApplications.map(app => app.createdAt.toISOString())
       },      
       // Send the months chronologically (oldest first) for clearer visualization
       userGrowth: userGrowth,
-      revenueGrowth: userGrowth
+      revenueGrowth: userGrowth,
+
     });
 
   } catch (error) {

@@ -17,8 +17,8 @@ export interface UserDetails {
   updatedAt: Date;
   
   // Subscription Details
-  subscriptionPlan: string;
-  subscriptionStatus: string;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string | null;
   subscriptionStartDate?: Date | null;
   subscriptionEndDate?: Date | null;
   billingPeriod?: string | null;
@@ -27,13 +27,15 @@ export interface UserDetails {
   lastPaymentDate?: Date | null;
   nextBillingDate?: Date | null;
   paymentAmount?: number | null;
-  isTrialActive: boolean;
+  isTrialActive: boolean | null;
   trialEndDate?: Date | null;
-  autoRenewal: boolean;
+  autoRenewal: boolean | null;
   
   // Related data counts
   sessionsCount: number;
   accountsCount: number;
+
+  authtype?: string; 
 }
 
 /**
@@ -56,6 +58,10 @@ export async function getUserDetails(userId: string): Promise<{ success: boolean
     if (!user) {
       return { success: false, error: "User not found" };
     }
+
+    const accounts = await prisma.account.findFirst({
+      where: { userId: user.id },
+    });
 
     const userDetails: UserDetails = {
       id: user.id,
@@ -86,9 +92,12 @@ export async function getUserDetails(userId: string): Promise<{ success: boolean
       
       // Related data counts
       sessionsCount: user.sessions.length,
-      accountsCount: user.accounts.length
-    };
+      accountsCount: user.accounts.length,
 
+      // Auth type (if available)
+      authtype: accounts?.providerId, 
+    };
+    
     return { success: true, user: userDetails };
   } catch (error) {
     console.error("Error fetching user details:", error);
