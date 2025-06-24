@@ -2,11 +2,10 @@ import {
   BarChart3,
   Users,
   Shield,
-  Server,
+  FileText,
   TrendingUp,
   Database,
   Settings,
-  HelpCircle,
 } from "lucide-react";
 import { AdminSidebarMenuItem } from "./types";
 
@@ -22,6 +21,12 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     title: "User Management",
     icon: Users,
     description: "Manage all users",
+  },
+  {
+    id: "applications",
+    title: "Mentor Applications",
+    icon: FileText,
+    description: "Review mentor applications",
   },
   {
     id: "moderators",

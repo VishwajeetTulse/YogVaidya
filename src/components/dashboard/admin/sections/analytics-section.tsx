@@ -10,7 +10,6 @@ import {
   DollarSign,
   ActivitySquare
 } from "lucide-react";
-import { Progress } from "@/components/ui/progress";
 import { Badge } from "@/components/ui/badge";
 
 interface AnalyticsData {
@@ -41,11 +40,6 @@ interface AnalyticsData {
     month: string;
     amount: number;
   }>;
-  systemHealth: {
-    uptime: number;
-    errorRate: number;
-    responseTime: number;
-  };
 }
 
 export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
@@ -55,7 +49,6 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
-  const [selectedTimeframe, setSelectedTimeframe] = useState<'week' | 'month' | 'quarter' | 'year'>('month');
   const MAX_RETRIES = 3;
 
   useEffect(() => {
@@ -63,7 +56,7 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
       try {
         setLoading(true);
         console.log(`Analytics: Fetching data (attempt ${retryCount + 1})`);
-        const response = await fetch(`/api/analytics?timeframe=${selectedTimeframe}`);
+        const response = await fetch(`/api/analytics`);
         const data = await response.json();
 
         if (!response.ok) {
@@ -103,22 +96,8 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
             approved: data.mentorApplications?.approved || 0,
             rejected: data.mentorApplications?.rejected || 0,
           },
-          userGrowth:
-            Array.isArray(data.userGrowth) && data.userGrowth.length === 3
-              ? data.userGrowth
-              : [
-                  { month: "Jun", count: 0 },
-                  { month: "May", count: 0 },
-                  { month: "Apr", count: 0 },
-                ],
-          revenueGrowth:
-            Array.isArray(data.revenueGrowth) && data.revenueGrowth.length === 3
-              ? data.revenueGrowth
-              : [
-                  { month: "Jun", amount: 0 },
-                  { month: "May", amount: 0 },
-                  { month: "Apr", amount: 0 },
-                ],
+          userGrowth: data.userGrowth,
+          revenueGrowth: data.revenueGrowth,
           systemHealth: {
             uptime: data.systemHealth?.uptime || 99.9,
             errorRate: data.systemHealth?.errorRate || 0.1,
@@ -127,6 +106,7 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
         };
         
         setAnalyticsData(sanitizedData);
+        console.log("Analytics data fetched successfully:", sanitizedData);
         setLoading(false); // Success! Stop loading
         
       } catch (err) {
@@ -170,12 +150,7 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
     return () => {
       if (retryTimer) clearTimeout(retryTimer);
     };
-  }, [retryCount, selectedTimeframe]);
-
-  const handleTimeframeChange = (timeframe: 'week' | 'month' | 'quarter' | 'year') => {
-    setSelectedTimeframe(timeframe);
-    setRetryCount(0); // Reset retry count to trigger a fresh fetch with new timeframe
-  };
+  }, [retryCount]);
 
   if (loading) {
     return <AnalyticsLoading />;
@@ -239,32 +214,6 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
             Comprehensive platform insights and performance metrics.
           </p>
         </div>
-        <div className="flex items-center space-x-2 bg-white rounded-md border shadow-sm p-1">
-          <button 
-            onClick={() => handleTimeframeChange('week')} 
-            className={`px-3 py-1 text-sm rounded-md ${selectedTimeframe === 'week' ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}`}
-          >
-            Week
-          </button>
-          <button 
-            onClick={() => handleTimeframeChange('month')} 
-            className={`px-3 py-1 text-sm rounded-md ${selectedTimeframe === 'month' ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}`}
-          >
-            Month
-          </button>
-          <button 
-            onClick={() => handleTimeframeChange('quarter')} 
-            className={`px-3 py-1 text-sm rounded-md ${selectedTimeframe === 'quarter' ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}`}
-          >
-            Quarter
-          </button>
-          <button 
-            onClick={() => handleTimeframeChange('year')} 
-            className={`px-3 py-1 text-sm rounded-md ${selectedTimeframe === 'year' ? 'bg-blue-100 text-blue-800' : 'hover:bg-gray-100'}`}
-          >
-            Year
-          </button>
-        </div>
       </div>
 
       {/* Overview Stats */}
@@ -291,14 +240,6 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
           description={`${Math.round((analyticsData.subscriptions.total / analyticsData.users.total) * 100)}% of users`}
           className="bg-indigo-50"
         />
-        <StatCard
-          title="User Retention"
-          value={analyticsData.users.retentionRate}
-          icon={<ActivitySquare className="h-6 w-6 text-purple-500" />}
-          description="Monthly retention rate"
-          className="bg-purple-50"
-          isPercentage={true}
-        />
       </div>
 
       {/* Role Distribution and System Health */}
@@ -310,42 +251,6 @@ export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
               userData={analyticsData.userGrowth} 
               revenueData={analyticsData.revenueGrowth} 
             />
-          </div>
-        </Card>
-
-        <Card className="p-6 shadow-sm">
-          <h2 className="font-semibold text-xl mb-4">System Health</h2>
-          <div className="space-y-4">
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Uptime</span>
-                <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-                  {analyticsData.systemHealth.uptime.toFixed(2)}%
-                </Badge>
-              </div>
-              <Progress value={analyticsData.systemHealth.uptime} className="h-2" />
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Error Rate</span>
-                <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-                  {analyticsData.systemHealth.errorRate.toFixed(2)}%
-                </Badge>
-              </div>
-              <Progress value={analyticsData.systemHealth.errorRate} max={10} className="h-2 bg-red-100" />
-            </div>
-            <div>
-              <div className="flex justify-between mb-1">
-                <span className="text-sm font-medium">Response Time</span>
-                <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-                  {analyticsData.systemHealth.responseTime} ms
-                </Badge>
-              </div>
-              <Progress 
-                value={100 - (analyticsData.systemHealth.responseTime / 10)} 
-                className="h-2" 
-              />
-            </div>
           </div>
         </Card>
       </div>
@@ -458,7 +363,9 @@ const CombinedGrowthChart = ({
   // Find the maximum values to normalize bar heights
   const maxCount = Math.max(...userData.map((item) => item.count));
   const maxRevenue = Math.max(...revenueData.map((item) => item.amount));
-  
+  userData.reverse();
+  revenueData.reverse();
+  console.log(userData, revenueData);
   return (
     <div className="flex h-full items-end space-x-8 justify-around">
       {userData.map((item, index) => {
@@ -468,8 +375,8 @@ const CombinedGrowthChart = ({
 
         return (
           <div key={index} className="h-full flex flex-col items-center justify-end space-x-2" style={{ width: '100px' }}>
-            <div className="flex items-end justify-center w-full space-x-2">
-              <div className="flex flex-col items-center">
+            <div className="h-full flex items-end justify-center w-full space-x-2">
+              <div className="h-full flex flex-col items-center justify-end">
                 <div
                   className="w-12 bg-blue-500 rounded-t-md transition-all duration-700 ease-out"
                   style={{
@@ -479,7 +386,7 @@ const CombinedGrowthChart = ({
                 />
                 <div className="text-xs text-blue-700 mt-1">{item.count} users</div>
               </div>
-              <div className="flex flex-col items-center">
+              <div className="h-full flex flex-col items-center justify-end">
                 <div
                   className="w-12 bg-green-500 rounded-t-md transition-all duration-700 ease-out"
                   style={{
@@ -487,7 +394,7 @@ const CombinedGrowthChart = ({
                     minHeight: "20px",
                   }}
                 />
-                <div className="text-xs text-green-700 mt-1">₹{revenueItem.amount.toLocaleString()}</div>
+                <div className="text-xs text-green-700 mt-1">₹ {revenueItem.count}</div>
               </div>
             </div>
             <div className="mt-2 font-medium">{item.month}</div>

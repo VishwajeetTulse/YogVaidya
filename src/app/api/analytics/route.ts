@@ -99,7 +99,7 @@ export async function GET(request: NextRequest) {
         (user.role === "USER" || user.role === "MENTOR")
       ).length;
       
-      userGrowth.push({
+      userGrowth.unshift({
         month: monthToDisplay,
         count: usersInMonth
       });
@@ -121,7 +121,7 @@ export async function GET(request: NextRequest) {
       }
     }    // Calculate total of only displayed roles (USER and MENTOR)
     const roleTotal = Object.values(usersByRole).reduce((sum, count) => sum + count, 0);
-    
+    console.log("Role total:", userGrowth);
     return NextResponse.json({
       users: {
         total: roleTotal, // Only count users and mentors in total
@@ -135,8 +135,10 @@ export async function GET(request: NextRequest) {
       mentorApplications: {
         total: mentorApplications.length,
         pending: pendingApplications
-      },      // Send the months chronologically (oldest first) for clearer visualization
-      userGrowth: userGrowth.reverse()
+      },      
+      // Send the months chronologically (oldest first) for clearer visualization
+      userGrowth: userGrowth,
+      revenueGrowth: userGrowth
     });
 
   } catch (error) {
