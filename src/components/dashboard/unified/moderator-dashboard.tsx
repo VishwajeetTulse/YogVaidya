@@ -24,7 +24,7 @@ const MODERATOR_SECTION_COMPONENTS = {
 
 export default function ModeratorDashboard() {
   return (
-    <UnifiedDashboard
+    <UnifiedDashboard<'moderator'>
       role="moderator"
       dashboardTitle="Moderator Dashboard"
       menuItems={MODERATOR_SIDEBAR_MENU_ITEMS}

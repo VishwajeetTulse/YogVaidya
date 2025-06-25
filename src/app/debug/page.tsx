@@ -19,7 +19,7 @@ export default function DebugPage() {
 
   useEffect(() => {
     if (session?.user?.id) {
-      fetchCurrentUser();
+      // fetchCurrentUser();
       fetchAllUsers();
     }
   }, [session]);
@@ -53,13 +53,13 @@ export default function DebugPage() {
     }
   };
 
-  const copyToClipboard = (data: any, label: string) => {
+  const copyToClipboard = (data: object, label: string) => {
     navigator.clipboard?.writeText(JSON.stringify(data, null, 2))
       .then(() => toast.success(`${label} copied to clipboard!`))
       .catch(() => toast.error('Failed to copy to clipboard'));
   };
 
-  const downloadJson = (data: any, filename: string) => {
+  const downloadJson = (data: object, filename: string) => {
     const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');

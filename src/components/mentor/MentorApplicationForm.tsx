@@ -105,7 +105,7 @@ export default function MentorApplicationForm() {
       } catch {}
     }
     prefillUser();
-  }, []);
+  }, [form]);
 
   // Poll for application approval and redirect if approved
   React.useEffect(() => {

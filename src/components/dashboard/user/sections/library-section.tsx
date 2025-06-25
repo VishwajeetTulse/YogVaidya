@@ -1,9 +1,6 @@
-import { BookOpen, Clock } from "lucide-react";
-import { SectionProps } from "../types";
+import { BookOpen } from "lucide-react";
 
-interface LibrarySectionProps extends SectionProps {}
-
-export const LibrarySection = ({ userDetails }: LibrarySectionProps) => {
+export const LibrarySection = () => {
   return (
     <div className="space-y-6">
       <div>
@@ -22,7 +19,7 @@ export const LibrarySection = ({ userDetails }: LibrarySectionProps) => {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Coming Soon...</h2>
 
         <p className="text-gray-500 text-center max-w-md mb-6">
-          We're working hard to bring you an amazing collection of yoga videos, meditation guides, and wellness articles. Stay tuned!
+          We&apos;re working hard to bring you an amazing collection of yoga videos, meditation guides, and wellness articles. Stay tuned!
         </p>
 
         <div className="mt-8 w-full max-w-md">

@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Star, Search, Filter } from "lucide-react";
-import { SectionProps } from "../types";
 
-interface ExploreMentorsSectionProps extends SectionProps {}
-
-export const ExploreMentorsSection = ({ userDetails }: ExploreMentorsSectionProps) => {
+export const ExploreMentorsSection = () => {
   return (
     <div className="space-y-6">
       <div>

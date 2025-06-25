@@ -1,14 +1,12 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { AdminSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, 
   TrendingUp,
   DollarSign,
-  ActivitySquare
 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 
@@ -42,7 +40,7 @@ interface AnalyticsData {
   }>;
 }
 
-export const AnalyticsSection = ({ userDetails }: AdminSectionProps) => {
+export const AnalyticsSection = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
   );
@@ -394,7 +392,7 @@ const CombinedGrowthChart = ({
                     minHeight: "20px",
                   }}
                 />
-                <div className="text-xs text-green-700 mt-1">₹ {revenueItem.count}</div>
+                <div className="text-xs text-green-700 mt-1">₹ {revenueItem.amount}</div>
               </div>
             </div>
             <div className="mt-2 font-medium">{item.month}</div>

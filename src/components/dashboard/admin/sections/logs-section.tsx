@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { AdminSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -36,7 +36,7 @@ import {
 } from "@/components/ui/table";
 import LogsExportSection from "./logs-export-section";
 
-export const LogsSection: React.FC<AdminSectionProps> = ({ userDetails }) => {
+export const LogsSection: React.FC<AdminSectionProps> = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -56,7 +56,7 @@ export const LogsSection: React.FC<AdminSectionProps> = ({ userDetails }) => {
   const categories = ["authentication", "system", "billing", "user", "all"];
   const levels = ["info", "warning", "error", "all"];
 
-  const fetchLogs = async () => {
+  const fetchLogs =  useCallback( async () => {
     setIsLoading(true);
     setError(null);
 
@@ -85,11 +85,11 @@ export const LogsSection: React.FC<AdminSectionProps> = ({ userDetails }) => {
     } finally {
       setIsLoading(false);
     }
-  };
+  },[pagination.page, pagination.pageSize, category, level, userId]);
 
   useEffect(() => {
     fetchLogs();
-  }, [pagination.page, category, level, userId]);
+  }, [fetchLogs, pagination.page, category, level, userId]);
 
   const handlePageChange = (newPage: number) => {
     setPagination((prev) => ({ ...prev, page: newPage }));

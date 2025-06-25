@@ -1,5 +1,6 @@
 import { ReactNode } from "react";
 import { UserDetails } from "@/lib/userDetails";
+import { SectionProps } from "../user/types";
 
 export interface BaseDashboardProps {
   loading: boolean;
@@ -34,6 +35,6 @@ export interface BaseHookResult {
 export interface SectionConfig {
   id: string;
   label: string;
-  component?: (props: any) => React.ReactNode;
+  component?: (props : SectionProps) => React.ReactNode;
   roles?: string[];
 }

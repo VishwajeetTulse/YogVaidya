@@ -1,8 +1,4 @@
-import { MentorSectionProps } from "../types";
-
-interface ScheduleSectionProps extends MentorSectionProps {}
-
-export const ScheduleSection = ({ userDetails }: ScheduleSectionProps) => {
+export const ScheduleSection = () => {
   return (
     <div className="space-y-6">
       <div>

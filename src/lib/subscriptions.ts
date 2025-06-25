@@ -1,6 +1,6 @@
 'use server';
 
-import { PrismaClient } from "@prisma/client";
+import { Prisma, PrismaClient } from "@prisma/client";
 import Razorpay from 'razorpay';
 import type { 
   SubscriptionPlan, 
@@ -8,7 +8,6 @@ import type {
   UpdateSubscriptionData,
   CreateSubscriptionData
 } from './types';
-import subscriptions from "razorpay/dist/types/subscriptions";
 
 // Re-export types for backwards compatibility
 export type { SubscriptionPlan, SubscriptionStatus, UpdateSubscriptionData, CreateSubscriptionData };
@@ -104,7 +103,7 @@ async function updateUserSubscription(data: UpdateSubscriptionData) {
       return { success: false, error: "User not found" };
     }
 
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       updatedAt: new Date()
     };
 
@@ -230,7 +229,7 @@ async function cancelUserSubscription(userId: string) {
       return { success: false, error: "User not found" };
     }
 
-    const razorpaySubscriptionId = (user as any).razorpaySubscriptionId;
+    const razorpaySubscriptionId = user.razorpaySubscriptionId;
     // Cancel the Razorpay subscription if it exists
     if (razorpaySubscriptionId) {
       try {
@@ -246,7 +245,7 @@ async function cancelUserSubscription(userId: string) {
     }
 
     // Update the local database - keep subscription active until end date
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       subscriptionStatus: "ACTIVE",
       autoRenewal: false,
       updatedAt: new Date()
@@ -453,89 +452,6 @@ function hasFeatureAccess(subscriptionPlan: SubscriptionPlan, feature: string): 
   return planFeatures[subscriptionPlan]?.includes(feature) || false;
 }
 
-/**
- * Get the next billing date for a user
- */
-function calculateNextBillingDate(subscriptionEndDate: Date, billingPeriod: "monthly" | "annual"): Date {
-  const nextBilling = new Date(subscriptionEndDate);
-  const monthsToAdd = billingPeriod === "annual" ? 12 : 1;
-  nextBilling.setMonth(nextBilling.getMonth() + monthsToAdd);
-  return nextBilling;
-}
-
-/**
- * Calculate prorated amount for plan changes
- */
-async function calculateProratedAmount(
-  currentPlan: SubscriptionPlan,
-  newPlan: SubscriptionPlan,
-  billingPeriod: "monthly" | "annual",
-  daysRemaining: number
-) {
-  const planPricing = await getPlanPricing();
-  const currentAmount = planPricing[currentPlan][billingPeriod];
-  const newAmount = planPricing[newPlan][billingPeriod];
-  const totalDays = billingPeriod === "annual" ? 365 : 30;
-  
-  const unusedAmount = (currentAmount / totalDays) * daysRemaining;
-  const proratedNewAmount = (newAmount / totalDays) * daysRemaining;
-  
-  return Math.max(0, proratedNewAmount - unusedAmount);
-}
-
-// Define User type with subscription fields
-interface User {
-  id: string;
-  email: string;
-  name: string;
-  subscriptionPlan?: SubscriptionPlan;
-  subscriptionStatus?: SubscriptionStatus;
-  subscriptionStartDate?: Date;
-  subscriptionEndDate?: Date;
-  billingPeriod?: "monthly" | "annual";
-  razorpaySubscriptionId?: string;
-  razorpayCustomerId?: string;
-  lastPaymentDate?: Date;
-  nextBillingDate?: Date;
-  paymentAmount?: number;
-  isTrialActive?: boolean;
-  trialEndDate?: Date;
-  autoRenewal?: boolean;
-  updatedAt: Date;
-}
-
-// Razorpay error handling
-interface RazorpayError extends Error {
-  statusCode?: number;
-  error?: {
-    description?: string;
-    code?: string;
-  };
-}
-
-function handleRazorpayError(error: RazorpayError): { message: string; code: string } {
-  if (error.statusCode === 400) {
-    return { 
-      message: "Invalid request to payment gateway",
-      code: "RAZORPAY_INVALID_REQUEST"
-    };
-  } else if (error.statusCode === 401) {
-    return {
-      message: "Payment gateway authentication failed",
-      code: "RAZORPAY_AUTH_ERROR"
-    };
-  } else if (error.error?.description) {
-    return {
-      message: error.error.description,
-      code: error.error.code || "RAZORPAY_ERROR"
-    };
-  }
-  return {
-    message: error.message || "Payment gateway error",
-    code: "RAZORPAY_UNKNOWN_ERROR"
-  };
-}
-
 // Create a Razorpay plan
 async function createPlan(planType: SubscriptionPlan, billingPeriod: "monthly" | "annual") {
   try {
@@ -634,7 +550,6 @@ export async function getSubscriptionAnalytics() {
     });
     
     // Calculate retention metrics
-    const currentDate = new Date();
     const lastMonth = new Date();
     lastMonth.setMonth(lastMonth.getMonth() - 1);
     

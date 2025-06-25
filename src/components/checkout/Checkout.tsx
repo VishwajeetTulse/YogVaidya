@@ -8,6 +8,12 @@ import Script from "next/script";
 import { createUserSubscription } from "@/lib/subscriptions";
 import { useSession } from "@/lib/auth-client";
 
+interface RazorpayResponse {
+  razorpay_subscription_id: string;
+  razorpay_payment_id: string;
+  razorpay_signature: string;
+}
+
 export default function Checkout({ plan }: { plan: string }) {
   const router = useRouter();
   const { data: session } = useSession();
@@ -132,7 +138,7 @@ export default function Checkout({ plan }: { plan: string }) {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         subscription_id: data.subscription.id,
         name: "Yoga Vaidya",
-        description: `${selectedPlan.name} Plan Subscription`, handler: async function (response: any) {
+        description: `${selectedPlan.name} Plan Subscription`, handler: async function (response:  RazorpayResponse) {
           try {
             if (!(await verify(response.razorpay_subscription_id, response.razorpay_payment_id, response.razorpay_signature))) {
               throw new Error("Payment verification failed");
@@ -179,11 +185,11 @@ export default function Checkout({ plan }: { plan: string }) {
           color: selectedPlan.bgColor.replace('bg-[', '').replace(']', ''),
         },
       };
-
-      const razorpay = new (window as any).Razorpay(options);
-      razorpay.on("payment.failed", function (response: any) {
+      // @ts-expect-error importing  Razorpay from cdn
+      const razorpay = new (window).Razorpay(options);
+      razorpay.on("payment.failed", function (response: RazorpayResponse) {
         alert("Payment failed. Please try again.");
-        console.error(response.error);
+        console.error("Payment failed:", response);
       });
       razorpay.open();
     } catch (error) {
@@ -231,7 +237,7 @@ export default function Checkout({ plan }: { plan: string }) {
               Complete Your Subscription
             </h1>
             <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              You're just one step away from starting your wellness journey with Yoga Vaidya
+              You&apos;re just one step away from starting your wellness journey with Yoga Vaidya
             </p>
           </div>
 
@@ -301,7 +307,7 @@ export default function Checkout({ plan }: { plan: string }) {
 
                 {/* Features */}
                 <div className="space-y-3 mb-8">
-                  <h3 className="text-lg font-semibold mb-4">What's included:</h3>
+                  <h3 className="text-lg font-semibold mb-4">What&apos;s included:</h3>
                   {selectedPlan.features.map((feature, index) => (
                     <div key={index} className="flex items-center">
                       <Check className="h-5 w-5 mr-3 flex-shrink-0" />

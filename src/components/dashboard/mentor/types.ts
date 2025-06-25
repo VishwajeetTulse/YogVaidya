@@ -1,3 +1,4 @@
+import { UserDetails } from "@/lib/userDetails";
 import { LucideIcon } from "lucide-react";
 
 export interface MentorSidebarMenuItem {
@@ -8,13 +9,13 @@ export interface MentorSidebarMenuItem {
 }
 
 export interface MentorSectionProps {
-  userDetails: any;
+  userDetails: UserDetails;
   setActiveSection: (section: string) => void;
   formatDate: (date: Date | null | undefined) => string;
 }
 
 export interface MentorDashboardState {
-  userDetails: any;
+  userDetails: UserDetails;
   loading: boolean;
   activeSection: string;
   setActiveSection: (section: string) => void;

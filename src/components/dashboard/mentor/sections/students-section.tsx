@@ -1,16 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { MentorSectionProps } from "../types";
 
-interface StudentsSectionProps extends MentorSectionProps {}
-
-export const StudentsSection = ({ userDetails }: StudentsSectionProps) => {
+export const StudentsSection = () => {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
         <p className="text-gray-600 mt-2">
-          Connect with and track your students' progress.
+          Connect with and track your students&apos; progress.
         </p>
       </div>
 

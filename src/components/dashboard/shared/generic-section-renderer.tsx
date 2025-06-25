@@ -1,14 +1,15 @@
-import React, { lazy, Suspense } from 'react';
+import React, { Suspense } from 'react';
 import { BaseSectionRendererProps, SectionConfig } from './types';
 import { LoadingSpinner } from './loading-spinner';
+import { SectionProps } from '../user/types';
 
-interface GenericSectionRendererProps extends BaseSectionRendererProps {
+interface GenericSectionRendererProps<TProps = SectionProps> extends BaseSectionRendererProps {
   sections?: SectionConfig[];
-  sectionComponentMap?: Record<string, React.ComponentType<any>>;
+  sectionComponentMap?: Record<string, React.ComponentType<TProps>>;
   defaultSection?: string;
 }
 
-export const GenericSectionRenderer = ({
+export const GenericSectionRenderer = <TProps = SectionProps>({
   activeSection,
   userDetails,
   setActiveSection,
@@ -16,11 +17,18 @@ export const GenericSectionRenderer = ({
   sectionComponentMap = {},
   defaultSection = "overview",
   ...otherProps
-}: GenericSectionRendererProps & Record<string, any>) => {
+}: GenericSectionRendererProps<TProps> ) => {
   // Find the active section either in sections array or use the component map
   const sectionConfig = sections.find(section => section.id === activeSection) || 
                         sections.find(section => section.id === defaultSection);
-  
+  if(userDetails === null) {
+    return (
+      <div className="p-6 text-center">
+        <h3 className="text-lg font-medium text-gray-700">Please log in</h3>
+        <p className="mt-2 text-gray-500">You need to be logged in to access this section.</p>
+      </div>
+    );
+  }
   // Determine the component to render
   let ComponentToRender;
   
@@ -49,7 +57,7 @@ export const GenericSectionRenderer = ({
       <ComponentToRender 
         userDetails={userDetails} 
         setActiveSection={setActiveSection} 
-        {...otherProps} 
+        {...otherProps as TProps} 
       />
     </Suspense>
   );

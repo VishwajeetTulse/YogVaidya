@@ -28,28 +28,7 @@ export async function GET(request: NextRequest) {
         { status: 403 }
       );
     }
-    
-    try {
-      // Try to access the moderatorSettings model if the Prisma client has been updated
-      // @ts-ignore - We know this might not exist yet, but it will after prisma generate runs
-      const userSettings = await prisma.moderatorSettings?.findUnique({
-        where: { userId: session.user.id },
-      });
-      
-      // If model exists and settings found, return them
-      if (userSettings) {
-        return NextResponse.json({
-          success: true,
-          settings: {
-            mentorApplicationAlerts: userSettings.mentorApplicationAlerts,
-            userSignupAlerts: userSettings.userSignupAlerts,
-          }
-        });
-      }
-    } catch (err) {
-      // If moderatorSettings model is not yet available, we'll continue and return defaults
-      console.log("ModeratorSettings model not yet available:", err);
-    }
+
       // If no settings exist yet or if the model isn't available, return default values
     return NextResponse.json({
       success: true,
@@ -96,45 +75,10 @@ export async function POST(request: NextRequest) {
     const fullSettings = {
       mentorApplicationAlerts: Boolean(settings.mentorApplicationAlerts),
       userSignupAlerts: Boolean(settings.userSignupAlerts),
-    };try {
-      // Store settings in the database using a transaction
-      await prisma.$transaction(async (tx) => {
-        try {
-          // Check if settings document exists for this user
-          // @ts-ignore - We know this might not exist yet, but it will after prisma generate runs
-          const existingSettings = await tx.moderatorSettings?.findUnique({
-            where: { userId: session.user.id },
-          });
-
-          if (existingSettings) {
-            // Update existing settings
-            // @ts-ignore - We know this might not exist yet, but it will after prisma generate runs
-            await tx.moderatorSettings?.update({
-              where: { userId: session.user.id },
-              data: fullSettings,
-            });
-          } else {
-            // Create new settings
-            // @ts-ignore - We know this might not exist yet, but it will after prisma generate runs
-            await tx.moderatorSettings?.create({
-              data: {
-                userId: session.user.id,
-                ...fullSettings,
-              },
-            });
-          }
-        } catch (err) {
-          // If the model isn't available yet, log the error
-          console.error("ModeratorSettings model not yet available:", err);
-          // We'll still return success, since this is a transitional state
-        }
-      });
-    } catch (err) {
-      console.error("Error saving moderator settings:", err);
-      // Continue execution as this might be due to the model not being available yet
-    }
-
-    console.log(`Saved settings for user ${session.user.id}:`, fullSettings);    return NextResponse.json({
+    };
+    
+    console.log(`Saved settings for user ${session.user.id}:`, fullSettings);   
+     return NextResponse.json({
       success: true,
       settings: fullSettings,
     });

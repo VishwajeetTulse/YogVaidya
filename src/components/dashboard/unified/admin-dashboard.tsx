@@ -25,7 +25,7 @@ const ADMIN_SECTION_COMPONENTS = {
 
 export default function AdminDashboard() {
   return (
-    <UnifiedDashboard
+    <UnifiedDashboard<'admin'>
       role="admin"
       dashboardTitle="Admin Dashboard"
       menuItems={ADMIN_SIDEBAR_MENU_ITEMS}

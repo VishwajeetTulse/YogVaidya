@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ModeratorSectionProps } from "../types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
@@ -23,9 +22,7 @@ interface MentorApplication {
   createdAt: string;
 }
 
-interface ApplicationsSectionProps extends ModeratorSectionProps {}
-
-export const ApplicationsSection = ({ userDetails }: ApplicationsSectionProps) => {
+export const ApplicationsSection = () => {
   const [applications, setApplications] = useState<MentorApplication[]>([]);
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<MentorApplication | null>(null);

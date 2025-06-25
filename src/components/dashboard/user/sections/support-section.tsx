@@ -10,17 +10,14 @@ import {
   ChevronRight,
   Search
 } from "lucide-react";
-import { SectionProps } from "../types";
 
-interface SupportSectionProps extends SectionProps {}
-
-export const SupportSection = ({ userDetails }: SupportSectionProps) => {
+export const SupportSection = () => {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Help & Support</h1>
         <p className="text-gray-600 mt-2">
-          Get help when you need it. We're here to support your wellness journey.
+          Get help when you need it. We&apos;re here to support your wellness journey.
         </p>
       </div>
 
@@ -167,7 +164,7 @@ export const SupportSection = ({ userDetails }: SupportSectionProps) => {
         <div className="text-center">
           <h3 className="text-lg font-semibold mb-2">Still Need Help?</h3>
           <p className="text-gray-600 mb-4">
-            Can't find what you're looking for? Our support team is here to help.
+            Can&apos;t find what you&apos;re looking for? Our support team is here to help.
           </p>
           <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">
             Contact Support

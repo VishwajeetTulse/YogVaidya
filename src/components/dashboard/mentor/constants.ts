@@ -7,7 +7,6 @@ import {
   Star,
   TrendingUp,
   MessageSquare,
-  User,
   Settings,
   HelpCircle,
 } from "lucide-react";

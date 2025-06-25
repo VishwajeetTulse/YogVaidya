@@ -19,7 +19,7 @@ import { SupportSection } from '../user/sections/support-section';
 import { cancelUserSubscription } from '@/lib/subscriptions';
 import { useState } from 'react';
 import { toast } from 'sonner';
-
+import { BaseHookResult } from '../shared/types';
 // Create a mapping of section IDs to components
 const USER_SECTION_COMPONENTS = {
   "overview": OverviewSection,
@@ -35,7 +35,7 @@ const USER_SECTION_COMPONENTS = {
 };
 
 // Create extended hook function to add user-specific states
-const extendUserHook = (baseHookResult: any) => {
+const useExtendUserHook = (baseHookResult : BaseHookResult) => {
   const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
   const [viewMode, setViewMode] = useState<"cards" | "comparison">("cards");
@@ -45,7 +45,7 @@ const extendUserHook = (baseHookResult: any) => {
 
     try {
       setCancellingSubscription(true);
-      const result = await cancelUserSubscription(baseHookResult.userDetails.id);
+      const result = await cancelUserSubscription(baseHookResult.userDetails?.id);
       if (result.success) {
         toast.success("Subscription cancelled", {
           description: "Your subscription has been cancelled successfully.",
@@ -82,13 +82,13 @@ const extendUserHook = (baseHookResult: any) => {
 
 export default function UserDashboard() {
   return (
-    <UnifiedDashboard
+    <UnifiedDashboard<'user'>
       role="user"
       dashboardTitle="My Dashboard"
       roleLabel='User'
       menuItems={SIDEBAR_MENU_ITEMS}
       sectionComponentMap={USER_SECTION_COMPONENTS}
-      extendedHook={extendUserHook}
+      extendedHook={useExtendUserHook}
     />
   );
 }

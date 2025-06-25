@@ -1,5 +1,5 @@
 import { LucideIcon } from "lucide-react";
-
+import { UserDetails } from "@/lib/userDetails";
 export interface SidebarMenuItem {
   id: string;
   title: string;
@@ -8,7 +8,7 @@ export interface SidebarMenuItem {
 }
 
 export interface DashboardProps {
-  userDetails: any;
+  userDetails: UserDetails;
   loading: boolean;
   activeSection: string;
   setActiveSection: (section: string) => void;
@@ -23,7 +23,7 @@ export interface DashboardProps {
 }
 
 export interface SectionProps {
-  userDetails: any;
+  userDetails : UserDetails;
   setActiveSection: (section: string) => void;
   billingPeriod?: "monthly" | "annual";
   setBillingPeriod?: (period: "monthly" | "annual") => void;

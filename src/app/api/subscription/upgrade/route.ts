@@ -1,16 +1,13 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import type { NextRequest } from 'next/server';
 import Razorpay from "razorpay";
 import {   calculateUpgradePrice, 
   getUserSubscription, 
   updateUserSubscription,
-  getPlanPricing,
   getPlanIds,
   type SubscriptionPlan
 } from "@/lib/subscriptions";
 import type { BillingPeriod } from "@/lib/types";
-import type { Subscriptions } from "razorpay/dist/types/subscriptions";
 
 // Validate environment variables
 const RAZORPAY_KEY_ID = process.env.RAZORPAY_KEY_ID;
@@ -194,7 +191,7 @@ export async function POST(req: NextRequest) {
       };
 
       console.log('Creating subscription with params:', subscriptionCreateParams);      
-      const newSubscription = await razorpay.subscriptions.create(subscriptionCreateParams) as any;
+      const newSubscription = await razorpay.subscriptions.create(subscriptionCreateParams);
       console.log('Created new subscription:', newSubscription);
 
       // Cancel the old subscription at the end of the current billing cycle
@@ -228,15 +225,16 @@ export async function POST(req: NextRequest) {
           startDate: new Date((nextBillingDate || newSubscription?.start_at || Math.floor(Date.now() / 1000)) * 1000).toISOString()
         }
       });
-    } catch (error: any) {
+    } catch (error) {
       console.error('Error processing upgrade:', error);
       return errorResponse(
-        `Failed to process upgrade: ${error?.error?.description || error.message || 'Unknown error'}`,
+        // `Failed to process upgrade: ${error?.error?.description || error.message || 'Unknown error'}`,
+        'Failed to process upgrade',
         'UPGRADE_FAILED',
         500
       );
     }
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error in upgrade route:', error);
     return errorResponse(
       'Internal server error',

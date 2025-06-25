@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { ModeratorSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart3, Users, Award, TrendingUp } from "lucide-react";
@@ -27,7 +26,7 @@ interface AnalyticsData {
   }>;
 }
 
-export const AnalyticsSection = ({ userDetails }: ModeratorSectionProps) => {
+export const AnalyticsSection = () => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
   );

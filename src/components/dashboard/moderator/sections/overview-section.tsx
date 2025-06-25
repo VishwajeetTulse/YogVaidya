@@ -4,12 +4,9 @@ import { Card } from "@/components/ui/card";
 import { Users, UserCheck, FileText, TrendingUp } from "lucide-react";
 import { ModeratorSectionProps } from "../types";
 import { useState, useEffect } from "react";
-import { format, formatDistance, subDays, subHours, subMinutes, parseISO } from "date-fns";
+import { format, formatDistance } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { date } from "zod";
-
-interface OverviewSectionProps extends ModeratorSectionProps {}
 
 interface AnalyticsData {
   users: {
@@ -52,12 +49,10 @@ interface Activity {
   gradientClass: string;
 }
 
-export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
-  const [recentApplications, setRecentApplications] = useState<MentorApplication[]>([]);
+export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null)
   const [activities, setActivities] = useState<Activity[]>([]);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     async function fetchData() {
@@ -89,8 +84,6 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
                 new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
               .slice(0, 5)
           : [];
-        
-        setRecentApplications(applications);
         
         // Generate activities based on fetched data
         const generatedActivities: Activity[] = [];
@@ -175,7 +168,6 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
         setLoading(false);
       } catch (err) {
         console.error("Error fetching dashboard data:", err);
-        setError(err instanceof Error ? err.message : 'An unknown error occurred');
         toast.error("Failed to load dashboard data");
         setLoading(false);
       }
@@ -191,7 +183,7 @@ export const OverviewSection = ({ userDetails }: OverviewSectionProps) => {
           Welcome back, {userDetails?.name || "Moderator"}!
         </h1>
         <p className="text-gray-600 mt-2">
-          Here's your moderation dashboard. Keep the platform safe and thriving.
+          Here&apos;s your moderation dashboard. Keep the platform safe and thriving.
         </p>
       </div>
 

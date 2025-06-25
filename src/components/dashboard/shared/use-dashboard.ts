@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
@@ -12,15 +12,10 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(initialActiveSection);
 
-  useEffect(() => {
-    if (session?.user?.id) {
-      fetchUserDetails();
-    }
-  }, [session]);
-
-  const fetchUserDetails = async () => {
+  
+  const fetchUserDetails = useCallback( async () => {
     if (!session?.user?.id) return;
-
+    
     setLoading(true);
     try {
       const result = await getUserDetails(session.user.id);
@@ -39,7 +34,13 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
     } finally {
       setLoading(false);
     }
-  };
+  },[session]);
+  
+  useEffect(() => {
+    if (session?.user?.id) {
+      fetchUserDetails();
+    }
+  }, [fetchUserDetails, session]);
 
   const handleSignOut = async () => {
     try {

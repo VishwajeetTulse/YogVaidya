@@ -6,19 +6,33 @@ import { GenericSidebar } from './sidebar-base';
 import { GenericSectionRenderer } from './generic-section-renderer';
 import { useDashboard } from './use-dashboard';
 import { SectionConfig } from './types';
+import { BaseHookResult } from './types';
+import { SectionProps } from '../user/types';
+import { type SidebarMenuItem } from '../user/types';
+import { CircleAlert } from 'lucide-react';
+import { MentorSectionProps } from '../mentor/types';
+import { ModeratorSectionProps } from '../moderator/types';
+import { AdminSectionProps } from '../admin/types';
 
-export interface UnifiedDashboardProps {
-  role: string;
+// Create a generic type for section components based on role
+type RoleSectionProps<T extends string> = 
+  T extends 'mentor' ? MentorSectionProps :
+  T extends 'admin' ? AdminSectionProps :
+  T extends 'moderator' ? ModeratorSectionProps :
+  SectionProps;
+
+export interface UnifiedDashboardProps<T extends string = string> {
+  role: T;
   dashboardTitle: string;
-  sectionComponentMap: Record<string, React.ComponentType<any>>;
-  menuItems: any[];
+  sectionComponentMap: Record<string, React.ComponentType<RoleSectionProps<T>>>;
+  menuItems: SidebarMenuItem[];
   roleLabel?: string;
   initialActiveSection?: string;
   getIcon?: (id: string) => React.ElementType;
-  extendedHook?: (baseHookResult: any) => any;
+  extendedHook?: (baseHookResult: BaseHookResult) => BaseHookResult;
 }
 
-export const UnifiedDashboard = ({
+export const UnifiedDashboard = <T extends string>({
   dashboardTitle,
   menuItems,
   sectionComponentMap,
@@ -26,7 +40,7 @@ export const UnifiedDashboard = ({
   initialActiveSection = "overview",
   getIcon,
   extendedHook,
-}: UnifiedDashboardProps) => {
+}: UnifiedDashboardProps<T>) => {
   // Use the base dashboard hook
   const baseHookResult = useDashboard(initialActiveSection);
   
@@ -43,12 +57,18 @@ export const UnifiedDashboard = ({
   } = hookResult;
 
   // Helper function to get an icon for a section ID if not provided
-  const getIconForSection = (id: string) => {
-    if (getIcon) return getIcon(id);
+  const getIconForSection = (id: string): React.ElementType => {
+    if (getIcon) {
+      const icon = getIcon(id);
+      if (icon) return icon;
+    }
     
     // Find the menu item with this ID
     const menuItem = menuItems.find(item => item.id === id);
-    return menuItem?.icon;
+    if (menuItem?.icon) return menuItem.icon;
+    
+    // Fallback to a default  icon
+    return CircleAlert; 
   };
 
   const sidebar = (
@@ -67,11 +87,10 @@ export const UnifiedDashboard = ({
   const sections: SectionConfig[] = menuItems.map(item => ({
     id: item.id,
     label: item.title,
-    roles: item.roles || []
   }));
   
   const sectionRenderer = (
-    <GenericSectionRenderer
+    <GenericSectionRenderer<RoleSectionProps<T>>
       activeSection={activeSection}
       userDetails={userDetails}
       setActiveSection={setActiveSection}

@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Video, Calendar, Clock, Users } from "lucide-react";
-import { MentorSectionProps } from "../types";
 
-interface SessionsSectionProps extends MentorSectionProps {}
-
-export const SessionsSection = ({ userDetails }: SessionsSectionProps) => {
+export const SessionsSection = () => {
   return (
     <div className="space-y-6">
       <div>

@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-
+import { Prisma } from "@prisma/client";
 export function useLogger() {
   const [isLogging, setIsLogging] = useState(false);
 
@@ -14,7 +14,7 @@ export function useLogger() {
     category: string;
     details?: string;
     level: "INFO" | "WARNING" | "ERROR";
-    metadata?: any;
+    metadata?: Prisma.JsonValue;
   }) => {
     setIsLogging(true);
     try {
@@ -43,7 +43,7 @@ export function useLogger() {
   /**
    * Log info level event
    */
-  const logInfo = (action: string, category: string, details?: string, metadata?: any) => {
+  const logInfo = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
     return logEvent({
       action,
       category,
@@ -56,7 +56,7 @@ export function useLogger() {
   /**
    * Log warning level event
    */
-  const logWarning = (action: string, category: string, details?: string, metadata?: any) => {
+  const logWarning = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
     return logEvent({
       action,
       category,
@@ -69,7 +69,7 @@ export function useLogger() {
   /**
    * Log error level event
    */
-  const logError = (action: string, category: string, details?: string, metadata?: any) => {
+  const logError = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
     return logEvent({
       action,
       category,

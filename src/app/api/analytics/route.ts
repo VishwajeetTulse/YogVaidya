@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       isWithinLastMonth(user.createdAt) && 
       (user.role === "USER" || user.role === "MENTOR")
     ).length;// Group users by role - include only USER and MENTOR roles
-    let usersByRole = allUsers.reduce((acc, user) => {
+    const usersByRole = allUsers.reduce((acc, user) => {
       const role = user.role || "USER";
       // Only include USER and MENTOR roles
       if (role === "USER" || role === "MENTOR") {

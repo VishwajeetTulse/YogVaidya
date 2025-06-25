@@ -1,8 +1,4 @@
-import { MentorSectionProps } from "../types";
-
-interface ProfileSectionProps extends MentorSectionProps {}
-
-export const ProfileSection = ({ userDetails }: ProfileSectionProps) => {
+export const ProfileSection = () => {
   return (
     <div className="space-y-6">
       <div>

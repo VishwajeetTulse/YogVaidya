@@ -7,15 +7,11 @@ import {
   Moon, 
   Globe, 
   Volume2,
-  Smartphone,
   Mail,
   Calendar
 } from "lucide-react";
-import { SectionProps } from "../types";
 
-interface SettingsSectionProps extends SectionProps {}
-
-export const SettingsSection = ({ userDetails }: SettingsSectionProps) => {
+export const SettingsSection = () => {
   return (
     <div className="space-y-6">
       <div>

@@ -1,11 +1,8 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, Clock, PlayCircle } from "lucide-react";
-import { SectionProps } from "../types";
 
-interface ClassesSectionProps extends SectionProps {}
-
-export const ClassesSection = ({ userDetails }: ClassesSectionProps) => {
+export const ClassesSection = () => {
   return (
     <div className="space-y-6">
       <div>

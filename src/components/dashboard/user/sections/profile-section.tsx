@@ -1,11 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { User, Mail, Phone, Calendar, MapPin, Edit } from "lucide-react";
+import { User, Mail, Phone, Calendar, Edit } from "lucide-react";
 import { SectionProps } from "../types";
 
-interface ProfileSectionProps extends SectionProps {}
-
-export const ProfileSection = ({ userDetails, formatDate }: ProfileSectionProps) => {
+export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
   return (
     <div className="space-y-6">
       <div>
@@ -69,24 +67,6 @@ export const ProfileSection = ({ userDetails, formatDate }: ProfileSectionProps)
               </div>
             </div>
             <div className="space-y-4">
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Date of Birth
-                </label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <Calendar className="w-4 h-4 text-gray-400" />
-                  <span>{userDetails?.dateOfBirth ? formatDate?.(new Date(userDetails.dateOfBirth)) : "Not provided"}</span>
-                </div>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Location
-                </label>
-                <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
-                  <MapPin className="w-4 h-4 text-gray-400" />
-                  <span>{userDetails?.location || "Not provided"}</span>
-                </div>
-              </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
                   Member Since

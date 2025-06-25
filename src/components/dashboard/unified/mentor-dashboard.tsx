@@ -3,7 +3,6 @@
 import React from 'react';
 import { UnifiedDashboard } from '../shared/unified-dashboard';
 import { MENTOR_SIDEBAR_MENU_ITEMS } from '../mentor/constants';
-import { formatDate } from '../shared/utils';
 
 // Import all mentor section components
 import { OverviewSection } from '../mentor/sections/overview-section';
@@ -17,7 +16,8 @@ import { MessagesSection } from '../mentor/sections/messages-section';
 import { ProfileSection } from '../mentor/sections/profile-section';
 import { SettingsSection } from '../mentor/sections/settings-section';
 import { SupportSection } from '../mentor/sections/support-section';
-
+import { formatDate } from '../shared/utils';
+import { BaseHookResult } from '../shared/types';
 // Create a mapping of section IDs to components
 const MENTOR_SECTION_COMPONENTS = {
   "overview": OverviewSection,
@@ -34,10 +34,7 @@ const MENTOR_SECTION_COMPONENTS = {
 };
 
 // Create extended hook function to add formatDate
-const extendMentorHook = (baseHookResult: any) => {
-  // Import shared formatDate function
-  const { formatDate } = require('../shared/utils');
-  
+const extendMentorHook = (baseHookResult: BaseHookResult) => {
   return {
     ...baseHookResult,
     formatDate
@@ -46,7 +43,7 @@ const extendMentorHook = (baseHookResult: any) => {
 
 export default function MentorDashboard() {
   return (
-    <UnifiedDashboard
+    <UnifiedDashboard<'mentor'>
       role="mentor"
       dashboardTitle="Mentor Dashboard"
       menuItems={MENTOR_SIDEBAR_MENU_ITEMS}

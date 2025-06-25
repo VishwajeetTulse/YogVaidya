@@ -11,9 +11,7 @@ import {
 } from "lucide-react";
 import { MentorSectionProps } from "../types";
 
-interface OverviewSectionProps extends MentorSectionProps {}
-
-export const OverviewSection = ({ userDetails, setActiveSection }: OverviewSectionProps) => {
+export const OverviewSection = ({ userDetails, setActiveSection }: MentorSectionProps) => {
   return (
     <div className="space-y-6">
       <div>
@@ -21,7 +19,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: OverviewSecti
           Welcome back, {userDetails?.name || "Mentor"}!
         </h1>
         <p className="text-gray-600 mt-2">
-          Here's your teaching dashboard. Ready to inspire and guide your students.
+          Here&apos;s your teaching dashboard. Ready to inspire and guide your students.
         </p>
       </div>
 
@@ -77,7 +75,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: OverviewSecti
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
-          Today's Sessions
+          Today&apos;s Sessions
         </h2>
         <div className="space-y-3">
           <div className="flex items-center justify-between p-3 bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 rounded-lg border border-[#76d2fa]/30">

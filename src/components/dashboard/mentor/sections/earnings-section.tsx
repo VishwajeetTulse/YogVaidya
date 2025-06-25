@@ -1,8 +1,4 @@
-import { MentorSectionProps } from "../types";
-
-interface EarningsSectionProps extends MentorSectionProps {}
-
-export const EarningsSection = ({ userDetails }: EarningsSectionProps) => {
+export const EarningsSection = () => {
   return (
     <div className="space-y-6">
       <div>

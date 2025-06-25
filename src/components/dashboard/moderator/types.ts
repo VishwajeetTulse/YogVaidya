@@ -1,3 +1,4 @@
+import { UserDetails } from "@/lib/userDetails";
 import { LucideIcon } from "lucide-react";
 
 export interface ModeratorSidebarMenuItem {
@@ -8,12 +9,12 @@ export interface ModeratorSidebarMenuItem {
 }
 
 export interface ModeratorSectionProps {
-  userDetails: any;
+  userDetails: UserDetails;
   setActiveSection: (section: string) => void;
 }
 
 export interface ModeratorDashboardState {
-  userDetails: any;
+  userDetails: UserDetails;
   loading: boolean;
   activeSection: string;
   setActiveSection: (section: string) => void;

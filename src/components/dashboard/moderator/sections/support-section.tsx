@@ -1,13 +1,12 @@
 "use client";
 
-import { ModeratorSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import {
   PhoneCall,
   Mail,
 } from "lucide-react";
 
-export const SupportSection = ({ userDetails }: ModeratorSectionProps) => {
+export const SupportSection = () => {
   return (
     <div className="space-y-8">
       <div>

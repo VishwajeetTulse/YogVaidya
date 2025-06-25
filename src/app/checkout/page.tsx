@@ -5,7 +5,6 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 
 export default async function Page({
-  params,
   searchParams,
 }: {
   params: Promise<{

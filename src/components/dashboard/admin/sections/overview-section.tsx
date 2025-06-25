@@ -12,9 +12,6 @@ import { AdminSectionProps } from "../types";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils";
 import { Skeleton } from "@/components/ui/skeleton";
-
-interface OverviewSectionProps extends AdminSectionProps {}
-
 // Define analytics data structure
 interface AnalyticsData {
   users: {
@@ -91,7 +88,7 @@ const OverviewLoading = () => (
 export const OverviewSection = ({
   userDetails,
   setActiveSection,
-}: OverviewSectionProps) => {
+}: AdminSectionProps) => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
     null
   );

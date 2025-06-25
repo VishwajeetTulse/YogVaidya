@@ -11,14 +11,15 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { BaseSidebarProps, SectionConfig } from "./types";
+import { BaseSidebarProps } from "./types";
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
+import { type SidebarMenuItem as SidebarMenuItemType} from "../user/types";
 
 interface GenericSidebarProps extends BaseSidebarProps {
   dashboardTitle: string;
-  menuItems: any[];
+  menuItems: SidebarMenuItemType[];
   roleLabel?: string;
   getIcon?: (id: string) => React.ElementType;
 }
@@ -39,7 +40,7 @@ export const GenericSidebar = ({
       <SidebarHeader className="p-4">
         <div className="flex items-center gap-3">
           <Avatar className="w-10 h-10  rounded-full flex items-center justify-center overflow-hidden">
-            <AvatarImage src={userDetails?.image!} />
+            <AvatarImage src={userDetails?.image || undefined} />
             <AvatarFallback className="bg-gradient-to-br from-[#76d2fa] to-[#876aff] text-white">
               {userDetails?.name?.substring(0, 2)}
             </AvatarFallback>
@@ -59,7 +60,7 @@ export const GenericSidebar = ({
         <SidebarGroup>
           <SidebarGroupContent>
             <SidebarMenu className="space-y-1">
-              {menuItems.map((item: any) => {
+              {menuItems.map((item) => {
                 const Icon = getIcon(item.id) || LogOut;
                 const isActive = activeSection === item.id;
 

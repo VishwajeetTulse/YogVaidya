@@ -7,8 +7,6 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Textarea } from "@/components/ui/textarea";
-import { Checkbox } from "@/components/ui/checkbox";
 import {
   Search,
   Shield,
@@ -35,6 +33,15 @@ interface Moderator {
   createdAt: string;
   updatedAt: string;
   permissions?: string[];
+}
+
+interface UserPatch {
+  id: string;
+  name?: string;
+  email?: string;
+  phone?: string;
+  role?: string;
+  password?: string; 
 }
 
 export const ModeratorManagementSection = () => {
@@ -66,7 +73,20 @@ export const ModeratorManagementSection = () => {
 
   useEffect(() => {
     // Filter moderators based on search term
-    filterModerators();
+    if (!searchTerm) {
+      setFilteredModerators(moderators);
+      return;
+    }
+
+    const term = searchTerm.toLowerCase();
+    const filtered = moderators.filter(
+      (moderator) =>
+        moderator.name?.toLowerCase().includes(term) ||
+        moderator.email.toLowerCase().includes(term) ||
+        moderator.phone?.toLowerCase().includes(term)
+    );
+
+    setFilteredModerators(filtered);
   }, [searchTerm, moderators]);
 
   const fetchModerators = async () => {
@@ -91,23 +111,6 @@ export const ModeratorManagementSection = () => {
     } finally {
       setLoading(false);
     }
-  };
-
-  const filterModerators = () => {
-    if (!searchTerm) {
-      setFilteredModerators(moderators);
-      return;
-    }
-
-    const term = searchTerm.toLowerCase();
-    const filtered = moderators.filter(
-      (moderator) =>
-        moderator.name?.toLowerCase().includes(term) ||
-        moderator.email.toLowerCase().includes(term) ||
-        moderator.phone?.toLowerCase().includes(term)
-    );
-
-    setFilteredModerators(filtered);
   };
 
   const handleCreateModerator = () => {
@@ -218,7 +221,7 @@ export const ModeratorManagementSection = () => {
       }
 
       // Prepare the update payload
-      const updateData: any = {
+      const updateData: UserPatch = {
         id: editingModerator.id,
         name: formData.name,
         email: formData.email,

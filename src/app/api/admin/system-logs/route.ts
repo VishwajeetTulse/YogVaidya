@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
-import { format, subDays } from "date-fns";
 
 const prisma = new PrismaClient();
 

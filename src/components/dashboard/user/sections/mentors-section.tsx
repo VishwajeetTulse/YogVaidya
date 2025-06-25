@@ -3,9 +3,8 @@ import { Card } from "@/components/ui/card";
 import { Star } from "lucide-react";
 import { SectionProps } from "../types";
 
-interface MentorsSectionProps extends SectionProps {}
 
-export const MentorsSection = ({ userDetails, setActiveSection }: MentorsSectionProps) => {
+export const MentorsSection = ({ setActiveSection }: SectionProps) => {
   return (
     <div className="space-y-6">
       <div>

@@ -3,8 +3,6 @@ import { Card } from "@/components/ui/card";
 import { CreditCard, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { SectionProps } from "../types";
 
-interface SubscriptionSectionProps extends SectionProps {}
-
 export const SubscriptionSection = ({ 
   userDetails, 
   cancellingSubscription, 
@@ -12,7 +10,7 @@ export const SubscriptionSection = ({
   formatDate, 
   getStatusColor,
   setActiveSection 
-}: SubscriptionSectionProps) => {
+}: SectionProps) => {
   return (
     <div className="space-y-6">
       <div>
@@ -29,13 +27,13 @@ export const SubscriptionSection = ({
             <CreditCard className="w-5 h-5" />
             Current Plan
           </h2>
-          {userDetails?.subscription?.status && (
+          {userDetails.subscriptionStatus && (
             <span
               className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor?.(
-                userDetails.subscription.status
+                userDetails.subscriptionStatus
               )}`}
             >
-              {userDetails.subscription.status}
+              {userDetails.subscriptionStatus}
             </span>
           )}
         </div>
@@ -43,14 +41,14 @@ export const SubscriptionSection = ({
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
             <h3 className="font-semibold text-lg mb-2">
-              {userDetails?.subscription?.plan || "No Active Plan"}
+              {userDetails.subscriptionPlan || "No Active Plan"}
             </h3>
             <p className="text-gray-500 mb-4">
-              {userDetails?.subscription?.plan === "BLOOM"
+              {userDetails.subscriptionPlan === "BLOOM"
                 ? "Perfect for yoga enthusiasts"
-                : userDetails?.subscription?.plan === "FLOURISH"
+                : userDetails.subscriptionPlan === "FLOURISH"
                 ? "Complete wellness journey"
-                : userDetails?.subscription?.plan === "SEED"
+                : userDetails.subscriptionPlan === "SEED"
                 ? "Perfect for meditation enthusiasts"
                 : "Choose a plan to get started"}
             </p>
@@ -59,32 +57,32 @@ export const SubscriptionSection = ({
               <div className="flex justify-between">
                 <span className="text-gray-500">Plan:</span>
                 <span className="font-medium">
-                  {userDetails?.subscription?.plan || "None"}
+                  {userDetails.subscriptionPlan || "None"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Status:</span>
                 <span className="font-medium">
-                  {userDetails?.subscription?.status || "Inactive"}
+                  {userDetails.subscriptionStatus || "Inactive"}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Next Billing:</span>
                 <span className="font-medium">
-                  {formatDate?.(userDetails?.subscription?.nextBillingDate)}
+                  {formatDate?.(userDetails.nextBillingDate)}
                 </span>
               </div>
               <div className="flex justify-between">
                 <span className="text-gray-500">Started:</span>
                 <span className="font-medium">
-                  {formatDate?.(userDetails?.subscription?.startDate)}
+                  {formatDate?.(userDetails.subscriptionStartDate)}
                 </span>
               </div>
             </div>
           </div>
 
           <div className="space-y-4">
-            {userDetails?.subscription?.status === "ACTIVE" ? (
+            {userDetails.subscriptionStatus === "ACTIVE" ? (
               <>
                 <div className="p-4 bg-green-50 border border-green-200 rounded-lg">
                   <div className="flex items-center gap-2 text-green-700">

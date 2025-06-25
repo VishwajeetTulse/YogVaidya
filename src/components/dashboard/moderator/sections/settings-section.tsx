@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { ModeratorSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -9,45 +9,13 @@ import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
 import { Bell, User, Lock } from "lucide-react";
-
 import { authClient } from "@/lib/auth-client"; // Adjust the import based on your project structure
-interface ModeratorSettings {
-  mentorApplicationAlerts: boolean;
-  userSignupAlerts: boolean;
-}
 
 export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
-  const [settings, setSettings] = useState<ModeratorSettings>({
-    mentorApplicationAlerts: true,
-    userSignupAlerts: false,
-  });
   const [displayName, setDisplayName] = useState(userDetails?.name || "");
   const [phoneNumber, setPhoneNumber] = useState(userDetails?.phone || "");
 console.log("User Details:", userDetails);
-  useEffect(() => {
-    const fetchSettings = async () => {
-      setIsLoading(true);
-      try {
-        const response = await fetch(`/api/moderator/settings`);
-        if (!response.ok) {
-          throw new Error("Failed to fetch settings");
-        }
-        const data = await response.json();
-        if (data.success) {
-          setSettings(data.settings);
-        }
-      } catch (error) {
-        console.error("Error fetching settings:", error);
-        toast.error("Failed to load settings");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchSettings();
-  }, []);
 
   const handlechangePassword = async () => {
     const { error } = await authClient.forgetPassword({
@@ -119,7 +87,7 @@ console.log("User Details:", userDetails);
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your display name"
-              disabled={isLoading || isSaving}
+              disabled={isSaving}
             />
           </div>
 
@@ -141,7 +109,7 @@ console.log("User Details:", userDetails);
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="Your phone number"
-              disabled={isLoading || isSaving}
+              disabled={isSaving}
             />
           </div>
 
@@ -157,7 +125,7 @@ console.log("User Details:", userDetails);
         </div>
 
         <div className="mt-6">
-          <Button onClick={updateProfile} disabled={isLoading || isSaving}>
+          <Button onClick={updateProfile} disabled={isSaving}>
             {isSaving ? "Saving..." : "Update Profile"}
           </Button>
         </div>

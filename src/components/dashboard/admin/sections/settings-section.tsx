@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { AdminSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -12,37 +12,10 @@ import { Bell, User, Lock } from "lucide-react";
 import { authClient } from "@/lib/auth-client"; // Adjust the import based on your project structure
 
 export const SettingsSection = ({ userDetails }: AdminSectionProps) => {
-  const [isLoading, setIsLoading] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [displayName, setDisplayName] = useState(userDetails?.name || "");
   const [phoneNumber, setPhoneNumber] = useState(userDetails?.phone || "");
   console.log("User Details:", userDetails);
-  useEffect(() => {
-    const fetchUserDetails = async () => {
-      try {
-        setIsLoading(true);
-        const response = await fetch(`/api/users/${userDetails.id}`);
-        console.error("Fetching user details:", response);
-        if (!response.ok) {
-          throw new Error("Failed to fetch user details");
-        }
-        const data = await response.json();
-        console.log("User details fetched:", data);
-        if (data.success) {
-          setDisplayName(data.user.name);
-          setPhoneNumber(data.user.phone);
-        } else {
-          toast.error(data.error || "Failed to load user details");
-        }
-      } catch (error) {
-        toast.error("Failed to load user details");
-      } finally {
-        setIsLoading(false);
-      }
-
-      fetchUserDetails();
-    };
-  }, [userDetails.id, isLoading]);
 
   const handlechangePassword = async () => {
     const { error } = await authClient.forgetPassword({
@@ -115,7 +88,7 @@ export const SettingsSection = ({ userDetails }: AdminSectionProps) => {
               value={displayName}
               onChange={(e) => setDisplayName(e.target.value)}
               placeholder="Your display name"
-              disabled={isLoading || isSaving}
+              disabled={isSaving}
             />
           </div>
 
@@ -137,7 +110,7 @@ export const SettingsSection = ({ userDetails }: AdminSectionProps) => {
               value={phoneNumber}
               onChange={(e) => setPhoneNumber(e.target.value)}
               placeholder="Your phone number"
-              disabled={isLoading || isSaving}
+              disabled={isSaving}
             />
           </div>
 
@@ -153,7 +126,7 @@ export const SettingsSection = ({ userDetails }: AdminSectionProps) => {
         </div>
 
         <div className="mt-6">
-          <Button onClick={updateProfile} disabled={isLoading || isSaving}>
+          <Button onClick={updateProfile} disabled={isSaving}>
             {isSaving ? "Saving..." : "Update Profile"}
           </Button>
         </div>

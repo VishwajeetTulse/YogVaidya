@@ -1,22 +1,28 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { ModeratorSectionProps } from "../moderator/types";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Search, UserCog, Trash2, Edit, AlertCircle, ChevronDown } from "lucide-react";
+import {
+  Search,
+  UserCog,
+  Trash2,
+  Edit,
+  AlertCircle,
+  ChevronDown,
+} from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { 
-  Dialog, 
-  DialogContent, 
-  DialogDescription, 
-  DialogFooter, 
-  DialogHeader, 
-  DialogTitle 
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
 } from "@/components/ui/dialog";
 
 interface User {
@@ -29,7 +35,7 @@ interface User {
   updatedAt: string;
 }
 
-export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
+export const UsersSection = () => {
   const [users, setUsers] = useState<User[]>([]);
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
@@ -50,14 +56,6 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
     role: "",
   });
 
-  useEffect(() => {
-    fetchUsers();
-  }, []);
-
-  useEffect(() => {
-    // Filter users based on search term and role filter
-    filterUsers();
-  }, [searchTerm, roleFilter, users]);
   const fetchUsers = async () => {
     setLoading(true);
     try {
@@ -81,34 +79,41 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
       setLoading(false);
     }
   };
-  const filterUsers = () => {
-    let result = [...users];
-    
-    // Apply role filter
-    if (roleFilter !== "ALL") {
-      result = result.filter(user => user.role === roleFilter);
-    }
-    
-    // Apply search term filter
-    if (searchTerm) {
-      const term = searchTerm.toLowerCase();
-      result = result.filter(
-        user =>
-          user.name?.toLowerCase().includes(term) ||
-          user.email.toLowerCase().includes(term) ||
-          user.phone?.toLowerCase().includes(term)
-      );
-    }
-    
-    setFilteredUsers(result);
-  };
+
+  useEffect(() => {
+    fetchUsers();
+  }, []);
+
+  useEffect(() => {
+    // Filter users based on search term and role filter
+      let result = [...users];
+
+      // Apply role filter
+      if (roleFilter !== "ALL") {
+        result = result.filter((user) => user.role === roleFilter);
+      }
+
+      // Apply search term filter
+      if (searchTerm) {
+        const term = searchTerm.toLowerCase();
+        result = result.filter(
+          (user) =>
+            user.name?.toLowerCase().includes(term) ||
+            user.email.toLowerCase().includes(term) ||
+            user.phone?.toLowerCase().includes(term)
+        );
+      }
+
+      setFilteredUsers(result);
+  }, [searchTerm, roleFilter, users]);
+
   const handleEditUser = (user: User) => {
     // Prevent editing ADMIN or MODERATOR users
     if (user.role === "ADMIN" || user.role === "MODERATOR") {
       toast.error("You don't have permission to edit this user");
       return;
     }
-    
+
     setEditingUser(user);
     setFormData({
       name: user.name || "",
@@ -125,7 +130,7 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
       toast.error("You don't have permission to delete this user");
       return;
     }
-    
+
     setUserToDelete(user);
     setIsDeleteDialogOpen(true);
   };
@@ -147,14 +152,14 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
 
   const submitUserEdit = async () => {
     if (!editingUser) return;
-    
+
     // Prevent editing ADMIN or MODERATOR users
     if (editingUser.role === "ADMIN" || editingUser.role === "MODERATOR") {
       toast.error("You don't have permission to edit this user");
       setIsEditDialogOpen(false);
       return;
     }
-    
+
     try {
       const res = await fetch("/api/users", {
         method: "PATCH",
@@ -169,16 +174,24 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
           role: formData.role,
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success("User updated successfully");
-        setUsers(users.map(u => 
-          u.id === editingUser.id 
-            ? { ...u, name: formData.name, email: formData.email, phone: formData.phone, role: formData.role } 
-            : u
-        ));
+        setUsers(
+          users.map((u) =>
+            u.id === editingUser.id
+              ? {
+                  ...u,
+                  name: formData.name,
+                  email: formData.email,
+                  phone: formData.phone,
+                  role: formData.role,
+                }
+              : u
+          )
+        );
         setIsEditDialogOpen(false);
       } else {
         toast.error("Failed to update user");
@@ -191,14 +204,14 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
 
   const confirmDeleteUser = async () => {
     if (!userToDelete) return;
-    
+
     // Prevent deleting ADMIN or MODERATOR users
     if (userToDelete.role === "ADMIN" || userToDelete.role === "MODERATOR") {
       toast.error("You don't have permission to delete this user");
       setIsDeleteDialogOpen(false);
       return;
     }
-    
+
     try {
       const res = await fetch("/api/users", {
         method: "DELETE",
@@ -209,12 +222,12 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
           id: userToDelete.id,
         }),
       });
-      
+
       const data = await res.json();
-      
+
       if (data.success) {
         toast.success("User deleted successfully");
-        setUsers(users.filter(u => u.id !== userToDelete.id));
+        setUsers(users.filter((u) => u.id !== userToDelete.id));
         setIsDeleteDialogOpen(false);
       } else {
         toast.error("Failed to delete user");
@@ -254,7 +267,9 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
 
       <Card className="p-6">
         {/* Filter and search controls */}
-        <div className="flex flex-col sm:flex-row gap-4 mb-6">          <div className="relative flex-1">
+        <div className="flex flex-col sm:flex-row gap-4 mb-6">
+          {" "}
+          <div className="relative flex-1">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
             <Input
               placeholder="Search by name, email or phone..."
@@ -264,30 +279,40 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
             />
           </div>
           <div className="relative">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               className="w-full sm:w-[180px] flex justify-between items-center"
               onClick={() => setShowRoleFilter(!showRoleFilter)}
             >
               <span>{roleFilter === "ALL" ? "All Roles" : roleFilter}</span>
               <ChevronDown className="h-4 w-4 ml-2" />
-            </Button>            {showRoleFilter && (
+            </Button>{" "}
+            {showRoleFilter && (
               <div className="absolute top-full left-0 mt-1 w-full bg-white border rounded-md shadow-lg z-10">
-                <div 
+                <div
                   className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => { setRoleFilter("ALL"); setShowRoleFilter(false); }}
+                  onClick={() => {
+                    setRoleFilter("ALL");
+                    setShowRoleFilter(false);
+                  }}
                 >
                   All Roles
                 </div>
-                <div 
+                <div
                   className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => { setRoleFilter("USER"); setShowRoleFilter(false); }}
+                  onClick={() => {
+                    setRoleFilter("USER");
+                    setShowRoleFilter(false);
+                  }}
                 >
                   Users
                 </div>
-                <div 
+                <div
                   className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => { setRoleFilter("MENTOR"); setShowRoleFilter(false); }}
+                  onClick={() => {
+                    setRoleFilter("MENTOR");
+                    setShowRoleFilter(false);
+                  }}
                 >
                   Mentors
                 </div>
@@ -303,12 +328,18 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-10">
             <UserCog className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-lg font-semibold text-gray-700">No Users Found</p>
-            <p className="text-gray-500">Try a different search term or filter.</p>
+            <p className="mt-2 text-lg font-semibold text-gray-700">
+              No Users Found
+            </p>
+            <p className="text-gray-500">
+              Try a different search term or filter.
+            </p>
           </div>
         ) : (
           <div className="overflow-x-auto">
-            <div className="min-w-full border rounded-md">              {/* Table Header */}
+            <div className="min-w-full border rounded-md">
+              {" "}
+              {/* Table Header */}
               <div className="grid grid-cols-5 gap-2 p-4 bg-gray-50 border-b font-medium text-xs uppercase text-gray-500">
                 <div>Name</div>
                 <div>Email</div>
@@ -316,11 +347,13 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
                 <div>Created</div>
                 <div className="text-right">Actions</div>
               </div>
-              
               {/* Table Body */}
               <div>
                 {filteredUsers.map((user) => (
-                  <div key={user.id} className="grid grid-cols-5 gap-2 p-4 border-b hover:bg-gray-50 text-sm">
+                  <div
+                    key={user.id}
+                    className="grid grid-cols-5 gap-2 p-4 border-b hover:bg-gray-50 text-sm"
+                  >
                     <div className="truncate">{user.name || "-"}</div>
                     <div className="truncate">{user.email}</div>
                     <div>{getRoleBadge(user.role)}</div>
@@ -357,7 +390,8 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update the user's information. Click save when you're done.
+              Update the user&apos;s information. Click save when you&apos;re
+              done.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -392,25 +426,32 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
               <div className="relative">
-                <Button 
-                  variant="outline" 
-                  type="button" 
+                <Button
+                  variant="outline"
+                  type="button"
                   className="w-full flex justify-between"
                   onClick={() => setShowEditRoleFilter(!showEditRoleFilter)}
                 >
                   {formData.role}
                   <ChevronDown className="h-4 w-4 ml-2" />
-                </Button>                {showEditRoleFilter && (
+                </Button>{" "}
+                {showEditRoleFilter && (
                   <div className="absolute top-full left-0 mt-1 w-full bg-white border rounded-md shadow-lg z-10">
-                    <div 
+                    <div
                       className="p-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => { handleRoleChange("USER"); setShowEditRoleFilter(false); }}
+                      onClick={() => {
+                        handleRoleChange("USER");
+                        setShowEditRoleFilter(false);
+                      }}
                     >
                       User
                     </div>
-                    <div 
+                    <div
                       className="p-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => { handleRoleChange("MENTOR"); setShowEditRoleFilter(false); }}
+                      onClick={() => {
+                        handleRoleChange("MENTOR");
+                        setShowEditRoleFilter(false);
+                      }}
                     >
                       Mentor
                     </div>
@@ -421,12 +462,13 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
           </div>
           <DialogFooter>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsEditDialogOpen(false)}
+              >
                 Cancel
               </Button>
-              <Button onClick={submitUserEdit}>
-                Save Changes
-              </Button>
+              <Button onClick={submitUserEdit}>Save Changes</Button>
             </div>
           </DialogFooter>
         </DialogContent>
@@ -440,27 +482,36 @@ export const UsersSection = ({ userDetails }: ModeratorSectionProps) => {
               <AlertCircle className="h-5 w-5 mr-2" /> Confirm Deletion
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be undone.
+              Are you sure you want to delete this user? This action cannot be
+              undone.
             </DialogDescription>
           </DialogHeader>
-          
+
           {userToDelete && (
             <div className="py-4">
               <div className="space-y-1">
-                <p className="font-medium">{userToDelete.name || "Unnamed user"}</p>
+                <p className="font-medium">
+                  {userToDelete.name || "Unnamed user"}
+                </p>
                 <p className="text-sm text-gray-600">{userToDelete.email}</p>
-                <p className="text-sm text-gray-600">Role: {userToDelete.role}</p>
+                <p className="text-sm text-gray-600">
+                  Role: {userToDelete.role}
+                </p>
               </div>
               <Separator className="my-4" />
               <p className="text-sm text-red-600">
-                This will delete the user account and all associated mentor applications.
+                This will delete the user account and all associated mentor
+                applications.
               </p>
             </div>
           )}
-          
+
           <DialogFooter>
             <div className="flex justify-end gap-2">
-              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
+              <Button
+                variant="outline"
+                onClick={() => setIsDeleteDialogOpen(false)}
+              >
                 Cancel
               </Button>
               <Button
