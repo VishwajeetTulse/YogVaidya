@@ -1,0 +1,15 @@
+[Unit]
+Description=YogVaidya Daily Subscription Renewal
+After=network.target
+
+[Service]
+Type=oneshot
+User=www-data
+WorkingDirectory=D:\Vishwajeet\YogVaidya
+Environment=NODE_ENV=production
+ExecStart=/usr/bin/node D:\Vishwajeet\YogVaidya\scripts\daily-subscription-renewal.js
+StandardOutput=append:D:\Vishwajeet\YogVaidya\logs\renewal-systemd.log
+StandardError=append:D:\Vishwajeet\YogVaidya\logs\renewal-systemd-error.log
+
+[Install]
+WantedBy=multi-user.target

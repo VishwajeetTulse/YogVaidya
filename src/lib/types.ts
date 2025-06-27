@@ -30,3 +30,19 @@ export interface CreateSubscriptionData {
   paymentAmount?: number;
   autoRenewal?: boolean;
 }
+
+// Renewal system types
+export interface RenewalResult {
+  success: boolean;
+  message?: string;
+  renewed?: number;
+  error?: string;
+  errors?: string[];
+}
+
+export interface RenewalStats {
+  usersDueToday: number;
+  totalActiveSubscriptions: number;
+  usersWithRazorpaySubscriptions: number;
+  testDate: string;
+}
