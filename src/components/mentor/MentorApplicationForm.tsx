@@ -4,7 +4,14 @@ import { z } from "zod";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
@@ -12,6 +19,9 @@ import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 import MentorApplicationSubmission from "./MentorApplicationSubmission";
+import { Separator } from "@/components/ui/separator";
+import { Select } from "../ui/select";
+import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
 
 const formSchema = z.object({
   name: z.string().min(2, "Full name is required"),
@@ -22,8 +32,12 @@ const formSchema = z.object({
   expertise: z.string().min(2, "Please enter your areas of expertise"),
   certifications: z.string().min(2, "Please enter your certifications"),
   pow: z.any().optional(),
-  consent: z.literal(true, { errorMap: () => ({ message: "You must agree to the terms." }) }),
-  mentorType: z.enum(["YOGAMENTOR", "DIETPLANNER"], { required_error: "Mentor type is required" }),
+  consent: z.literal(true, {
+    errorMap: () => ({ message: "You must agree to the terms." }),
+  }),
+  mentorType: z.enum(["YOGAMENTOR", "MEDITATIONMENTOR"], {
+    required_error: "Mentor type is required",
+  }),
 });
 
 type FormValues = z.infer<typeof formSchema>;
@@ -33,7 +47,8 @@ type MentorApplication = {
   name: string;
   email: string;
   phone: string;
-  experience: string;  expertise: string;
+  experience: string;
+  expertise: string;
   certifications: string;
   powUrl?: string | null;
   status: string;
@@ -46,7 +61,8 @@ export default function MentorApplicationForm() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [existingApplication, setExistingApplication] = useState<MentorApplication | null>(null);
+  const [existingApplication, setExistingApplication] =
+    useState<MentorApplication | null>(null);
   const [fetching, setFetching] = useState(true);
   const router = useRouter();
 
@@ -71,13 +87,17 @@ export default function MentorApplicationForm() {
       try {
         // Get user session to extract email
         const session = await authClient.getSession();
-        const userEmail = session && 'data' in session && session.data?.user?.email;
+        const userEmail =
+          session && "data" in session && session.data?.user?.email;
         if (!userEmail) {
           setExistingApplication(null);
           setFetching(false);
           return;
         }
-        const res = await fetch(`/api/mentor-application?email=${encodeURIComponent(userEmail)}`, { method: "GET" });
+        const res = await fetch(
+          `/api/mentor-application?email=${encodeURIComponent(userEmail)}`,
+          { method: "GET" }
+        );
         const data = await res.json();
         if (data.success && data.applications && data.applications.length > 0) {
           setExistingApplication(data.applications[0]);
@@ -98,9 +118,11 @@ export default function MentorApplicationForm() {
     async function prefillUser() {
       try {
         const session = await authClient.getSession();
-        if (session && 'data' in session && session.data?.user) {
-          if (session.data.user.name) form.setValue("name", session.data.user.name);
-          if (session.data.user.email) form.setValue("email", session.data.user.email);
+        if (session && "data" in session && session.data?.user) {
+          if (session.data.user.name)
+            form.setValue("name", session.data.user.name);
+          if (session.data.user.email)
+            form.setValue("email", session.data.user.email);
         }
       } catch {}
     }
@@ -116,9 +138,17 @@ export default function MentorApplicationForm() {
     }
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(`/api/mentor-application?email=${encodeURIComponent(existingApplication.email)}`);
+        const res = await fetch(
+          `/api/mentor-application?email=${encodeURIComponent(
+            existingApplication.email
+          )}`
+        );
         const data = await res.json();
-        if (data.success && data.applications && data.applications[0]?.status === "approved") {
+        if (
+          data.success &&
+          data.applications &&
+          data.applications[0]?.status === "approved"
+        ) {
           router.replace("/dashboard?role=mentor");
         }
       } catch {}
@@ -164,7 +194,11 @@ export default function MentorApplicationForm() {
         try {
           const res = await fetch("/api/mentor-application", { method: "GET" });
           const data = await res.json();
-          if (data.success && data.applications && data.applications.length > 0) {
+          if (
+            data.success &&
+            data.applications &&
+            data.applications.length > 0
+          ) {
             setExistingApplication(data.applications[0]);
             console.log("Existing application", existingApplication);
           }
@@ -221,7 +255,7 @@ export default function MentorApplicationForm() {
       expertise: form.getValues("expertise"),
       certifications: form.getValues("certifications"),
       powUrl: null,
-      status: "pending"
+      status: "pending",
     };
 
     return (
@@ -239,24 +273,39 @@ export default function MentorApplicationForm() {
       <section className="max-w-7xl mx-auto px-4 pt-3 pb-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">Mentor Application</h1>
-            <p className="text-gray-600">Apply to become a certified YogVaidya mentor</p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">
+              Mentor Application
+            </h1>
+            <p className="text-gray-600">
+              Apply to become a certified YogVaidya mentor
+            </p>
           </div>
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
             <Form {...form}>
-              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
+              <form
+                onSubmit={form.handleSubmit(onSubmit)}
+                className="space-y-8"
+              >
                 {/* Personal Information Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Personal Information</h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                    Personal Information
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Full Name</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Full Name
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="Your full name" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Input
+                              placeholder="Your full name"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -267,9 +316,16 @@ export default function MentorApplicationForm() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Email
+                          </FormLabel>
                           <FormControl>
-                            <Input type="email" placeholder="your@email.com" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Input
+                              type="email"
+                              placeholder="your@email.com"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -280,9 +336,15 @@ export default function MentorApplicationForm() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Phone Number
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="Your phone number" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Input
+                              placeholder="Your phone number"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -290,21 +352,27 @@ export default function MentorApplicationForm() {
                     />
                   </div>
                 </div>
-                <div className="flex items-center justify-between mb-4">
-                  <div className="h-px bg-gray-300 flex-grow mr-2"></div>
-                </div>
+                <Separator />
                 {/* Professional Details Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Professional Details</h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                    Professional Details
+                  </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <FormField
                       control={form.control}
                       name="experience"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <FormLabel className="text-gray-700 font-medium">Teaching Experience</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Teaching Experience
+                          </FormLabel>
                           <FormControl>
-                            <Textarea placeholder="Describe your teaching experience" className="h-24 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Textarea
+                              placeholder="Describe your teaching experience"
+                              className="h-24 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -315,9 +383,15 @@ export default function MentorApplicationForm() {
                       name="expertise"
                       render={({ field }) => (
                         <FormItem className="md:col-span-2">
-                          <FormLabel className="text-gray-700 font-medium">Areas of Expertise</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Areas of Expertise
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. Hatha Yoga, Meditation" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Input
+                              placeholder="e.g. Hatha Yoga, Meditation"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -328,9 +402,15 @@ export default function MentorApplicationForm() {
                       name="certifications"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Certifications</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Certifications
+                          </FormLabel>
                           <FormControl>
-                            <Input placeholder="e.g. RYT 200, RYT 500" className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" {...field} />
+                            <Input
+                              placeholder="e.g. RYT 200, RYT 500"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              {...field}
+                            />
                           </FormControl>
                           <FormMessage className="text-red-500" />
                         </FormItem>
@@ -341,14 +421,30 @@ export default function MentorApplicationForm() {
                       name="pow"
                       render={() => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">Proof of Work (certificate/portfolio)</FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">
+                            Proof of Work (certificate/portfolio)
+                          </FormLabel>
                           <FormControl>
                             <div className="flex items-center gap-2">
-                              <Input type="file" accept=".pdf,.jpg,.jpeg,.png" onChange={handleFileChange} className="w-full h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent" />
+                              <Input
+                                type="file"
+                                accept=".pdf,.jpg,.jpeg,.png"
+                                onChange={handleFileChange}
+                                className="w-full h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                              />
                               {fileName && (
                                 <>
-                                  <span className="text-xs text-gray-600 truncate max-w-[120px]">{fileName}</span>
-                                  <Button type="button" size="sm" variant="outline" onClick={removeFile}>Remove</Button>
+                                  <span className="text-xs text-gray-600 truncate max-w-[120px]">
+                                    {fileName}
+                                  </span>
+                                  <Button
+                                    type="button"
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={removeFile}
+                                  >
+                                    Remove
+                                  </Button>
                                 </>
                               )}
                             </div>
@@ -359,24 +455,30 @@ export default function MentorApplicationForm() {
                     />
                   </div>
                 </div>
+                <Separator />
                 {/* Mentor Type Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Mentor Type</h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                    Mentor Type
+                  </h3>
                   <FormField
                     control={form.control}
                     name="mentorType"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">Select Mentor Type</FormLabel>
+                        <FormLabel className="text-gray-700 font-medium">
+                          Select Mentor Type
+                        </FormLabel>
                         <FormControl>
-                          <select
-                            {...field}
-                            className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent w-full"
-                          >
-                            <option value="" disabled>Select type</option>
-                            <option value="YOGAMENTOR">Yoga Mentor</option>
-                            <option value="DIETPLANNER">Diet Planner</option>
-                          </select>
+                          <Select onValueChange={field.onChange}>
+                            <SelectTrigger className="w-full h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent">
+                              <SelectValue placeholder="Select the type" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="YOGAMENTOR">Yoga Mentor</SelectItem>
+                              <SelectItem value="MEDITATIONMENTOR">Meditation Mentor</SelectItem>
+                            </SelectContent>
+                          </Select>
                         </FormControl>
                         <FormMessage className="text-red-500" />
                       </FormItem>
@@ -385,17 +487,42 @@ export default function MentorApplicationForm() {
                 </div>
                 {/* Agreements Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Agreements</h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
+                    Agreements
+                  </h3>
                   <FormField
                     control={form.control}
                     name="consent"
                     render={({ field }) => (
                       <FormItem className="flex items-center gap-2 mt-4">
                         <FormControl>
-                          <Checkbox checked={field.value} onCheckedChange={field.onChange} id="consent" />
+                          <Checkbox
+                            checked={field.value}
+                            onCheckedChange={field.onChange}
+                            id="consent"
+                          />
                         </FormControl>
-                        <FormLabel htmlFor="consent" className="!mt-0 cursor-pointer">
-                          I agree to the <a href="/terms" className="underline text-blue-600" target="_blank">terms</a> and <a href="/privacy" className="underline text-blue-600" target="_blank">privacy policy</a>.
+                        <FormLabel
+                          htmlFor="consent"
+                          className="!mt-0 cursor-pointer"
+                        >
+                          I agree to the{" "}
+                          <a
+                            href="/terms"
+                            className="underline text-blue-600"
+                            target="_blank"
+                          >
+                            terms
+                          </a>{" "}
+                          and{" "}
+                          <a
+                            href="/privacy"
+                            className="underline text-blue-600"
+                            target="_blank"
+                          >
+                            privacy policy
+                          </a>
+                          .
                         </FormLabel>
                         <FormMessage />
                       </FormItem>
@@ -403,7 +530,11 @@ export default function MentorApplicationForm() {
                   />
                 </div>
                 <div className="flex justify-end pt-6">
-                  <Button type="submit" className="bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6" disabled={loading}>
+                  <Button
+                    type="submit"
+                    className="bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
+                    disabled={loading}
+                  >
                     {loading ? "Submitting..." : "Submit Application"}
                   </Button>
                 </div>

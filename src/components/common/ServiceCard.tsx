@@ -16,7 +16,6 @@ export default function ServiceCard({
   description, 
   color, 
   imgUrl,
-  comingSoon = false,
   bulletsItems = []
 }: ServiceCardProps) {
   const getBgColor = () => {
@@ -43,11 +42,6 @@ export default function ServiceCard({
               className="object-contain"
             />
           </div>
-          {comingSoon && (
-            <span className="text-xs font-medium bg-amber-100 text-amber-800 px-3 py-1 rounded-full">
-              Coming Soon
-            </span>
-          )}
         </div>
         <h3 className="text-2xl font-bold text-gray-800 mt-4">{title}</h3>
         

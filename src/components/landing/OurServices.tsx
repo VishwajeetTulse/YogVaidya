@@ -71,7 +71,6 @@ export default function OurServices() {
             description="Guided meditation experiences for inner peace."
             color="blue"
             imgUrl={SERVICE_IMAGES.meditation}
-            comingSoon={true}
             bulletsItems={[
               "Mindfulness techniques",
               "Guided sessions",

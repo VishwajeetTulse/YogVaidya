@@ -168,7 +168,7 @@ export const ApplicationsSection = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold">Application Type</h3>
-                    <p>{selectedApplication.mentorType === "YOGAMENTOR" ? "Yoga Mentor" : "Diet Planner"}</p>
+                    <p>{selectedApplication.mentorType === "YOGAMENTOR" ? "Yoga Mentor" : "Meditation Mentor"}</p>
                   </div>
                   
                   <div>
