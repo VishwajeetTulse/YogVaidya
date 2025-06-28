@@ -24,6 +24,13 @@ enum SessionType {
   MEDITATION
 }
 
+enum ScheduleStatus {
+  SCHEDULED
+  ONGOING
+  COMPLETED
+  CANCELLED
+}
+
 enum SubscriptionPlan {
   SEED
   BLOOM
@@ -37,6 +44,7 @@ enum SubscriptionStatus {
   EXPIRED
   PENDING
 }
+
 enum LogLevel {
   INFO
   WARNING
@@ -175,18 +183,20 @@ model SystemLog {
 }
 
 model Schedule {
-  id            String      @id @map("_id") 
+  id            String         @id @map("_id") 
   title         String
   scheduledTime DateTime
   link          String
-  duration      Int         // Duration in minutes
+  duration      Int            // Duration in minutes
   sessionType   SessionType
+  status        ScheduleStatus @default(SCHEDULED)
   mentorId      String
-  mentor        User        @relation(fields: [mentorId], references: [id], onDelete: Cascade)
-  createdAt     DateTime    @default(now())
-  updatedAt     DateTime    @updatedAt
+  mentor        User           @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@index([mentorId])
   @@index([scheduledTime])
+  @@index([status])
   @@map("schedule")
 }

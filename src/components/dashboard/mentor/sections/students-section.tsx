@@ -1,7 +1,85 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import { Skeleton } from "@/components/ui/skeleton";
+import { getStudents } from "@/lib/students";
+import { useEffect, useState } from "react";
+import { Users } from "lucide-react";
 
 export const StudentsSection = () => {
+  const [students, setstudents] = useState<any[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    const fetchStudents = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const studentsData = await getStudents();
+        setstudents(studentsData);
+      } catch (error) {
+        console.error("Error fetching students:", error);
+        setError("Failed to load students. Please try again.");
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchStudents();
+  }, []);
+  if (loading) {
+    return (
+      <div className="space-y-6">
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
+          <p className="text-gray-600 mt-2">
+            Connect with and track your students&apos; progress.
+          </p>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {[...Array(6)].map((_, index) => (
+            <Card key={index} className="p-6 border border-purple-100">
+              <div className="text-center">
+                <Skeleton className="w-16 h-16 rounded-full mx-auto mb-4" />
+                <Skeleton className="h-6 w-32 mx-auto mb-2" />
+                <Skeleton className="h-4 w-40 mx-auto mb-3" />
+                <Skeleton className="h-4 w-36 mx-auto" />
+              </div>
+            </Card>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="text-center py-10">
+        <h2 className="text-xl font-semibold text-gray-800">Error Loading Students</h2>
+        <p className="text-gray-500 mt-2">{error}</p>
+        <Button 
+          onClick={() => window.location.reload()} 
+          className="mt-4"
+          variant="outline"
+        >
+          Try Again
+        </Button>
+      </div>
+    );
+  }
+
+  if (!students || students.length === 0) {
+    return (
+      <div className="text-center py-10">
+        <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+        <h2 className="text-xl font-semibold text-gray-800">No Students Found</h2>
+        <p className="text-gray-500 mt-2">
+          Start by inviting students to join your mentorship program.
+        </p>
+      </div>
+    );
+  }
   return (
     <div className="space-y-6">
       <div>
@@ -12,27 +90,18 @@ export const StudentsSection = () => {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {[1, 2, 3, 4, 5, 6].map((student) => (
-          <Card key={student} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors">
+        {students.map((student) => (
+          <Card key={student.id} className="p-6 border border-purple-100 hover:border-purple-200 transition-colors">
             <div className="text-center">
               <div className="w-16 h-16 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-white font-semibold">AJ</span>
+                <span className="text-white font-semibold">{student.name.charAt(0).toUpperCase()}</span>
               </div>
-              <h3 className="font-semibold text-lg">Alice Johnson</h3>
+              <h3 className="font-semibold text-lg">{student.name}</h3>
               <p className="text-gray-500 text-sm">
-                Member since Jan 2024
+                Joined on {new Date(student.subscriptionStartDate).toLocaleDateString()}
               </p>
               <div className="flex items-center justify-center gap-4 mt-3 text-sm">
-                <span className="text-[#76d2fa]">12 Sessions</span>
-                <span className="text-[#ff7dac]">Level: Beginner</span>
-              </div>
-              <div className="flex gap-2 mt-4">
-                <Button size="sm" variant="outline" className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]">
-                  Message
-                </Button>
-                <Button size="sm" className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]">
-                  View Progress
-                </Button>
+                <span className="text-[#ff7dac]">Subsription Plan : {student.subscriptionPlan}</span>
               </div>
             </div>
           </Card>

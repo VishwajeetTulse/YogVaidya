@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Link as LinkIcon, Video, Plus, Trash2 } from "lucide-react";
+import { Calendar, Clock, Link as LinkIcon, Video, Plus, Trash2, Edit } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -25,7 +25,8 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-
+import { Schedule } from "@prisma/client";
+import { sendEmail } from "@/lib/email-student-for-session";
 // Form validation schema
 const scheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -39,21 +40,12 @@ const scheduleSchema = z.object({
 
 type ScheduleFormData = z.infer<typeof scheduleSchema>;
 
-interface ScheduledSession {
-  id: string;
-  title: string;
-  scheduledTime: string;
-  link: string;
-  duration: number;
-  sessionType: "YOGA" | "MEDITATION";
-  createdAt: string;
-}
-
 export const ScheduleSection = () => {
   const { data: session } = useSession();
-  const [scheduledSessions, setScheduledSessions] = useState<ScheduledSession[]>([]);
+  const [scheduledSessions, setScheduledSessions] = useState<Schedule[]>([]);
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [editingSession, setEditingSession] = useState<Schedule | null>(null);
 
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
@@ -79,11 +71,20 @@ export const ScheduleSection = () => {
     return "YOGA"; // Default to YOGA for YOGAMENTOR or if mentorType is not set
   };
 
-  // Set the session type based on mentor type when component mounts
+  // Set the session type based on mentor type when component mounts or when editing
   useEffect(() => {
     const sessionType = getMentorSessionType();
     form.setValue("sessionType", sessionType);
-  }, [session, form]);
+    
+    // If editing a session, populate the form with existing data
+    if (editingSession) {
+      form.setValue("title", editingSession.title);
+      form.setValue("scheduledTime", new Date(editingSession.scheduledTime).toISOString().slice(0, 16));
+      form.setValue("link", editingSession.link);
+      form.setValue("duration", editingSession.duration);
+      form.setValue("sessionType", editingSession.sessionType);
+    }
+  }, [session, form, editingSession]);
 
   // Load scheduled sessions from API
   const loadScheduledSessions = async () => {
@@ -120,8 +121,14 @@ export const ScheduleSection = () => {
   const onSubmit = async (data: ScheduleFormData) => {
     setSubmitting(true);
     try {
-      const response = await fetch('/api/mentor/schedule', {
-        method: 'POST',
+      const url = editingSession 
+        ? `/api/mentor/schedule?sessionId=${editingSession.id}`
+        : '/api/mentor/schedule';
+      
+      const method = editingSession ? 'PUT' : 'POST';
+      
+      const response = await fetch(url, {
+        method,
         headers: {
           'Content-Type': 'application/json',
         },
@@ -131,10 +138,24 @@ export const ScheduleSection = () => {
       const result = await response.json();
 
       if (result.success) {
-        // Add the new session to the local state
-        setScheduledSessions(prev => [...prev, result.session]);
+        if (editingSession) {
+          // Update existing session in local state
+          setScheduledSessions(prev => 
+            prev.map(session => 
+              session.id === editingSession.id 
+                ? { ...session, ...data, scheduledTime: new Date(data.scheduledTime) }
+                : session
+            )
+          );
+          toast.success("Session updated successfully!");
+          setEditingSession(null);
+        } else {
+          // Add the new session to the local state
+          setScheduledSessions(prev => [...prev, result.session]);
+          toast.success("Session scheduled successfully!");
+        }
+        sendEmail(result.session);
         
-        toast.success("Session scheduled successfully!");
         form.reset({
           title: "",
           scheduledTime: "",
@@ -146,14 +167,25 @@ export const ScheduleSection = () => {
         // Refresh the sessions list to ensure data consistency
         loadScheduledSessions();
       } else {
-        toast.error(result.error || "Failed to schedule session");
+        toast.error(result.error || `Failed to ${editingSession ? 'update' : 'schedule'} session`);
       }
     } catch (error) {
-      console.error('Error scheduling session:', error);
-      toast.error("Failed to schedule session. Please try again.");
+      console.error(`Error ${editingSession ? 'updating' : 'scheduling'} session:`, error);
+      toast.error(`Failed to ${editingSession ? 'update' : 'schedule'} session. Please try again.`);
     } finally {
       setSubmitting(false);
     }
+  };
+
+  const cancelEdit = () => {
+    setEditingSession(null);
+    form.reset({
+      title: "",
+      scheduledTime: "",
+      link: "",
+      duration: 60,
+      sessionType: getMentorSessionType(),
+    });
   };
 
   return (
@@ -170,7 +202,7 @@ export const ScheduleSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Plus className="h-5 w-5" />
-            Schedule New Session
+            {editingSession ? "Edit Session" : "Schedule New Session"}
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -199,11 +231,11 @@ export const ScheduleSection = () => {
                       <FormLabel>Session Type</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}// Disabled because it's auto-set based on mentor type
+                        value={field.value}// Always disabled as it's auto-set based on mentor type
                       >
                         <FormControl>
                           <SelectTrigger className="bg-gray-50">
-                            <SelectValue placeholder="Select your mentor type" />
+                            <SelectValue placeholder="Select the mentor type" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -293,9 +325,21 @@ export const ScheduleSection = () => {
                 )}
               />
 
-              <Button type="submit" disabled={submitting} className="w-full md:w-auto">
-                {submitting ? "Scheduling..." : "Schedule Session"}
-              </Button>
+              <div className="flex gap-2">
+                <Button type="submit" disabled={submitting} className="w-full md:w-auto">
+                  {submitting ? (editingSession ? "Updating..." : "Scheduling...") : (editingSession ? "Update Session" : "Schedule Session")}
+                </Button>
+                {editingSession && (
+                  <Button 
+                    type="button" 
+                    variant="outline" 
+                    onClick={cancelEdit}
+                    className="w-full md:w-auto"
+                  >
+                    Cancel
+                  </Button>
+                )}
+              </div>
             </form>
           </Form>
         </CardContent>
@@ -306,7 +350,7 @@ export const ScheduleSection = () => {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5" />
-            Scheduled Sessions ({scheduledSessions.length})
+            Scheduled Sessions ({scheduledSessions.filter(s => s.status === "SCHEDULED").length})
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -322,10 +366,14 @@ export const ScheduleSection = () => {
                 Schedule your first session using the form above!
               </p>
             </div>
-          ) : (
+          ) : ( 
             <div className="space-y-4">
               {scheduledSessions
                 .sort((a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime())
+                .filter((session) => {
+                  // Filter out sessions that are in the past
+                  return session.status === "SCHEDULED"
+                })
                 .map((session) => (
                 <div
                   key={session.id}
@@ -368,11 +416,11 @@ export const ScheduleSection = () => {
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(session.link, '_blank')}
+                      onClick={() => setEditingSession(session)}
                       className="text-blue-600 border-blue-600 hover:bg-blue-50"
                     >
-                      <LinkIcon className="w-4 h-4 mr-1" />
-                      Link
+                      <Edit className="w-4 h-4 mr-1" />
+                      Edit
                     </Button>
                     <Button
                       variant="outline"
