@@ -9,10 +9,7 @@ import { OverviewSection } from '../mentor/sections/overview-section';
 import { SessionsSection } from '../mentor/sections/sessions-section';
 import { StudentsSection } from '../mentor/sections/students-section';
 import { ScheduleSection } from '../mentor/sections/schedule-section';
-import { EarningsSection } from '../mentor/sections/earnings-section';
 import { ReviewsSection } from '../mentor/sections/reviews-section';
-import { AnalyticsSection } from '../mentor/sections/analytics-section';
-import { MessagesSection } from '../mentor/sections/messages-section';
 import { ProfileSection } from '../mentor/sections/profile-section';
 import { SettingsSection } from '../mentor/sections/settings-section';
 import { SupportSection } from '../mentor/sections/support-section';
@@ -24,10 +21,7 @@ const MENTOR_SECTION_COMPONENTS = {
   "sessions": SessionsSection,
   "students": StudentsSection,
   "schedule": ScheduleSection,
-  "earnings": EarningsSection,
   "reviews": ReviewsSection,
-  "analytics": AnalyticsSection,
-  "messages": MessagesSection,
   "profile": ProfileSection,
   "settings": SettingsSection,
   "support": SupportSection,

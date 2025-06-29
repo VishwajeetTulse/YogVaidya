@@ -3,10 +3,7 @@ import {
   Video,
   Users,
   Calendar,
-  DollarSign,
   Star,
-  TrendingUp,
-  MessageSquare,
   Settings,
   HelpCircle,
 } from "lucide-react";
@@ -38,28 +35,10 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     description: "Manage your availability",
   },
   {
-    id: "earnings",
-    title: "Earnings",
-    icon: DollarSign,
-    description: "Track your income",
-  },
-  {
     id: "reviews",
     title: "Reviews & Ratings",
     icon: Star,
     description: "Student feedback",
-  },
-  {
-    id: "analytics",
-    title: "Analytics",
-    icon: TrendingUp,
-    description: "Performance insights",
-  },
-  {
-    id: "messages",
-    title: "Messages",
-    icon: MessageSquare,
-    description: "Chat with students",
   },
   {
     id: "settings",
