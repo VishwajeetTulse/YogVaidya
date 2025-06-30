@@ -4,18 +4,23 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { getStudents } from "@/lib/students";
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
+import { getMentorType } from "@/lib/mentor-type";
+import { useSession } from "@/lib/auth-client";
 
 export const StudentsSection = () => {
   const [students, setstudents] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
+  const {data : session} = useSession();
 
   useEffect(() => {
     const fetchStudents = async () => {
       try {
         setLoading(true);
         setError(null);
-        const studentsData = await getStudents();
+        const mentortype = await getMentorType(session?.user || { email: "" });
+        console.log("Fetching students for mentor type:", mentortype);
+        const studentsData = await getStudents(mentortype);
         setstudents(studentsData);
       } catch (error) {
         console.error("Error fetching students:", error);

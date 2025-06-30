@@ -43,6 +43,7 @@ export const OverviewSection = ({ userDetails, setActiveSection, formatDate }: M
 
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString('en-US', {
+      timeZone: 'Asia/Kolkata',
       hour: 'numeric',
       minute: '2-digit',
       hour12: true

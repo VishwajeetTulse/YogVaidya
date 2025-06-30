@@ -6,7 +6,7 @@ import { sendEmail } from "@/lib/email";
 
 const prisma = new PrismaClient();
 
-type MentorType = "YOGAMENTOR" | "DIETPLANNER";
+type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
 
 // Create mentor application
 export async function POST(req: NextRequest) {

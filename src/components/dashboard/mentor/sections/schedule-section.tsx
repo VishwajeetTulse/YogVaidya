@@ -70,7 +70,6 @@ export const ScheduleSection = () => {
     }
     return "YOGA"; // Default to YOGA for YOGAMENTOR or if mentorType is not set
   };
-
   // Set the session type based on mentor type when component mounts or when editing
   useEffect(() => {
     const sessionType = getMentorSessionType();
@@ -231,7 +230,7 @@ export const ScheduleSection = () => {
                       <FormLabel>Session Type</FormLabel>
                       <Select
                         onValueChange={field.onChange}
-                        value={field.value}// Always disabled as it's auto-set based on mentor type
+                        value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger className="bg-gray-50">
@@ -268,7 +267,7 @@ export const ScheduleSection = () => {
                         <Input
                           type="datetime-local"
                           {...field}
-                          min={new Date().toISOString().slice(0, 16)}
+                          min={new Date().toLocaleString().slice(0, 16)}
                           className="w-fit"
                         />
                       </FormControl>

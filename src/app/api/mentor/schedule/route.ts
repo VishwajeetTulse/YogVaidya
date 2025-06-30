@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
     const formattedSessions = scheduledSessions.map(session => ({
       id: session.id,
       title: session.title,
-      scheduledTime: session.scheduledTime.toISOString(),
+      scheduledTime: session.scheduledTime.toString(),
       link: session.link,
       duration: session.duration,
       status: session.status,

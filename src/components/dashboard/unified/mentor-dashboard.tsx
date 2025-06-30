@@ -10,7 +10,6 @@ import { SessionsSection } from '../mentor/sections/sessions-section';
 import { StudentsSection } from '../mentor/sections/students-section';
 import { ScheduleSection } from '../mentor/sections/schedule-section';
 import { ReviewsSection } from '../mentor/sections/reviews-section';
-import { ProfileSection } from '../mentor/sections/profile-section';
 import { SettingsSection } from '../mentor/sections/settings-section';
 import { SupportSection } from '../mentor/sections/support-section';
 import { formatDate } from '../shared/utils';
@@ -22,7 +21,6 @@ const MENTOR_SECTION_COMPONENTS = {
   "students": StudentsSection,
   "schedule": ScheduleSection,
   "reviews": ReviewsSection,
-  "profile": ProfileSection,
   "settings": SettingsSection,
   "support": SupportSection,
 };

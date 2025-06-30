@@ -122,15 +122,16 @@ export const SessionsSection = () => {
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
-    .filter(
-      (session) => {
-        if (session.status === "COMPLETED") return true;
-        if (session.status === "CANCELLED" || session.status === "ONGOING") return false;
-        // If no status or SCHEDULED and time has passed, consider completed
-        return new Date(session.scheduledTime) <= new Date() && 
-               (!session.status || session.status === "SCHEDULED");
-      }
-    )
+    .filter((session) => {
+      if (session.status === "COMPLETED") return true;
+      if (session.status === "CANCELLED" || session.status === "ONGOING")
+        return false;
+      // If no status or SCHEDULED and time has passed, consider completed
+      return (
+        new Date(session.scheduledTime) <= new Date() &&
+        (!session.status || session.status === "SCHEDULED")
+      );
+    })
     .sort(
       (a, b) =>
         new Date(b.scheduledTime).getTime() -
@@ -147,18 +148,33 @@ export const SessionsSection = () => {
     );
 
   const renderSessionCard = (sessionItem: Schedule) => {
-    const isUpcoming = new Date(sessionItem.scheduledTime) > new Date() && 
-                      (!sessionItem.status || sessionItem.status === "SCHEDULED");
+    const isUpcoming =
+      new Date(sessionItem.scheduledTime) > new Date() &&
+      (!sessionItem.status || sessionItem.status === "SCHEDULED");
     const isOngoing = sessionItem.status === "ONGOING";
     const isCompleted = (() => {
       if (sessionItem.status === "COMPLETED") return true;
-      if (sessionItem.status === "CANCELLED" || sessionItem.status === "ONGOING") return false;
+      if (
+        sessionItem.status === "CANCELLED" ||
+        sessionItem.status === "ONGOING"
+      )
+        return false;
       // If no status or SCHEDULED and time has passed, consider completed
-      return new Date(sessionItem.scheduledTime) <= new Date() && 
-             (!sessionItem.status || sessionItem.status === "SCHEDULED");
+      return (
+        new Date(sessionItem.scheduledTime) <= new Date() &&
+        (!sessionItem.status || sessionItem.status === "SCHEDULED")
+      );
     })();
     const isCancelled = sessionItem.status === "CANCELLED";
-
+    console.log(
+      "TIme ZOne " , sessionItem.scheduledTime.toLocaleString("en-US", {
+        timeZone: "Asia/Kolkata",
+        hour: "numeric",
+        minute: "2-digit",
+        hour12: true,
+      }),
+      sessionItem.scheduledTime
+    );
     return (
       <Card key={sessionItem.id} className="p-6">
         <div className="flex items-center justify-between">
@@ -172,22 +188,30 @@ export const SessionsSection = () => {
             </div>
             <div>
               <div className="flex items-center gap-2">
-                <h3 className="font-semibold text-lg">
-                  {sessionItem.title}
-                </h3>
+                <h3 className="font-semibold text-lg">{sessionItem.title}</h3>
                 {/* Status Badge */}
-                <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                  isOngoing ? 'bg-orange-100 text-orange-800' :
-                  isUpcoming ? 'bg-blue-100 text-blue-800' :
-                  isCompleted ? 'bg-green-100 text-green-800' :
-                  isCancelled ? 'bg-red-100 text-red-800' :
-                  'bg-gray-100 text-gray-800'
-                }`}>
-                  {isOngoing ? 'ONGOING' :
-                   isUpcoming ? 'UPCOMING' :
-                   isCompleted ? 'COMPLETED' :
-                   isCancelled ? 'CANCELLED' :
-                   'SCHEDULED'}
+                <span
+                  className={`px-2 py-1 text-xs font-medium rounded-full ${
+                    isOngoing
+                      ? "bg-orange-100 text-orange-800"
+                      : isUpcoming
+                      ? "bg-blue-100 text-blue-800"
+                      : isCompleted
+                      ? "bg-green-100 text-green-800"
+                      : isCancelled
+                      ? "bg-red-100 text-red-800"
+                      : "bg-gray-100 text-gray-800"
+                  }`}
+                >
+                  {isOngoing
+                    ? "ONGOING"
+                    : isUpcoming
+                    ? "UPCOMING"
+                    : isCompleted
+                    ? "COMPLETED"
+                    : isCancelled
+                    ? "CANCELLED"
+                    : "SCHEDULED"}
                 </span>
               </div>
               <p className="text-gray-500 capitalize">
@@ -196,14 +220,15 @@ export const SessionsSection = () => {
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {sessionItem.scheduledTime.toLocaleString("en-US", {
-                    weekday: "short",
-                    year: "numeric",
-                    month: "short",
-                    day: "numeric",
-                    hour: "2-digit",
+                  {new Date(sessionItem.scheduledTime).toLocaleString("en-US", {
+                    timeZone: "Asia/Kolkata",
+                    day: "2-digit",
+                    month: "2-digit",
+                    year: "2-digit",
+                    hour: "numeric",
                     minute: "2-digit",
-                  })}
+                    hour12: true,
+                  }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -238,7 +263,7 @@ export const SessionsSection = () => {
                 )}
               </>
             )}
-            
+
             {/* Buttons for ongoing sessions */}
             {isOngoing && (
               <>
@@ -278,7 +303,7 @@ export const SessionsSection = () => {
                 </Button>
               </>
             )}
-            
+
             {/* Buttons for completed sessions */}
             {isCompleted && !isOngoing && (
               <Button
@@ -309,7 +334,9 @@ export const SessionsSection = () => {
           <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 text-lg mb-2">{emptyMessage}</p>
           <p className="text-gray-400">
-            {activeTab === "upcoming" ? "Schedule your first session from the Schedule tab!" : ""}
+            {activeTab === "upcoming"
+              ? "Schedule your first session from the Schedule tab!"
+              : ""}
           </p>
         </div>
       );
@@ -329,7 +356,9 @@ export const SessionsSection = () => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">Scheduled Sessions</h1>
+          <h1 className="text-3xl font-bold text-gray-900">
+            Scheduled Sessions
+          </h1>
           <p className="text-gray-600 mt-2">
             View and manage your sessions by status.
           </p>
@@ -347,7 +376,7 @@ export const SessionsSection = () => {
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} >
+      <Tabs value={activeTab} onValueChange={setActiveTab}>
         <TabsList className="grid w-full grid-cols-4">
           <TabsTrigger value="upcoming" className="flex items-center gap-2">
             Upcoming ({upcomingSessions.length})

@@ -3,6 +3,7 @@
 import { PrismaClient } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
+import { getMentorType } from "./mentor-type";
 
 const prisma = new PrismaClient();
 
@@ -12,14 +13,20 @@ const prisma = new PrismaClient();
 // 1. Gets all active students with BLOOM/FLOURISH subscriptions (same as getStudents())
 // 2. Analyzes mentor's session history to estimate their active student count
 // 3. Returns both total active students and mentor-specific estimates
-export async function getMentorStudents(mentorId: string) {
+export async function getMentorStudents(mentorId: string){
   try {
     // Get all active students (using the same logic as getStudents)
+    const mentoremail = await prisma.user.findUnique({
+      where: { id: mentorId },
+      select: { email: true }
+    });
+    const mentortype = await getMentorType(mentoremail || { email: "" });
+    console.log("Fetching students for mentor type:", mentortype);
     const allActiveStudents = await prisma.user.findMany({
       where: {
         subscriptionStatus: "ACTIVE",
         subscriptionPlan: {
-          in: ["BLOOM", "FLOURISH"]
+                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : "SEED" , "FLOURISH" ]
         },
       },
       select: {
@@ -60,7 +67,6 @@ export async function getMentorStudents(mentorId: string) {
     return {
       totalActiveStudents: 0,
       mentorSessions: 0,
-      estimatedActiveStudents: 0,
       students: []
     };
   }
@@ -69,7 +75,6 @@ export async function getMentorStudents(mentorId: string) {
 export interface MentorOverviewData {
   activeStudents: number;
   sessionsThisWeek: number;
-  totalEarnings: number;
   averageRating: number;
   todaysSessions: Array<{
     id: string;
@@ -128,37 +133,38 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     const now = new Date();
     const startOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate());
     const endOfDay = new Date(now.getFullYear(), now.getMonth(), now.getDate(), 23, 59, 59);
-    const startOfWeek = new Date(now.getTime() - (now.getDay() * 24 * 60 * 60 * 1000));
+    // Get start of week (Monday) in IST timezone
+    const startOfWeek = (() => {
+      const date = new Date(now);
+      const day = date.getDay();
+      const diff = date.getDate() - day + (day === 0 ? -6 : 1); // Adjust when day is Sunday
+      const monday = new Date(date.setDate(diff));
+      monday.setHours(0, 0, 0, 0);
+      return monday;
+    })();
+    const endOfWeek = new Date(startOfWeek);
+    endOfWeek.setDate(endOfWeek.getDate() + 6);
+    endOfWeek.setHours(23, 59, 59, 999);
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
     const startOfPreviousMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
-
     // Get active students for this mentor using the improved logic
     // This uses the same subscription filtering as getStudents() from students.ts
     // but adds mentor-specific session analysis for more accurate counts
-    const mentorStudentsData = await getMentorStudents(user.id);
-    const estimatedMentorStudents = mentorStudentsData.totalActiveStudents;
+    const mentorStudentsData = await getMentorStudents(user.id, );
+    const totalMentorStudents = mentorStudentsData.totalActiveStudents;
 
     // Get sessions this week
     const sessionsThisWeek = await prisma.schedule.count({
       where: {
         mentorId: user.id,
+        status: "SCHEDULED", 
         scheduledTime: {
           gte: startOfWeek,
-          lte: now
+          lte: endOfWeek
         }
       }
     });
-
-    // Calculate total earnings (placeholder - you might want to add a payments/earnings table)
-    // For now, we'll estimate based on sessions completed
-    const completedSessions = await prisma.schedule.count({
-      where: {
-        mentorId: user.id,
-        status: "COMPLETED"
-      }
-    });
-    const estimatedEarnings = completedSessions * 500; // Assuming ₹500 per session
 
     // Get today's sessions
     const todaysSessions = await prisma.schedule.findMany({
@@ -171,7 +177,6 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
       },
       orderBy: { scheduledTime: 'asc' }
     });
-
     // Get upcoming sessions (next 7 days)
     const upcomingSessions = await prisma.schedule.findMany({
       where: {
@@ -245,9 +250,8 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     });
 
     const overviewData: MentorOverviewData = {
-      activeStudents: estimatedMentorStudents,
+      activeStudents: totalMentorStudents,
       sessionsThisWeek,
-      totalEarnings: estimatedEarnings,
       averageRating: 4.8, // Placeholder - you might want to add a reviews/ratings table
       todaysSessions: todaysSessions.map(session => ({
         id: session.id,
@@ -275,7 +279,7 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         currentMonth: {
           sessions: currentMonthSessions,
           earnings: currentMonthCompletedSessions * 500,
-          students: estimatedMentorStudents
+          students: totalMentorStudents
         },
         previousMonth: {
           sessions: previousMonthSessions,
