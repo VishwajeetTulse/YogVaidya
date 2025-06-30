@@ -5,10 +5,12 @@ export async function sendEmail({
   to,
   subject,
   text,
+  html = false, // Default to false, can be set to true if HTML content is provided
 }: {
   to: string;
   subject: string;
   text: string;
+  html?: boolean
 }) {
 
   const transporter = nodemailer.createTransport({
@@ -24,7 +26,8 @@ export async function sendEmail({
     const info = await transporter.sendMail({
       to: to.toLowerCase().trim(),
       subject: subject.trim(),
-      text: text.trim(),
+      text: html ? undefined : text.trim(), // If text is provided, use it as plain text content
+      html: html ? text : undefined, // If html is true, use text as HTML content
     });
 
     console.log("Email sent (dev mode):", info.messageId);

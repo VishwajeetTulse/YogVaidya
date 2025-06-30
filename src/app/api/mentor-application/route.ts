@@ -55,11 +55,39 @@ export async function POST(req: NextRequest) {
     });
 
     // Send confirmation email to mentor
-    await sendEmail({
-      to: email,
-      subject: "YogVaidya Mentor Application Received",
-      text: `Dear ${name},\n\nThank you for applying to become a YogVaidya mentor! We have received your application and will review it soon.\n\nWarm regards,\nYogVaidya Team`,
-    });
+await sendEmail({
+  to: email,
+  subject: "🧘 YogVaidya Mentor Application Received",
+  text: `
+    <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+      <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+        <h2 style="text-align: center; color: #4a4e69;">🙏 Thank You for Applying, ${name}!</h2>
+        <p style="font-size: 15px; color: #333;">
+          We’re excited to let you know that we’ve received your application to join <strong>YogVaidya</strong> as a <strong>mentor</strong>.
+        </p>
+
+        <div style="background-color: #f0f4f8; padding: 16px; border-left: 4px solid #5e60ce; border-radius: 4px; margin: 20px 0;">
+          <p style="margin: 0; font-size: 14px; color: #222;">
+            Our team will carefully review your experience, expertise, and certification details. We’ll get back to you soon with the next steps.
+          </p>
+        </div>
+
+        <p style="font-size: 15px;">If you have any questions or need to update your application, feel free to reply to this email.</p>
+
+        <p style="font-size: 15px;">Warm regards,<br/><strong>The YogVaidya Team</strong></p>
+
+        <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+
+        <footer style="text-align: center; font-size: 12px; color: #888;">
+          YogVaidya Wellness Pvt. Ltd.<br/>
+          This is an automated email—please do not reply directly.
+        </footer>
+      </div>
+    </div>
+  `,
+  html: true
+});
+
 
     return NextResponse.json({ success: true, application });
   } catch (error) {

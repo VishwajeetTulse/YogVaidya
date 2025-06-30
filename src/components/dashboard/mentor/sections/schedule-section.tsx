@@ -26,7 +26,8 @@ import {
 } from "@/components/ui/select";
 import { toast } from "sonner";
 import { Schedule } from "@prisma/client";
-import { sendEmail } from "@/lib/email-student-for-session";
+import { getMentorType } from "@/lib/mentor-type";
+import { get } from "http";
 // Form validation schema
 const scheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -46,7 +47,7 @@ export const ScheduleSection = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingSession, setEditingSession] = useState<Schedule | null>(null);
-
+  const [getMentorSessionType, setGetMentorSessionType] = useState<"YOGA" | "MEDITATION">("YOGA");
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
@@ -54,26 +55,19 @@ export const ScheduleSection = () => {
       scheduledTime: "",
       link: "",
       duration: 60,
-      sessionType: undefined,
+      sessionType: "YOGA", // Will be set asynchronously in useEffect
     },
   });
-
-  // Get the mentor's session type based on their mentor type
-  const getMentorSessionType = (): "YOGA" | "MEDITATION" => {
-    if (!session?.user) return "YOGA";
-    
-    // Check if user has mentorType field and determine session type
-    const userMentorType = (session.user as any)?.mentorType;
-    
-    if (userMentorType === "MEDITATIONMENTOR") {
-      return "MEDITATION";
-    }
-    return "YOGA"; // Default to YOGA for YOGAMENTOR or if mentorType is not set
-  };
   // Set the session type based on mentor type when component mounts or when editing
   useEffect(() => {
-    const sessionType = getMentorSessionType();
-    form.setValue("sessionType", sessionType);
+    const initializeSessionType = async () => {
+      const mentorType = await getMentorType(session?.user || { email: "" });
+      const sessionType = mentorType === "YOGAMENTOR" ? "YOGA" : "MEDITATION";
+      form.setValue("sessionType", sessionType);
+      setGetMentorSessionType(sessionType);
+    };
+    
+    initializeSessionType();
     
     // If editing a session, populate the form with existing data
     if (editingSession) {
@@ -153,14 +147,13 @@ export const ScheduleSection = () => {
           setScheduledSessions(prev => [...prev, result.session]);
           toast.success("Session scheduled successfully!");
         }
-        sendEmail(result.session);
         
         form.reset({
           title: "",
           scheduledTime: "",
           link: "",
           duration: 60,
-          sessionType: getMentorSessionType(),
+          sessionType: getMentorSessionType,
         });
         
         // Refresh the sessions list to ensure data consistency
@@ -183,7 +176,7 @@ export const ScheduleSection = () => {
       scheduledTime: "",
       link: "",
       duration: 60,
-      sessionType: getMentorSessionType(),
+      sessionType: getMentorSessionType,
     });
   };
 
@@ -219,48 +212,49 @@ export const ScheduleSection = () => {
                       </FormControl>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="sessionType"
-                  render={({ field }) => (
+                  <FormField
+                    control={form.control}
+                    name="sessionType"
+                    render={({ field }) => (
                     <FormItem>
                       <FormLabel>Session Type</FormLabel>
                       <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={true} // Auto-filled based on mentor type
                       >
-                        <FormControl>
-                          <SelectTrigger className="bg-gray-50">
-                            <SelectValue placeholder="Select the mentor type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="YOGA">
-                            <div className="flex items-center gap-2">
-                              <Video className="h-4 w-4" />
-                              Yoga
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="MEDITATION">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Meditation
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                        <SelectValue placeholder="Auto-filled based on mentor type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="YOGA">
+                        <div className="flex items-center gap-2">
+                          <Video className="h-4 w-4" />
+                          Yoga
+                        </div>
+                        </SelectItem>
+                        <SelectItem value="MEDITATION">
+                        <div className="flex items-center gap-2">
+                          <Calendar className="h-4 w-4" />
+                          Meditation
+                        </div>
+                        </SelectItem>
+                      </SelectContent>
                       </Select>
                       <FormMessage />
                     </FormItem>
-                  )}
-                />
+                    )}
+                  />
 
-                <FormField
-                  control={form.control}
-                  name="scheduledTime"
-                  render={({ field }) => (
+                  <FormField
+                    control={form.control}
+                    name="scheduledTime"
+                    render={({ field }) => (
                     <FormItem>
                       <FormLabel>Date & Time</FormLabel>
                       <FormControl>

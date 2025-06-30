@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
 import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
+import { scheduleEmailReminder } from "@/lib/scheduleEmails";
 
 const prisma = new PrismaClient();
 // Validation schema for schedule creation
@@ -144,7 +145,7 @@ export async function POST(request: NextRequest) {
       sessionType: newSession.sessionType,
       createdAt: newSession.createdAt.toISOString(),
     };
-
+    scheduleEmailReminder(newSession);
     return NextResponse.json({
       success: true,
       session: formattedSession,

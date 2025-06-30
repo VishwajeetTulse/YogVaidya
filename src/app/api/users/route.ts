@@ -271,27 +271,49 @@ export async function POST(req: NextRequest) {
       const { sendEmail } = await import('@/lib/email');
       
       const emailSubject = "Your YogaVaidya Moderator Account";
-      const emailText = `
-Hello ${name},
+const emailHtml = `
+  <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+    <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+      <h2 style="text-align: center; color: #4a4e69;">👋 Welcome to YogVaidya, ${name}!</h2>
 
-An administrator has created a moderator account for you on the YogaVaidya platform.
+      <p style="font-size: 15px; color: #333;">
+        An administrator has created a <strong>moderator account</strong> for you on the <strong>YogVaidya</strong> platform.
+      </p>
 
-Here are your login credentials:
-Email: ${email}
-Password: ${password}
+      <div style="background-color: #f0f4f8; padding: 16px; border-left: 4px solid #5e60ce; border-radius: 4px; margin: 20px 0;">
+        <p style="margin: 0; font-size: 14px;">
+          <strong>Login Credentials:</strong><br/>
+          Email: <code>${email}</code><br/>
+          Password: <code>${password}</code>
+        </p>
+      </div>
 
-Please log in at [Your Login URL] and change your password immediately.
+      <p style="font-size: 15px;">
+        👉 Please log in at <a href="https://your-login-url.com" style="color: #5e60ce; text-decoration: none;">https://your-login-url.com</a> and change your password immediately.
+      </p>
 
-If you have any questions, please contact the administrator.
+      <p style="font-size: 15px;">
+        If you have any questions, feel free to contact your administrator.
+      </p>
 
-Best regards,
-YogaVaidya Team
-      `.trim();
+      <p style="font-size: 15px;">Best regards,<br/><strong>The YogVaidya Team</strong></p>
+
+      <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+
+      <footer style="text-align: center; font-size: 12px; color: #888;">
+        YogaVaidya Wellness Pvt. Ltd.<br/>
+        This is an automated email—please do not reply directly.
+      </footer>
+    </div>
+  </div>
+`;
+
       
       await sendEmail({
         to: email,
         subject: emailSubject,
-        text: emailText,
+        text: emailHtml,
+        html: true, // Set to true to send HTML content
       });
     } catch (emailError) {
       console.error("Failed to send moderator credentials email:", emailError);
