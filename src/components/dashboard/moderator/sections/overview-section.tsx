@@ -7,6 +7,7 @@ import { useState, useEffect } from "react";
 import { format, formatDistance } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
+import { getMentorApplicationsAction } from "@/lib/mentor-application-actions";
 
 interface AnalyticsData {
   users: {
@@ -35,9 +36,17 @@ interface MentorApplication {
   id: string;
   name: string;
   email: string;
-  createdAt: string;
-  status: string;
-  mentorType: string;
+  phone: string;
+  profile: string | null;
+  experience: string;
+  expertise: string;
+  certifications: string;
+  powUrl?: string | null;
+  status: string | null;
+  mentorType?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string | null;
 }
 
 interface Activity {
@@ -67,11 +76,10 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
         console.log('Analytics data:', analyticsResult); // For debugging
 
         // Fetch recent mentor applications
-        const applicationsResponse = await fetch('/api/mentor-application');
-        if (!applicationsResponse.ok) {
+        const applicationsResult = await getMentorApplicationsAction();
+        if (!applicationsResult.success) {
           throw new Error('Failed to fetch mentor applications');
         }
-        const applicationsResult = await applicationsResponse.json();
         console.log('Applications data:', applicationsResult); // For debugging
         
         // Make sure we set analyticsData before using it
@@ -81,7 +89,7 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
         const applications = applicationsResult.success && applicationsResult.applications 
           ? applicationsResult.applications
               .sort((a: MentorApplication, b: MentorApplication) => 
-                new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime())
+                b.createdAt.getTime() - a.createdAt.getTime())
               .slice(0, 5)
           : [];
         
@@ -96,7 +104,7 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
             type: 'application',
             title: 'New mentor application received',
             description: `${app.name} applied to become a ${app.mentorType?.toLowerCase() === 'yogamentor' ? 'yoga mentor' : 'diet planner'}`,
-            timestamp: new Date(app.createdAt), // Use the actual timestamp from the application
+            timestamp: app.createdAt, // Use the actual timestamp from the application
             gradientClass: 'from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
           });
         });

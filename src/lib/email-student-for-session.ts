@@ -1,7 +1,7 @@
 "use server"
 import nodemailer from "nodemailer";
-import { PrismaClient, Schedule } from "@prisma/client";
-const prisma = new PrismaClient();
+import { Schedule } from "@prisma/client";
+import { prisma } from "./prisma";
 
 export async function sendEmail(sessionDetails: Schedule) {
   const emails = await prisma.user.findMany({

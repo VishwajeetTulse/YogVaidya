@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import type { RenewalStats } from '@/lib/types';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 export async function GET(): Promise<NextResponse<{ success: boolean; data?: RenewalStats; error?: string }>> {
   try {

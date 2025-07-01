@@ -1,9 +1,7 @@
 import { NextResponse } from 'next/server';
-import { PrismaClient } from '@prisma/client';
 import Razorpay from 'razorpay';
 import type { RenewalResult } from '@/lib/types';
-
-const prisma = new PrismaClient();
+import { prisma } from '@/lib/prisma';
 
 // Initialize Razorpay
 const razorpay = new Razorpay({

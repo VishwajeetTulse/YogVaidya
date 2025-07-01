@@ -1,11 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
-import { PrismaClient } from "@prisma/client";
 import { nextCookies } from "better-auth/next-js";
 import { sendEmail } from "@/lib/email";
 import { NextRequest } from "next/server";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 // Helper to get rememberMe from the request body (for sign-in route)
 async function getRememberMeFromRequest(req: NextRequest): Promise<boolean> {

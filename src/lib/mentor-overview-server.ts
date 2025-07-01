@@ -1,11 +1,9 @@
 "use server";
 
-import { PrismaClient } from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { headers } from "next/headers";
 import { getMentorType } from "./mentor-type";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 
 // Helper function to get students for a specific mentor
 // Uses similar logic to getStudents from students.ts but adds mentor-specific filtering

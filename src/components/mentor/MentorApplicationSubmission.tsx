@@ -6,11 +6,15 @@ type MentorApplication = {
   name: string;
   email: string;
   phone: string;
+  profile: string | null;
   experience: string;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
-  status: string;
+  status: string | null;
+  mentorType: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 interface MentorApplicationSubmissionProps {

@@ -22,6 +22,11 @@ import MentorApplicationSubmission from "./MentorApplicationSubmission";
 import { Separator } from "@/components/ui/separator";
 import { Select } from "../ui/select";
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
+import { 
+  createMentorApplicationAction, 
+  getMentorApplicationsAction, 
+  deleteMentorApplicationAction 
+} from "@/lib/mentor-application-actions";
 
 const formSchema = z.object({
   name: z.string().min(2, "Full name is required"),
@@ -47,11 +52,15 @@ type MentorApplication = {
   name: string;
   email: string;
   phone: string;
+  profile: string | null;
   experience: string;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
-  status: string;
+  status: string | null;
+  mentorType: string | null;
+  createdAt: Date;
+  updatedAt: Date;
 };
 
 export default function MentorApplicationForm() {
@@ -94,14 +103,11 @@ export default function MentorApplicationForm() {
           setFetching(false);
           return;
         }
-        const res = await fetch(
-          `/api/mentor-application?email=${encodeURIComponent(userEmail)}`,
-          { method: "GET" }
-        );
-        const data = await res.json();
-        if (data.success && data.applications && data.applications.length > 0) {
-          setExistingApplication(data.applications[0]);
-          setSubmittedEmail(data.applications[0].email); // Set submittedEmail from loaded application
+        
+        const result = await getMentorApplicationsAction(userEmail);
+        if (result.success && result.applications && result.applications.length > 0) {
+          setExistingApplication(result.applications[0]);
+          setSubmittedEmail(result.applications[0].email); // Set submittedEmail from loaded application
         } else {
           setExistingApplication(null);
           setSubmittedEmail(null);
@@ -138,16 +144,11 @@ export default function MentorApplicationForm() {
     }
     const interval = setInterval(async () => {
       try {
-        const res = await fetch(
-          `/api/mentor-application?email=${encodeURIComponent(
-            existingApplication.email
-          )}`
-        );
-        const data = await res.json();
+        const result = await getMentorApplicationsAction(existingApplication.email);
         if (
-          data.success &&
-          data.applications &&
-          data.applications[0]?.status === "approved"
+          result.success &&
+          result.applications &&
+          result.applications[0]?.status === "approved"
         ) {
           router.replace("/dashboard?role=mentor");
         }
@@ -182,24 +183,21 @@ export default function MentorApplicationForm() {
       if (data.pow instanceof File) {
         formData.append("pow", data.pow);
       }
-      const res = await fetch("/api/mentor-application", {
-        method: "POST",
-        body: formData,
-      });
-      const result = await res.json();
+      
+      const result = await createMentorApplicationAction(formData);
+      
       if (result.success) {
         setSubmittedEmail(data.email);
         setSubmitted(true);
         // Fetch the latest application so the form is not shown again
         try {
-          const res = await fetch("/api/mentor-application", { method: "GET" });
-          const data = await res.json();
+          const applicationsResult = await getMentorApplicationsAction(data.email);
           if (
-            data.success &&
-            data.applications &&
-            data.applications.length > 0
+            applicationsResult.success &&
+            applicationsResult.applications &&
+            applicationsResult.applications.length > 0
           ) {
-            setExistingApplication(data.applications[0]);
+            setExistingApplication(applicationsResult.applications[0]);
             console.log("Existing application", existingApplication);
           }
         } catch {}
@@ -218,12 +216,8 @@ export default function MentorApplicationForm() {
     setDeleteLoading(true);
     setDeleteError(null);
     try {
-      const res = await fetch("/api/mentor-application", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: submittedEmail }),
-      });
-      const result = await res.json();
+      const result = await deleteMentorApplicationAction(submittedEmail);
+      
       if (result.success) {
         setSubmitted(false);
         setSubmittedEmail(null);
@@ -251,11 +245,15 @@ export default function MentorApplicationForm() {
       name: form.getValues("name"),
       email: submittedEmail || form.getValues("email"),
       phone: form.getValues("phone"),
+      profile: null,
       experience: form.getValues("experience"),
       expertise: form.getValues("expertise"),
       certifications: form.getValues("certifications"),
       powUrl: null,
       status: "pending",
+      mentorType: form.getValues("mentorType"),
+      createdAt: new Date(),
+      updatedAt: new Date(),
     };
 
     return (

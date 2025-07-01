@@ -1,8 +1,7 @@
 "use server"
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import { ScheduleStatus } from "@prisma/client";
-
-const prisma = new PrismaClient();
+import { prisma } from "./prisma";
 export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: string) {
     await prisma.schedule.update({
         where: { id: sessionId },

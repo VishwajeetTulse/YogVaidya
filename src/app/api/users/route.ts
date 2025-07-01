@@ -1,9 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient} from "@prisma/client";
 import { auth } from "@/lib/auth";
 import { authClient } from "@/lib/auth-client";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // Get all users
 export async function GET(req: NextRequest) {

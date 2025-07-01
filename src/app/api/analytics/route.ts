@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
 import { getSubscriptionAnalytics } from "@/lib/subscriptions";
 import { format, subMonths } from "date-fns";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 // Helper function to check if a date is within the last month
 function isWithinLastMonth(date: Date): boolean {

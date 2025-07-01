@@ -7,19 +7,26 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Check, X, Eye, FileText } from "lucide-react";
+import { 
+  getMentorApplicationsAction, 
+  updateMentorApplicationStatusAction 
+} from "@/lib/mentor-application-actions";
 
 interface MentorApplication {
   id: string;
   name: string;
   email: string;
   phone: string;
+  profile: string | null;
   experience: string;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
-  status: string;
-  mentorType?: string;
-  createdAt: string;
+  status: string | null;
+  mentorType?: string | null;
+  createdAt: Date;
+  updatedAt: Date;
+  userId: string | null;
 }
 
 export const ApplicationsSection = () => {
@@ -35,11 +42,10 @@ export const ApplicationsSection = () => {
   const fetchApplications = async () => {
     setLoading(true);
     try {
-      const res = await fetch("/api/mentor-application");
-      const data = await res.json();
+      const result = await getMentorApplicationsAction();
       
-      if (data.success && data.applications) {
-        setApplications(data.applications);
+      if (result.success && result.applications) {
+        setApplications(result.applications);
       } else {
         toast.error("Failed to load applications");
       }
@@ -51,20 +57,12 @@ export const ApplicationsSection = () => {
     }
   };
 
-  const handleStatusUpdate = async (id: string, status: string) => {
+  const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
     setProcessingId(id);
     try {
-      const res = await fetch("/api/mentor-application", {
-        method: "PATCH",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({ id, status }),
-      });
+      const result = await updateMentorApplicationStatusAction(id, status);
       
-      const data = await res.json();
-      
-      if (data.success) {
+      if (result.success) {
         toast.success(`Application ${status}`);
         // Update the local state
         setApplications(applications.map(app => 
@@ -82,7 +80,7 @@ export const ApplicationsSection = () => {
     }
   };
 
-  const getStatusBadge = (status: string) => {
+  const getStatusBadge = (status: string | null) => {
     switch (status) {
       case "approved":
         return <Badge className="bg-green-500">Approved</Badge>;
@@ -94,13 +92,13 @@ export const ApplicationsSection = () => {
     }
   };
 
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
+  const formatDate = (date: Date | string) => {
+    const dateObj = typeof date === 'string' ? new Date(date) : date;
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
       day: "numeric",
-    }).format(date);
+    }).format(dateObj);
   };
 
   return (

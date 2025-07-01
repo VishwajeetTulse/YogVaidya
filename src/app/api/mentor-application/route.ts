@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/email";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 
 type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
 

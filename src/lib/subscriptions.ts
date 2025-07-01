@@ -1,6 +1,6 @@
 'use server';
 
-import { Prisma, PrismaClient } from "@prisma/client";
+import { Prisma } from "@prisma/client";
 import Razorpay from 'razorpay';
 import type { 
   SubscriptionPlan, 
@@ -8,11 +8,10 @@ import type {
   UpdateSubscriptionData,
   CreateSubscriptionData
 } from './types';
+import { prisma } from './prisma';
 
 // Re-export types for backwards compatibility
 export type { SubscriptionPlan, SubscriptionStatus, UpdateSubscriptionData, CreateSubscriptionData };
-
-const prisma = new PrismaClient();
 
 // Initialize Razorpay instance
 const razorpay = new Razorpay({

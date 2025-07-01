@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/auth";
-import { PrismaClient } from "@prisma/client";
 import { z } from "zod";
 import { scheduleEmailReminder } from "@/lib/scheduleEmails";
-
-const prisma = new PrismaClient();
+import { prisma } from "@/lib/prisma";
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
