@@ -16,6 +16,7 @@ import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { type SidebarMenuItem as SidebarMenuItemType} from "../user/types";
+import { SubscriptionCountdown } from "./subscription-countdown";
 
 interface GenericSidebarProps extends BaseSidebarProps {
   dashboardTitle: string;
@@ -109,6 +110,7 @@ export const GenericSidebar = ({
         </SidebarGroup>
       </SidebarContent>
       <SidebarFooter className="p-2">
+        <SubscriptionCountdown userDetails={userDetails} />
         <Button
           onClick={handleSignOut}
           variant="outline"

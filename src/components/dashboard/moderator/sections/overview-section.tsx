@@ -311,7 +311,7 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
           </div>
         ) : activities.length > 0 ? (
           <div className="space-y-3">
-            {activities.map(activity => (
+            {activities.slice(0,3).map(activity => (
               <div 
                 key={activity.id}
                 className={`flex items-center justify-between p-3 bg-gradient-to-r ${activity.gradientClass} rounded-lg border`}
