@@ -2,15 +2,47 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { CreditCard, Calendar, AlertCircle, CheckCircle } from "lucide-react";
 import { SectionProps } from "../types";
+import { toast } from "sonner";
 
 export const SubscriptionSection = ({ 
   userDetails, 
-  cancellingSubscription, 
-  handleCancelSubscription, 
+  cancellingSubscription,
+  handleCancelSubscription,
   formatDate, 
   getStatusColor,
-  setActiveSection 
+  setActiveSection,
+  refreshSubscriptionData
 }: SectionProps) => {
+  const handleCancel = async () => {
+    if (!handleCancelSubscription) {
+      toast.error("Unable to process cancellation. Please try again later.");
+      return;
+    }
+
+    try {
+      const result = await handleCancelSubscription();
+      
+      if (!result.success) {
+        toast.error(result.message || "Failed to cancel subscription. Please try again.");
+        return;
+      }
+
+      if (result.alreadyCancelled) {
+        toast.info(result.details?.message || "Your subscription is already scheduled for cancellation at the end of the billing period.");
+        return;
+      }
+
+      toast.success(result.details?.message || "Your subscription has been scheduled for cancellation at the end of the billing period.");
+      
+      // Refresh subscription data to update UI
+      await refreshSubscriptionData?.();
+      
+    } catch (error) {
+      console.error("Error during cancellation:", error);
+      toast.error("Failed to cancel subscription. Please try again.");
+    }
+  };
+
   return (
     <div className="space-y-6">
       <div>
@@ -104,7 +136,7 @@ export const SubscriptionSection = ({
                   <Button
                     variant="outline"
                     className="w-full border-red-300 text-red-600 hover:bg-red-50"
-                    onClick={handleCancelSubscription}
+                    onClick={handleCancel}
                     disabled={cancellingSubscription}
                   >
                     {cancellingSubscription ? "Cancelling..." : "Cancel Subscription"}

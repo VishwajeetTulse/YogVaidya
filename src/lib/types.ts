@@ -1,6 +1,5 @@
-// Subscription types
-export type SubscriptionPlan = "SEED" | "BLOOM" | "FLOURISH";
-export type SubscriptionStatus = "ACTIVE" | "INACTIVE" | "CANCELLED" | "EXPIRED" | "PENDING";
+import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+export type { SubscriptionPlan, SubscriptionStatus };
 export type BillingPeriod = "monthly" | "annual";
 
 // Types for subscription update operations

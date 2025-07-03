@@ -39,6 +39,7 @@ enum SubscriptionPlan {
 
 enum SubscriptionStatus {
   ACTIVE
+  ACTIVE_UNTIL_END  // For subscriptions that are cancelled but still active
   INACTIVE
   CANCELLED
   EXPIRED
