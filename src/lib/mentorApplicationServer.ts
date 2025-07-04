@@ -106,18 +106,112 @@ export async function updateMentorApplicationStatus({
   status: "approved" | "rejected";
 }) {
   if (!id || !status) throw new Error("Missing id or status");
+  
   const updated = await prisma.mentorApplication.update({
     where: { id },
     data: { status },
   });
+  
   let redirectUrl = null;
+  
   if (status === "approved") {
+    // Update user to be a mentor with the appropriate mentor type
     await prisma.user.updateMany({
       where: { email: updated.email },
-      data: { role: "MENTOR", phone: updated.phone },
+      data: { 
+        role: "MENTOR", 
+        phone: updated.phone,
+        mentorType: updated.mentorType // Add the mentor type from the application
+      },
     });
+    
+    // Send approval email to the new mentor
+    try {
+      await sendEmail({
+        to: updated.email,
+        subject: "🎉 Welcome to YogVaidya - Mentor Application Approved!",
+        text: `
+          <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+              <h2 style="text-align: center; color: #4a4e69;">🎉 Congratulations, ${updated.name}!</h2>
+              <p style="font-size: 15px; color: #333;">
+                We're thrilled to welcome you to the <strong>YogVaidya</strong> mentor community as a <strong>${updated.mentorType === 'YOGAMENTOR' ? 'Yoga' : 'Meditation'} Mentor</strong>!
+              </p>
+
+              <div style="background-color: #e8f5e8; padding: 16px; border-left: 4px solid #4caf50; border-radius: 4px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px; color: #222;">
+                  Your application has been approved. You now have access to the mentor dashboard where you can schedule sessions, manage students, and share your expertise.
+                </p>
+              </div>
+
+              <div style="text-align: center; margin: 25px 0;">
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
+                   style="background-color: #5e60ce; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
+                  Access Your Mentor Dashboard
+                </a>
+              </div>
+
+              <p style="font-size: 15px;">We're excited to see the positive impact you'll make on our community!</p>
+
+              <p style="font-size: 15px;">Best regards,<br/><strong>The YogVaidya Team</strong></p>
+
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+
+              <footer style="text-align: center; font-size: 12px; color: #888;">
+                YogVaidya Wellness Pvt. Ltd.<br/>
+                This is an automated email—please do not reply directly.
+              </footer>
+            </div>
+          </div>
+        `,
+        html: true
+      });
+    } catch (emailError) {
+      console.error("Failed to send approval email:", emailError);
+      // Don't throw error here as the main operation (approval) was successful
+    }
+    
     redirectUrl = "/dashboard/mentors";
+  } else if (status === "rejected") {
+    // Send rejection email
+    try {
+      await sendEmail({
+        to: updated.email,
+        subject: "YogVaidya Mentor Application Update",
+        text: `
+          <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
+            <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
+              <h2 style="text-align: center; color: #4a4e69;">Thank You for Your Interest, ${updated.name}</h2>
+              <p style="font-size: 15px; color: #333;">
+                Thank you for your interest in becoming a mentor with <strong>YogVaidya</strong>.
+              </p>
+
+              <div style="background-color: #fff3e0; padding: 16px; border-left: 4px solid #ff9800; border-radius: 4px; margin: 20px 0;">
+                <p style="margin: 0; font-size: 14px; color: #222;">
+                  After careful review, we've decided not to move forward with your application at this time. This decision doesn't reflect your qualifications, but rather our current specific needs.
+                </p>
+              </div>
+
+              <p style="font-size: 15px;">We encourage you to apply again in the future as our needs evolve.</p>
+
+              <p style="font-size: 15px;">Best regards,<br/><strong>The YogVaidya Team</strong></p>
+
+              <hr style="margin: 30px 0; border: none; border-top: 1px solid #eee;" />
+
+              <footer style="text-align: center; font-size: 12px; color: #888;">
+                YogVaidya Wellness Pvt. Ltd.<br/>
+                This is an automated email—please do not reply directly.
+              </footer>
+            </div>
+          </div>
+        `,
+        html: true
+      });
+    } catch (emailError) {
+      console.error("Failed to send rejection email:", emailError);
+    }
   }
+  
   return { application: updated, redirectUrl };
 }
 

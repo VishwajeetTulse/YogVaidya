@@ -296,32 +296,32 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
       return { success: false, error: "User not found" };
     }
 
-    // Check if subscription is already scheduled for cancellation
-    if (!user.autoRenewal) {
+    // Check if subscription is already cancelled
+    if (user.subscriptionStatus === 'CANCELLED' || user.subscriptionStatus === 'INACTIVE') {
       return {
         success: true,
         alreadyCancelled: true,
         user,
         details: {
-          message: "Subscription is already scheduled for cancellation",
-          isScheduledForCancellation: true,
-          willRemainActiveUntil: user.subscriptionEndDate,
+          message: "Subscription is already cancelled",
+          isCancelled: true,
+          cancelledAt: new Date(),
           autoRenewalDisabled: true
         }
       };
     }
 
     const razorpaySubscriptionId = user.razorpaySubscriptionId;
-    let scheduledCancellation = false;
+    let immediateCancellation = false;
     let razorpayError = null;
     
-    // Cancel the Razorpay subscription if it exists
+    // Cancel the Razorpay subscription immediately if it exists
     if (razorpaySubscriptionId) {
       try {
-        // Cancel at end of billing cycle
-        const response = await razorpay.subscriptions.cancel(razorpaySubscriptionId, true);
-        scheduledCancellation = true;
-        console.log(`Razorpay subscription ${razorpaySubscriptionId} will be cancelled at the end of billing period`);
+        // Cancel immediately (false parameter for immediate cancellation)
+        const response = await razorpay.subscriptions.cancel(razorpaySubscriptionId, false);
+        immediateCancellation = true;
+        console.log(`Razorpay subscription ${razorpaySubscriptionId} has been cancelled immediately`);
       } catch (error) {
         razorpayError = error;
         console.error("Error cancelling Razorpay subscription:", error);
@@ -329,10 +329,11 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
       }
     }
 
-    // Update the local database - keep subscription active until end date
+    // Update the local database - cancel subscription immediately
     const updateData: Prisma.UserUpdateInput = {
-      subscriptionStatus: "ACTIVE", // Keep active until end date
-      autoRenewal: false, // This indicates it will be cancelled at end date
+      subscriptionStatus: "CANCELLED", // Cancel immediately
+      subscriptionEndDate: new Date(), // Set end date to now
+      autoRenewal: false, // Disable auto renewal
       updatedAt: new Date()
     };
 
@@ -352,12 +353,12 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
       success: true, 
       user: updatedUser,
       details: {
-        isScheduledForCancellation: true,
-        willRemainActiveUntil: user.subscriptionEndDate,
+        isCancelled: true,
+        cancelledAt: new Date(),
         autoRenewalDisabled: true,
-        message: scheduledCancellation 
-          ? "Your subscription will be cancelled at the end of the billing cycle"
-          : "Your subscription has been scheduled for cancellation",
+        message: immediateCancellation 
+          ? "Your subscription has been cancelled immediately"
+          : "Your subscription has been cancelled",
         razorpayError: razorpayError ? (razorpayError instanceof Error ? razorpayError.message : "Unknown error") : null
       }
     };
@@ -399,11 +400,14 @@ async function getUserSubscription(userId: string) {
       return { success: false, error: "User not found", code: "USER_NOT_FOUND" };
     }
 
-    // Check subscription status based on end date and auto-renewal
+    // Check subscription status based on end date and cancellation status
     const now = new Date();
-    if (user.subscriptionEndDate && !user.autoRenewal) {
+    if (user.subscriptionEndDate && user.subscriptionStatus === 'CANCELLED') {
+      // Subscription was cancelled immediately, keep it as CANCELLED
+      // No need to update anything as it's already in the correct state
+    } else if (user.subscriptionEndDate && !user.autoRenewal) {
       if (now > user.subscriptionEndDate) {
-        // Subscription has ended
+        // Subscription has ended naturally
         await updateUserSubscription({
           userId: user.id,
           subscriptionStatus: 'INACTIVE'
@@ -421,20 +425,15 @@ async function getUserSubscription(userId: string) {
         
         // Update local status based on Razorpay status
         if (razorpayStatus === 'cancelled') {
-          if (now > user.subscriptionEndDate!) {
-            await updateUserSubscription({
-              userId: user.id,
-              subscriptionStatus: 'INACTIVE'
-            });
-            user.subscriptionStatus = 'INACTIVE';
-          } else if (user.autoRenewal) {
-            // Only update if autoRenewal is still true (not already cancelled locally)
-            await updateUserSubscription({
-              userId: user.id,
-              autoRenewal: false
-            });
-            user.autoRenewal = false;
-          }
+          // If Razorpay subscription is cancelled, mark as cancelled immediately
+          await updateUserSubscription({
+            userId: user.id,
+            subscriptionStatus: 'CANCELLED',
+            subscriptionEndDate: new Date(), // Set end date to now
+            autoRenewal: false
+          });
+          user.subscriptionStatus = 'CANCELLED';
+          user.autoRenewal = false;
         } else if (razorpayStatus === 'expired') {
           await updateUserSubscription({
             userId: user.id,
@@ -453,8 +452,9 @@ async function getUserSubscription(userId: string) {
       isTrialActive: user.isTrialActive || false,
       autoRenewal: user.autoRenewal ?? true,
       razorpayStatus,
-      isScheduledForCancellation: user.subscriptionStatus === 'ACTIVE' && !user.autoRenewal,
-      willBeInactiveOn: (user.subscriptionStatus === 'ACTIVE' && !user.autoRenewal) ? user.subscriptionEndDate : undefined
+      isCancelled: user.subscriptionStatus === 'CANCELLED',
+      isActive: user.subscriptionStatus === 'ACTIVE',
+      cancelledAt: user.subscriptionStatus === 'CANCELLED' ? user.subscriptionEndDate : undefined
     };
 
     return { success: true, subscription: subscriptionData };
@@ -903,17 +903,11 @@ export async function upgradeUserSubscription({
           }
         }
 
-        // Cancel or schedule cancellation of current subscription
+        // Cancel or cancel current subscription immediately for both upgrades and switches
         if (currentSubscription.razorpaySubscriptionId) {
-          if (!isSameTier) {
-            // For upgrades, cancel immediately and silently
-            await razorpay.subscriptions.cancel(currentSubscription.razorpaySubscriptionId, false);
-            await cancelUserSubscription(userId, true); // Silent cancellation for upgrade
-          } else {
-            // For switches, schedule cancellation at end of period and silently
-            await razorpay.subscriptions.cancel(currentSubscription.razorpaySubscriptionId, true);
-            await cancelUserSubscription(userId, true); // Silent cancellation for switch
-          }
+          // For both upgrades and switches, cancel immediately and silently
+          await razorpay.subscriptions.cancel(currentSubscription.razorpaySubscriptionId, false);
+          await cancelUserSubscription(userId, true); // Silent cancellation
         }
       } catch (error) {
         console.warn('Error managing Razorpay subscription:', error);
@@ -991,18 +985,31 @@ export async function batchUpdateSubscriptionStatuses() {
   try {
     const now = new Date();
     
-    // Find all active subscriptions that have expired
+    // Find all active subscriptions that have expired or cancelled subscriptions that should be inactive
     const expiredSubscriptions = await prisma.user.findMany({
       where: {
-        AND: [
-          { subscriptionStatus: "ACTIVE" },
-          { subscriptionEndDate: { lt: now } },
-          { autoRenewal: false }
+        OR: [
+          // Active subscriptions that have passed their end date
+          {
+            AND: [
+              { subscriptionStatus: "ACTIVE" },
+              { subscriptionEndDate: { lt: now } },
+              { autoRenewal: false }
+            ]
+          },
+          // Cancelled subscriptions that should be marked as inactive
+          {
+            AND: [
+              { subscriptionStatus: "CANCELLED" },
+              { subscriptionEndDate: { lt: now } }
+            ]
+          }
         ]
       },
       select: {
         id: true,
-        razorpaySubscriptionId: true
+        razorpaySubscriptionId: true,
+        subscriptionStatus: true
       }
     });
 
@@ -1024,7 +1031,7 @@ export async function batchUpdateSubscriptionStatuses() {
         }
       }
 
-      // Update local status
+      // Update local status to INACTIVE for both expired active and cancelled subscriptions
       return updateUserSubscription({
         userId: user.id,
         subscriptionStatus: 'INACTIVE'

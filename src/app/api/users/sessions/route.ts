@@ -1,0 +1,28 @@
+import { NextRequest, NextResponse } from "next/server";
+import { getUserSessions } from "@/lib/user-sessions-server";
+
+// GET - Fetch user's available sessions based on subscription
+export async function GET(request: NextRequest) {
+  try {
+    const result = await getUserSessions();
+    
+    if (!result.success) {
+      return NextResponse.json(
+        { success: false, error: result.error },
+        { status: 400 }
+      );
+    }
+
+    return NextResponse.json({
+      success: true,
+      data: result.data,
+    });
+
+  } catch (error) {
+    console.error("Error in user sessions API:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to fetch user sessions" },
+      { status: 500 }
+    );
+  }
+}

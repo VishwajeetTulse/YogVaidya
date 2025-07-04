@@ -6,6 +6,7 @@ import {
   TrendingUp,
   Database,
   Settings,
+  UserCheck,
 } from "lucide-react";
 import { AdminSidebarMenuItem } from "./types";
 
@@ -27,6 +28,12 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     title: "Mentor Applications",
     icon: FileText,
     description: "Review mentor applications",
+  },
+  {
+    id: "mentor-management",
+    title: "Mentor Management",
+    icon: UserCheck,
+    description: "Manage mentor data & sync",
   },
   {
     id: "moderators",
