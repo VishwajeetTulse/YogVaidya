@@ -1,10 +1,10 @@
 'use server';
 
 import { Prisma } from "@prisma/client";
-import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+import type { SubscriptionPlan } from "@prisma/client";
 import Razorpay from 'razorpay';
 import type { UpdateSubscriptionData, CreateSubscriptionData } from './types';
-import { prisma } from './prisma';
+import { prisma } from './config/prisma';
 
 // Type helpers for Prisma enums
 const PlanTypes = {
@@ -100,7 +100,7 @@ async function getPlanPricing() {
 
 
 // Trial period configuration (in days)
-const TRIAL_PERIOD_DAYS = 7;
+const TRIAL_PERIOD_DAYS = 1;
 
 /**
  * Update user subscription details
@@ -246,9 +246,9 @@ async function createUserSubscription(data: CreateSubscriptionData) {
 }
 
 /**
- * Start a trial subscription for a user
+ * Start a trial subscription for a user - gives access to ALL content (FLOURISH level)
  */
-async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "BLOOM") {
+async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "FLOURISH") {
   try {
     const now = new Date();
     const trialEndDate = new Date(now);
@@ -267,7 +267,7 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
         paymentAmount: 0,
         isTrialActive: true,
         trialEndDate,
-        autoRenewal: true,
+        autoRenewal: false, // Don't auto-renew trials
         updatedAt: new Date()
       }
     });
@@ -276,6 +276,38 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
   } catch (error) {
     console.error("Error starting trial subscription:", error);
     return { success: false, error: "Failed to start trial" };
+  }
+}
+
+/**
+ * Automatically start trial for new users upon registration
+ */
+async function startAutoTrialForNewUser(userId: string) {
+  try {
+    // Check if user already has any subscription plan or trial
+    const user = await prisma.user.findUnique({
+      where: { id: userId },
+      select: {
+        subscriptionPlan: true,
+        subscriptionStatus: true,
+        isTrialActive: true,
+        trialEndDate: true
+      }
+    });
+
+    if (!user) {
+      return { success: false, error: "User not found" };
+    }
+
+    // Only start trial if user has no subscription plan and hasn't had a trial
+    if (!user.subscriptionPlan && (!user.isTrialActive || !user.trialEndDate)) {
+      return await startTrialSubscription(userId, "FLOURISH");
+    }
+
+    return { success: true, message: "User already has subscription or trial" };
+  } catch (error) {
+    console.error("Error starting auto trial for new user:", error);
+    return { success: false, error: "Failed to start auto trial" };
   }
 }
 
@@ -297,13 +329,15 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
     }
 
     // Check if subscription is already cancelled
-    if (user.subscriptionStatus === 'CANCELLED' || user.subscriptionStatus === 'INACTIVE') {
+    if (user.subscriptionStatus === 'CANCELLED' || user.subscriptionStatus === 'INACTIVE' || user.subscriptionStatus === 'ACTIVE_UNTIL_END') {
       return {
         success: true,
         alreadyCancelled: true,
         user,
         details: {
-          message: "Subscription is already cancelled",
+          message: user.subscriptionStatus === 'ACTIVE_UNTIL_END' 
+            ? "Your subscription is already scheduled for cancellation at the end of the billing period"
+            : "Subscription is already cancelled",
           isCancelled: true,
           cancelledAt: new Date(),
           autoRenewalDisabled: true
@@ -312,29 +346,27 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
     }
 
     const razorpaySubscriptionId = user.razorpaySubscriptionId;
-    let immediateCancellation = false;
     let razorpayError = null;
     
-    // Cancel the Razorpay subscription immediately if it exists
+    // Cancel the Razorpay subscription at the end of billing period if it exists
     if (razorpaySubscriptionId) {
       try {
-        // Cancel immediately (false parameter for immediate cancellation)
-        const response = await razorpay.subscriptions.cancel(razorpaySubscriptionId, false);
-        immediateCancellation = true;
-        console.log(`Razorpay subscription ${razorpaySubscriptionId} has been cancelled immediately`);
+        // Cancel at end of billing period (true parameter)
+        await razorpay.subscriptions.cancel(razorpaySubscriptionId, true);
+        console.log(`Razorpay subscription ${razorpaySubscriptionId} has been scheduled for cancellation`);
       } catch (error) {
         razorpayError = error;
-        console.error("Error cancelling Razorpay subscription:", error);
+        console.error("Error scheduling Razorpay subscription cancellation:", error);
         // Continue with local cancellation even if Razorpay fails
       }
     }
 
-    // Update the local database - cancel subscription immediately
+    // Update the local database - set status to ACTIVE_UNTIL_END to keep access until billing period ends
     const updateData: Prisma.UserUpdateInput = {
-      subscriptionStatus: "CANCELLED", // Cancel immediately
-      subscriptionEndDate: new Date(), // Set end date to now
+      subscriptionStatus: "ACTIVE_UNTIL_END", // Keep active until end of billing period
       autoRenewal: false, // Disable auto renewal
       updatedAt: new Date()
+      // Note: Keep subscriptionEndDate and nextBillingDate as they are
     };
 
     const updatedUser = await prisma.user.update({
@@ -356,9 +388,7 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
         isCancelled: true,
         cancelledAt: new Date(),
         autoRenewalDisabled: true,
-        message: immediateCancellation 
-          ? "Your subscription has been cancelled immediately"
-          : "Your subscription has been cancelled",
+        message: "Your subscription has been scheduled for cancellation at the end of your billing period. You'll continue to have access to all features until then.",
         razorpayError: razorpayError ? (razorpayError instanceof Error ? razorpayError.message : "Unknown error") : null
       }
     };
@@ -405,7 +435,22 @@ async function getUserSubscription(userId: string) {
     if (user.subscriptionEndDate && user.subscriptionStatus === 'CANCELLED') {
       // Subscription was cancelled immediately, keep it as CANCELLED
       // No need to update anything as it's already in the correct state
-    } else if (user.subscriptionEndDate && !user.autoRenewal) {
+    } else if (user.subscriptionStatus === 'ACTIVE_UNTIL_END') {
+      // Check if the subscription should transition from ACTIVE_UNTIL_END to INACTIVE
+      if (user.subscriptionEndDate && now > user.subscriptionEndDate) {
+        await updateUserSubscription({
+          userId: user.id,
+          subscriptionStatus: 'INACTIVE'
+        });
+        user.subscriptionStatus = 'INACTIVE';
+      } else if (user.nextBillingDate && now > user.nextBillingDate) {
+        await updateUserSubscription({
+          userId: user.id,
+          subscriptionStatus: 'INACTIVE'
+        });
+        user.subscriptionStatus = 'INACTIVE';
+      }
+    } else if (user.subscriptionEndDate && user.autoRenewal === false) {
       if (now > user.subscriptionEndDate) {
         // Subscription has ended naturally
         await updateUserSubscription({
@@ -425,14 +470,13 @@ async function getUserSubscription(userId: string) {
         
         // Update local status based on Razorpay status
         if (razorpayStatus === 'cancelled') {
-          // If Razorpay subscription is cancelled, mark as cancelled immediately
+          // If Razorpay subscription is cancelled, mark as ACTIVE_UNTIL_END (not immediate cancellation)
           await updateUserSubscription({
             userId: user.id,
-            subscriptionStatus: 'CANCELLED',
-            subscriptionEndDate: new Date(), // Set end date to now
+            subscriptionStatus: 'ACTIVE_UNTIL_END',
             autoRenewal: false
           });
-          user.subscriptionStatus = 'CANCELLED';
+          user.subscriptionStatus = 'ACTIVE_UNTIL_END';
           user.autoRenewal = false;
         } else if (razorpayStatus === 'expired') {
           await updateUserSubscription({
@@ -450,11 +494,12 @@ async function getUserSubscription(userId: string) {
       ...user,
       subscriptionStatus: user.subscriptionStatus || "INACTIVE",
       isTrialActive: user.isTrialActive || false,
-      autoRenewal: user.autoRenewal ?? true,
+      autoRenewal: user.autoRenewal ?? false, // Default to false for new users
       razorpayStatus,
-      isCancelled: user.subscriptionStatus === 'CANCELLED',
-      isActive: user.subscriptionStatus === 'ACTIVE',
-      cancelledAt: user.subscriptionStatus === 'CANCELLED' ? user.subscriptionEndDate : undefined
+      isCancelled: user.subscriptionStatus === 'CANCELLED' || user.subscriptionStatus === 'ACTIVE_UNTIL_END',
+      isActive: user.subscriptionStatus === 'ACTIVE' || user.subscriptionStatus === 'ACTIVE_UNTIL_END',
+      cancelledAt: (user.subscriptionStatus === 'CANCELLED' || user.subscriptionStatus === 'ACTIVE_UNTIL_END') ? 
+        user.subscriptionEndDate || user.nextBillingDate : undefined
     };
 
     return { success: true, subscription: subscriptionData };
@@ -628,9 +673,9 @@ export async function getSubscriptionAnalytics() {
       }
     });
 
-    // Count active subscriptions
+    // Count active subscriptions (including those active until end)
     const activeSubscriptions = users.filter(user => 
-      user.subscriptionStatus === 'ACTIVE'
+      user.subscriptionStatus === 'ACTIVE' || user.subscriptionStatus === 'ACTIVE_UNTIL_END'
     );
     
     // Calculate total active subscriptions
@@ -640,6 +685,7 @@ export async function getSubscriptionAnalytics() {
     const planBreakdown: Record<string, Record<string, number>> = {
       'SEED': {
         'ACTIVE': 0,
+        'ACTIVE_UNTIL_END': 0,
         'INACTIVE': 0,
         'CANCELLED': 0,
         'EXPIRED': 0,
@@ -647,6 +693,7 @@ export async function getSubscriptionAnalytics() {
       },
       'BLOOM': {
         'ACTIVE': 0,
+        'ACTIVE_UNTIL_END': 0,
         'INACTIVE': 0,
         'CANCELLED': 0,
         'EXPIRED': 0,
@@ -654,6 +701,7 @@ export async function getSubscriptionAnalytics() {
       },
       'FLOURISH': {
         'ACTIVE': 0,
+        'ACTIVE_UNTIL_END': 0,
         'INACTIVE': 0,
         'CANCELLED': 0,
         'EXPIRED': 0,
@@ -783,6 +831,22 @@ export async function upgradeUserSubscription({
         success: false,
         error: 'Plan changes are not available for annual subscriptions. Please wait until your current subscription ends or cancel your current subscription.',
         code: 'ANNUAL_CHANGES_NOT_ALLOWED'
+      };
+    }
+
+    // Check if subscription is in a valid state for upgrade
+    if (currentSubscription.subscriptionStatus !== 'ACTIVE') {
+      if (currentSubscription.subscriptionStatus === 'ACTIVE_UNTIL_END') {
+        return {
+          success: false,
+          error: 'Cannot upgrade or change plans while subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period.',
+          code: 'UPGRADE_BLOCKED_CANCELLATION'
+        };
+      }
+      return {
+        success: false,
+        error: 'Subscription must be active to upgrade. Current status: ' + currentSubscription.subscriptionStatus,
+        code: 'SUBSCRIPTION_NOT_ACTIVE'
       };
     }
 
@@ -997,6 +1061,18 @@ export async function batchUpdateSubscriptionStatuses() {
               { autoRenewal: false }
             ]
           },
+          // ACTIVE_UNTIL_END subscriptions that have passed their end date or next billing date
+          {
+            AND: [
+              { subscriptionStatus: "ACTIVE_UNTIL_END" },
+              {
+                OR: [
+                  { subscriptionEndDate: { lt: now } },
+                  { nextBillingDate: { lt: now } }
+                ]
+              }
+            ]
+          },
           // Cancelled subscriptions that should be marked as inactive
           {
             AND: [
@@ -1072,6 +1148,7 @@ export {
   createUserSubscription,
   updateUserSubscription,
   startTrialSubscription,
+  startAutoTrialForNewUser,
   cancelUserSubscription,
   getUserSubscription,
   hasFeatureAccess,
@@ -1080,3 +1157,4 @@ export {
   getPlanIds,
   getPlanPricing
 };
+

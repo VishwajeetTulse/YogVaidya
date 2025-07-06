@@ -1,6 +1,7 @@
 "use server"
-import { prisma } from "./prisma";
-export async function getStudents(mentortype : string) {
+import { User } from "@prisma/client";
+import { prisma } from "./config/prisma";
+export async function getStudents(mentortype : string) : Promise<User[]> {
 
     const students = await prisma.user.findMany({
         where: {
@@ -12,3 +13,4 @@ export async function getStudents(mentortype : string) {
     })
     return students;
 }
+

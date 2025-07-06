@@ -10,3 +10,4 @@ export const SettingsSection = ({ userDetails }: ModeratorSectionProps) => {
     />
   );
 };
+

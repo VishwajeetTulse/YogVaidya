@@ -1,9 +1,9 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
-import { getMentorType } from "./mentor-type";
-import { prisma } from "./prisma";
+import { getMentorType } from "../mentor-type";
+import { prisma } from "@/lib/config/prisma";
 
 // Helper function to get students for a specific mentor
 // Uses similar logic to getStudents from students.ts but adds mentor-specific filtering
@@ -294,3 +294,4 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     return { success: false, error: "Failed to fetch overview data" };
   }
 }
+

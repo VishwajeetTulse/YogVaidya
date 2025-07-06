@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
-import { logSystemEvent } from "@/lib/logger";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
+import { logSystemEvent } from "@/lib/utils/logger";
 
 export async function POST(req: NextRequest) {
   try {
@@ -77,3 +77,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

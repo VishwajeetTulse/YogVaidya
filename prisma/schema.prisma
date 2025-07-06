@@ -74,7 +74,7 @@ model User {
   image                 String?
   createdAt             DateTime
   updatedAt             DateTime
-    // Subscription Details
+  // Subscription Details
   subscriptionPlan      SubscriptionPlan?  // Optional field, will be null by default
   subscriptionStatus    SubscriptionStatus @default(INACTIVE)
   subscriptionStartDate DateTime?
@@ -85,9 +85,9 @@ model User {
   lastPaymentDate       DateTime?
   nextBillingDate       DateTime?
   paymentAmount         Float?
-  isTrialActive         Boolean           @default(true)
+  isTrialActive         Boolean           @default(false)  // Changed from true to false
   trialEndDate          DateTime?
-  autoRenewal           Boolean           @default(true)
+  autoRenewal           Boolean?          // Changed from default(true) to optional
   
   sessions              Session[]
   accounts              Account[]

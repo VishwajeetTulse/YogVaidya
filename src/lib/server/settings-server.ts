@@ -1,7 +1,7 @@
 "use server";
 
-import { prisma } from "@/lib/prisma";
-import { authClient } from "@/lib/auth-client";
+import { prisma } from "@/lib/config/prisma";
+import { Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export type UpdateProfileData = {
@@ -15,7 +15,7 @@ export type UpdateProfileData = {
 export type SettingsActionResult = {
   success: boolean;
   error?: string;
-  data?: any;
+  data?: Prisma.UserUpdateInput | { message: string };
 };
 
 /**
@@ -23,7 +23,7 @@ export type SettingsActionResult = {
  */
 export async function updateUserProfile(data: UpdateProfileData): Promise<SettingsActionResult> {
   try {
-    const { id, name, phone, email, role } = data;
+    const { id, name, phone, email } = data;
 
     // Validate required fields
     if (!id || !email) {
@@ -95,3 +95,4 @@ export async function sendPasswordResetEmail(email: string): Promise<SettingsAct
     };
   }
 }
+

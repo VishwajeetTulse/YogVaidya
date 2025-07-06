@@ -20,3 +20,4 @@ export interface AdminDashboardState {
   setActiveSection: (section: string) => void;
   handleSignOut: () => void;
 }
+

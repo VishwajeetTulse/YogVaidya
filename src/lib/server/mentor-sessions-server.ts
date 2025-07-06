@@ -1,7 +1,7 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
 import { headers } from "next/headers";
 
 export interface MentorSessionData {
@@ -184,3 +184,4 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     return { success: false, error: "Failed to fetch mentor sessions" };
   }
 }
+

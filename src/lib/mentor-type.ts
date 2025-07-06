@@ -1,5 +1,5 @@
 "use server";   
-import { prisma } from "./prisma";
+import { prisma } from "./config/prisma";
 export async function getMentorType(user: { email: string }) {
         const type = await prisma.mentorApplication.findFirst(
             {
@@ -9,3 +9,4 @@ export async function getMentorType(user: { email: string }) {
         )
         return type?.mentorType as "YOGAMENTOR" | "MEDITATIONMENTOR";
 }
+

@@ -11,3 +11,4 @@ const resetPasswordPage = () => {
   );
 };
 export default resetPasswordPage;
+

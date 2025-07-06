@@ -3,11 +3,10 @@
 import React, { useState, useEffect, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import Image from "next/image";
 import { 
-  Star, 
   Calendar, 
   Clock, 
-  MessageCircle, 
   Video, 
   RefreshCw,
   Crown,
@@ -19,7 +18,7 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { SectionProps } from "../types";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
-import { getUserMentor, UserMentorData } from "@/lib/user-mentor-server";
+import { getUserMentor, UserMentorData } from "@/lib/server/user-mentor-server";
 
 interface UserMentorResponseData {
   subscriptionInfo: {
@@ -27,6 +26,7 @@ interface UserMentorResponseData {
     status: string;
     needsSubscription: boolean;
     nextBillingDate?: string | null;
+    isTrialExpired?: boolean;
   };
   assignedMentor: UserMentorData | null;
   availableMentors: UserMentorData[];
@@ -44,10 +44,11 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
 
-  // Load user mentor data using server action
+// Load user mentor data using server action
+useEffect(() => {
   const loadUserMentor = async () => {
     if (!session?.user) return;
-
+    
     try {
       const result = await getUserMentor();
       
@@ -64,6 +65,9 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
       setLoading(false);
     }
   };
+  
+  loadUserMentor();
+}, [session]);
 
   // Refresh function for manual updates
   const refreshMentorData = async () => {
@@ -83,10 +87,6 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
       }
     });
   };
-
-  useEffect(() => {
-    loadUserMentor();
-  }, [session]);
 
   // Show loading state
   if (loading) {
@@ -112,6 +112,7 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
         subscriptionStatus={mentorData.subscriptionInfo.status}
         subscriptionPlan={mentorData.subscriptionInfo.plan}
         nextBillingDate={mentorData.subscriptionInfo.nextBillingDate}
+        isTrialExpired={mentorData.subscriptionInfo.isTrialExpired}
       />
     );
   }
@@ -159,7 +160,7 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
           
           <div className={`w-20 h-20 bg-gradient-to-br ${avatarColors} rounded-full mx-auto mb-4 flex items-center justify-center`}>
             {mentor.image ? (
-              <img 
+              <Image
                 src={mentor.image} 
                 alt={mentor.name || "Mentor"} 
                 className="w-full h-full rounded-full object-cover"
@@ -215,35 +216,8 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
             </div>
           )}
 
-          {/* Rating (Mock for now) */}
-          <div className="flex items-center justify-center gap-1 mt-2">
-            {[1, 2, 3, 4, 5].map((star) => (
-              <Star
-                key={star}
-                className={`w-4 h-4 ${
-                  isAssigned 
-                    ? "fill-[#876aff] text-[#876aff]"
-                    : "fill-[#ff7dac] text-[#ff7dac]"
-                }`}
-              />
-            ))}
-            <span className="text-sm text-gray-500 ml-1">(4.9)</span>
-          </div>
-
           {/* Action Buttons */}
-          <div className="flex gap-2 mt-4">
-            <Button 
-              size="sm" 
-              variant="outline" 
-              className="flex-1 border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
-              onClick={() => {
-                // TODO: Implement messaging functionality
-                toast.info("Messaging feature coming soon!");
-              }}
-            >
-              <MessageCircle className="w-4 h-4 mr-1" />
-              Message
-            </Button>
+          <div className="flex mt-4">
             <Button 
               size="sm" 
               className="flex-1 bg-[#76d2fa] hover:bg-[#5a9be9]"
@@ -345,7 +319,7 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
           <Users className="h-16 w-16 text-gray-400 mx-auto mb-4" />
           <h3 className="text-lg font-medium text-gray-900 mb-2">No Mentors Available</h3>
           <p className="text-gray-500 mb-4">
-            We're working on assigning mentors for your subscription plan.
+            We&apos;re working on assigning mentors for your subscription plan.
           </p>
           <Button
             onClick={() => setActiveSection("explore-mentors")}
@@ -358,3 +332,4 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
     </div>
   );
 };
+

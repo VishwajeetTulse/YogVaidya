@@ -4,16 +4,14 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { 
   Users, 
   Video, 
-  DollarSign, 
   Calendar, 
   ChevronRight, 
-  TrendingUp
 } from "lucide-react";
 import { MentorSectionProps } from "../types";
 import { useState, useEffect } from "react";
-import { getMentorOverviewData, MentorOverviewData } from "@/lib/mentor-overview-server";
+import { getMentorOverviewData, MentorOverviewData } from "@/lib/server/mentor-overview-server";
 
-export const OverviewSection = ({ userDetails, setActiveSection, formatDate }: MentorSectionProps) => {
+export const OverviewSection = ({ userDetails, setActiveSection }: MentorSectionProps) => {
   const [overviewData, setOverviewData] = useState<MentorOverviewData | null>(null);
   const [loading, setLoading] = useState(true);
 
@@ -281,3 +279,4 @@ export const OverviewSection = ({ userDetails, setActiveSection, formatDate }: M
     </div>
   );
 };
+

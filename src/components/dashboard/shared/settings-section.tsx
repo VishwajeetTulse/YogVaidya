@@ -7,9 +7,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Separator } from "@/components/ui/separator";
 import { toast } from "sonner";
-import { Bell, User, Lock, Settings, Shield, Moon, Globe, Volume2, Mail, Calendar } from "lucide-react";
+import { Bell, User, Lock, Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
-import { updateUserProfile, sendPasswordResetEmail } from "@/lib/settings-server";
+import { updateUserProfile } from "@/lib/server/settings-server";
 import { UserDetails } from "@/lib/userDetails";
 
 export interface SharedSettingsSectionProps {
@@ -220,3 +220,4 @@ export const SharedSettingsSection = ({
     </div>
   );
 };
+

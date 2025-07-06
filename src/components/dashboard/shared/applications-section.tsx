@@ -10,7 +10,7 @@ import { Check, X, Eye, FileText } from "lucide-react";
 import { 
   getMentorApplicationsAction, 
   updateMentorApplicationStatusAction 
-} from "@/lib/mentor-application-actions";
+} from "@/lib/actions/mentor-application-actions";
 
 interface MentorApplication {
   id: string;
@@ -240,3 +240,4 @@ export const ApplicationsSection = () => {
     </div>
   );
 };
+

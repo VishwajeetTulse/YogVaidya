@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { UpdateSessionStatus } from "@/lib/session";
-import { getMentorSessions, MentorSessionData } from "@/lib/mentor-sessions-server";
+import { getMentorSessions, MentorSessionData } from "@/lib/server/mentor-sessions-server";
 
 interface MentorSessionsData {
   mentorInfo: {
@@ -39,26 +39,30 @@ export const SessionsSection = () => {
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("upcoming");
 
-  // Load mentor sessions using server action
-  const loadMentorSessions = async () => {
-    if (!session?.user) return;
-
-    try {
-      const result = await getMentorSessions();
-      
-      if (result.success && result.data) {
-        setMentorSessionsData(result.data);
-      } else {
-        console.error("Failed to load sessions:", result.error);
-        toast.error("Failed to load your sessions");
-      }
-    } catch (error) {
-      console.error("Error loading sessions:", error);
+// Load mentor sessions using server action
+const loadMentorSessions = useCallback(async () => {
+  if (!session?.user) return;
+  
+  try {
+    const result = await getMentorSessions();
+    
+    if (result.success && result.data) {
+      setMentorSessionsData(result.data);
+    } else {
+      console.error("Failed to load sessions:", result.error);
       toast.error("Failed to load your sessions");
-    } finally {
-      setLoading(false);
     }
-  };
+  } catch (error) {
+    console.error("Error loading sessions:", error);
+    toast.error("Failed to load your sessions");
+  } finally {
+    setLoading(false);
+  }
+}, [session]);
+
+useEffect(() => {
+  loadMentorSessions();
+}, [loadMentorSessions, session]);
 
   // Refresh function for manual updates
   const refreshSessions = async () => {
@@ -89,9 +93,7 @@ export const SessionsSection = () => {
     toast.success("Session started successfully");
   };
 
-  useEffect(() => {
-    loadMentorSessions();
-  }, [session]);
+
 
   // Show loading state
   if (loading) {
@@ -502,3 +504,4 @@ export const SessionsSection = () => {
     </div>
   );
 };
+

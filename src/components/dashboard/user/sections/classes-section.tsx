@@ -7,7 +7,8 @@ import { Calendar, Clock, PlayCircle, ExternalLink, RefreshCw } from "lucide-rea
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
-import { getUserSessions, UserSessionData } from "@/lib/user-sessions-server";
+import { getUserSessions, UserSessionData, UserSessionsResponse } from "@/lib/server/user-sessions-server";
+// import { Prisma } from "@prisma/client";
 
 interface SessionData {
   id: string;
@@ -29,6 +30,7 @@ interface UserSessionsData {
   sessions: SessionData[];
   needsSubscription: boolean;
   nextBillingDate?: string | null;
+  isTrialExpired?: boolean;
 }
 
 export const ClassesSection = () => {
@@ -39,20 +41,25 @@ export const ClassesSection = () => {
   const [activeTab, setActiveTab] = useState("upcoming");
 
   // Helper function to convert server data to component format
-  const formatSessionsData = (serverData: any): UserSessionsData => {
+  const formatSessionsData = (serverData: UserSessionsResponse["data"]): UserSessionsData => {
+    if (!serverData) {
+      throw new Error("Server data is undefined");
+    }
+
     return {
       ...serverData,
       sessions: serverData.sessions.map((session: UserSessionData) => ({
         ...session,
-        scheduledTime: session.scheduledTime.toISOString()
+        scheduledTime: (session.scheduledTime as Date).toISOString()
       }))
     };
   };
 
-  // Load user sessions using server action
+// Load user sessions using server action
+useEffect(() => {
   const loadUserSessions = async () => {
     if (!session?.user) return;
-
+    
     try {
       const result = await getUserSessions();
       
@@ -69,7 +76,10 @@ export const ClassesSection = () => {
       setLoading(false);
     }
   };
-
+  
+  loadUserSessions();
+}, [session]);
+  
   // Refresh function for manual updates
   const refreshSessions = async () => {
     startTransition(async () => {
@@ -89,9 +99,6 @@ export const ClassesSection = () => {
     });
   };
 
-  useEffect(() => {
-    loadUserSessions();
-  }, [session]);
 
   // Show loading state
   if (loading) {
@@ -117,6 +124,7 @@ export const ClassesSection = () => {
         subscriptionStatus={sessionsData.subscriptionStatus}
         subscriptionPlan={sessionsData.subscriptionPlan}
         nextBillingDate={sessionsData.nextBillingDate}
+        isTrialExpired={sessionsData.isTrialExpired}
       />
     );
   }
@@ -325,3 +333,4 @@ export const ClassesSection = () => {
     </div>
   );
 };
+

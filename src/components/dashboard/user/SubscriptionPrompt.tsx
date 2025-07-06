@@ -7,9 +7,10 @@ interface SubscriptionPromptProps {
   subscriptionStatus: string;
   subscriptionPlan: string | null;
   nextBillingDate?: string | null;
+  isTrialExpired?: boolean; // Add optional prop to detect trial expiration
 }
 
-export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextBillingDate }: SubscriptionPromptProps) => {
+export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextBillingDate, isTrialExpired }: SubscriptionPromptProps) => {
   const isExpired = subscriptionStatus === "CANCELLED" || 
                    subscriptionStatus === "INACTIVE" || 
                    subscriptionStatus === "EXPIRED";
@@ -17,6 +18,10 @@ export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextB
   const isCancelledButActive = subscriptionStatus === "ACTIVE_UNTIL_END";
   
   const getStatusMessage = () => {
+    if (isTrialExpired) {
+      return "Your 1-day trial has ended! You experienced the full power of our platform. Choose a plan to continue your wellness journey with unlimited access to yoga and meditation sessions.";
+    }
+    
     if (isCancelledButActive && nextBillingDate) {
       const billingDate = new Date(nextBillingDate);
       return `Your subscription has been cancelled but you still have access until ${billingDate.toLocaleDateString("en-US", {
@@ -34,6 +39,9 @@ export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextB
   };
   
   const getTitle = () => {
+    if (isTrialExpired) {
+      return "Trial Period Ended";
+    }
     if (isCancelledButActive) {
       return "Subscription Cancelled";
     }
@@ -93,7 +101,7 @@ export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextB
             className="bg-gradient-to-r from-[#876aff] to-[#ff7dac] hover:from-[#7c5cff] hover:to-[#ff6ba3] text-white"
           >
             <Link href="/pricing">
-              {isCancelledButActive ? "Reactivate Subscription" : (isExpired ? "Renew Subscription" : "Choose Your Plan")}
+              {isTrialExpired ? "Continue Your Journey" : (isCancelledButActive ? "Reactivate Subscription" : (isExpired ? "Renew Subscription" : "Choose Your Plan"))}
             </Link>
           </Button>
           
@@ -107,3 +115,4 @@ export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextB
     </div>
   );
 };
+

@@ -1,5 +1,5 @@
 import * as React from "react"
-import { cn } from "@/lib/utils"
+import { cn } from "@/lib/utils/utils"
 
 const badgeVariants = {
   default: "inline-flex items-center rounded-full border border-transparent bg-slate-900 px-2.5 py-0.5 text-xs font-semibold text-slate-50",

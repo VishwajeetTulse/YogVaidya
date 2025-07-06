@@ -20,3 +20,4 @@ export interface ModeratorDashboardState {
   setActiveSection: (section: string) => void;
   handleSignOut: () => void;
 }
+

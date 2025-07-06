@@ -13,8 +13,8 @@ import {
   Database
 } from "lucide-react";
 import { toast } from "sonner";
-import { syncMentorTypes, getMentorStats } from "@/lib/mentor-sync";
-
+import { syncMentorTypes, getMentorStats } from "@/lib/services/mentor-sync";
+import { LucideIcon } from "lucide-react";
 interface MentorStats {
   totalMentors: number;
   mentorsWithType: number;
@@ -75,7 +75,7 @@ export const MentorManagementSection = () => {
   }: { 
     title: string; 
     value: number | string; 
-    icon: any; 
+    icon: LucideIcon; 
     color: string; 
     description?: string;
   }) => (
@@ -260,3 +260,4 @@ export const MentorManagementSection = () => {
     </div>
   );
 };
+

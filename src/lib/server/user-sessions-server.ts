@@ -1,8 +1,9 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
 import { getUserSubscription } from "@/lib/subscriptions";
+import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 
 export interface UserSessionData {
@@ -27,6 +28,7 @@ export interface UserSessionsResponse {
     sessions: UserSessionData[];
     needsSubscription: boolean;
     nextBillingDate?: string | null;
+    isTrialExpired?: boolean;
   };
   error?: string;
 }
@@ -53,7 +55,32 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     const subscription = subscriptionResult.subscription;
     const now = new Date();
 
+    // Helper function to detect if trial has expired
+    const isTrialExpired = (): boolean => {
+      return !!(subscription?.trialEndDate && 
+               subscription.trialEndDate <= now && 
+               subscription.subscriptionStatus === "INACTIVE");
+    };
+
     if (!subscription) {
+      // Try to start a trial for users without any subscription
+      try {
+        const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+        const trialResult = await startAutoTrialForNewUser(session.user.id);
+        
+        if (trialResult.success) {
+          // Re-fetch subscription after starting trial
+          const newSubscriptionResult = await getUserSubscription(session.user.id);
+          if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+            // Continue with the new trial subscription
+            return getUserSessions(); // Recursive call with new subscription
+          }
+        }
+      } catch (error) {
+        console.error("Failed to start trial for user:", error);
+      }
+
+      // If trial creation failed or user already had a trial, return subscription needed
       return {
         success: true,
         data: {
@@ -61,7 +88,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           subscriptionPlan: null,
           sessions: [],
           needsSubscription: true,
-          nextBillingDate: null
+          nextBillingDate: null,
+          isTrialExpired: false // No trial data available
         }
       };
     }
@@ -72,6 +100,25 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     
     if (subscription.subscriptionStatus === "INACTIVE" || 
         subscription.subscriptionStatus === "EXPIRED") {
+      // For INACTIVE users, check if they should get a trial (new users with no previous subscription)
+      if (!subscription.subscriptionPlan && !subscription.isTrialActive && !subscription.trialEndDate) {
+        // This is a new user who has never had a subscription or trial
+        try {
+          const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+          const trialResult = await startAutoTrialForNewUser(session.user.id);
+          
+          if (trialResult.success) {
+            // Re-fetch subscription after starting trial
+            const newSubscriptionResult = await getUserSubscription(session.user.id);
+            if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+              // Continue with the new trial subscription
+              return getUserSessions(); // Recursive call with new subscription
+            }
+          }
+        } catch (error) {
+          console.error("Failed to start trial for user:", error);
+        }
+      }
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "CANCELLED" || 
                subscription.subscriptionStatus === "ACTIVE_UNTIL_END") {
@@ -79,7 +126,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       const accessEndDate = subscription.nextBillingDate || subscription.subscriptionEndDate;
       needsSubscription = accessEndDate ? new Date(accessEndDate) <= now : true;
     } else if (subscription.subscriptionStatus === "ACTIVE") {
-      // For active subscriptions, check subscriptionEndDate if it exists
+      // For active subscriptions (including trials), check subscriptionEndDate if it exists
       needsSubscription = subscription.subscriptionEndDate ? new Date(subscription.subscriptionEndDate) <= now : false;
     }
 
@@ -91,13 +138,14 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           subscriptionPlan: subscription.subscriptionPlan,
           sessions: [],
           needsSubscription: true,
-          nextBillingDate: subscription.nextBillingDate?.toISOString() || null
+          nextBillingDate: subscription.nextBillingDate?.toISOString() || null,
+          isTrialExpired: isTrialExpired()
         }
       };
     }
 
     // Get sessions based on subscription plan
-    let sessionFilters: any = {
+    const sessionFilters: Prisma.ScheduleWhereInput = {
       // Get all sessions (past and future) for the user's subscription period
       scheduledTime: {
         gte: subscription.subscriptionStartDate || new Date(0) // From subscription start or beginning of time
@@ -150,7 +198,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         subscriptionPlan: subscription.subscriptionPlan,
         sessions: formattedSessions,
         needsSubscription: false,
-        nextBillingDate: subscription.nextBillingDate?.toISOString() || null
+        nextBillingDate: subscription.nextBillingDate?.toISOString() || null,
+        isTrialExpired: false // Active users don't have expired trials
       }
     };
 
@@ -159,3 +208,4 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     return { success: false, error: "Failed to fetch sessions" };
   }
 }
+

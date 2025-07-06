@@ -7,7 +7,7 @@ import { useState, useEffect } from "react";
 import { format, formatDistance } from "date-fns";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { getMentorApplicationsAction } from "@/lib/mentor-application-actions";
+import { getMentorApplicationsAction } from "@/lib/actions/mentor-application-actions";
 
 interface AnalyticsData {
   users: {
@@ -354,3 +354,4 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
     </div>
   );
 };
+

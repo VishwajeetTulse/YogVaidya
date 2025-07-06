@@ -1,6 +1,6 @@
 'use server';
 
-import { prisma } from "./prisma";
+import { prisma } from "./config/prisma";
 
 export interface UserDetails {
   id: string;
@@ -207,3 +207,4 @@ export async function printUserDetails(userId: string): Promise<void> {
     console.error("Failed to fetch user details:", result.error);
   }
 }
+

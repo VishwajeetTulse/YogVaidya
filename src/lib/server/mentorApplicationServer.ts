@@ -1,7 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { sendEmail } from "@/lib/email";
-import { prisma } from "./prisma";
+import { sendEmail } from "@/lib/services/email";
+import { prisma } from "@/lib/config/prisma";
 
 type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
 
@@ -218,3 +218,4 @@ export async function updateMentorApplicationStatus({
 export async function deleteMentorApplication(email: string) {
   return prisma.mentorApplication.deleteMany({ where: { email } });
 } 
+

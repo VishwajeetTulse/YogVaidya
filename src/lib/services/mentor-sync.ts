@@ -1,6 +1,6 @@
 "use server";
 
-import { prisma } from "./prisma";
+import { prisma } from "../config/prisma";
 
 /**
  * Sync mentor types from approved mentor applications to user records
@@ -109,3 +109,4 @@ export async function getMentorStats() {
     };
   }
 }
+

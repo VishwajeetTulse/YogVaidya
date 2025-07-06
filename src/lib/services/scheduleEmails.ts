@@ -1,5 +1,5 @@
 import schedule from "node-schedule";
-import { sendEmail } from "../lib/email-student-for-session";
+import { sendEmail } from "./email-student-for-session";
 import { Schedule } from "@prisma/client";
 
 /* Schedules an email to be sent 1 hour before the session.
@@ -20,3 +20,4 @@ export function scheduleEmailReminder(session: Schedule) {
     await sendEmail(session);
   });
 }
+

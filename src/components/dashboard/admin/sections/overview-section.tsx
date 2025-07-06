@@ -10,7 +10,7 @@ import {
 } from "lucide-react";
 import { AdminSectionProps } from "../types";
 import { useEffect, useState } from "react";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { Skeleton } from "@/components/ui/skeleton";
 // Define analytics data structure
 interface AnalyticsData {
@@ -333,3 +333,4 @@ export const OverviewSection = ({
     </div>
   );
 };
+

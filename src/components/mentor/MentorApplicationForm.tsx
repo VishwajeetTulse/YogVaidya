@@ -26,7 +26,7 @@ import {
   createMentorApplicationAction, 
   getMentorApplicationsAction, 
   deleteMentorApplicationAction 
-} from "@/lib/mentor-application-actions";
+} from "@/lib/actions/mentor-application-actions";
 
 const formSchema = z.object({
   name: z.string().min(2, "Full name is required"),
@@ -544,3 +544,4 @@ export default function MentorApplicationForm() {
     </div>
   );
 }
+

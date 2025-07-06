@@ -14,7 +14,7 @@ import { Button } from "@/components/ui/button";
 import { BaseSidebarProps } from "./types";
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { cn } from "@/lib/utils";
+import { cn } from "@/lib/utils/utils";
 import { type SidebarMenuItem as SidebarMenuItemType} from "../user/types";
 import { SubscriptionCountdown } from "./subscription-countdown";
 
@@ -124,3 +124,4 @@ export const GenericSidebar = ({
     </ShadcnSidebar>
   );
 };
+

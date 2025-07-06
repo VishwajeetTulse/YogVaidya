@@ -1,7 +1,7 @@
 "use server"
 import nodemailer from "nodemailer";
 import { Schedule } from "@prisma/client";
-import { prisma } from "./prisma";
+import { prisma } from "../config/prisma";
 
 export async function sendEmail(sessionDetails: Schedule) {
   const emails = await prisma.user.findMany({
@@ -91,3 +91,4 @@ export async function sendEmail(sessionDetails: Schedule) {
     };
   }
 }
+

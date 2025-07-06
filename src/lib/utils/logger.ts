@@ -1,5 +1,5 @@
 import { Prisma } from "@prisma/client";
-import { prisma } from "./prisma";
+import { prisma } from "../config/prisma";
 import crypto from "crypto";
 
 type LogParams = {
@@ -156,3 +156,4 @@ export function logSystemEvent(action: string, details?: string, level: LogParam
     metadata,
   });
 }
+

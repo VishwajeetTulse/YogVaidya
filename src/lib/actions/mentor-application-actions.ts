@@ -5,7 +5,7 @@ import {
   getMentorApplications, 
   deleteMentorApplication,
   updateMentorApplicationStatus
-} from "./mentorApplicationServer";
+} from "../server/mentorApplicationServer";
 
 export async function createMentorApplicationAction(formData: FormData) {
   try {
@@ -73,3 +73,4 @@ export async function updateMentorApplicationStatusAction(id: string, status: "a
     };
   }
 }
+

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
-import { sendEmail } from "@/lib/email";
-import { prisma } from "@/lib/prisma";
+import { sendEmail } from "@/lib/services/email";
+import { prisma } from "@/lib/config/prisma";
 
 type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
 
@@ -146,4 +146,5 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }
+
 

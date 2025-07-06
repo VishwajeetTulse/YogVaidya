@@ -1,6 +1,6 @@
 import { Suspense } from "react";
 import Checkout from "@/components/checkout/Checkout";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 

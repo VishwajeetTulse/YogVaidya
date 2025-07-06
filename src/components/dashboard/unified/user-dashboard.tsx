@@ -4,7 +4,6 @@ import React from 'react';
 import { UnifiedDashboard } from '../shared/unified-dashboard';
 import { SIDEBAR_MENU_ITEMS } from '../user/constants';
 import { formatDate, getStatusColor } from '../shared/utils';
-import { toast } from 'sonner';
 import { useState } from 'react';
 import { 
   cancelUserSubscription, 
@@ -44,7 +43,6 @@ const useExtendUserHook = (baseHookResult: BaseHookResult) => {
   const [cancellingSubscription, setCancellingSubscription] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
   const [viewMode, setViewMode] = useState<"cards" | "comparison">("cards");
-  const [isUpgrading, setIsUpgrading] = useState(false);
 
   // Function to refresh subscription data
   const refreshSubscriptionData = async () => {
@@ -90,7 +88,6 @@ const useExtendUserHook = (baseHookResult: BaseHookResult) => {
     }
 
     try {
-      setIsUpgrading(true);
       const result = await upgradeUserSubscription({
         userId: baseHookResult.userDetails.id,
         newPlan: planId.toUpperCase(),
@@ -109,8 +106,6 @@ const useExtendUserHook = (baseHookResult: BaseHookResult) => {
         error: "An unexpected error occurred during the upgrade",
         code: "UPGRADE_FAILED"
       };
-    } finally {
-      setIsUpgrading(false);
     }
   };
 
@@ -141,3 +136,4 @@ export default function UserDashboard() {
     />
   );
 }
+

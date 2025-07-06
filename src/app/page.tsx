@@ -2,7 +2,7 @@ import OurServices from "@/components/landing/OurServices";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import Hero from "@/components/landing/Hero";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import PlansDashboard from "@/components/dashboard/plans-dashboard";
@@ -38,3 +38,4 @@ export default async function YogaLandingPage() {
     </div>
   );
 }
+

@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
 import crypto from "crypto";
 import { Prisma } from "@prisma/client";
 
@@ -169,3 +169,4 @@ export async function POST(req: NextRequest) {
     );
   }
 }
+

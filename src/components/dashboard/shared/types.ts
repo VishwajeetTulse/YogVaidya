@@ -38,3 +38,4 @@ export interface SectionConfig {
   component?: (props : SectionProps) => React.ReactNode;
   roles?: string[];
 }
+

@@ -1,10 +1,10 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Link as LinkIcon, Video, Plus, Trash2, Edit } from "lucide-react";
+import { Calendar, Clock, Video, Plus, Trash2, Edit } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -27,7 +27,7 @@ import {
 import { toast } from "sonner";
 import { Schedule } from "@prisma/client";
 import { getMentorType } from "@/lib/mentor-type";
-import { get } from "http";
+
 // Form validation schema
 const scheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -80,7 +80,7 @@ export const ScheduleSection = () => {
   }, [session, form, editingSession]);
 
   // Load scheduled sessions from API
-  const loadScheduledSessions = async () => {
+  const loadScheduledSessions = useCallback(async () => {
     if (!session?.user) return;
     
     setLoading(true);
@@ -100,7 +100,7 @@ export const ScheduleSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user]);
 
   useEffect(() => {
     loadScheduledSessions();
@@ -109,7 +109,7 @@ export const ScheduleSection = () => {
     const interval = setInterval(loadScheduledSessions, 30000);
     
     return () => clearInterval(interval);
-  }, [session]);
+  }, [loadScheduledSessions, session]);
 
   const onSubmit = async (data: ScheduleFormData) => {
     setSubmitting(true);
@@ -460,3 +460,4 @@ export const ScheduleSection = () => {
     </div>
   );
 };
+

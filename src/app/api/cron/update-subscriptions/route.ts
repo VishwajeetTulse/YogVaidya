@@ -1,8 +1,6 @@
 import { NextResponse } from 'next/server';
 import { batchUpdateSubscriptionStatuses } from '@/lib/subscriptions';
 
-export const runtime = 'edge';
-
 /**
  * Cron job endpoint to update subscription statuses
  * This endpoint should be called daily to:
@@ -38,3 +36,4 @@ export async function GET(request: Request) {
     );
   }
 }
+

@@ -60,3 +60,4 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     description: "System configuration",
   },
 ];
+

@@ -1,7 +1,7 @@
 "use server"
-import { Prisma } from "@prisma/client";
+
 import { ScheduleStatus } from "@prisma/client";
-import { prisma } from "./prisma";
+import { prisma } from "./config/prisma";
 export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: string) {
     await prisma.schedule.update({
         where: { id: sessionId },
@@ -9,3 +9,4 @@ export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: str
     })
     console.log(`Session ${sessionId} status updated to ${status}`);
 }
+

@@ -1,7 +1,7 @@
 import React from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import PlansDashboard from "@/components/dashboard/plans-dashboard";
 
 export default async function PlansPage() {
@@ -18,3 +18,4 @@ export default async function PlansPage() {
     </div>
   );
 }
+

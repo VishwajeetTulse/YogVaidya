@@ -45,3 +45,4 @@ export const SupportSection = () => {
     </div>
   );
 };
+

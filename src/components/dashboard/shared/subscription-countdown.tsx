@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Clock, Calendar } from 'lucide-react';
+import { Calendar } from 'lucide-react';
 import { Card } from '@/components/ui/card';
 import { UserDetails } from '@/lib/userDetails';
 
@@ -22,9 +22,11 @@ export const SubscriptionCountdown: React.FC<SubscriptionCountdownProps> = ({ us
 
   useEffect(() => {
     // Check if user has an active subscription and next billing date
+    // Don't show countdown during trial period
     if (!userDetails || 
         userDetails.subscriptionStatus !== 'ACTIVE' || 
-        !userDetails.nextBillingDate) {
+        !userDetails.nextBillingDate ||
+        userDetails.isTrialActive) {
       setIsActive(false);
       return;
     }
@@ -145,3 +147,4 @@ export const SubscriptionCountdown: React.FC<SubscriptionCountdownProps> = ({ us
     </Card>
   );
 };
+

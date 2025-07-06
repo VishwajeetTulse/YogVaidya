@@ -1,7 +1,7 @@
 import React from "react";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import UserDashboard from "@/components/dashboard/unified/user-dashboard";
 import MentorDashboard from "@/components/dashboard/unified/mentor-dashboard";
 import ModeratorDashboard from "@/components/dashboard/unified/moderator-dashboard";
@@ -26,3 +26,4 @@ const dashboardPage = async () => {
 };
 
 export default dashboardPage;
+

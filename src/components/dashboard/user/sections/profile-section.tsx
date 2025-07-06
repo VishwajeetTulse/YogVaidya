@@ -159,3 +159,4 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
     </div>
   );
 };
+

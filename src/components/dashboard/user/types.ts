@@ -1,11 +1,11 @@
 import { LucideIcon } from "lucide-react";
 import { UserDetails } from "@/lib/userDetails";
-import { SubscriptionPlan } from "@prisma/client";
+import { Prisma, SubscriptionPlan } from "@prisma/client";
 
 export interface CancellationResponse {
   success: boolean;
   alreadyCancelled?: boolean;
-  user?: any;
+  user?: Prisma.UserCreateInput;
   details?: {
     isScheduledForCancellation: boolean;
     willRemainActiveUntil: Date;
@@ -59,3 +59,4 @@ export interface SectionProps extends Omit<Partial<DashboardProps>, 'loading' | 
   userDetails: UserDetails;
   setActiveSection: (section: string) => void;
 }
+

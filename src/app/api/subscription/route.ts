@@ -1,7 +1,7 @@
 // create a razorpay instance and export it
 import { NextResponse } from 'next/server';
 import Razorpay from 'razorpay';
-import { auth } from '@/lib/auth';
+import { auth } from '@/lib/config/auth';
 import { NextRequest } from 'next/server';
 import type { Subscriptions } from "razorpay/dist/types/subscriptions";
 import type { BillingPeriod } from '@/lib/types';
@@ -70,3 +70,4 @@ export async function POST(req: NextRequest) {
         );
     }
 }
+

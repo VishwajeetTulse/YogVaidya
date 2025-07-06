@@ -17,9 +17,9 @@ import {
 } from "lucide-react";
 import { SectionProps } from "../types";
 import { toast } from "sonner";
-import { useState, useEffect } from "react";
-import { getUserSubscription, upgradeUserSubscription } from "@/lib/subscriptions";
-import { useSession } from "@/lib/auth-client";
+import { useState } from "react";
+import { getUserSubscription } from "@/lib/subscriptions";
+
 export const PlansSection = ({
   userDetails,
   billingPeriod = "monthly",
@@ -27,7 +27,6 @@ export const PlansSection = ({
   viewMode = "cards",
   setViewMode,
   handleUpgradeSubscription,
-  refreshSubscriptionData
 }: SectionProps) => {
   const [isUpgrading, setIsUpgrading] = useState(false);
 
@@ -48,6 +47,12 @@ export const PlansSection = ({
       const isNewOrInactive = !subscription.success || 
         !subscription.subscription?.subscriptionPlan || 
         subscription.subscription.subscriptionStatus === 'INACTIVE';
+
+      // Block upgrades if subscription is cancelled but still active
+      if (subscription.subscription?.subscriptionStatus === 'ACTIVE_UNTIL_END') {
+        toast.error("You cannot upgrade or change plans while your subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period.");
+        return;
+      }
 
       // If the user doesn't have an active subscription, create a new one
       if (isNewOrInactive) {
@@ -108,6 +113,8 @@ export const PlansSection = ({
         return "Cannot upgrade while on an annual plan. Please wait until your current subscription ends.";
       case 'INVALID_UPGRADE_PATH':
         return "Cannot downgrade to a lower tier plan.";
+      case 'UPGRADE_BLOCKED_CANCELLATION':
+        return "Cannot upgrade or change plans while your subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period.";
       default:
         return defaultError || "Failed to process upgrade";
     }
@@ -119,16 +126,6 @@ export const PlansSection = ({
       return Math.round(price * 0.8); // 20% discount for annual billing
     }
     return price;
-  };
-
-  // Format currency helper
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat("en-IN", {
-      style: "currency",
-      currency: "INR",
-      minimumFractionDigits: 0,
-      maximumFractionDigits: 0,
-    }).format(amount);
   };
 
   const plans = [
@@ -482,3 +479,4 @@ export const PlansSection = ({
     </div>
   );
 };
+

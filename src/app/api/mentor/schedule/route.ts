@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { z } from "zod";
-import { scheduleEmailReminder } from "@/lib/scheduleEmails";
-import { prisma } from "@/lib/prisma";
+import { scheduleEmailReminder } from "@/lib/services/scheduleEmails";
+import { prisma } from "@/lib/config/prisma";
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -334,3 +334,4 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
+

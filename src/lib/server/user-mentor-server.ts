@@ -1,9 +1,10 @@
 "use server";
 
-import { auth } from "@/lib/auth";
-import { prisma } from "@/lib/prisma";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
 import { getUserSubscription } from "@/lib/subscriptions";
 import { headers } from "next/headers";
+import { Prisma } from "@prisma/client";
 
 export interface UserMentorData {
   id: string;
@@ -30,6 +31,7 @@ export interface UserMentorResponse {
       status: string;
       needsSubscription: boolean;
       nextBillingDate?: string | null;
+      isTrialExpired?: boolean;
     };
     assignedMentor: UserMentorData | null;
     availableMentors: UserMentorData[];
@@ -64,13 +66,56 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     const subscription = subscriptionResult.subscription;
     const now = new Date();
 
+    // Helper function to detect if trial has expired
+    const isTrialExpired = (): boolean => {
+      return !!(subscription?.trialEndDate && 
+               subscription.trialEndDate <= now && 
+               subscription.subscriptionStatus === "INACTIVE");
+    };
+
     // Check if user needs subscription
     let needsSubscription = false;
     
     if (!subscription) {
+      // Try to start a trial for users without any subscription
+      try {
+        const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+        const trialResult = await startAutoTrialForNewUser(session.user.id);
+        
+        if (trialResult.success) {
+          // Re-fetch subscription after starting trial
+          const newSubscriptionResult = await getUserSubscription(session.user.id);
+          if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+            // Continue with the new trial subscription
+            return getUserMentor(); // Recursive call with new subscription
+          }
+        }
+      } catch (error) {
+        console.error("Failed to start trial for user:", error);
+      }
+      
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "INACTIVE" || 
                subscription.subscriptionStatus === "EXPIRED") {
+      // For INACTIVE users, check if they should get a trial
+      if (!subscription.subscriptionPlan && !subscription.isTrialActive && !subscription.trialEndDate) {
+        // This is a new user who has never had a subscription or trial
+        try {
+          const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+          const trialResult = await startAutoTrialForNewUser(session.user.id);
+          
+          if (trialResult.success) {
+            // Re-fetch subscription after starting trial
+            const newSubscriptionResult = await getUserSubscription(session.user.id);
+            if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+              // Continue with the new trial subscription
+              return getUserMentor(); // Recursive call with new subscription
+            }
+          }
+        } catch (error) {
+          console.error("Failed to start trial for user:", error);
+        }
+      }
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "CANCELLED" || 
                subscription.subscriptionStatus === "ACTIVE_UNTIL_END") {
@@ -91,7 +136,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
             plan: subscription?.subscriptionPlan || null,
             status: subscription?.subscriptionStatus || "INACTIVE",
             needsSubscription: true,
-            nextBillingDate: subscription?.nextBillingDate?.toString() || null
+            nextBillingDate: subscription?.nextBillingDate?.toString() || null,
+            isTrialExpired: isTrialExpired()
           },
           assignedMentor: null,
           availableMentors: [],
@@ -117,7 +163,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     // FLOURISH plan users can access both types, we'll show both options
 
     // Get mentors based on the subscription plan
-    let mentorQuery: any = {
+    const mentorQuery: Prisma.UserWhereInput = {
       role: "MENTOR"
     };
 
@@ -172,7 +218,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
     if (assignedMentor) {
       // Get all sessions from this mentor that the user can access
-      let sessionTypeFilter: any = {};
+      const sessionTypeFilter: Prisma.ScheduleWhereInput = {};
       
       if (subscription!.subscriptionPlan === "SEED") {
         sessionTypeFilter.sessionType = "MEDITATION";
@@ -206,8 +252,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     }
 
     // Format mentor data with session counts
-    const formatMentorData = async (mentor: any): Promise<UserMentorData> => {
-      let sessionTypeFilter: any = {};
+    const formatMentorData = async (mentor: { id: string; name: string | null; email: string; mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null; image: string | null; phone: string | null; createdAt: Date; }): Promise<UserMentorData> => {
+      const sessionTypeFilter: Prisma.ScheduleWhereInput = {};
       
       if (subscription!.subscriptionPlan === "SEED") {
         sessionTypeFilter.sessionType = "MEDITATION";
@@ -261,7 +307,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           plan: subscription!.subscriptionPlan,
           status: subscription!.subscriptionStatus,
           needsSubscription: false,
-          nextBillingDate: subscription!.nextBillingDate?.toISOString() || null
+          nextBillingDate: subscription!.nextBillingDate?.toISOString() || null,
+          isTrialExpired: false // Active users don't have expired trials
         },
         assignedMentor: formattedAssignedMentor,
         availableMentors: formattedAvailableMentors,
@@ -274,3 +321,4 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     return { success: false, error: "Failed to fetch mentor information" };
   }
 }
+

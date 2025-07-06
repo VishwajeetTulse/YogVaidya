@@ -1,7 +1,7 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
-import { sendEmail } from "@/lib/email";
+import { sendEmail } from "@/lib/services/email";
 import { NextRequest } from "next/server";
 import { prisma } from "./prisma";
 
@@ -34,13 +34,14 @@ export const auth = betterAuth({
             text: `Click the link to reset your password: ${url}`,
           });
         },
-    },    socialProviders: {
+    },    
+    socialProviders: {
         google: {
             clientId: process.env.GOOGLE_CLIENT_ID || "",
             clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
             signIn: {
                 enabled: true,
-                createUserIfNotExists: false,
+                createUserIfNotExists: true,
             },
         },
     },  
@@ -80,4 +81,18 @@ export const auth = betterAuth({
             },
         },
     },
+    // hooks: {
+    //     after: async (ctx: any) => {
+    //         try {
+    //             console.log("AFTER HOOK CONTEXT:", JSON.stringify(ctx));
+    //             if (ctx.endpoint === "sign-up" && ctx.user && ctx.user.id) {
+    //                 await startAutoTrialForNewUser(ctx.user.id);
+    //             }
+    //         } catch (error) {
+    //             // Log error but never throw or block the flow
+    //             console.error("Failed to start trial for new user:", error);
+    //         }
+    //         return ctx;
+    //     },
+    // },
 });

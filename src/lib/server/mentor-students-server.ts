@@ -1,8 +1,8 @@
 "use server";
 
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
-import { getMentorStudents } from "@/lib/mentor-overview-server";
+import { getMentorStudents } from "@/lib/server/mentor-overview-server";
 
 export interface MentorStudentData {
   id: string;
@@ -49,3 +49,4 @@ export async function getMentorStudentsData(): Promise<MentorStudentsResponse> {
     return { success: false, error: "Failed to fetch students data" };
   }
 }
+

@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { getSubscriptionAnalytics } from "@/lib/subscriptions";
 import { format, subMonths } from "date-fns";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/config/prisma";
 
 // Helper function to check if a date is within the last month
 function isWithinLastMonth(date: Date): boolean {
@@ -151,3 +151,4 @@ export async function GET(request: NextRequest) {
     );
   }
 }
+

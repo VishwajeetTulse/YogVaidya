@@ -62,3 +62,4 @@ export const GenericSectionRenderer = <TProps = SectionProps>({
     </Suspense>
   );
 };
+

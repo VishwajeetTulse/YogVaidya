@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
-import { auth } from "@/lib/auth";
+import { auth } from "@/lib/config/auth";
 import { authClient } from "@/lib/auth-client";
-import { prisma } from "@/lib/prisma";
+import { prisma } from "@/lib/config/prisma";
 
 // Get all users
 export async function GET(req: NextRequest) {
@@ -266,7 +266,7 @@ export async function POST(req: NextRequest) {
     // Send an email with credentials
     try {
       // Import the email sending utility
-      const { sendEmail } = await import('@/lib/email');
+      const { sendEmail } = await import('@/lib/services/email');
       
       const emailSubject = "Your YogaVaidya Moderator Account";
 const emailHtml = `
@@ -329,3 +329,4 @@ const emailHtml = `
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }
+

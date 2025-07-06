@@ -2,10 +2,8 @@ import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { 
-  MessageCircle, 
   Phone, 
-  Mail, 
-  Shield,
+  Mail,
   HelpCircle
 } from "lucide-react";
 
@@ -147,10 +145,10 @@ export const SupportSection = () => {
                 <div className="flex items-center gap-3">
                   <HelpCircle className="h-5 w-5 text-blue-600" />
                   <div>
-                    <h4 className="font-medium text-blue-900">Can't find what you're looking for?</h4>
+                    <h4 className="font-medium text-blue-900">Can&apos;t find what you&apos;re looking for?</h4>
                     <p className="text-blue-700 text-sm mt-1">
                       Our support team is here to help with any questions not covered in the FAQ. 
-                      Don't hesitate to reach out!
+                      Don&apos;t hesitate to reach out!
                     </p>
                   </div>
                 </div>
@@ -162,3 +160,4 @@ export const SupportSection = () => {
     </div>
   );
 };
+

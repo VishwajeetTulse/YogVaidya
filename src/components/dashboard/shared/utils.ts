@@ -35,3 +35,4 @@ export const getStatusColor = (status: string): string => {
       return "bg-gradient-to-r from-gray-400 to-gray-500 text-white";
   }
 };
+

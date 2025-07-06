@@ -139,3 +139,4 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
     </div>
   );
 };
+
