@@ -10,13 +10,16 @@ import {
   Instagram,
   MessageCircle,
 } from "lucide-react";
-
+import { useChat } from "@ai-sdk/react";
+import ReactMarkdown from "react-markdown";
 export default function Footer() {
   const [isChatOpen, setIsChatOpen] = useState(false);
 
   const toggleChat = () => {
     setIsChatOpen(!isChatOpen);
   };
+
+  const { messages, input, handleInputChange, handleSubmit, error } = useChat();
 
   return (
     <footer className="bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] text-gray-800 relative">
@@ -163,31 +166,72 @@ export default function Footer() {
 
       {/* Chat Window - This is just a placeholder, you'd implement actual chat functionality here */}
       {isChatOpen && (
-        <div className="fixed bottom-24 right-6 w-80 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
+        <div className="fixed bottom-24 right-6 w-96 bg-white rounded-lg shadow-xl z-50 overflow-hidden">
           <div className="bg-[#76d2fa] p-4 text-white flex justify-between items-center">
             <h3 className="font-medium">Chat with YogaBot</h3>
-            <button onClick={toggleChat} className="text-white">
+            <Button
+              variant={"ghost"}
+              onClick={toggleChat}
+              className="text-white hover:bg-transparent"
+            >
               &times;
-            </button>
+            </Button>
           </div>
-          <div className="p-4 h-80 overflow-y-auto bg-gray-50">
-            <div className="text-center text-gray-500 text-sm">
-              This is where the chat messages would appear.
+          <div className="flex flex-col h-96">
+            {/* Messages Area */}
+            <div className="flex-1 p-4 overflow-y-auto bg-gray-50 space-y-3">
+              {messages.length === 0 ? (
+                <div className="text-gray-500 text-center text-sm">
+                  Welcome! How can I help you with your yoga journey today?
+                </div>
+              ) : (
+                messages.map((message) => (
+                  <div
+                    key={message.id}
+                    className={`flex ${
+                      message.role === "user" ? "justify-end" : "justify-start"
+                    }`}
+                  >
+                    <div
+                      className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
+                        message.role === "user"
+                          ? "bg-[#76d2fa] text-white"
+                          : "bg-white text-gray-800 border"
+                      }`}
+                    >
+                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                    </div>
+                  </div>
+                ))
+              )}
+              {error && (
+                <div className="text-red-500 text-sm text-center">
+                  Error: {error.message}
+                </div>
+              )}
             </div>
-          </div>
-          <div className="p-4 border-t flex">
-            <input
-              type="text"
-              placeholder="Type your message..."
-              className="flex-1 p-2 border rounded-l-md focus:outline-none"
-            />
-            <button className="bg-[#76d2fa] text-white p-2 rounded-r-md">
-              Send
-            </button>
+
+            {/* Input Area */}
+            <div className="border-t bg-white p-3">
+              <form onSubmit={handleSubmit} className="flex gap-2">
+                <input
+                  className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                  value={input}
+                  placeholder="Type your message..."
+                  onChange={handleInputChange}
+                />
+                <Button
+                  type="submit"
+                  size="sm"
+                  className="bg-[#76d2fa] hover:bg-[#5abe9b] text-white px-4"
+                >
+                  Send
+                </Button>
+              </form>
+            </div>
           </div>
         </div>
       )}
     </footer>
   );
 }
-

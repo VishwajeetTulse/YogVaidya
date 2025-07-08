@@ -256,7 +256,7 @@ export async function getUserDashboardData(): Promise<{
           mentor: session.mentor?.name || 'Mentor',
           time: formatSessionTime(session.scheduledTime),
           type: session.sessionType.toLowerCase() as 'yoga' | 'meditation',
-          status: session.status as any
+          status: session.status as 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
         })),
         upcomingSessions: upcomingSessions.map(session => ({
           id: session.id,
@@ -264,7 +264,7 @@ export async function getUserDashboardData(): Promise<{
           mentor: session.mentor?.name || 'Mentor',
           time: formatSessionTime(session.scheduledTime),
           type: session.sessionType.toLowerCase() as 'yoga' | 'meditation',
-          status: session.status as any
+          status: session.status as 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
         })),
         monthlyStats: {
           currentMonth: {
