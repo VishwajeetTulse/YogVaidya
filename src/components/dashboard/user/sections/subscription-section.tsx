@@ -42,10 +42,24 @@ export const SubscriptionSection = ({
     userDetails.trialEndDate && 
     new Date() < new Date(userDetails.trialEndDate);
 
-  // Check if trial has expired but isTrialActive is still true
-  const isTrialExpired = userDetails.isTrialActive && 
-    userDetails.trialEndDate && 
-    new Date() >= new Date(userDetails.trialEndDate);
+  // Check if trial has expired
+  // A trial is expired if there was a trialEndDate in the past and user never made a payment (trial only)
+  const isTrialExpired = userDetails.trialEndDate && 
+    new Date() >= new Date(userDetails.trialEndDate) && 
+    (!userDetails.subscriptionStatus || userDetails.subscriptionStatus === 'INACTIVE') &&
+    // Check that user never made a payment (indicating they only had trial, no paid subscription)
+    (!userDetails.paymentAmount || userDetails.paymentAmount === 0) &&
+    // If user still has subscription plan but trial expired, they're in transition state (trial expired but DB not updated)
+    (!userDetails.subscriptionPlan || (userDetails.subscriptionPlan && !userDetails.subscriptionStartDate));
+
+  // Check if it's a real subscription expiry (user had paid subscription that expired)
+  // This applies to users who had actual paid subscriptions (not trial users)
+  const isSubscriptionExpired = !isTrialExpired && 
+    userDetails.subscriptionPlan && 
+    (userDetails.subscriptionStatus === 'INACTIVE' || 
+     userDetails.subscriptionStatus === 'EXPIRED') &&
+    userDetails.subscriptionStartDate && // Must have had a real subscription start date
+    userDetails.paymentAmount && userDetails.paymentAmount > 0; // Must have made a payment
 
   // Handle trial expiration and database update
   useTrialExpiration({
@@ -87,14 +101,26 @@ export const SubscriptionSection = ({
       {/* Header Section */}
       <div className="text-center space-y-2">
         <h1 className="text-4xl font-bold bg-gradient-to-r from-[#876aff] to-[#76d2fa] bg-clip-text text-transparent">
-          {isTrialActiveAndValid ? "Your Free Trial" : isTrialExpired ? "Trial Expired" : "Your Subscription"}
+          {isTrialActiveAndValid 
+            ? "Your Free Trial" 
+            : isTrialExpired 
+            ? "Trial Expired" 
+            : isSubscriptionExpired
+            ? "Subscription Expired"
+            : userDetails.subscriptionStatus && userDetails.subscriptionStatus !== 'INACTIVE'
+            ? "Your Subscription"
+            : "Get Started"}
         </h1>
         <p className="text-lg text-gray-600 max-w-2xl mx-auto">
           {isTrialActiveAndValid 
             ? "Enjoy full access to all wellness features during your trial period."
             : isTrialExpired
             ? "Your trial has ended. Subscribe to continue your wellness journey."
-            : "Manage your wellness journey with flexible subscription options."
+            : isSubscriptionExpired
+            ? `Your ${userDetails.subscriptionPlan} plan has expired. Renew your subscription to continue accessing yoga and meditation sessions.`
+            : userDetails.subscriptionStatus && userDetails.subscriptionStatus !== 'INACTIVE'
+            ? "Manage your wellness journey with flexible subscription options."
+            : "Choose a subscription plan to begin your wellness transformation."
           }
         </p>
       </div>
@@ -118,6 +144,10 @@ export const SubscriptionSection = ({
                 <span className="px-4 py-2 rounded-full text-sm font-semibold bg-red-500/20 text-red-100 border border-red-400/30">
                   TRIAL EXPIRED
                 </span>
+              ) : isSubscriptionExpired ? (
+                <span className="px-4 py-2 rounded-full text-sm font-semibold bg-orange-500/20 text-orange-100 border border-orange-400/30">
+                  SUBSCRIPTION EXPIRED
+                </span>
               ) : userDetails.subscriptionStatus && (
                 <span className={`px-4 py-2 rounded-full text-sm font-semibold ${
                   userDetails.subscriptionStatus === "ACTIVE" 
@@ -139,17 +169,21 @@ export const SubscriptionSection = ({
               <div>
                 <h3 className="text-2xl font-bold text-gray-900 mb-2">
                   {isTrialActiveAndValid 
-                    ? "Free Trial - All Features Unlocked" 
+                    ? "Free Trial - FLOURISH Access" 
                     : isTrialExpired
                     ? "Trial Expired - Subscribe to Continue"
+                    : isSubscriptionExpired
+                    ? `${userDetails.subscriptionPlan} Plan Expired`
                     : userDetails.subscriptionPlan || "No Active Plan"
                   }
                 </h3>
                 <p className="text-gray-600 text-lg">
                   {isTrialActiveAndValid 
-                    ? "🎉 Enjoy unlimited access to all wellness features during your trial period"
+                    ? "🎉 You have full FLOURISH plan access during your trial - all features unlocked!"
                     : isTrialExpired
-                    ? "⏰ Your trial period has ended. Choose a subscription plan to restore access to all features"
+                    ? "⏰ Your trial period with FLOURISH access has ended. Choose a subscription plan to continue"
+                    : isSubscriptionExpired
+                    ? `⏰ Your ${userDetails.subscriptionPlan} subscription has expired. Renew to restore access to all features`
                     : userDetails.subscriptionPlan === "BLOOM"
                     ? "🧘‍♀️ Perfect for yoga enthusiasts - Unlimited access to yoga sessions"
                     : userDetails.subscriptionPlan === "FLOURISH"
@@ -163,13 +197,15 @@ export const SubscriptionSection = ({
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                 <div className="bg-gray-50 p-4 rounded-xl">
                   <div className="text-sm text-gray-500 font-medium">
-                    {isTrialActiveAndValid ? "Trial Status" : isTrialExpired ? "Trial Status" : "Plan"}
+                    {(isTrialActiveAndValid || isTrialExpired) ? "Trial Status" : "Plan"}
                   </div>
                   <div className="text-lg font-bold text-gray-900 mt-1">
                     {isTrialActiveAndValid 
-                      ? "Free Trial" 
+                      ? "Free Trial (FLOURISH)" 
                       : isTrialExpired
-                      ? "Expired"
+                      ? "Trial Expired"
+                      : isSubscriptionExpired
+                      ? `${userDetails.subscriptionPlan} (Expired)`
                       : userDetails.subscriptionPlan || "None"
                     }
                   </div>
@@ -178,9 +214,11 @@ export const SubscriptionSection = ({
                   <div className="text-sm text-gray-500 font-medium">Status</div>
                   <div className="text-lg font-bold text-gray-900 mt-1">
                     {isTrialActiveAndValid 
-                      ? "Active" 
+                      ? "Trial Active" 
                       : isTrialExpired
-                      ? "Expired"
+                      ? "Trial Expired"
+                      : isSubscriptionExpired
+                      ? "Subscription Expired"
                       : userDetails.subscriptionStatus || "Inactive"
                     }
                   </div>

@@ -62,19 +62,31 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    // Update the user's trial status
+    // Update the user's trial status and clear subscription details
     const updatedUser = await prisma.user.update({
       where: { email },
       data: {
         isTrialActive: false,
         subscriptionStatus: 'INACTIVE',
-        trialEndDate: null,
+        subscriptionPlan: null,
+        subscriptionStartDate: null,
+        subscriptionEndDate: null,
+        nextBillingDate: null,
+        billingPeriod: null,
+        razorpaySubscriptionId: null,
+        razorpayCustomerId: null,
+        lastPaymentDate: null,
+        paymentAmount: null,
+        autoRenewal: null,
       },
       select: {
         id: true,
         isTrialActive: true,
         trialEndDate: true,
         subscriptionStatus: true,
+        subscriptionPlan: true,
+        subscriptionStartDate: true,
+        subscriptionEndDate: true,
       },
     });
 

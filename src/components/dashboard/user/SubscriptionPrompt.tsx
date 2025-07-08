@@ -104,12 +104,6 @@ export const SubscriptionPrompt = ({ subscriptionStatus, subscriptionPlan, nextB
               {isTrialExpired ? "Continue Your Journey" : (isCancelledButActive ? "Reactivate Subscription" : (isExpired ? "Renew Subscription" : "Choose Your Plan"))}
             </Link>
           </Button>
-          
-          <Button variant="outline" asChild>
-            <Link href="/dashboard">
-              Back to Dashboard
-            </Link>
-          </Button>
         </div>
       </Card>
     </div>

@@ -267,6 +267,7 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
         paymentAmount: 0,
         isTrialActive: true,
         trialEndDate,
+        trialUsed: true, // Mark that user has used their trial
         autoRenewal: false, // Don't auto-renew trials
         updatedAt: new Date()
       }
@@ -291,7 +292,8 @@ async function startAutoTrialForNewUser(userId: string) {
         subscriptionPlan: true,
         subscriptionStatus: true,
         isTrialActive: true,
-        trialEndDate: true
+        trialEndDate: true,
+        trialUsed: true
       }
     });
 
@@ -299,12 +301,12 @@ async function startAutoTrialForNewUser(userId: string) {
       return { success: false, error: "User not found" };
     }
 
-    // Only start trial if user has no subscription plan and hasn't had a trial
-    if (!user.subscriptionPlan && (!user.isTrialActive || !user.trialEndDate)) {
+    // Only start trial if user has no subscription plan and hasn't used their trial before
+    if (!user.subscriptionPlan && !user.trialUsed && (!user.isTrialActive || !user.trialEndDate)) {
       return await startTrialSubscription(userId, "FLOURISH");
     }
 
-    return { success: true, message: "User already has subscription or trial" };
+    return { success: true, message: "User already has subscription or has used trial" };
   } catch (error) {
     console.error("Error starting auto trial for new user:", error);
     return { success: false, error: "Failed to start auto trial" };

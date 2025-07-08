@@ -68,9 +68,11 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
     // Helper function to detect if trial has expired
     const isTrialExpired = (): boolean => {
+      // Check if user had a trial that ended and never had a paid subscription
       return !!(subscription?.trialEndDate && 
                subscription.trialEndDate <= now && 
-               subscription.subscriptionStatus === "INACTIVE");
+               subscription.subscriptionStatus === "INACTIVE" &&
+               (!subscription.subscriptionPlan || subscription.paymentAmount === 0));
     };
 
     // Check if user needs subscription
@@ -97,25 +99,6 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "INACTIVE" || 
                subscription.subscriptionStatus === "EXPIRED") {
-      // For INACTIVE users, check if they should get a trial
-      if (!subscription.subscriptionPlan && !subscription.isTrialActive && !subscription.trialEndDate) {
-        // This is a new user who has never had a subscription or trial
-        try {
-          const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
-          const trialResult = await startAutoTrialForNewUser(session.user.id);
-          
-          if (trialResult.success) {
-            // Re-fetch subscription after starting trial
-            const newSubscriptionResult = await getUserSubscription(session.user.id);
-            if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
-              // Continue with the new trial subscription
-              return getUserMentor(); // Recursive call with new subscription
-            }
-          }
-        } catch (error) {
-          console.error("Failed to start trial for user:", error);
-        }
-      }
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "CANCELLED" || 
                subscription.subscriptionStatus === "ACTIVE_UNTIL_END") {

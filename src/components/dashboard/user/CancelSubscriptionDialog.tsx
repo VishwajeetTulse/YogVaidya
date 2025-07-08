@@ -89,13 +89,6 @@ export const CancelSubscriptionDialog: React.FC<CancelSubscriptionDialogProps> =
               )}
             </div>
           </div>
-
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <p className="text-sm text-gray-600">
-              <strong>Note:</strong> You can reactivate your subscription anytime before {formatDate(userDetails.nextBillingDate)} 
-              by visiting the Plans section. After this date, you&apos;ll need to start a new subscription.
-            </p>
-          </div>
         </div>
 
         <DialogFooter className="gap-3">

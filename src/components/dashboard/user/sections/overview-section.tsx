@@ -20,7 +20,8 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
   // Check user subscription status
   const isOnActiveTrial = userDetails?.isTrialActive === true;
   const hasActiveSubscription = userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === 'ACTIVE';
-  const hasNoAccess = !isOnActiveTrial && !hasActiveSubscription;
+  const hasCancelledSubscription = userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === 'ACTIVE_UNTIL_END';
+  const hasNoAccess = !isOnActiveTrial && !hasActiveSubscription && !hasCancelledSubscription;
 
   // Calculate days remaining in trial
   const trialDaysRemaining = userDetails?.trialEndDate 
@@ -108,74 +109,6 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           </div>
         </Card>
       )}
-
-      {/* Quick Stats - Using real data */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className={`p-4 ${hasNoAccess ? 'opacity-60' : ''} bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20`}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
-              <Calendar className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Classes This Week</p>
-              <p className="text-xl font-semibold">
-                {loading ? "..." : hasNoAccess ? "0" : dashboardData?.classesThisWeek || 0}
-              </p>
-            </div>
-          </div>
-          {hasNoAccess && (
-            <p className="text-xs text-red-600 mt-2">Subscribe to access classes</p>
-          )}
-        </Card>
-        <Card className={`p-4 ${hasNoAccess ? 'opacity-60' : ''} bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30`}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
-              <Clock className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Total Practice</p>
-              <p className="text-xl font-semibold">
-                {loading ? "..." : hasNoAccess ? "0h 0m" : dashboardData?.totalPracticeTime || "0h 0m"}
-              </p>
-            </div>
-          </div>
-          {hasNoAccess && (
-            <p className="text-xs text-red-600 mt-2">Track progress with subscription</p>
-          )}
-        </Card>
-        <Card className={`p-4 ${hasNoAccess ? 'opacity-60' : ''} bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20`}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
-              <Target className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Goals Achieved</p>
-              <p className="text-xl font-semibold">
-                {loading ? "..." : hasNoAccess ? "0/0" : `${dashboardData?.goalsAchieved || 0}/${dashboardData?.totalGoals || 0}`}
-              </p>
-            </div>
-          </div>
-          {hasNoAccess && (
-            <p className="text-xs text-red-600 mt-2">Set goals with subscription</p>
-          )}
-        </Card>
-        <Card className={`p-4 ${hasNoAccess ? 'opacity-60' : ''} bg-gradient-to-br from-orange-100 to-yellow-100 border border-orange-200`}>
-          <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-orange-400 to-yellow-500 rounded-lg">
-              <Award className="w-5 h-5 text-white" />
-            </div>
-            <div>
-              <p className="text-sm text-gray-500">Streak</p>
-              <p className="text-xl font-semibold">
-                {loading ? "..." : hasNoAccess ? "0 days" : `${dashboardData?.streakDays || 0} days`}
-              </p>
-            </div>
-          </div>
-          {hasNoAccess && (
-            <p className="text-xs text-red-600 mt-2">Build streaks with subscription</p>
-          )}
-        </Card>
-      </div>
 
       {/* Today's Schedule - Using real data */}
       <Card className="p-6">
