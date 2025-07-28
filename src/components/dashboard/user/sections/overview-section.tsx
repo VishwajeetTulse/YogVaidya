@@ -2,8 +2,6 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import {
   Calendar,
-  Clock,
-  Target,
   Award,
   PlayCircle,
   Users,
