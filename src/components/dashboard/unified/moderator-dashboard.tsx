@@ -9,6 +9,7 @@ import { OverviewSection } from '../moderator/sections/overview-section';
 import { ApplicationsSection } from '../shared/applications-section';
 import { UsersSection } from '../shared/users-management-section';
 import { AnalyticsSection } from '../moderator/sections/analytics-section';
+import SubscriptionSection from '../moderator/sections/subscription-section';
 import { SettingsSection } from '../moderator/sections/settings-section';
 import { SupportSection } from '../moderator/sections/support-section';
 
@@ -18,6 +19,7 @@ const MODERATOR_SECTION_COMPONENTS = {
   "applications": ApplicationsSection,
   "users": UsersSection,
   "analytics": AnalyticsSection,
+  "subscriptions": SubscriptionSection,
   "settings": SettingsSection,
   "support": SupportSection,
 };

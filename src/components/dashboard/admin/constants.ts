@@ -7,6 +7,7 @@ import {
   Database,
   Settings,
   UserCheck,
+  CreditCard,
 } from "lucide-react";
 import { AdminSidebarMenuItem } from "./types";
 
@@ -40,6 +41,12 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     title: "Moderators",
     icon: Shield,
     description: "Manage moderators",
+  },
+  {
+    id: "subscriptions",
+    title: "Subscriptions",
+    icon: CreditCard,
+    description: "Manage user subscriptions",
   },
   {
     id: "logs",

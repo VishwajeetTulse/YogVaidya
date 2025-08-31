@@ -10,12 +10,12 @@ export interface UserMentorData {
   id: string;
   name: string | null;
   email: string;
-  mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null;
+  mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
   image: string | null;
   phone: string | null;
   createdAt: Date;
   // Additional mentor info from MentorApplication
-  experience?: string;
+  experience?: number;
   expertise?: string;
   certifications?: string;
   profile?: string;
@@ -80,21 +80,21 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     
     if (!subscription) {
       // Try to start a trial for users without any subscription
-      try {
-        const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
-        const trialResult = await startAutoTrialForNewUser(session.user.id);
+      // try {
+      //   const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+      //   const trialResult = await startAutoTrialForNewUser(session.user.id);
         
-        if (trialResult.success) {
-          // Re-fetch subscription after starting trial
-          const newSubscriptionResult = await getUserSubscription(session.user.id);
-          if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
-            // Continue with the new trial subscription
-            return getUserMentor(); // Recursive call with new subscription
-          }
-        }
-      } catch (error) {
-        console.error("Failed to start trial for user:", error);
-      }
+      //   if (trialResult.success) {
+      //     // Re-fetch subscription after starting trial
+      //     const newSubscriptionResult = await getUserSubscription(session.user.id);
+      //     if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+      //       // Continue with the new trial subscription
+      //       return getUserMentor(); // Recursive call with new subscription
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Failed to start trial for user:", error);
+      // }
       
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "INACTIVE" || 
@@ -134,7 +134,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     }
 
     // Determine which mentor type to assign based on subscription plan
-    let requiredMentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null = null;
+    let requiredMentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null = null;
     
     if (subscription!.subscriptionPlan === "SEED") {
       // SEED plan gets MEDITATION mentor
@@ -235,7 +235,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     }
 
     // Format mentor data with session counts
-    const formatMentorData = async (mentor: { id: string; name: string | null; email: string; mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null; image: string | null; phone: string | null; createdAt: Date; }): Promise<UserMentorData> => {
+    const formatMentorData = async (mentor: { id: string; name: string | null; email: string; mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null; image: string | null; phone: string | null; createdAt: Date; }): Promise<UserMentorData> => {
       const sessionTypeFilter: Prisma.ScheduleWhereInput = {};
       
       if (subscription!.subscriptionPlan === "SEED") {

@@ -9,7 +9,7 @@ const createScheduleSchema = z.object({
   scheduledTime: z.string().min(1, "Please select a date and time"),
   link: z.string().url("Please enter a valid URL"),
   duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
-  sessionType: z.enum(["YOGA", "MEDITATION"]),
+  sessionType: z.enum(["YOGA", "MEDITATION", "DIET"]),
 });
 
 // GET - Fetch scheduled sessions for the mentor
@@ -109,7 +109,11 @@ export async function POST(request: NextRequest) {
     const scheduleData = validationResult.data;
 
     // Validate that the session type matches the mentor type
-    const expectedSessionType = (user.mentorType && user.mentorType.toString() === "MEDITATIONMENTOR") ? "MEDITATION" : "YOGA";
+    const expectedSessionType = user.mentorType?.toString() === "MEDITATIONMENTOR" 
+      ? "MEDITATION" 
+      : user.mentorType?.toString() === "DIETPLANNER" 
+      ? "DIET" 
+      : "YOGA";
     if (scheduleData.sessionType !== expectedSessionType) {
       return NextResponse.json(
         { 
@@ -226,7 +230,11 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate that the session type matches the mentor type
-    const expectedSessionType = (user.mentorType && user.mentorType.toString() === "MEDITATIONMENTOR") ? "MEDITATION" : "YOGA";
+    const expectedSessionType = user.mentorType?.toString() === "MEDITATIONMENTOR" 
+      ? "MEDITATION" 
+      : user.mentorType?.toString() === "DIETPLANNER" 
+      ? "DIET" 
+      : "YOGA";
     if (scheduleData.sessionType !== expectedSessionType) {
       return NextResponse.json(
         { 

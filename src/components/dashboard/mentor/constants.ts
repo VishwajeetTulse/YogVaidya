@@ -6,6 +6,7 @@ import {
   Star,
   Settings,
   HelpCircle,
+  Clock,
 } from "lucide-react";
 import { MentorSidebarMenuItem } from "./types";
 
@@ -33,6 +34,12 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     title: "Schedule",
     icon: Calendar,
     description: "Manage your availability",
+  },
+  {
+    id: "availability",
+    title: "Availability",
+    icon: Clock,
+    description: "Control your online status",
   },
   {
     id: "reviews",

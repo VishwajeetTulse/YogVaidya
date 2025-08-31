@@ -25,7 +25,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { toast } from "sonner";
-import { Schedule } from "@prisma/client";
+import { Schedule, SessionType } from "@prisma/client";
 import { getMentorType } from "@/lib/mentor-type";
 
 // Form validation schema
@@ -34,7 +34,7 @@ const scheduleSchema = z.object({
   scheduledTime: z.string().min(1, "Please select a date and time"),
   link: z.string().url("Please enter a valid URL"),
   duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
-  sessionType: z.enum(["YOGA", "MEDITATION"], {
+  sessionType: z.nativeEnum(SessionType, {
     required_error: "Please select a session type",
   }),
 });
@@ -47,7 +47,7 @@ export const ScheduleSection = () => {
   const [loading, setLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingSession, setEditingSession] = useState<Schedule | null>(null);
-  const [getMentorSessionType, setGetMentorSessionType] = useState<"YOGA" | "MEDITATION">("YOGA");
+  const [getMentorSessionType, setGetMentorSessionType] = useState<keyof typeof SessionType>("YOGA");
   const form = useForm<ScheduleFormData>({
     resolver: zodResolver(scheduleSchema),
     defaultValues: {
@@ -55,16 +55,16 @@ export const ScheduleSection = () => {
       scheduledTime: "",
       link: "",
       duration: 60,
-      sessionType: "YOGA", // Will be set asynchronously in useEffect
+      sessionType: "YOGA" as keyof typeof SessionType, // Will be set asynchronously in useEffect
     },
   });
   // Set the session type based on mentor type when component mounts or when editing
   useEffect(() => {
     const initializeSessionType = async () => {
       const mentorType = await getMentorType(session?.user || { email: "" });
-      const sessionType = mentorType === "YOGAMENTOR" ? "YOGA" : "MEDITATION";
-      form.setValue("sessionType", sessionType);
-      setGetMentorSessionType(sessionType);
+      const sessionType = mentorType === "YOGAMENTOR" ? "YOGA" : mentorType === "DIETPLANNER" ? "DIET" : "MEDITATION";
+      form.setValue("sessionType", sessionType as keyof typeof SessionType);
+      setGetMentorSessionType(sessionType as keyof typeof SessionType);
     };
     
     initializeSessionType();
@@ -244,6 +244,12 @@ export const ScheduleSection = () => {
                           Meditation
                         </div>
                         </SelectItem>
+                        <SelectItem value="DIET">
+                        <div className="flex items-center gap-2">
+                          <Clock className="h-4 w-4" />
+                          Diet Planning
+                        </div>
+                        </SelectItem>
                       </SelectContent>
                       </Select>
                       <FormMessage />
@@ -376,12 +382,16 @@ export const ScheduleSection = () => {
                     <div className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                       session.sessionType === "YOGA" 
                         ? "bg-gradient-to-br from-[#76d2fa] to-[#5a9be9]"
-                        : "bg-gradient-to-br from-[#876aff] to-[#9966cc]"
+                        : session.sessionType === "MEDITATION"
+                        ? "bg-gradient-to-br from-[#876aff] to-[#9966cc]"
+                        : "bg-gradient-to-br from-[#22c55e] to-[#16a34a]"
                     }`}>
                       {session.sessionType === "YOGA" ? (
                         <Video className="w-6 h-6 text-white" />
-                      ) : (
+                      ) : session.sessionType === "MEDITATION" ? (
                         <Calendar className="w-6 h-6 text-white" />
+                      ) : (
+                        <Clock className="w-6 h-6 text-white" />
                       )}
                     </div>
                     <div>

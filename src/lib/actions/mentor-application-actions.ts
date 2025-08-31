@@ -6,16 +6,18 @@ import {
   deleteMentorApplication,
   updateMentorApplicationStatus
 } from "../server/mentorApplicationServer";
+import { MentorType } from "@prisma/client";
 
 export async function createMentorApplicationAction(formData: FormData) {
   try {
     const name = formData.get("name") as string;
     const email = formData.get("email") as string;
     const phone = formData.get("phone") as string;
-    const experience = formData.get("experience") as string;
+    const experienceStr = formData.get("experience") as string;
+    const experience = parseInt(experienceStr, 10); // Convert string to number
     const expertise = formData.get("expertise") as string;
     const certifications = formData.get("certifications") as string;
-    const mentorType = formData.get("mentorType") as "YOGAMENTOR" | "MEDITATIONMENTOR";
+    const mentorType = formData.get("mentorType") as MentorType;
     const powFile = formData.get("pow") as File | null;
 
     const application = await createMentorApplication({

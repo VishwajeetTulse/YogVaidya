@@ -57,26 +57,28 @@ export default function Footer() {
           {/* Left Column - Questions Section */}
           <div>
             <h2 className="text-4xl font-bold mb-2">
-              Do you have
+              Ready to begin
               <br />
-              any questions?
+              your wellness journey?
             </h2>
             <p className="mb-6">
-              Feel free to send us your questions or request a free
-              consultation.
+              Connect with certified mentors for Yoga, Meditation, and Diet Planning.
+              Start with a free consultation or chat with our AI assistant.
             </p>
 
             <div className="flex space-x-4">
-              <Button className="bg-white hover:bg-gray-100 text-gray-800 rounded-md">
-                SEND A MESSAGE
-              </Button>
-
               <Button
                 className="bg-transparent border border-white hover:bg-white/10 text-white rounded-md flex items-center"
                 onClick={toggleChat}
               >
                 <MessageCircle className="mr-2 h-4 w-4" /> Chat with AI
               </Button>
+              
+              <Link href="/mentors">
+                <Button className="bg-white hover:bg-gray-100 text-gray-800 rounded-md">
+                  FIND MENTORS
+                </Button>
+              </Link>
             </div>
           </div>
 
@@ -97,8 +99,8 @@ export default function Footer() {
               <div className="max-w-xs">
                 <div className="h-12 border-l-2 border-gray-800 pl-4 mb-4">
                   <p>
-                    It is necessary to follow a proper diet and exercise routine
-                    along with yoga to maximize the benefits.
+                    Transform your lifestyle with personalized guidance from
+                    certified professionals in Yoga, Meditation, and Nutrition.
                   </p>
                 </div>
               </div>
@@ -106,21 +108,24 @@ export default function Footer() {
           </div>
         </div>
         {/* Footer Bottom */}
-        <div className="mt-16 flex flex-col md:flex-row justify-between items-start md:items-center border-t border-gray-600 pt-6">
+        <div className="flex flex-col md:flex-row justify-between items-start md:items-center border-t border-gray-600">
           {/* Email and Social Media */}
           <div>
             {/* Social Media Icons */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-8 mb-6">
-              {/* Navigation Links */}
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mb-6">              
+              {/* Legal & Support Links */}
               <div className="flex flex-wrap gap-x-6 gap-y-2">
-                <Link href="#services" className="hover:opacity-80">
-                  Services
+                <Link href="/privacy" className="hover:opacity-80">
+                  Privacy Policy
                 </Link>
-                <Link href="#plans" className="hover:opacity-80">
-                  Pricing
+                <Link href="/terms" className="hover:opacity-80">
+                  Terms of Service
                 </Link>
-                <Link href="#" className="hover:opacity-80">
-                  Gallery
+                <Link href="/help" className="hover:opacity-80">
+                  Help Center
+                </Link>
+                <Link href="/about" className="hover:opacity-80">
+                  About Us
                 </Link>
               </div>
             </div>
@@ -175,11 +180,11 @@ export default function Footer() {
             </div>
 
             <p className="mb-1">
-              Don&apos;t know where to start your yoga journey?
+              Ready to start your wellness journey?
               <br />
-              YogVaidya — practical, safe, and affordable.
+              Connect with expert mentors in Yoga, Meditation & Diet Planning.
             </p>
-            <p>&copy; 2025 — Copyright</p>
+            <p>&copy; 2025 YogVaidya — All rights reserved</p>
           </div>
         </div>
       </div>
@@ -216,7 +221,7 @@ export default function Footer() {
                   Hi there! 👋
                 </h4>
                 <p className="text-sm text-gray-600 mb-4 leading-relaxed">
-                  Need help starting your yoga journey? I'm here to guide you.
+                  Need help starting your yoga journey? I&apos;m here to guide you.
                 </p>
                 <div className="flex gap-2">
                   <Button

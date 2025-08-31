@@ -8,6 +8,8 @@ import { ADMIN_SIDEBAR_MENU_ITEMS } from "../admin/constants";
 import { OverviewSection } from "../admin/sections/overview-section";
 import { UsersSection } from "../shared/users-management-section";
 import { ModeratorManagementSection } from "../admin/sections/mod-management-section";
+import { MentorManagementSection } from "../admin/sections/mentor-management-section";
+import SubscriptionManagementSection from "../admin/sections/subscription-management-section";
 import { LogsSection } from "../admin/sections/logs-section";
 import { AnalyticsSection } from "../admin/sections/analytics-section";
 import { SettingsSection } from "../admin/sections/settings-section";
@@ -17,7 +19,9 @@ const ADMIN_SECTION_COMPONENTS = {
   overview: OverviewSection,
   users: UsersSection,
   applications: ApplicationsSection,
+  "mentor-management": MentorManagementSection,
   moderators: ModeratorManagementSection,
+  subscriptions: SubscriptionManagementSection,
   logs: LogsSection,
   analytics: AnalyticsSection,
   settings: SettingsSection,

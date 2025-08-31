@@ -2,8 +2,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
-
-type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
+import { MentorType } from "@prisma/client";
 
 export async function createMentorApplication({
   name,
@@ -18,7 +17,7 @@ export async function createMentorApplication({
   name: string;
   email: string;
   phone: string;
-  experience: string;
+  experience: number; // Changed back to number to match Prisma schema (Int)
   expertise: string;
   certifications: string;
   powFile?: File | null;

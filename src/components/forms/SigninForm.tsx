@@ -1,8 +1,7 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { ArrowLeft, Eye, EyeOff } from "lucide-react";
 import { Input } from "@/components/ui/input";
@@ -30,12 +29,22 @@ const signinSchema = z.object({
 type SigninFormValues = z.infer<typeof signinSchema>;
 
 export default function SigninPage() {
-  const router = useRouter();
   const [showPassword, setShowPassword] = useState(false);
   const [error, setError] = useState("");
   const [pendingGoogle, setPendingGoogle] = useState(false);
   const [isLoading, setIsLoading] = useState(false);
   const searchParams = useSearchParams();
+
+  // Show success message if redirected from signup
+  useEffect(() => {
+    const signupSuccess = searchParams.get("signup");
+    if (signupSuccess === "success") {
+      toast.success("Account created successfully!", {
+        description: "Please sign in with your credentials to continue.",
+        duration: 5000,
+      });
+    }
+  }, [searchParams]);
 
   const form = useForm<SigninFormValues>({
     resolver: zodResolver(signinSchema),
@@ -46,28 +55,19 @@ export default function SigninPage() {
     },
   });
 
-  let redirect_url = "/dashboard";
-  if (searchParams.get("from") === "pricing") {
-    redirect_url = "/pricing";
-  }
-  if (searchParams.get("from") === "mentor") {
-    redirect_url = "/mentors/apply";
-  }
-
   const onSubmit = async (data: SigninFormValues) => {
     setError("");
     setIsLoading(true);
+    const finalRedirect = searchParams.get("from") || "dashboard";
     await authClient.signIn.email(
       {
         email: data.email,
         password: data.password,
-        callbackURL: redirect_url,
+        callbackURL: `/welcome?from=${finalRedirect}`,
       },
       {
         rememberMe: data.rememberMe, // Pass rememberMe to auth logic
         onSuccess: () => {
-          // Redirect based on 'from' query param
-          router.push(redirect_url);
           toast.success("Signed in successfully");
         },
         onError: (ctx) => {
@@ -86,20 +86,18 @@ export default function SigninPage() {
   };
 
   const handleGoogleAuth = async () => {
+    const finalRedirect = searchParams.get("from") || "dashboard";
     await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL: redirect_url,
+        callbackURL: `/welcome?from=${finalRedirect}`,
       },
       {
         onRequest: () => {
           setPendingGoogle(true);
         },
         onSuccess: async () => {
-          console.log(redirect_url);
-          router.push(redirect_url);
           toast.success("Signed in with Google");
-          router.refresh();
         },
         onError: (ctx) => {
           toast("Something went wrong", {

@@ -12,6 +12,7 @@ import { ScheduleSection } from '../mentor/sections/schedule-section';
 import { ReviewsSection } from '../mentor/sections/reviews-section';
 import { SettingsSection } from '../mentor/sections/settings-section';
 import { SupportSection } from '../mentor/sections/support-section';
+import { MentorAvailabilityToggle } from '../mentor/sections/availability-section';
 import { formatDate } from '../shared/utils';
 import { BaseHookResult } from '../shared/types';
 // Create a mapping of section IDs to components
@@ -20,6 +21,7 @@ const MENTOR_SECTION_COMPONENTS = {
   "sessions": SessionsSection,
   "students": StudentsSection,
   "schedule": ScheduleSection,
+  "availability": MentorAvailabilityToggle,
   "reviews": ReviewsSection,
   "settings": SettingsSection,
   "support": SupportSection,

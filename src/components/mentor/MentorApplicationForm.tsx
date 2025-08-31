@@ -13,7 +13,6 @@ import {
   FormMessage,
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
-import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
@@ -33,14 +32,14 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(8, "Phone number is required"),
   profile: z.string().url("Enter a valid URL").optional().or(z.literal("")),
-  experience: z.string().min(10, "Please describe your experience"),
+  experience: z.number().min(0, "Experience must be a positive number").max(50, "Maximum 50 years experience"),
   expertise: z.string().min(2, "Please enter your areas of expertise"),
   certifications: z.string().min(2, "Please enter your certifications"),
   pow: z.any().optional(),
   consent: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the terms." }),
   }),
-  mentorType: z.enum(["YOGAMENTOR", "MEDITATIONMENTOR"], {
+  mentorType: z.enum(["YOGAMENTOR", "MEDITATIONMENTOR", "DIETPLANNER"], {
     required_error: "Mentor type is required",
   }),
 });
@@ -53,7 +52,7 @@ type MentorApplication = {
   email: string;
   phone: string;
   profile: string | null;
-  experience: string;
+  experience: number;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
@@ -82,13 +81,19 @@ export default function MentorApplicationForm() {
       email: "",
       phone: "",
       profile: "",
-      experience: "",
+      experience: 0,
       expertise: "",
       certifications: "",
       pow: undefined,
       mentorType: undefined,
     },
   });
+
+  // Helper function to convert database application to form application
+  const convertDatabaseToForm = (dbApp: Record<string, unknown>): MentorApplication => ({
+    ...dbApp,
+    experience: typeof dbApp.experience === 'string' ? parseInt(dbApp.experience, 10) || 0 : (dbApp.experience as number) || 0
+  } as MentorApplication);
 
   React.useEffect(() => {
     async function fetchApplication() {
@@ -106,7 +111,7 @@ export default function MentorApplicationForm() {
         
         const result = await getMentorApplicationsAction(userEmail);
         if (result.success && result.applications && result.applications.length > 0) {
-          setExistingApplication(result.applications[0]);
+          setExistingApplication(convertDatabaseToForm(result.applications[0]));
           setSubmittedEmail(result.applications[0].email); // Set submittedEmail from loaded application
         } else {
           setExistingApplication(null);
@@ -176,7 +181,7 @@ export default function MentorApplicationForm() {
       formData.append("email", data.email);
       formData.append("phone", data.phone);
       formData.append("profile", data.profile || "");
-      formData.append("experience", data.experience);
+      formData.append("experience", data.experience.toString());
       formData.append("expertise", data.expertise);
       formData.append("certifications", data.certifications);
       formData.append("mentorType", data.mentorType);
@@ -197,7 +202,7 @@ export default function MentorApplicationForm() {
             applicationsResult.applications &&
             applicationsResult.applications.length > 0
           ) {
-            setExistingApplication(applicationsResult.applications[0]);
+            setExistingApplication(convertDatabaseToForm(applicationsResult.applications[0]));
             console.log("Existing application", existingApplication);
           }
         } catch {}
@@ -361,15 +366,19 @@ export default function MentorApplicationForm() {
                       control={form.control}
                       name="experience"
                       render={({ field }) => (
-                        <FormItem className="md:col-span-2">
+                        <FormItem className="md:col-span-1">
                           <FormLabel className="text-gray-700 font-medium">
-                            Teaching Experience
+                            Years of Experience
                           </FormLabel>
                           <FormControl>
-                            <Textarea
-                              placeholder="Describe your teaching experience"
-                              className="h-24 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                            <Input
+                              type="number"
+                              min="0"
+                              max="50"
+                              placeholder="Enter years of experience"
+                              className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
                               {...field}
+                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : 0)}
                             />
                           </FormControl>
                           <FormMessage className="text-red-500" />
@@ -475,6 +484,7 @@ export default function MentorApplicationForm() {
                             <SelectContent>
                               <SelectItem value="YOGAMENTOR">Yoga Mentor</SelectItem>
                               <SelectItem value="MEDITATIONMENTOR">Meditation Mentor</SelectItem>
+                              <SelectItem value="DIETPLANNER">Diet Planner</SelectItem>
                             </SelectContent>
                           </Select>
                         </FormControl>

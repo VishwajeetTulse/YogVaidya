@@ -20,11 +20,13 @@ export async function getMentorStudents(mentorId: string){
     });
     const mentortype = await getMentorType(mentoremail || { email: "" });
     console.log("Fetching students for mentor type:", mentortype);
+    // Get all active students with role "USER" (excluding mentors who have role "MENTOR")
     const allActiveStudents = await prisma.user.findMany({
       where: {
+        role: "USER", // Only users with USER role (mentors have MENTOR role)
         subscriptionStatus: "ACTIVE",
         subscriptionPlan: {
-                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : "SEED" , "FLOURISH" ]
+                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : mentortype == "DIETPLANNER" ? "FLOURISH" : "SEED" , "FLOURISH" ]
         },
       },
       select: {
@@ -79,7 +81,7 @@ export interface MentorOverviewData {
     title: string;
     scheduledTime: Date;
     duration: number;
-    sessionType: "YOGA" | "MEDITATION";
+    sessionType: "YOGA" | "MEDITATION" | "DIET";
     status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
   }>;
   upcomingSessions: Array<{
@@ -87,7 +89,7 @@ export interface MentorOverviewData {
     title: string;
     scheduledTime: Date;
     duration: number;
-    sessionType: "YOGA" | "MEDITATION";
+    sessionType: "YOGA" | "MEDITATION" | "DIET";
     status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
   }>;
   recentActivity: Array<{

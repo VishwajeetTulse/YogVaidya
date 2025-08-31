@@ -5,6 +5,7 @@ import {
   TrendingUp,
   Settings,
   HelpCircle,
+  CreditCard,
 } from "lucide-react";
 import { ModeratorSidebarMenuItem } from "./types";
 
@@ -32,6 +33,12 @@ export const MODERATOR_SIDEBAR_MENU_ITEMS: ModeratorSidebarMenuItem[] = [
     title: "Analytics",
     icon: TrendingUp,
     description: "Platform insights",
+  },
+  {
+    id: "subscriptions",
+    title: "Subscriptions",
+    icon: CreditCard,
+    description: "View subscription details",
   },
   {
     id: "settings",

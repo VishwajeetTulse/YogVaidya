@@ -1,124 +1,141 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
 import { UserPlus, Check } from "lucide-react";
 import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
-import MentorCarousel from "@/components/mentor/MentorCarousel";
+import EnhancedMentorCarousel from "@/components/mentor/EnhancedMentorCarousel";
 import Link from "next/link";
-
-// Sample mentor data by category
-const MENTORS_DATA = {
-  liveSession: [
-    {
-      id: 1,
-      name: "Priya Sharma",
-      specialty: "Hatha Yoga",
-      experience: "10+ years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: true,
-      description: "Specializes in gentle, alignment-focused yoga practices for all levels.",
-    },
-    {
-      id: 2,
-      name: "Priya Sharma",
-      specialty: "Hatha Yoga",
-      experience: "10+ years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: true,
-      description: "Specializes in gentle, alignment-focused yoga practices for all levels.",
-    },
-    {
-      id: 3,
-      name: "Priya Sharma",
-      specialty: "Hatha Yoga",
-      experience: "10+ years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: true,
-      description: "Specializes in gentle, alignment-focused yoga practices for all levels.",
-    },
-    {
-      id: 4,
-      name: "Priya Sharma",
-      specialty: "Hatha Yoga",
-      experience: "10+ years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: true,
-      description: "Specializes in gentle, alignment-focused yoga practices for all levels.",
-    },
-    {
-      id: 5,
-      name: "Raj Patel",
-      specialty: "Ashtanga Yoga",
-      experience: "8 years",
-      imageUrl: "/assets/mentor-2.svg",
-      available: true,
-      description: "Expert in dynamic, physically demanding practice with synchronized breathing.",
-    },
-    {
-      id: 6,
-      name: "Meena Verma",
-      specialty: "Vinyasa Flow",
-      experience: "6 years",
-      imageUrl: "/assets/mentor-2.svg",
-      available: true,
-      description: "Specializes in fluid, movement-intensive yoga sequences that build strength and flexibility.",
-    },
-    {
-      id: 7,
-      name: "Vikram Reddy",
-      specialty: "Power Yoga",
-      experience: "7 years",
-      imageUrl: "/assets/mentor-2.svg",
-      available: true,
-      description: "Teaches vigorous, fitness-based approach to vinyasa-style yoga for energy and vitality.",
-    },
-  ],
-  dietPlanning: [
-    {
-      id: 5,
-      name: "Meera Joshi",
-      specialty: "Ayurvedic Nutrition",
-      experience: "15 years",
-      imageUrl: "/assets/mentor-3.svg",
-      available: true,
-      description: "Creates customized diet plans based on Ayurvedic principles and body types.",
-    },
-    {
-      id: 6,
-      name: "Arjun Kapoor",
-      specialty: "Holistic Nutrition",
-      experience: "9 years",
-      imageUrl: "/assets/mentor-3.svg",
-      available: true,
-      description: "Designs balanced meal plans to complement your yoga practice and lifestyle goals.",
-    },
-  ],
-  meditation: [
-    {
-      id: 7,
-      name: "Ananya Gupta",
-      specialty: "Mindfulness Meditation",
-      experience: "12 years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: false,
-      description: "Guides practitioners through focused awareness and presence techniques.",
-    },
-    {
-      id: 8,
-      name: "Rohan Sharma",
-      specialty: "Transcendental Meditation",
-      experience: "10 years",
-      imageUrl: "/assets/mentor-1.svg",
-      available: false,
-      description: "Expert in mantra-based meditation practices for deep relaxation and stress relief.",
-    },
-  ],
-};
+import { Mentor } from "@/lib/types/mentor";
 
 export default function MentorsPage() {
+  const [mentors, setMentors] = useState<Mentor[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [availabilityMap, setAvailabilityMap] = useState<Record<string, boolean>>({});
+
+  // Fetch mentors data
+  const fetchMentors = async () => {
+    try {
+      setLoading(true);
+      const response = await fetch('/api/mentor/get-approved-mentors');
+      const data = await response.json();
+      
+      if (data.success) {
+        setMentors(data.mentors);
+      } else {
+        setError(data.error || 'Failed to fetch mentors');
+      }
+    } catch (err) {
+      setError('Failed to fetch mentors');
+      console.error('Error fetching mentors:', err);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Fetch real-time availability status
+  const fetchAvailabilityStatus = async () => {
+    try {
+      console.log('🔄 Fetching availability status...');
+      const response = await fetch('/api/mentor/availability-status');
+      const data = await response.json();
+      
+      if (data.success) {
+        console.log('✅ Availability data received:', data.data);
+        console.log('📋 Availability map:', data.data.availabilityMap);
+        
+        setAvailabilityMap(data.data.availabilityMap);
+        
+        // Log each mentor's availability from the map
+        Object.entries(data.data.availabilityMap).forEach(([email, availData]: [string, any]) => {
+          console.log(`📧 ${email}: ${availData.isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}`);
+        });
+        
+        console.log('🔄 Updated mentor availability status in state');
+      } else {
+        console.error('❌ Failed to fetch availability:', data.error);
+      }
+    } catch (err) {
+      console.error('❌ Error fetching availability status:', err);
+    }
+  };
+
+  useEffect(() => {
+    fetchMentors();
+    fetchAvailabilityStatus();
+
+    // Set up real-time polling for availability updates every 30 seconds
+    const availabilityInterval = setInterval(fetchAvailabilityStatus, 30000);
+
+    // Listen for visibility change to refresh when tab becomes active
+    const handleVisibilityChange = () => {
+      if (!document.hidden) {
+        fetchAvailabilityStatus();
+      }
+    };
+
+    // Listen for custom mentor availability change events
+    const handleMentorAvailabilityChange = (event: CustomEvent) => {
+      const { mentorId, isAvailable } = event.detail;
+      setAvailabilityMap(prev => ({
+        ...prev,
+        [mentorId]: isAvailable
+      }));
+      console.log(`🔔 Real-time update: Mentor ${mentorId} is now ${isAvailable ? 'available' : 'unavailable'}`);
+    };
+
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+    window.addEventListener('mentorAvailabilityChanged', handleMentorAvailabilityChange as EventListener);
+
+    return () => {
+      clearInterval(availabilityInterval);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+      window.removeEventListener('mentorAvailabilityChanged', handleMentorAvailabilityChange as EventListener);
+    };
+  }, []);
+
+  // Transform mentor data with real-time availability
+  const transformMentorWithRealTimeAvailability = (mentor: Mentor) => {
+    // Get real-time availability from the map
+    const realTimeData = availabilityMap[mentor.email] as any;
+    const realTimeAvailable = realTimeData?.isAvailable ?? mentor.available;
+    
+    console.log(`👤 Mentor ${mentor.name} (${mentor.email}):`);
+    console.log(`   - DB availability: ${mentor.available}`);
+    console.log(`   - Real-time data:`, realTimeData);
+    console.log(`   - Final availability: ${realTimeAvailable}`);
+    
+    return {
+      id: mentor.id,
+      name: mentor.name,
+      specialty: mentor.specialty,
+      experience: typeof mentor.experience === 'string' ? 
+        parseInt(mentor.experience, 10) || 0 : 
+        mentor.experience || 0,
+      imageUrl: mentor.image,
+      available: realTimeAvailable, // Use real-time availability
+      description: mentor.bio || mentor.description,
+      mentorType: mentor.mentorType,
+      certifications: mentor.certifications,
+      expertise: mentor.specialty,
+    };
+  };
+
+  // Categorize mentors by type with real-time availability
+  const categorizedMentors = {
+    liveSession: mentors
+      .filter(mentor => mentor.mentorType === 'YOGAMENTOR')
+      .map(transformMentorWithRealTimeAvailability),
+    dietPlanning: mentors
+      .filter(mentor => mentor.mentorType === 'DIETPLANNER')
+      .map(transformMentorWithRealTimeAvailability),
+    meditation: mentors
+      .filter(mentor => mentor.mentorType === 'MEDITATIONMENTOR')
+      .map(transformMentorWithRealTimeAvailability),
+  };
   return (
     <div className="bg-gray-100 min-h-screen">
       {/* Navbar with back button */}
@@ -139,30 +156,52 @@ export default function MentorsPage() {
           </p>
         </div>
 
-        {/* Live Session Mentors */}
-        <MentorCarousel 
-          mentors={MENTORS_DATA.liveSession}
-          title="Live Session Mentors"
-          colorClass="bg-[#76d2fa]"
-          buttonText="Book Session"
-        />
+        {/* Loading State */}
+        {loading && (
+          <div className="text-center py-20">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <p className="text-gray-600">Loading mentors...</p>
+          </div>
+        )}
 
-        {/* Diet Planning Mentors */}
-        <MentorCarousel 
-          mentors={MENTORS_DATA.dietPlanning}
-          title="Diet Planning Experts"
-          colorClass="bg-[#ff7dac]"
-          buttonText="Book Consultation"
-        />
+        {/* Error State */}
+        {error && (
+          <div className="text-center py-20">
+            <p className="text-red-600 mb-4">Error: {error}</p>
+            <Button 
+              onClick={() => window.location.reload()} 
+              variant="outline"
+            >
+              Try Again
+            </Button>
+          </div>
+        )}
 
-        {/* Meditation Mentors - Coming Soon */}
-        <MentorCarousel 
-          mentors={MENTORS_DATA.meditation}
-          title="Meditation Guides"
-          colorClass="bg-[#876aff]"
-          buttonText="Join Waitlist"
-          disabled={true}
-        />
+        {/* Mentors Content */}
+        {!loading && !error && (
+          <>
+            {/* Live Session Mentors */}
+            <EnhancedMentorCarousel 
+              mentors={categorizedMentors.liveSession}
+              title="Live Session Mentors"
+              colorClass="bg-[#76d2fa]"
+            />
+
+            {/* Diet Planning Mentors */}
+            <EnhancedMentorCarousel 
+              mentors={categorizedMentors.dietPlanning}
+              title="Diet Planning Experts"
+              colorClass="bg-[#ff7dac]"
+            />
+
+            {/* Meditation Mentors */}
+            <EnhancedMentorCarousel 
+              mentors={categorizedMentors.meditation}
+              title="Meditation Guides"
+              colorClass="bg-[#876aff]"
+            />
+          </>
+        )}
 
         {/* Register as Mentor Section */}
         <div className="bg-gray-50 rounded-3xl p-8 md:p-12">

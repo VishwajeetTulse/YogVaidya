@@ -18,7 +18,7 @@ interface MentorApplication {
   email: string;
   phone: string;
   profile: string | null;
-  experience: string;
+  experience: number;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
@@ -171,7 +171,7 @@ export const ApplicationsSection = () => {
                   
                   <div>
                     <h3 className="font-semibold">Experience</h3>
-                    <p className="whitespace-pre-line">{selectedApplication.experience}</p>
+                    <p className="whitespace-pre-line">{selectedApplication.experience} years</p>
                   </div>
                   
                   <div>

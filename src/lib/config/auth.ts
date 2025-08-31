@@ -81,18 +81,4 @@ export const auth = betterAuth({
             },
         },
     },
-    // hooks: {
-    //     after: async (ctx: any) => {
-    //         try {
-    //             console.log("AFTER HOOK CONTEXT:", JSON.stringify(ctx));
-    //             if (ctx.endpoint === "sign-up" && ctx.user && ctx.user.id) {
-    //                 await startAutoTrialForNewUser(ctx.user.id);
-    //             }
-    //         } catch (error) {
-    //             // Log error but never throw or block the flow
-    //             console.error("Failed to start trial for new user:", error);
-    //         }
-    //         return ctx;
-    //     },
-    // },
 });

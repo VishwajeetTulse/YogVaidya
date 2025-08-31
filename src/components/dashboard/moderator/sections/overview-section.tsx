@@ -38,7 +38,7 @@ interface MentorApplication {
   email: string;
   phone: string;
   profile: string | null;
-  experience: string;
+  experience: number;
   expertise: string;
   certifications: string;
   powUrl?: string | null;

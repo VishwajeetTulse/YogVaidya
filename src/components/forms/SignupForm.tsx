@@ -18,7 +18,7 @@ import {
 } from "@/components/ui/form";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
-import { useRouter, useSearchParams } from "next/navigation";
+import { useSearchParams, useRouter } from "next/navigation";
 
 const signupSchema = z
   .object({
@@ -37,17 +37,10 @@ type SignupFormValues = z.infer<typeof signupSchema>;
 
 export default function SignupPage() {
   const [showPassword, setShowPassword] = useState(false);
-  const [isLoading, setIsLoading] = useState(false);
-  const [pendingGoogle, setPendingGoogle] = useState(false);
-  const router = useRouter();
+  const [isSignupLoading, setIsSignupLoading] = useState(false);
+  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const searchParams = useSearchParams();
-    let redirect_url = "/dashboard";
-    if (searchParams.get("from") === "pricing") {
-      redirect_url = "/pricing";
-    }
-    if (searchParams.get("from") === "mentor") {
-      redirect_url = "/mentors/apply";
-    }
+  const router = useRouter();
   const form = useForm<SignupFormValues>({
     resolver: zodResolver(signupSchema),
     defaultValues: {
@@ -60,8 +53,11 @@ export default function SignupPage() {
   });
 
   const onSubmit = async (data: SignupFormValues) => {
-    form.reset();
-    setIsLoading(true);
+    setIsSignupLoading(true);
+
+    // Store the redirect destination for after signin
+    const finalRedirect = searchParams.get("from") || "dashboard";
+
     await authClient.signUp.email(
       {
         email: data.email,
@@ -69,17 +65,25 @@ export default function SignupPage() {
         name: data.fullName,
         phone: data.phoneNumber,
         role: "USER",
-        callbackURL: redirect_url,
       },
       {
         onRequest: () => {
-          setPendingGoogle(true);
+          // No need to set any additional loading state here
         },
         onSuccess: () => {
-          toast.success("Signed up successfully", {
-            description: "Welcome to YogVaidya!",
+          // Reset form and show success message
+          form.reset();
+          
+          // Show success toast
+          toast.success("Account created successfully!", {
+            description: "You can now sign in with your credentials.",
+            duration: 4000,
           });
-          router.refresh();
+          
+          // Redirect to sign-in page with the original destination
+          setTimeout(() => {
+            router.push(`/signin?from=${finalRedirect}&signup=success`);
+          }, 1500);
         },
         onError: (ctx) => {
           console.log("error", ctx);
@@ -90,7 +94,7 @@ export default function SignupPage() {
         },
       }
     );
-    setIsLoading(false);
+    setIsSignupLoading(false);
   };
 
   const togglePasswordVisibility = () => {
@@ -98,18 +102,19 @@ export default function SignupPage() {
   };
 
   const handleGoogleAuth = async () => {
+    setIsGoogleLoading(true);
+    const finalRedirect = searchParams.get("from") || "dashboard";
     await authClient.signIn.social(
       {
         provider: "google",
-        callbackURL: redirect_url,
+        callbackURL: `/welcome?from=${finalRedirect}`,
       },
       {
         onRequest: () => {
-          setPendingGoogle(true);
+          // Loading state is already set above
         },
         onSuccess: async () => {
           toast.success("Signed in with Google");
-          router.refresh();
         },
         onError: (ctx) => {
           toast("Something went wrong", {
@@ -118,7 +123,7 @@ export default function SignupPage() {
         },
       }
     );
-    setPendingGoogle(false);
+    setIsGoogleLoading(false);
   };
 
   return (
@@ -185,7 +190,7 @@ export default function SignupPage() {
                         <FormControl>
                           <Input
                             placeholder="Your full name"
-                            disabled={isLoading}
+                            disabled={isSignupLoading || isGoogleLoading}
                             className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
                             {...field}
                           />
@@ -207,7 +212,7 @@ export default function SignupPage() {
                           <Input
                             type="email"
                             placeholder="your.email@example.com"
-                            disabled={isLoading}
+                            disabled={isSignupLoading || isGoogleLoading}
                             className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
                             {...field}
                           />
@@ -229,7 +234,7 @@ export default function SignupPage() {
                           <Input
                             type="tel"
                             placeholder="Your phone number"
-                            disabled={isLoading}
+                            disabled={isSignupLoading || isGoogleLoading}
                             className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
                             {...field}
                           />
@@ -254,7 +259,7 @@ export default function SignupPage() {
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Create a password"
                                 className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent w-full pr-10"
-                                disabled={isLoading}
+                                disabled={isSignupLoading || isGoogleLoading}
                                 {...field}
                               />
                               <button
@@ -293,7 +298,7 @@ export default function SignupPage() {
                                 type={showPassword ? "text" : "password"}
                                 placeholder="Confirm your password"
                                 className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent w-full pr-10"
-                                disabled={isLoading}
+                                disabled={isSignupLoading || isGoogleLoading}
                                 {...field}
                               />
                             </div>
@@ -313,11 +318,11 @@ export default function SignupPage() {
                 <div className="mt-4">
                   <Button
                     type="button"
-                    disabled={pendingGoogle}
+                    disabled={isGoogleLoading}
                     onClick={handleGoogleAuth}
                     className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
                   >
-                    {pendingGoogle ? (
+                    {isGoogleLoading ? (
                       <svg
                         className="animate-spin h-5 w-5 mr-2 text-gray-400"
                         viewBox="0 0 24 24"
@@ -366,9 +371,9 @@ export default function SignupPage() {
                 <Button
                   type="submit"
                   className="w-full bg-[#76d2fa] hover:bg-[#5a9be9] text-white py-6"
-                  disabled={isLoading}
+                  disabled={isSignupLoading}
                 >
-                  {isLoading ? "Signing Up..." : "Sign Up"}
+                  {isSignupLoading ? "Signing Up..." : "Sign Up"}
                 </Button>
                 <div className="text-center">
                   <p className="text-gray-600">

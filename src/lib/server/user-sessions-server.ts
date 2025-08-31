@@ -11,12 +11,12 @@ export interface UserSessionData {
   title: string;
   scheduledTime: Date;
   duration: number;
-  sessionType: "YOGA" | "MEDITATION";
+  sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
   mentor: {
     id: string;
     name: string | null;
-    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null;
+    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
   };
 }
 
@@ -66,21 +66,21 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
 
     if (!subscription) {
       // Try to start a trial for users without any subscription
-      try {
-        const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
-        const trialResult = await startAutoTrialForNewUser(session.user.id);
+      // try {
+      //   const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
+      //   const trialResult = await startAutoTrialForNewUser(session.user.id);
         
-        if (trialResult.success) {
-          // Re-fetch subscription after starting trial
-          const newSubscriptionResult = await getUserSubscription(session.user.id);
-          if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
-            // Continue with the new trial subscription
-            return getUserSessions(); // Recursive call with new subscription
-          }
-        }
-      } catch (error) {
-        console.error("Failed to start trial for user:", error);
-      }
+      //   if (trialResult.success) {
+      //     // Re-fetch subscription after starting trial
+      //     const newSubscriptionResult = await getUserSubscription(session.user.id);
+      //     if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
+      //       // Continue with the new trial subscription
+      //       return getUserSessions(); // Recursive call with new subscription
+      //     }
+      //   }
+      // } catch (error) {
+      //   console.error("Failed to start trial for user:", error);
+      // }
 
       // If trial creation failed or user already had a trial, return subscription needed
       return {

@@ -9,7 +9,7 @@ export interface MentorSessionData {
   title: string;
   scheduledTime: Date;
   duration: number;
-  sessionType: "YOGA" | "MEDITATION";
+  sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
   link: string;
   createdAt: Date;
@@ -39,7 +39,7 @@ export interface MentorSessionsResponse {
       id: string;
       name: string | null;
       email: string;
-      mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null;
+      mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
     };
     sessions: MentorSessionData[];
     totalSessions: number;
@@ -83,10 +83,11 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     });
 
     // Get all users with active subscriptions that might be eligible for this mentor's sessions
+    // Filter by role "USER" to exclude mentors (who have role "MENTOR")
     const currentDate = new Date();
     const eligibleUsers = await prisma.user.findMany({
       where: {
-        role: "USER",
+        role: "USER", // Only users with USER role (mentors have MENTOR role)
         OR: [
           // Active subscriptions
           {
@@ -134,6 +135,11 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         // YOGA sessions are available to BLOOM and FLOURISH users
         sessionEligibleUsers = eligibleUsers.filter(user => 
           user.subscriptionPlan === "BLOOM" || user.subscriptionPlan === "FLOURISH"
+        );
+      } else if (session.sessionType === "DIET") {
+        // DIET sessions are available to FLOURISH users (or all users if you prefer)
+        sessionEligibleUsers = eligibleUsers.filter(user => 
+          user.subscriptionPlan === "FLOURISH"
         );
       }
 

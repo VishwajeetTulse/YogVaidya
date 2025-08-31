@@ -7,6 +7,6 @@ export async function getMentorType(user: { email: string }) {
                 select: { mentorType: true }
             }
         )
-        return type?.mentorType as "YOGAMENTOR" | "MEDITATIONMENTOR";
+        return type?.mentorType as "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER";
 }
 

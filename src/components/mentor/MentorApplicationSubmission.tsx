@@ -7,7 +7,7 @@ type MentorApplication = {
   email: string;
   phone: string;
   profile: string | null;
-  experience: string;
+  experience: number;
   expertise: string;
   certifications: string;
   powUrl?: string | null;
@@ -43,8 +43,8 @@ const MentorApplicationSubmission: React.FC<MentorApplicationSubmissionProps> = 
           <div className="text-gray-900 break-words">{application.phone}</div>
         </div>
         <div>
-          <div className="font-semibold text-gray-700">Experience:</div>
-          <div className="text-gray-900 break-words whitespace-pre-line">{application.experience}</div>
+          <div className="font-semibold text-gray-700">Years of Experience:</div>
+          <div className="text-gray-900 break-words">{application.experience} years</div>
         </div>
         <div>
           <div className="font-semibold text-gray-700">Expertise:</div>

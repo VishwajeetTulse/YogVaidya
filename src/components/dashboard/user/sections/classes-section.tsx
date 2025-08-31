@@ -15,12 +15,12 @@ interface SessionData {
   title: string;
   scheduledTime: string;
   duration: number;
-  sessionType: "YOGA" | "MEDITATION";
+  sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
   mentor: {
     id: string;
     name: string | null;
-    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null;
+    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
   };
 }
 
@@ -141,15 +141,16 @@ useEffect(() => {
     session.status === "CANCELLED"
   );
 
-  const getSessionTypeColor = (type: "YOGA" | "MEDITATION") => {
-    return type === "YOGA" 
-      ? "from-[#76d2fa] to-[#5a9be9]" 
-      : "from-[#876aff] to-[#9966cc]";
+  const getSessionTypeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
+    if (type === "YOGA") return "from-[#76d2fa] to-[#5a9be9]";
+    if (type === "MEDITATION") return "from-[#876aff] to-[#9966cc]";
+    return "from-[#4ade80] to-[#22c55e]"; // Green gradient for DIET
   };
 
-  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null) => {
+  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";
+    if (mentorType === "DIETPLANNER") return "Diet Planner";
     return "Mentor";
   };
 

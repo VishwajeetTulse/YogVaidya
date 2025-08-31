@@ -250,9 +250,12 @@ async function createUserSubscription(data: CreateSubscriptionData) {
  */
 async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "FLOURISH") {
   try {
+    console.log(`[TRIAL] Starting trial subscription for user: ${userId} with plan: ${plan}`);
     const now = new Date();
     const trialEndDate = new Date(now);
     trialEndDate.setDate(trialEndDate.getDate() + TRIAL_PERIOD_DAYS);
+
+    console.log(`[TRIAL] Trial period: ${TRIAL_PERIOD_DAYS} days until ${trialEndDate.toISOString()}`);
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
@@ -273,9 +276,10 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
       }
     });
 
+    console.log(`[TRIAL] Successfully updated user with trial subscription`);
     return { success: true, user: updatedUser };
   } catch (error) {
-    console.error("Error starting trial subscription:", error);
+    console.error("[TRIAL] Error starting trial subscription:", error);
     return { success: false, error: "Failed to start trial" };
   }
 }
@@ -302,8 +306,9 @@ async function startAutoTrialForNewUser(userId: string) {
     }
 
     // Only start trial if user has no subscription plan and hasn't used their trial before
-    if (!user.subscriptionPlan && !user.trialUsed && (!user.isTrialActive || !user.trialEndDate)) {
-      return await startTrialSubscription(userId, "FLOURISH");
+    if (!user.subscriptionPlan && !user.trialUsed) {
+      const result = await startTrialSubscription(userId, "FLOURISH");
+      return result;
     }
 
     return { success: true, message: "User already has subscription or has used trial" };
@@ -663,8 +668,11 @@ async function createPlan(planType: SubscriptionPlan, billingPeriod: "monthly" |
  */
 export async function getSubscriptionAnalytics() {
   try {
-    // Get all users with subscription data
+    // Get all users with subscription data (only customers with USER role)
     const users = await prisma.user.findMany({
+      where: {
+        role: 'USER' // Only count actual customers
+      },
       select: {
         id: true,
         subscriptionPlan: true,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { 
@@ -22,12 +22,13 @@ interface MentorStats {
   approvedApplications: number;
   yogaMentors: number;
   meditationMentors: number;
+  dietPlanners: number;
   typeConsistency: boolean;
 }
 
 export const MentorManagementSection = () => {
   const [stats, setStats] = useState<MentorStats | null>(null);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [syncing, setSyncing] = useState(false);
 
   const loadMentorStats = async () => {
@@ -46,6 +47,11 @@ export const MentorManagementSection = () => {
       setLoading(false);
     }
   };
+
+  // Auto-load stats on component mount
+  useEffect(() => {
+    loadMentorStats();
+  }, []);
 
   const handleSyncMentorTypes = async () => {
     setSyncing(true);
@@ -122,6 +128,17 @@ export const MentorManagementSection = () => {
           </Button>
         </div>
       </div>
+
+      {/* Loading State */}
+      {loading && !stats && (
+        <Card className="p-8 text-center">
+          <RefreshCw className="w-8 h-8 text-gray-400 mx-auto mb-4 animate-spin" />
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Loading Mentor Statistics</h3>
+          <p className="text-gray-600">
+            Fetching mentor data and analyzing consistency...
+          </p>
+        </Card>
+      )}
 
       {/* Data Consistency Alert */}
       {stats && !stats.typeConsistency && (
@@ -204,6 +221,10 @@ export const MentorManagementSection = () => {
                 <span className="text-sm text-gray-600">Meditation Mentors</span>
                 <span className="font-medium text-purple-600">{stats.meditationMentors}</span>
               </div>
+              <div className="flex justify-between items-center">
+                <span className="text-sm text-gray-600">Diet Planners</span>
+                <span className="font-medium text-green-600">{stats.dietPlanners}</span>
+              </div>
               <div className="border-t pt-3">
                 <div className="flex justify-between items-center">
                   <span className="text-sm font-medium">Total Typed</span>
@@ -241,21 +262,6 @@ export const MentorManagementSection = () => {
             </div>
           </Card>
         </div>
-      )}
-
-      {/* Load Initial Stats */}
-      {!stats && !loading && (
-        <Card className="p-8 text-center">
-          <Database className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-          <h3 className="text-lg font-medium text-gray-900 mb-2">Mentor Statistics</h3>
-          <p className="text-gray-600 mb-4">
-            Load mentor statistics to see data consistency and perform sync operations.
-          </p>
-          <Button onClick={loadMentorStats} disabled={loading}>
-            <BarChart3 className="w-4 h-4 mr-2" />
-            Load Statistics
-          </Button>
-        </Card>
       )}
     </div>
   );

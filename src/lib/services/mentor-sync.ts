@@ -78,14 +78,16 @@ export async function getMentorStats() {
       mentorsWithoutType,
       approvedApplications,
       yogaMentors,
-      meditationMentors
+      meditationMentors,
+      dietPlanners
     ] = await Promise.all([
       prisma.user.count({ where: { role: "MENTOR" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: { not: null } } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: null } }),
       prisma.mentorApplication.count({ where: { status: "approved" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: "YOGAMENTOR" } }),
-      prisma.user.count({ where: { role: "MENTOR", mentorType: "MEDITATIONMENTOR" } })
+      prisma.user.count({ where: { role: "MENTOR", mentorType: "MEDITATIONMENTOR" } }),
+      prisma.user.count({ where: { role: "MENTOR", mentorType: "DIETPLANNER" as any } })
     ]);
 
     return {
@@ -97,6 +99,7 @@ export async function getMentorStats() {
         approvedApplications,
         yogaMentors,
         meditationMentors,
+        dietPlanners,
         typeConsistency: mentorsWithType === approvedApplications
       }
     };

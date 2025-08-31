@@ -26,7 +26,7 @@ interface MentorSessionsData {
     id: string;
     name: string | null;
     email: string;
-    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null;
+    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
   };
   sessions: MentorSessionData[];
   totalSessions: number;
@@ -102,7 +102,7 @@ useEffect(() => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
           <p className="text-gray-600 mt-2">
-            Manage your scheduled yoga and meditation sessions.
+            Manage your scheduled sessions.
           </p>
         </div>
         <div className="text-center py-8">
@@ -119,7 +119,7 @@ useEffect(() => {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
           <p className="text-gray-600 mt-2">
-            Manage your scheduled yoga and meditation sessions.
+            Manage your scheduled sessions.
           </p>
         </div>
         <div className="text-center py-8">
@@ -131,23 +131,28 @@ useEffect(() => {
 
   const scheduledSessions = mentorSessionsData.sessions || [];
 
-  const getSessionTypeIcon = (type: "YOGA" | "MEDITATION") => {
+  const getSessionTypeIcon = (type: "YOGA" | "MEDITATION" | "DIET") => {
     return type === "YOGA" ? (
       <Video className="w-8 h-8 text-white" />
-    ) : (
+    ) : type === "MEDITATION" ? (
       <Calendar className="w-8 h-8 text-white" />
+    ) : (
+      <Users className="w-8 h-8 text-white" />
     );
   };
 
-  const getSessionTypeBadgeColor = (type: "YOGA" | "MEDITATION") => {
+  const getSessionTypeBadgeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
     return type === "YOGA"
       ? "from-[#76d2fa] to-[#5a9be9]"
-      : "from-[#876aff] to-[#9966cc]";
+      : type === "MEDITATION" 
+      ? "from-[#876aff] to-[#9966cc]"
+      : "from-[#22c55e] to-[#16a34a]";
   };
 
-  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null) => {
+  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";
+    if (mentorType === "DIETPLANNER") return "Diet Planner";
     return "Mentor";
   };
 

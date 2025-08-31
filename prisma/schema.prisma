@@ -17,11 +17,13 @@ enum Role {
 enum MentorType{
   YOGAMENTOR
   MEDITATIONMENTOR
+  DIETPLANNER
 }
 
 enum SessionType {
   YOGA
   MEDITATION
+  DIET
 }
 
 enum ScheduleStatus {
@@ -74,7 +76,7 @@ model User {
   image                 String?
   createdAt             DateTime
   updatedAt             DateTime
-  // Subscription Details
+  isAvailable           Boolean           @default(true)  // For mentors to control their availability
   subscriptionPlan      SubscriptionPlan?  // Optional field, will be null by default
   subscriptionStatus    SubscriptionStatus @default(INACTIVE)
   subscriptionStartDate DateTime?
@@ -88,7 +90,8 @@ model User {
   isTrialActive         Boolean           @default(false)  // Changed from true to false
   trialEndDate          DateTime?
   autoRenewal           Boolean?          // Changed from default(true) to optional
-  
+  trialUsed             Boolean           @default(false)
+
   sessions              Session[]
   accounts              Account[]
   systemLogs            SystemLog[]
@@ -150,7 +153,7 @@ model MentorApplication {
   email          String
   phone          String
   profile        String?
-  experience     String
+  experience     Int      // Changed back to Int since database now has clean numeric data
   expertise      String
   certifications String
   powUrl         String?

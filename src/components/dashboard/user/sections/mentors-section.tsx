@@ -117,9 +117,10 @@ useEffect(() => {
     );
   }
 
-  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null) => {
+  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";
+    if (mentorType === "DIETPLANNER") return "Diet Planner";
     return "Mentor";
   };
 
@@ -130,9 +131,10 @@ useEffect(() => {
     return "No Plan";
   };
 
-  const getMentorTypeIcon = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | null) => {
+  const getMentorTypeIcon = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
     if (mentorType === "YOGAMENTOR") return <Video className="w-5 h-5 text-blue-600" />;
     if (mentorType === "MEDITATIONMENTOR") return <Heart className="w-5 h-5 text-purple-600" />;
+    if (mentorType === "DIETPLANNER") return <Users className="w-5 h-5 text-green-600" />;
     return <Users className="w-5 h-5 text-gray-600" />;
   };
 
@@ -163,6 +165,8 @@ useEffect(() => {
               <Image
                 src={mentor.image} 
                 alt={mentor.name || "Mentor"} 
+                width={100}
+                height={100}
                 className="w-full h-full rounded-full object-cover"
               />
             ) : (
@@ -191,7 +195,7 @@ useEffect(() => {
           {/* Experience Years */}
           {mentor.experience && (
             <p className="text-xs text-purple-600 mt-1 font-medium">
-              {mentor.experience} experience
+              {mentor.experience} years experience
             </p>
           )}
 

@@ -3,8 +3,7 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
-
-type MentorType = "YOGAMENTOR" | "MEDITATIONMENTOR";
+import { MentorType } from "@prisma/client";
 
 // Create mentor application
 export async function POST(req: NextRequest) {
@@ -12,11 +11,12 @@ export async function POST(req: NextRequest) {
   const name = data.get("name") as string;
   const email = data.get("email") as string;
   const phone = data.get("phone") as string;
-  const experience = data.get("experience") as string;
+  const experienceStr = data.get("experience") as string;
+  const experience = parseInt(experienceStr, 10); // Convert to number
   const expertise = data.get("expertise") as string;
   const certifications = data.get("certifications") as string;
   const powFile = data.get("pow") as File | null;
-  const mentorType = data.get("mentorType") as string;
+  const mentorType = data.get("mentorType") as MentorType;
   let powUrl: string | null = null;
   if (powFile && powFile.name) {
     const proofsDir = path.join(process.cwd(), "public", "proofs");
@@ -48,7 +48,7 @@ export async function POST(req: NextRequest) {
         certifications,
         powUrl,
         status: "pending", // Set default status on creation
-        mentorType: mentorType as MentorType,
+        mentorType: mentorType,
       },
     });
 
