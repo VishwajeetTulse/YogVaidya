@@ -58,6 +58,9 @@ interface SubscriptionStats {
     timestamp: string;
   }>;
   planBreakdown: Record<string, Record<string, number>>;
+  growthRate?: number;
+  growthDirection?: 'up' | 'down' | 'neutral';
+  isFirstMonth?: boolean;
 }
 
 export default function SubscriptionManagementSection() {
@@ -68,6 +71,7 @@ export default function SubscriptionManagementSection() {
   const [statusFilter, setStatusFilter] = useState("all");
   const [planFilter, setPlanFilter] = useState("all");
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
+  const [growthLoading, setGrowthLoading] = useState(false);
   
   // Dialog states
   const [selectedUser, setSelectedUser] = useState<UserSubscription | null>(null);
@@ -112,14 +116,36 @@ export default function SubscriptionManagementSection() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/admin/subscription-stats');
-      const result = await response.json();
+      setGrowthLoading(true);
       
-      if (result.success) {
-        setStats(result.stats);
+      // Fetch both subscription stats and growth stats in parallel
+      const [statsResponse, growthResponse] = await Promise.all([
+        fetch('/api/admin/subscription-stats'),
+        fetch('/api/admin/growth-stats')
+      ]);
+      
+      const statsResult = await statsResponse.json();
+      const growthResult = await growthResponse.json();
+      
+      if (statsResult.success) {
+        let combinedStats = statsResult.stats;
+        
+        // Add growth data if available
+        if (growthResult.success) {
+          combinedStats = {
+            ...combinedStats,
+            growthRate: growthResult.growthStats.growthRate,
+            growthDirection: growthResult.growthStats.growthDirection,
+            isFirstMonth: growthResult.growthStats.isFirstMonth
+          };
+        }
+        
+        setStats(combinedStats);
       }
     } catch (error) {
       console.error('Error fetching stats:', error);
+    } finally {
+      setGrowthLoading(false);
     }
   };
 
@@ -158,8 +184,8 @@ export default function SubscriptionManagementSection() {
   const handleEditUser = (user: UserSubscription) => {
     setSelectedUser(user);
     setEditFormData({
-      subscriptionPlan: user.subscriptionPlan || "",
-      subscriptionStatus: user.subscriptionStatus || "",
+      subscriptionPlan: user.subscriptionPlan || "NONE",
+      subscriptionStatus: user.subscriptionStatus || "INACTIVE",
       billingPeriod: user.billingPeriod || "monthly",
       autoRenewal: user.autoRenewal,
       extendDays: 7
@@ -177,12 +203,18 @@ export default function SubscriptionManagementSection() {
     if (!selectedUser) return;
     
     try {
+      // Convert "NONE" back to null for the API
+      const formDataToSubmit = {
+        ...editFormData,
+        subscriptionPlan: editFormData.subscriptionPlan === "NONE" ? null : editFormData.subscriptionPlan
+      };
+      
       const response = await fetch('/api/admin/users/subscription-update', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           userId: selectedUser.id,
-          ...editFormData
+          ...formDataToSubmit
         })
       });
       
@@ -295,6 +327,29 @@ export default function SubscriptionManagementSection() {
     return `₹${amount.toLocaleString('en-IN')}`;
   };
 
+  const formatGrowthRate = (growthRate?: number, growthDirection?: 'up' | 'down' | 'neutral', isFirstMonth?: boolean) => {
+    if (isFirstMonth) {
+      return "New Business";
+    }
+    
+    if (growthRate === undefined || growthRate === null) {
+      return "N/A";
+    }
+    
+    const sign = growthDirection === 'up' ? '+' : growthDirection === 'down' ? '' : '';
+    return `${sign}${Math.abs(growthRate).toFixed(1)}%`;
+  };
+
+  const getGrowthColor = (growthDirection?: 'up' | 'down' | 'neutral', isFirstMonth?: boolean) => {
+    if (isFirstMonth) return "text-blue-600";
+    
+    switch (growthDirection) {
+      case 'up': return "text-green-600";
+      case 'down': return "text-red-600";
+      default: return "text-gray-600";
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-6 p-6">
@@ -380,10 +435,35 @@ export default function SubscriptionManagementSection() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Growth Rate</p>
-                  <p className="text-2xl font-bold text-green-600">+8.3%</p>
+                  {growthLoading ? (
+                    <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                  ) : (
+                    <p className={`text-2xl font-bold ${getGrowthColor(stats?.growthDirection, stats?.isFirstMonth)}`}>
+                      {formatGrowthRate(stats?.growthRate, stats?.growthDirection, stats?.isFirstMonth)}
+                    </p>
+                  )}
+                  {stats?.isFirstMonth && (
+                    <p className="text-xs text-blue-500 mt-1">First month tracking</p>
+                  )}
                 </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
+                <div className={`p-3 rounded-full ${
+                  stats?.isFirstMonth 
+                    ? "bg-blue-100" 
+                    : stats?.growthDirection === 'up' 
+                    ? "bg-green-100" 
+                    : stats?.growthDirection === 'down' 
+                    ? "bg-red-100" 
+                    : "bg-gray-100"
+                }`}>
+                  <TrendingUp className={`w-6 h-6 ${
+                    stats?.isFirstMonth 
+                      ? "text-blue-600" 
+                      : stats?.growthDirection === 'up' 
+                      ? "text-green-600" 
+                      : stats?.growthDirection === 'down' 
+                      ? "text-red-600" 
+                      : "text-gray-600"
+                  }`} />
                 </div>
               </div>
             </CardContent>
@@ -573,7 +653,7 @@ export default function SubscriptionManagementSection() {
                     <SelectValue placeholder="Select plan" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">No Plan</SelectItem>
+                    <SelectItem value="NONE">No Plan</SelectItem>
                     <SelectItem value="SEED">Seed</SelectItem>
                     <SelectItem value="BLOOM">Bloom</SelectItem>
                     <SelectItem value="FLOURISH">Flourish</SelectItem>
@@ -615,17 +695,6 @@ export default function SubscriptionManagementSection() {
                   <SelectItem value="annual">Annual</SelectItem>
                 </SelectContent>
               </Select>
-            </div>
-            
-            <div className="flex items-center space-x-2">
-              <input
-                type="checkbox"
-                id="autoRenewal"
-                checked={editFormData.autoRenewal}
-                onChange={(e) => setEditFormData(prev => ({ ...prev, autoRenewal: e.target.checked }))}
-                className="rounded"
-              />
-              <Label htmlFor="autoRenewal">Auto-renewal enabled</Label>
             </div>
           </div>
           

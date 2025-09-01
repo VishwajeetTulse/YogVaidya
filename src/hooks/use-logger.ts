@@ -16,8 +16,13 @@ export function useLogger() {
     level: "INFO" | "WARNING" | "ERROR";
     metadata?: Prisma.JsonValue;
   }) => {
+    console.log("=== CLIENT-SIDE LOGGING ===");
+    console.log("Logging params:", params);
+    
     setIsLogging(true);
     try {
+      console.log("Sending request to /api/admin/logs");
+      
       const response = await fetch('/api/admin/logs', {
         method: 'POST',
         headers: {
@@ -26,11 +31,18 @@ export function useLogger() {
         body: JSON.stringify(params),
       });
 
+      console.log("Response status:", response.status);
+      console.log("Response ok:", response.ok);
+
       if (!response.ok) {
-        throw new Error(`Failed to create log: ${response.statusText}`);
+        const errorText = await response.text();
+        console.error("Response error:", errorText);
+        throw new Error(`Failed to create log: ${response.statusText} - ${errorText}`);
       }
 
-      return await response.json();
+      const result = await response.json();
+      console.log("Log creation result:", result);
+      return result;
     } catch (error) {
       console.error("Error creating log:", error);
       toast.error("Failed to log event. Check the console for details.");

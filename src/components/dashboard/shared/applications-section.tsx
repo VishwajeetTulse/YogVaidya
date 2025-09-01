@@ -34,10 +34,25 @@ export const ApplicationsSection = () => {
   const [loading, setLoading] = useState(true);
   const [selectedApplication, setSelectedApplication] = useState<MentorApplication | null>(null);
   const [processingId, setProcessingId] = useState<string | null>(null);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN
 
   useEffect(() => {
     fetchApplications();
+    detectUserRole();
   }, []);
+
+  const detectUserRole = async () => {
+    try {
+      const roleRes = await fetch("/api/auth/get-session");
+      const roleData = await roleRes.json();
+      if (roleData?.user?.role) {
+        setCurrentUserRole(roleData.user.role);
+        console.log("🔍 Detected current user role (Applications):", roleData.user.role);
+      }
+    } catch (roleError) {
+      console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
+    }
+  };
 
   const fetchApplications = async () => {
     setLoading(true);
@@ -60,7 +75,8 @@ export const ApplicationsSection = () => {
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
     setProcessingId(id);
     try {
-      const result = await updateMentorApplicationStatusAction(id, status);
+      console.log("🔍 Updating application status with role:", currentUserRole);
+      const result = await updateMentorApplicationStatusAction(id, status, currentUserRole);
       
       if (result.success) {
         toast.success(`Application ${status}`);

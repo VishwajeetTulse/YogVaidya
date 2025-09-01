@@ -7,6 +7,7 @@ import {
   Target,
   Settings,
   HelpCircle,
+  Ticket,
 } from "lucide-react";
 import { SidebarMenuItem } from "./types";
 
@@ -58,6 +59,12 @@ export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
     title: "Settings",
     icon: Settings,
     description: "App preferences",
+  },
+  {
+    id: "tickets",
+    title: "Support Tickets",
+    icon: Ticket,
+    description: "Manage your support requests",
   },
   {
     id: "support",

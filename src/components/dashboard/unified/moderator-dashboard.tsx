@@ -8,8 +8,10 @@ import { MODERATOR_SIDEBAR_MENU_ITEMS } from '../moderator/constants';
 import { OverviewSection } from '../moderator/sections/overview-section';
 import { ApplicationsSection } from '../shared/applications-section';
 import { UsersSection } from '../shared/users-management-section';
+import { MentorManagementSection } from '../admin/sections/mentor-management-section';
 import { AnalyticsSection } from '../moderator/sections/analytics-section';
 import SubscriptionSection from '../moderator/sections/subscription-section';
+import { TicketsSection } from '../moderator/sections/tickets-section';
 import { SettingsSection } from '../moderator/sections/settings-section';
 import { SupportSection } from '../moderator/sections/support-section';
 
@@ -18,8 +20,10 @@ const MODERATOR_SECTION_COMPONENTS = {
   "overview": OverviewSection,
   "applications": ApplicationsSection,
   "users": UsersSection,
+  "mentor-management": MentorManagementSection,
   "analytics": AnalyticsSection,
   "subscriptions": SubscriptionSection,
+  "tickets": () => <TicketsSection userRole="MODERATOR" />,
   "settings": SettingsSection,
   "support": SupportSection,
 };

@@ -64,9 +64,13 @@ export async function deleteMentorApplicationAction(email: string) {
   }
 }
 
-export async function updateMentorApplicationStatusAction(id: string, status: "approved" | "rejected") {
+export async function updateMentorApplicationStatusAction(
+  id: string, 
+  status: "approved" | "rejected",
+  currentUserRole: string = "ADMIN"
+) {
   try {
-    const result = await updateMentorApplicationStatus({ id, status });
+    const result = await updateMentorApplicationStatus({ id, status, currentUserRole });
     return { success: true, ...result };
   } catch (error) {
     return { 

@@ -24,9 +24,10 @@ export async function GET(req: NextRequest) {
 
     // Get subscription statistics (limited info for moderators)
     const [totalActiveSubscriptions, totalTrialUsers, monthlyRevenue] = await Promise.all([
-      // Active subscriptions count
+      // Active subscriptions count (only for customers with USER role)
       prisma.user.count({
         where: {
+          role: 'USER', // Only count actual customers
           OR: [
             { subscriptionStatus: 'ACTIVE' },
             { subscriptionStatus: 'ACTIVE_UNTIL_END' }
@@ -34,9 +35,10 @@ export async function GET(req: NextRequest) {
         }
       }),
 
-      // Trial users count
+      // Trial users count (only for customers with USER role)
       prisma.user.count({
         where: {
+          role: 'USER', // Only count actual customers
           isTrialActive: true
         }
       }),
@@ -45,6 +47,7 @@ export async function GET(req: NextRequest) {
       prisma.user.aggregate({
         where: {
           AND: [
+            { role: 'USER' }, // Only count actual customers
             { subscriptionStatus: 'ACTIVE' },
             { paymentAmount: { gt: 0 } },
             { billingPeriod: 'monthly' }
@@ -56,9 +59,12 @@ export async function GET(req: NextRequest) {
       })
     ]);
 
-    // Get plan breakdown
+    // Get plan breakdown (only for customers with USER role)
     const planStats = await prisma.user.groupBy({
       by: ['subscriptionPlan', 'subscriptionStatus'],
+      where: {
+        role: 'USER' // Only count actual customers
+      },
       _count: {
         id: true
       }

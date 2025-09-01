@@ -4,6 +4,7 @@ import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
 import { MentorType } from "@prisma/client";
+import { logError } from "@/lib/utils/logger";
 
 // Create mentor application
 export async function POST(req: NextRequest) {
@@ -89,6 +90,22 @@ await sendEmail({
 
     return NextResponse.json({ success: true, application });
   } catch (error) {
+    // Log mentor application submission failure
+    await logError(
+      "MENTOR_APPLICATION_SUBMISSION_FAILED",
+      "SYSTEM",
+      `Failed to submit mentor application for ${email}`,
+      undefined,
+      {
+        email,
+        name,
+        mentorType,
+        error: (error as Error).message,
+        submissionDate: new Date().toISOString()
+      },
+      error as Error
+    );
+    
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }

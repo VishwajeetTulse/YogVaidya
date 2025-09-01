@@ -43,7 +43,7 @@ const MentorCard: React.FC<{ mentor: EnhancedMentorProps; colorClass: string }> 
 }) => {
   return (
     <Card className={cn(
-      "relative overflow-hidden h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group md:w-sm",
+      "relative overflow-hidden h-full bg-white/95 backdrop-blur-sm border-0 shadow-lg hover:shadow-xl transition-all duration-300 group md:w-smw",
       !mentor.available && "opacity-75 grayscale-[0.2]"
     )}>
       {/* Availability Badge - Responsive positioning */}

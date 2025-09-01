@@ -20,7 +20,7 @@ export type LogEntry = {
 
 export async function GET(req: NextRequest) {
   try {
-    // Verify authentication and admin role
+    // Verify authentication and admin/moderator role
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) {
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
@@ -28,7 +28,7 @@ export async function GET(req: NextRequest) {
       });
     }
 
-    if (session.user?.role !== "ADMIN") {
+    if (session.user?.role !== "ADMIN" && session.user?.role !== "MODERATOR") {
       return new NextResponse(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
       });
@@ -115,15 +115,22 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
-    // Verify authentication and admin role
+    console.log("=== LOGS API POST REQUEST ===");
+    
+    // Verify authentication and admin/moderator role
     const session = await auth.api.getSession({ headers: req.headers });
+    console.log("Session:", session ? "Found" : "Not found");
+    console.log("User role:", session?.user?.role);
+    
     if (!session) {
+      console.log("Authentication failed - no session");
       return new NextResponse(JSON.stringify({ error: "Unauthorized" }), {
         status: 401,
       });
     }
 
-    if (session.user?.role !== "ADMIN") {
+    if (session.user?.role !== "ADMIN" && session.user?.role !== "MODERATOR") {
+      console.log("Authorization failed - not admin/moderator role:", session.user?.role);
       return new NextResponse(JSON.stringify({ error: "Forbidden" }), {
         status: 403,
       });
@@ -131,9 +138,11 @@ export async function POST(req: NextRequest) {
 
     // Parse request body
     const body = await req.json();
+    console.log("Request body:", body);
     const { action, category, details, level, metadata } = body;
 
     if (!action || !category || !level) {
+      console.log("Missing required fields:", { action, category, level });
       return NextResponse.json(
         { success: false, error: "Missing required fields" },
         { status: 400 }
@@ -143,6 +152,17 @@ export async function POST(req: NextRequest) {
     // Get IP address and user agent
     const ipAddress = req.headers.get("x-forwarded-for") || undefined;
     const userAgent = req.headers.get("user-agent") || undefined;
+
+    console.log("Creating log entry with data:", {
+      userId: session.user.id,
+      action,
+      category,
+      details,
+      level,
+      metadata,
+      ipAddress,
+      userAgent
+    });
 
     // Create the log entry
     const logEntry = await prisma.systemLog.create({
@@ -160,6 +180,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
+    console.log("Log entry created successfully:", logEntry.id);
     return NextResponse.json({ success: true, logEntry });
   } catch (error) {
     console.error("Error creating log entry:", error);

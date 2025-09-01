@@ -39,28 +39,98 @@ export async function GET(request: NextRequest) {
         id: true,
         createdAt: true,
         role: true,
+        mentorType: true,
+        isAvailable: true,
+        subscriptionStatus: true,
+        trialUsed: true,
       },
-    });    // Get recent signups (within last month) - only users and mentors
+    });    // Get recent signups (within last month) - only users and mentors for growth calculation
     const recentSignups = allUsers.filter(user => 
       isWithinLastMonth(user.createdAt) && 
       (user.role === "USER" || user.role === "MENTOR")
-    ).length;// Group users by role - include only USER and MENTOR roles
+    ).length;
+
+    // Group users by role - include ALL roles for admin visibility
     const usersByRole = allUsers.reduce((acc, user) => {
       const role = user.role || "USER";
-      // Only include USER and MENTOR roles
-      if (role === "USER" || role === "MENTOR") {
-        acc[role] = (acc[role] || 0) + 1;
-      }
+      acc[role] = (acc[role] || 0) + 1;
       return acc;
     }, {} as Record<string, number>);
     
-    // Ensure USER and MENTOR roles exist in the response
-    const displayRoles = ["USER", "MENTOR"];
-    displayRoles.forEach(role => {
+    // Ensure all possible roles exist in the response with 0 count if none exist
+    const allPossibleRoles = ["USER", "MENTOR", "ADMIN", "MODERATOR"];
+    allPossibleRoles.forEach(role => {
       if (usersByRole[role] === undefined) {
         usersByRole[role] = 0;
       }
     });
+
+    // Calculate mentor analytics
+    const mentors = allUsers.filter(user => user.role === "MENTOR");
+    const totalMentors = mentors.length;
+    const activeMentors = mentors.filter(mentor => mentor.isAvailable).length;
+    
+    // Group mentors by type
+    const mentorsByType = mentors.reduce((acc, mentor) => {
+      const type = mentor.mentorType || "UNSPECIFIED";
+      acc[type] = (acc[type] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calculate system log analytics
+    const systemLogs = await prisma.systemLog.findMany({
+      select: {
+        id: true,
+        category: true,
+        level: true,
+        createdAt: true,
+      },
+      orderBy: {
+        createdAt: 'desc'
+      },
+      take: 1000 // Limit to recent logs for performance
+    });
+
+    const logsByCategory = systemLogs.reduce((acc, log) => {
+      acc[log.category] = (acc[log.category] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const logsByLevel = systemLogs.reduce((acc, log) => {
+      acc[log.level] = (acc[log.level] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    // Calculate session scheduling analytics
+    const schedules = await prisma.schedule.findMany({
+      select: {
+        id: true,
+        sessionType: true,
+        status: true,
+        scheduledTime: true,
+        duration: true,
+        createdAt: true,
+      },
+    });
+
+    const sessionsByType = schedules.reduce((acc, schedule) => {
+      acc[schedule.sessionType] = (acc[schedule.sessionType] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const sessionsByStatus = schedules.reduce((acc, schedule) => {
+      acc[schedule.status] = (acc[schedule.status] || 0) + 1;
+      return acc;
+    }, {} as Record<string, number>);
+
+    const totalSessionsScheduled = schedules.length;
+    const completedSessions = schedules.filter(s => s.status === "COMPLETED").length;
+    const completionRate = totalSessionsScheduled > 0 ? Math.round((completedSessions / totalSessionsScheduled) * 100) : 0;
+
+    // Calculate real conversion rates
+    const trialUsers = allUsers.filter(user => user.trialUsed === true).length;
+    const activeSubscribers = allUsers.filter(user => user.subscriptionStatus === "ACTIVE").length;
+    const realTrialToSubscriptionRate = trialUsers > 0 ? Math.round((activeSubscribers / trialUsers) * 100) : 0;
 
     // Get subscription data
     const subscriptionData = await getSubscriptionAnalytics();
@@ -76,6 +146,14 @@ export async function GET(request: NextRequest) {
 
     const pendingApplications = mentorApplications.filter(
       app => app.status === "pending"
+    ).length;
+
+    const approvedApplications = mentorApplications.filter(
+      app => app.status === "approved"
+    ).length;
+
+    const rejectedApplications = mentorApplications.filter(
+      app => app.status === "rejected"
     ).length;    // Calculate user growth for the last 3 months
     const now = new Date();
     const userGrowth = [];
@@ -117,12 +195,22 @@ export async function GET(request: NextRequest) {
           subscriptionsByPlan[plan] = planBreakdown[plan]["ACTIVE"] || 0;
         }
       }
-    }    // Calculate total of only displayed roles (USER and MENTOR)
+    }
+
+    // Calculate total of all users (including all roles)
     const roleTotal = Object.values(usersByRole).reduce((sum, count) => sum + count, 0);
+    
+    // Calculate paying users (USER role only) for subscription percentage calculations
+    const payingUsers = usersByRole.USER || 0;
+    
+    // Calculate platform users (USER + MENTOR) excluding internal staff (ADMIN + MODERATOR)
+    const platformUsers = (usersByRole.USER || 0) + (usersByRole.MENTOR || 0);
 
     return NextResponse.json({
       users: {
-        total: roleTotal, // Only count users and mentors in total
+        total: roleTotal, // Count all users including admins and moderators
+        platformUsers, // Only actual platform users (USER + MENTOR)
+        payingUsers, // Only normal users who can have subscriptions
         recentSignups,
         byRole: usersByRole,
         createdAt: allUsers.map(user => user.createdAt.toISOString())
@@ -135,11 +223,37 @@ export async function GET(request: NextRequest) {
       mentorApplications: {
         total: mentorApplications.length,
         pending: pendingApplications,
+        approved: approvedApplications,
+        rejected: rejectedApplications,
         createdAt: mentorApplications.map(app => app.createdAt.toISOString())
+      },
+      mentorAnalytics: {
+        totalMentors,
+        activeMentors,
+        availabilityRate: totalMentors > 0 ? Math.round((activeMentors / totalMentors) * 100) : 0,
+        mentorsByType
+      },
+      systemLogAnalytics: {
+        totalLogs: systemLogs.length,
+        logsByCategory,
+        logsByLevel
+      },
+      sessionAnalytics: {
+        totalSessions: totalSessionsScheduled,
+        completedSessions,
+        completionRate,
+        sessionsByType,
+        sessionsByStatus
+      },
+      conversionAnalytics: {
+        trialUsers,
+        activeSubscribers,
+        trialToSubscriptionRate: realTrialToSubscriptionRate
       },      
       // Send the months chronologically (oldest first) for clearer visualization
       userGrowth: userGrowth,
-      revenueGrowth: userGrowth,
+      // Revenue growth calculation based on actual subscription data will be added in future iteration
+      // For now, removing fake revenueGrowth to avoid misleading data
 
     });
 

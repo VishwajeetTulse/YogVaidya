@@ -63,6 +63,34 @@ enum LogCategory {
   MENTOR
   MODERATOR
   ADMIN
+  TICKET
+}
+
+enum TicketStatus {
+  OPEN
+  IN_PROGRESS
+  WAITING_FOR_USER
+  RESOLVED
+  CLOSED
+}
+
+enum TicketPriority {
+  LOW
+  MEDIUM
+  HIGH
+  URGENT
+}
+
+enum TicketCategory {
+  SUBSCRIPTION_ISSUE
+  PAYMENT_PROBLEM
+  MENTOR_APPLICATION
+  TECHNICAL_SUPPORT
+  ACCOUNT_ISSUE
+  REFUND_REQUEST
+  GENERAL_INQUIRY
+  BUG_REPORT
+  FEATURE_REQUEST
 }
 
 model User {
@@ -96,6 +124,9 @@ model User {
   accounts              Account[]
   systemLogs            SystemLog[]
   schedules             Schedule[]
+  tickets               Ticket[]
+  ticketMessages        TicketMessage[]
+  assignedTickets       Ticket[]          @relation("AssignedTickets")
   
   
   @@unique([email])
@@ -203,4 +234,69 @@ model Schedule {
   @@index([scheduledTime])
   @@index([status])
   @@map("schedule")
+}
+
+model Ticket {
+  id              String         @id @map("_id")
+  ticketNumber    String         @unique  // Human-readable ticket number like "TKT-2024-001"
+  title           String
+  description     String
+  status          TicketStatus   @default(OPEN)
+  priority        TicketPriority @default(MEDIUM)
+  category        TicketCategory
+  
+  // User who created the ticket
+  userId          String
+  user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  
+  // Moderator assigned to the ticket (optional)
+  assignedToId    String?
+  assignedTo      User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
+  
+  // Metadata
+  tags            String[]       @default([])
+  metadata        Json?          // For storing additional context like related entities
+  
+  // Timestamps
+  createdAt       DateTime       @default(now())
+  updatedAt       DateTime       @updatedAt
+  resolvedAt      DateTime?
+  closedAt        DateTime?
+  
+  // Relations
+  messages        TicketMessage[]
+
+  @@index([userId])
+  @@index([assignedToId])
+  @@index([status])
+  @@index([priority])
+  @@index([category])
+  @@index([createdAt(sort: Desc)])
+  @@map("ticket")
+}
+
+model TicketMessage {
+  id          String    @id @map("_id")
+  content     String
+  isInternal  Boolean   @default(false)  // Internal notes only visible to moderators
+  
+  // Message author
+  authorId    String
+  author      User      @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  
+  // Related ticket
+  ticketId    String
+  ticket      Ticket    @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+  
+  // Attachments (file URLs)
+  attachments String[]  @default([])
+  
+  // Timestamps
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  @@index([ticketId])
+  @@index([authorId])
+  @@index([createdAt(sort: Desc)])
+  @@map("ticket_message")
 }

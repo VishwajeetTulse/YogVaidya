@@ -13,6 +13,8 @@ import { Badge } from "@/components/ui/badge";
 interface AnalyticsData {
   users: {
     total: number;
+    platformUsers: number;
+    payingUsers: number;
     recentSignups: number;
     byRole: Record<string, number>;
     retentionRate: number;
@@ -34,7 +36,7 @@ interface AnalyticsData {
     month: string;
     count: number;
   }>;
-  revenueGrowth: Array<{
+  revenueGrowth?: Array<{
     month: string;
     amount: number;
   }>;
@@ -67,6 +69,8 @@ export const AnalyticsSection = () => {
         const sanitizedData = {
           users: {
             total: data.users?.total || 0,
+            platformUsers: data.users?.platformUsers || 0,
+            payingUsers: data.users?.payingUsers || 0,
             recentSignups: data.users?.recentSignups || 0,
             retentionRate: data.users?.retentionRate || 0,
             byRole: {
@@ -95,7 +99,7 @@ export const AnalyticsSection = () => {
             rejected: data.mentorApplications?.rejected || 0,
           },
           userGrowth: data.userGrowth,
-          revenueGrowth: data.revenueGrowth,
+          revenueGrowth: data.revenueGrowth || undefined,
           systemHealth: {
             uptime: data.systemHealth?.uptime || 99.9,
             errorRate: data.systemHealth?.errorRate || 0.1,
@@ -204,7 +208,7 @@ export const AnalyticsSection = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Analytics</h1>
@@ -215,10 +219,10 @@ export const AnalyticsSection = () => {
       </div>
 
       {/* Overview Stats */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <StatCard
-          title="Total Users"
-          value={analyticsData.users.total}
+          title="Platform Users"
+          value={analyticsData.users.platformUsers}
           icon={<Users className="h-6 w-6 text-blue-500" />}
           description={`${analyticsData.users.recentSignups} new in the last month`}
           className="bg-blue-50"
@@ -235,28 +239,33 @@ export const AnalyticsSection = () => {
           title="Active Subscriptions"
           value={analyticsData.subscriptions.total}
           icon={<TrendingUp className="h-6 w-6 text-indigo-500" />}
-          description={`${Math.round((analyticsData.subscriptions.total / analyticsData.users.total) * 100)}% of users`}
+          description={`${Math.round((analyticsData.subscriptions.total / analyticsData.users.payingUsers) * 100)}% of paying users`}
           className="bg-indigo-50"
+        />
+        <StatCard
+          title="Mentor Applications"
+          value={analyticsData.mentorApplications.total}
+          icon={<Users className="h-6 w-6 text-purple-500" />}
+          description={`${analyticsData.mentorApplications.pending} pending review`}
+          className="bg-purple-50"
         />
       </div>
 
-      {/* Role Distribution and System Health */}
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        <Card className="p-6 shadow-sm col-span-2">
-          <h2 className="font-semibold text-xl mb-4">User Growth & Revenue</h2>
-          <div className="h-64">
-            <CombinedGrowthChart 
-              userData={analyticsData.userGrowth} 
-              revenueData={analyticsData.revenueGrowth} 
-            />
-          </div>
-        </Card>
-      </div>
+      {/* Growth Chart - Full Width */}
+      <Card className="p-6 shadow-sm">
+        <h2 className="font-semibold text-xl mb-6">User Growth {analyticsData.revenueGrowth ? '& Revenue' : ''}</h2>
+        <div className="h-80">
+          <CombinedGrowthChart 
+            userData={analyticsData.userGrowth} 
+            revenueData={analyticsData.revenueGrowth} 
+          />
+        </div>
+      </Card>
 
-      {/* User and Subscription Distribution */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      {/* Distribution Cards Row */}
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="p-6 shadow-sm">
-          <h2 className="font-semibold text-xl mb-4">User Distribution</h2>
+          <h2 className="font-semibold text-xl mb-6">User Distribution</h2>
           <div className="flex flex-wrap gap-4">
             <RoleDistribution
               usersByRole={analyticsData.users.byRole}
@@ -266,53 +275,55 @@ export const AnalyticsSection = () => {
         </Card>
 
         <Card className="p-6 shadow-sm">
-          <h2 className="font-semibold text-xl mb-4">Subscription Plans</h2>
+          <h2 className="font-semibold text-xl mb-6">Subscription Plans</h2>
           <div className="flex flex-wrap gap-4">
             <SubscriptionDistribution
               subscriptionsByPlan={analyticsData.subscriptions.byPlan}
-              total={analyticsData.users.total}
-              revenue={analyticsData.subscriptions.totalRevenue}
+              total={analyticsData.users.payingUsers}
             />
           </div>
         </Card>
-      </div>
 
-      {/* Mentor Applications */}
-      <Card className="p-6 shadow-sm">
-        <div className="flex justify-between items-center mb-4">
-          <h2 className="font-semibold text-xl">Mentor Applications</h2>
-          <div className="flex gap-2">
-            <Badge variant="outline" className="bg-blue-50 text-blue-700 border-blue-200">
-              Total: {analyticsData.mentorApplications.total}
-            </Badge>
-            <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-              Pending: {analyticsData.mentorApplications.pending}
-            </Badge>
-            <Badge variant="outline" className="bg-green-50 text-green-700 border-green-200">
-              Approved: {analyticsData.mentorApplications.approved}
-            </Badge>
-            <Badge variant="outline" className="bg-red-50 text-red-700 border-red-200">
-              Rejected: {analyticsData.mentorApplications.rejected}
-            </Badge>
+        <Card className="p-6 shadow-sm">
+          <h2 className="font-semibold text-xl mb-6">Application Status</h2>
+          <div className="space-y-4">
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Approved</span>
+              <span className="text-sm font-bold text-green-600">
+                {analyticsData.mentorApplications.approved}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Pending</span>
+              <span className="text-sm font-bold text-amber-600">
+                {analyticsData.mentorApplications.pending}
+              </span>
+            </div>
+            <div className="flex justify-between items-center">
+              <span className="text-sm font-medium text-gray-600">Rejected</span>
+              <span className="text-sm font-bold text-red-600">
+                {analyticsData.mentorApplications.rejected}
+              </span>
+            </div>
+            <div className="w-full bg-gray-200 rounded-full h-3 mt-4">
+              <div className="flex h-3 rounded-full overflow-hidden">
+                <div 
+                  className="bg-green-500" 
+                  style={{ width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%` }}
+                />
+                <div 
+                  className="bg-amber-500" 
+                  style={{ width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%` }}
+                />
+                <div 
+                  className="bg-red-500" 
+                  style={{ width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%` }}
+                />
+              </div>
+            </div>
           </div>
-        </div>
-        <div className="w-full bg-gray-200 rounded-full h-4">
-          <div className="flex h-4 rounded-full overflow-hidden">
-            <div 
-              className="bg-green-500" 
-              style={{ width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%` }}
-            />
-            <div 
-              className="bg-amber-500" 
-              style={{ width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%` }}
-            />
-            <div 
-              className="bg-red-500" 
-              style={{ width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%` }}
-            />
-          </div>
-        </div>
-      </Card>
+        </Card>
+      </div>
     </div>
   );
 };
@@ -356,8 +367,46 @@ const CombinedGrowthChart = ({
   revenueData,
 }: {
   userData: Array<{ month: string; count: number }>;
-  revenueData: Array<{ month: string; amount: number }>;
+  revenueData?: Array<{ month: string; amount: number }>;
 }) => {
+  // Handle missing or undefined data
+  if (!userData || userData.length === 0) {
+    return (
+      <div className="flex h-full items-center justify-center">
+        <p className="text-gray-500">No user growth data available</p>
+      </div>
+    );
+  }
+
+  // If revenueData is not available, show only user growth
+  if (!revenueData || revenueData.length === 0) {
+    return (
+      <div className="flex h-full items-end space-x-8 justify-around">
+        {userData.map((item, index) => {
+          const maxCount = Math.max(...userData.map((item) => item.count));
+          const heightPercentage = (item.count / maxCount) * 100;
+
+          return (
+            <div key={index} className="h-full flex flex-col items-center justify-end" style={{ width: '100px' }}>
+              <div className="h-full flex items-end justify-center w-full">
+                <div className="h-full flex flex-col items-center justify-end">
+                  <div
+                    className="w-12 bg-blue-500 rounded-t-md transition-all duration-700 ease-out"
+                    style={{
+                      height: `${heightPercentage}%`,
+                    }}
+                  ></div>
+                  <span className="text-sm font-medium mt-2">{item.count}</span>
+                </div>
+              </div>
+              <span className="text-xs text-gray-500 mt-2">{item.month}</span>
+            </div>
+          );
+        })}
+      </div>
+    );
+  }
+
   // Find the maximum values to normalize bar heights
   const maxCount = Math.max(...userData.map((item) => item.count));
   const maxRevenue = Math.max(...revenueData.map((item) => item.amount));
@@ -448,45 +497,28 @@ const RoleDistribution = ({
 const SubscriptionDistribution = ({
   subscriptionsByPlan,
   total,
-  revenue,
 }: {
   subscriptionsByPlan: Record<string, number>;
   total: number;
-  revenue: number;
 }) => {
   const planColors: Record<string, string> = {
     SEED: "bg-green-300",
     BLOOM: "bg-green-500",
     FLOURISH: "bg-green-700",
   };
-  
-  // Sample plan pricing for revenue calculation
-  const planPricing: Record<string, number> = {
-    SEED: 999,
-    BLOOM: 1999,
-    FLOURISH: 2999,
-  };
 
   return (
     <div className="w-full flex flex-col space-y-2">
       {Object.entries(subscriptionsByPlan).map(([plan, count]) => {
         const percentage = Math.round((count / total) * 100) || 0;
-        // Calculate approximate revenue contribution
-        const planRevenue = count * (planPricing[plan] || 0);
-        const revenuePercentage = Math.round((planRevenue / revenue) * 100) || 0;
 
         return (
           <div key={plan} className="flex flex-col">
             <div className="flex justify-between items-center mb-1">
               <span className="text-sm font-medium">{plan}</span>
-              <div className="flex items-center space-x-2">
-                <span className="text-xs text-gray-500">
-                  {count} users ({percentage}%)
-                </span>
-                <span className="text-xs text-green-600">
-                  ₹{planRevenue.toLocaleString()} ({revenuePercentage}%)
-                </span>
-              </div>
+              <span className="text-xs text-gray-500">
+                {count} users ({percentage}%)
+              </span>
             </div>
             <div className="h-2 rounded-full bg-gray-200">
               <div

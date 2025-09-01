@@ -6,6 +6,8 @@ import {
   Settings,
   HelpCircle,
   CreditCard,
+  UserCheck,
+  Ticket,
 } from "lucide-react";
 import { ModeratorSidebarMenuItem } from "./types";
 
@@ -29,6 +31,12 @@ export const MODERATOR_SIDEBAR_MENU_ITEMS: ModeratorSidebarMenuItem[] = [
     description: "Manage platform users",
   },
   {
+    id: "mentor-management",
+    title: "Mentor Management",
+    icon: UserCheck,
+    description: "Manage mentor data & profiles",
+  },
+  {
     id: "analytics",
     title: "Analytics",
     icon: TrendingUp,
@@ -39,6 +47,12 @@ export const MODERATOR_SIDEBAR_MENU_ITEMS: ModeratorSidebarMenuItem[] = [
     title: "Subscriptions",
     icon: CreditCard,
     description: "View subscription details",
+  },
+  {
+    id: "tickets",
+    title: "Support Tickets",
+    icon: Ticket,
+    description: "Manage customer support",
   },
   {
     id: "settings",

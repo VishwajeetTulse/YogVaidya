@@ -21,6 +21,7 @@ import { PlansSection } from '../user/sections/plans-section';
 import { ExploreMentorsSection } from '../user/sections/explore-mentors-section';
 import { ProfileSection } from '../user/sections/profile-section';
 import { SettingsSection } from '../user/sections/settings-section';
+import { UserTicketsSection } from '../user/sections/tickets-section';
 import { SupportSection } from '../user/sections/support-section';
 import { BaseHookResult } from '../shared/types';
 
@@ -35,6 +36,7 @@ const USER_SECTION_COMPONENTS = {
   "explore-mentors": ExploreMentorsSection,
   "profile": ProfileSection,
   "settings": SettingsSection,
+  "tickets": UserTicketsSection,
   "support": SupportSection,
 };
 

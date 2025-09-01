@@ -52,9 +52,24 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
   const [level, setLevel] = useState<string>("");
   const [userId, setUserId] = useState<string>("");
 
-  // Available filter options
-  const categories = ["authentication", "system", "billing", "user", "all"];
-  const levels = ["info", "warning", "error", "all"];
+  // Available filter options - Updated to match actual categories in use
+  const categoryOptions = [
+    { value: "all", label: "All Categories" },
+    { value: "AUTHENTICATION", label: "Authentication" },
+    { value: "SYSTEM", label: "System" },
+    { value: "USER", label: "User Management" },
+    { value: "MENTOR", label: "Mentor Management" },
+    { value: "ADMIN", label: "Admin Actions" },
+    { value: "MODERATOR", label: "Moderator Actions" },
+    { value: "SUBSCRIPTION", label: "Subscriptions" },
+    { value: "PAYMENT", label: "Payments" },
+  ];
+  const levelOptions = [
+    { value: "all", label: "All Levels" },
+    { value: "INFO", label: "Info" },
+    { value: "WARNING", label: "Warning" },
+    { value: "ERROR", label: "Error" },
+  ];
 
   const fetchLogs =  useCallback( async () => {
     setIsLoading(true);
@@ -178,15 +193,11 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                   <SelectValue placeholder="Select category" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Categories</SelectItem>
-                  {categories.map(
-                    (cat) =>
-                      cat !== "all" && (
-                        <SelectItem key={cat} value={cat}>
-                          {cat}
-                        </SelectItem>
-                      )
-                  )}
+                  {categoryOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>
@@ -198,15 +209,11 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                   <SelectValue placeholder="Select level" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="all">All Levels</SelectItem>
-                  {levels.map(
-                    (lvl) =>
-                      lvl !== "all" && (
-                        <SelectItem key={lvl} value={lvl}>
-                          {lvl}
-                        </SelectItem>
-                      )
-                  )}
+                  {levelOptions.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                      {option.label}
+                    </SelectItem>
+                  ))}
                 </SelectContent>
               </Select>
             </div>

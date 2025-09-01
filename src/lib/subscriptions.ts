@@ -5,6 +5,7 @@ import type { SubscriptionPlan } from "@prisma/client";
 import Razorpay from 'razorpay';
 import type { UpdateSubscriptionData, CreateSubscriptionData } from './types';
 import { prisma } from './config/prisma';
+import { logSubscriptionEvent, logPaymentEvent, logError, logSystemEvent } from './utils/logger';
 
 // Type helpers for Prisma enums
 const PlanTypes = {
@@ -238,9 +239,59 @@ async function createUserSubscription(data: CreateSubscriptionData) {
       }
     });
 
+    // Log successful subscription creation
+    await logSubscriptionEvent(
+      "SUBSCRIPTION_CREATED",
+      data.userId,
+      `New ${data.subscriptionPlan} subscription (${data.billingPeriod})`,
+      "INFO",
+      {
+        subscriptionPlan: data.subscriptionPlan,
+        billingPeriod: data.billingPeriod,
+        paymentAmount,
+        razorpaySubscriptionId: data.razorpaySubscriptionId,
+        subscriptionStartDate: now.toISOString(),
+        subscriptionEndDate: subscriptionEndDate.toISOString(),
+        autoRenewal: data.autoRenewal ?? true
+      }
+    );
+
+    // Log payment processing
+    if (paymentAmount > 0) {
+      await logPaymentEvent(
+        "PAYMENT_PROCESSED",
+        data.userId,
+        `₹${paymentAmount} payment for ${data.subscriptionPlan} subscription`,
+        "INFO",
+        {
+          paymentAmount,
+          subscriptionPlan: data.subscriptionPlan,
+          billingPeriod: data.billingPeriod,
+          razorpaySubscriptionId: data.razorpaySubscriptionId,
+          paymentDate: now.toISOString()
+        }
+      );
+    }
+
     return { success: true, user: updatedUser };
   } catch (error) {
     console.error("Error creating user subscription:", error);
+    
+    // Log subscription creation failure
+    await logError(
+      "SUBSCRIPTION_CREATION_FAILED",
+      "SUBSCRIPTION",
+      `Failed to create ${data.subscriptionPlan} subscription`,
+      data.userId,
+      {
+        subscriptionPlan: data.subscriptionPlan,
+        billingPeriod: data.billingPeriod,
+        paymentAmount: data.paymentAmount,
+        error: (error as Error).message
+      },
+      error as Error
+    );
+    
     return { success: false, error: "Failed to create subscription" };
   }
 }
@@ -276,10 +327,36 @@ async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "
       }
     });
 
+    // Log trial activation
+    await logSubscriptionEvent(
+      "TRIAL_STARTED", 
+      userId, 
+      `Started ${TRIAL_PERIOD_DAYS}-day trial with ${plan} access`, 
+      "INFO",
+      {
+        subscriptionPlan: plan,
+        trialPeriodDays: TRIAL_PERIOD_DAYS,
+        trialStartDate: now.toISOString(),
+        trialEndDate: trialEndDate.toISOString(),
+        paymentAmount: 0
+      }
+    );
+
     console.log(`[TRIAL] Successfully updated user with trial subscription`);
     return { success: true, user: updatedUser };
   } catch (error) {
     console.error("[TRIAL] Error starting trial subscription:", error);
+    
+    // Log trial activation failure
+    await logError(
+      "TRIAL_START_FAILED",
+      "SUBSCRIPTION",
+      `Failed to start trial for user: ${userId}`,
+      userId,
+      { plan, error: (error as Error).message },
+      error as Error
+    );
+    
     return { success: false, error: "Failed to start trial" };
   }
 }
@@ -371,15 +448,32 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
     // Update the local database - set status to ACTIVE_UNTIL_END to keep access until billing period ends
     const updateData: Prisma.UserUpdateInput = {
       subscriptionStatus: "ACTIVE_UNTIL_END", // Keep active until end of billing period
-      autoRenewal: false, // Disable auto renewal
+      autoRenewal: false, // Disable auto-renewal
       updatedAt: new Date()
-      // Note: Keep subscriptionEndDate and nextBillingDate as they are
     };
 
     const updatedUser = await prisma.user.update({
       where: { id: userId },
       data: updateData
     });
+
+    // Log subscription cancellation
+    await logSubscriptionEvent(
+      "SUBSCRIPTION_CANCELLED",
+      userId,
+      `Cancelled ${user.subscriptionPlan} subscription (effective at billing period end)`,
+      "WARNING",
+      {
+        subscriptionPlan: user.subscriptionPlan,
+        billingPeriod: user.billingPeriod,
+        paymentAmount: user.paymentAmount,
+        subscriptionEndDate: user.subscriptionEndDate?.toISOString(),
+        razorpaySubscriptionId,
+        cancellationDate: new Date().toISOString(),
+        activeUntilEnd: true,
+        razorpayError: razorpayError ? (razorpayError as Error).message : null
+      }
+    );
 
     // Only send SMS notification if not silent
     if (!silent) {
@@ -764,7 +858,7 @@ export async function getSubscriptionAnalytics() {
         billingPeriodBreakdown,
         retentionRate: Math.round(retentionRate * 100) / 100, // Round to 2 decimal places
       },
-      createdAt : users.map(user => user.subscriptionStartDate?.toISOString()),
+      createdAt : activeSubscriptions.map(user => user.subscriptionStartDate?.toISOString()).filter(Boolean),
     };
     
   } catch (error) {

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
+import { useLogger } from "@/hooks/use-logger";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import {
@@ -36,7 +37,17 @@ interface User {
 }
 
 export const UsersSection = () => {
+  const { logInfo, logWarning, logError } = useLogger();
+  
+  // Debug the logger hook
+  console.log("🔍 useLogger hook initialized (Users Section):", {
+    logInfo: typeof logInfo,
+    logWarning: typeof logWarning,
+    logError: typeof logError
+  });
+  
   const [users, setUsers] = useState<User[]>([]);
+  const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
@@ -63,12 +74,24 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success && data.users) {
-        // Filter users to only include those with USER or MENTOR roles
+        // Filter users to only include regular users (exclude mentors, admins, moderators)
         const filteredByPermission = data.users.filter(
-          (user: User) => user.role === "USER" || user.role === "MENTOR"
+          (user: User) => user.role === "USER"
         );
         setUsers(filteredByPermission);
         setFilteredUsers(filteredByPermission);
+        
+        // Try to detect current user role
+        try {
+          const roleRes = await fetch("/api/auth/get-session");
+          const roleData = await roleRes.json();
+          if (roleData?.user?.role) {
+            setCurrentUserRole(roleData.user.role);
+            console.log("🔍 Detected current user role (Users):", roleData.user.role);
+          }
+        } catch (roleError) {
+          console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
+        }
       } else {
         toast.error("Failed to load users");
       }
@@ -178,7 +201,36 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
+        console.log("✅ User update API call succeeded");
         toast.success("User updated successfully");
+        
+        // Log user update with debugging
+        console.log("🔍 Attempting to log user update...");
+        console.log("🔍 logInfo function exists:", typeof logInfo);
+        console.log("🔍 Form data:", formData);
+        
+        try {
+          const logResult = await logInfo(
+            "USER_PROFILE_UPDATED",
+            currentUserRole,
+            `Updated user profile: ${formData.email}`,
+            {
+              userId: editingUser.id,
+              userEmail: formData.email,
+              updatedFields: {
+                name: formData.name,
+                phone: formData.phone,
+                role: formData.role
+              },
+              updateDate: new Date().toISOString()
+            }
+          );
+          console.log("✅ User update log result:", logResult);
+        } catch (logError) {
+          console.error("❌ User update logging failed:", logError);
+          toast.error("Failed to log the user update. Check console for details.");
+        }
+        
         setUsers(
           users.map((u) =>
             u.id === editingUser.id
@@ -226,7 +278,31 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
+        console.log("✅ User delete API call succeeded");
         toast.success("User deleted successfully");
+        
+        // Log user deletion with debugging
+        console.log("🔍 Attempting to log user deletion...");
+        
+        try {
+          const logResult = await logWarning(
+            "USER_ACCOUNT_DELETED",
+            currentUserRole,
+            `Deleted user account: ${userToDelete.email}`,
+            {
+              deletedUserId: userToDelete.id,
+              deletedUserEmail: userToDelete.email,
+              deletedUserName: userToDelete.name,
+              deletedUserRole: userToDelete.role,
+              deletionDate: new Date().toISOString()
+            }
+          );
+          console.log("✅ User deletion log result:", logResult);
+        } catch (logError) {
+          console.error("❌ User deletion logging failed:", logError);
+          toast.error("Failed to log the user deletion. Check console for details.");
+        }
+        
         setUsers(users.filter((u) => u.id !== userToDelete.id));
         setIsDeleteDialogOpen(false);
       } else {
@@ -239,8 +315,6 @@ export const UsersSection = () => {
   };
   const getRoleBadge = (role: string) => {
     switch (role) {
-      case "MENTOR":
-        return <Badge className="bg-green-500">Mentor</Badge>;
       case "USER":
       default:
         return <Badge className="bg-gray-500">User</Badge>;
@@ -261,7 +335,7 @@ export const UsersSection = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
         <p className="text-gray-600 mt-2">
-          Manage platform users and their activities.
+          Manage regular platform users and their accounts. (Mentors are managed in the separate Mentor Management section)
         </p>
       </div>
 
@@ -284,7 +358,7 @@ export const UsersSection = () => {
               className="w-full sm:w-[180px] flex justify-between items-center"
               onClick={() => setShowRoleFilter(!showRoleFilter)}
             >
-              <span>{roleFilter === "ALL" ? "All Roles" : roleFilter}</span>
+              <span>{roleFilter === "ALL" ? "All Users" : "Regular Users"}</span>
               <ChevronDown className="h-4 w-4 ml-2" />
             </Button>{" "}
             {showRoleFilter && (
@@ -296,7 +370,7 @@ export const UsersSection = () => {
                     setShowRoleFilter(false);
                   }}
                 >
-                  All Roles
+                  All Users
                 </div>
                 <div
                   className="p-2 hover:bg-gray-100 cursor-pointer"
@@ -305,16 +379,7 @@ export const UsersSection = () => {
                     setShowRoleFilter(false);
                   }}
                 >
-                  Users
-                </div>
-                <div
-                  className="p-2 hover:bg-gray-100 cursor-pointer"
-                  onClick={() => {
-                    setRoleFilter("MENTOR");
-                    setShowRoleFilter(false);
-                  }}
-                >
-                  Mentors
+                  Regular Users
                 </div>
               </div>
             )}
@@ -444,16 +509,7 @@ export const UsersSection = () => {
                         setShowEditRoleFilter(false);
                       }}
                     >
-                      User
-                    </div>
-                    <div
-                      className="p-2 hover:bg-gray-100 cursor-pointer"
-                      onClick={() => {
-                        handleRoleChange("MENTOR");
-                        setShowEditRoleFilter(false);
-                      }}
-                    >
-                      Mentor
+                      Regular User
                     </div>
                   </div>
                 )}

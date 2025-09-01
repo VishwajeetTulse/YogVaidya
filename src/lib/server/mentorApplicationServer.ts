@@ -3,6 +3,7 @@ import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
 import { MentorType } from "@prisma/client";
+import { logInfo, logWarning, logError } from "@/lib/utils/logger";
 
 export async function createMentorApplication({
   name,
@@ -55,6 +56,23 @@ export async function createMentorApplication({
       mentorType: mentorType as MentorType,
     },
   });
+
+  // Log mentor application submission
+  await logInfo(
+    "MENTOR_APPLICATION_SUBMITTED",
+    "MENTOR",
+    `New ${mentorType} mentor application from ${email}`,
+    undefined,
+    {
+      email,
+      name,
+      mentorType,
+      experience,
+      expertise: expertise.substring(0, 100), // Truncate for logging
+      hasProofOfWork: !!powUrl,
+      applicationId: application.id
+    }
+  );
   await sendEmail({
     to: email,
     subject: "🧘 YogVaidya Mentor Application Received",
@@ -100,9 +118,11 @@ export async function getMentorApplications(email?: string) {
 export async function updateMentorApplicationStatus({
   id,
   status,
+  currentUserRole = "ADMIN", // Default to ADMIN for backward compatibility
 }: {
   id: string;
   status: "approved" | "rejected";
+  currentUserRole?: string;
 }) {
   if (!id || !status) throw new Error("Missing id or status");
   
@@ -123,6 +143,22 @@ export async function updateMentorApplicationStatus({
         mentorType: updated.mentorType // Add the mentor type from the application
       },
     });
+
+    // Log mentor approval
+    await logInfo(
+      "MENTOR_APPLICATION_APPROVED",
+      currentUserRole as "ADMIN" | "MODERATOR",
+      `Approved ${updated.mentorType} mentor: ${updated.email}`,
+      undefined, // adminId would be better if available
+      {
+        applicationId: id,
+        mentorEmail: updated.email,
+        mentorName: updated.name,
+        mentorType: updated.mentorType,
+        experience: updated.experience,
+        approvalDate: new Date().toISOString()
+      }
+    );
     
     // Send approval email to the new mentor
     try {
@@ -172,6 +208,23 @@ export async function updateMentorApplicationStatus({
     
     redirectUrl = "/dashboard/mentors";
   } else if (status === "rejected") {
+    // Log mentor rejection
+    await logWarning(
+      "MENTOR_APPLICATION_REJECTED",
+      currentUserRole as "ADMIN" | "MODERATOR",
+      `Rejected ${updated.mentorType} mentor application: ${updated.email}`,
+      undefined, // adminId would be better if available
+      {
+        applicationId: id,
+        mentorEmail: updated.email,
+        mentorName: updated.name,
+        mentorType: updated.mentorType,
+        experience: updated.experience,
+        rejectionDate: new Date().toISOString(),
+        reason: `${currentUserRole.toLowerCase()}_decision`
+      }
+    );
+
     // Send rejection email
     try {
       await sendEmail({

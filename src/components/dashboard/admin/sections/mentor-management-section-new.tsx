@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { useLogger } from "@/hooks/use-logger";
 import { 
   Users, 
   RefreshCw, 
@@ -15,6 +15,7 @@ import {
   AlertTriangle, 
   BarChart3,
   ArrowRightLeft,
+  Database,
   Edit,
   Search,
   Trash2,
@@ -37,7 +38,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
-import { getMentorStats } from "@/lib/services/mentor-sync";
+import { syncMentorTypes, getMentorStats } from "@/lib/services/mentor-sync";
 import { LucideIcon } from "lucide-react";
 
 interface MentorStats {
@@ -48,6 +49,7 @@ interface MentorStats {
   yogaMentors: number;
   meditationMentors: number;
   dietPlanners: number;
+  typeConsistency: boolean;
 }
 
 interface Mentor {
@@ -56,7 +58,9 @@ interface Mentor {
   email: string;
   phone: string | null;
   role: string;
-  mentorType: string | null;
+  experience: string | null;
+  specialization: string | null;
+  bio: string | null;
   isAvailable: boolean;
   createdAt: string;
   updatedAt: string;
@@ -67,7 +71,9 @@ interface MentorPatch {
   name?: string;
   email?: string;
   phone?: string;
-  mentorType?: string;
+  experience?: string;
+  specialization?: string;
+  bio?: string;
   isAvailable?: boolean;
 }
 
@@ -93,20 +99,11 @@ const StatCard = ({ title, value, description, icon, onClick }: StatCardProps) =
 );
 
 export const MentorManagementSection = () => {
-  const { logInfo, logWarning, logError } = useLogger();
-  
-  // Debug the logger hook
-  console.log("🔍 useLogger hook initialized:", {
-    logInfo: typeof logInfo,
-    logWarning: typeof logWarning,
-    logError: typeof logError
-  });
-  
   const [stats, setStats] = useState<MentorStats | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
-  const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
   const [filteredMentors, setFilteredMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
+  const [syncing, setSyncing] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
   const [editingMentor, setEditingMentor] = useState<Mentor | null>(null);
   const [mentorToDelete, setMentorToDelete] = useState<Mentor | null>(null);
@@ -119,7 +116,9 @@ export const MentorManagementSection = () => {
     name: "",
     email: "",
     phone: "",
-    mentorType: "",
+    experience: "",
+    specialization: "",
+    bio: "",
     isAvailable: true,
   });
 
@@ -142,7 +141,8 @@ export const MentorManagementSection = () => {
       (mentor) =>
         mentor.name?.toLowerCase().includes(term) ||
         mentor.email.toLowerCase().includes(term) ||
-        mentor.mentorType?.toLowerCase().includes(term)
+        mentor.specialization?.toLowerCase().includes(term) ||
+        mentor.experience?.toLowerCase().includes(term)
     );
 
     setFilteredMentors(filtered);
@@ -158,21 +158,6 @@ export const MentorManagementSection = () => {
         const mentorUsers = data.users.filter(
           (user: Mentor) => user.role === "MENTOR"
         );
-        
-        // Try to detect current user role from the response or make a separate call
-        // The /api/users endpoint returns all users, so we can check if we have permission
-        // If we got a successful response, we know we have ADMIN or MODERATOR role
-        // We'll need to make a separate call to get the exact role
-        try {
-          const roleRes = await fetch("/api/auth/get-session");
-          const roleData = await roleRes.json();
-          if (roleData?.user?.role) {
-            setCurrentUserRole(roleData.user.role);
-            console.log("🔍 Detected current user role:", roleData.user.role);
-          }
-        } catch (roleError) {
-          console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
-        }
         setMentors(mentorUsers);
         setFilteredMentors(mentorUsers);
       } else {
@@ -207,7 +192,9 @@ export const MentorManagementSection = () => {
       name: mentor.name || "",
       email: mentor.email,
       phone: mentor.phone || "",
-      mentorType: mentor.mentorType || "",
+      experience: mentor.experience || "",
+      specialization: mentor.specialization || "",
+      bio: mentor.bio || "",
       isAvailable: mentor.isAvailable,
     });
     setIsEditDialogOpen(true);
@@ -258,7 +245,9 @@ export const MentorManagementSection = () => {
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        mentorType: formData.mentorType,
+        experience: formData.experience,
+        specialization: formData.specialization,
+        bio: formData.bio,
         isAvailable: formData.isAvailable,
       };
 
@@ -273,37 +262,7 @@ export const MentorManagementSection = () => {
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ Mentor update API call succeeded");
         toast.success("Mentor updated successfully");
-        
-        // Log mentor update with debugging
-        console.log("🔍 Attempting to log mentor update...");
-        console.log("🔍 logInfo function exists:", typeof logInfo);
-        console.log("🔍 Form data:", formData);
-        
-        try {
-          const logResult = await logInfo(
-            "MENTOR_PROFILE_UPDATED",
-            currentUserRole,
-            `Updated mentor profile: ${formData.email}`,
-            {
-              mentorId: editingMentor.id,
-              mentorEmail: formData.email,
-              updatedFields: {
-                name: formData.name,
-                phone: formData.phone,
-                mentorType: formData.mentorType,
-                isAvailable: formData.isAvailable
-              },
-              updateDate: new Date().toISOString()
-            }
-          );
-          console.log("✅ Log result:", logResult);
-        } catch (logError) {
-          console.error("❌ Logging failed:", logError);
-          toast.error("Failed to log the update. Check console for details.");
-        }
-        
         // Update the mentor in the local state
         setMentors((mentors) =>
           mentors.map((m) =>
@@ -313,7 +272,9 @@ export const MentorManagementSection = () => {
                   name: formData.name,
                   email: formData.email,
                   phone: formData.phone,
-                  mentorType: formData.mentorType,
+                  experience: formData.experience,
+                  specialization: formData.specialization,
+                  bio: formData.bio,
                   isAvailable: formData.isAvailable,
                 }
               : m
@@ -325,19 +286,6 @@ export const MentorManagementSection = () => {
       } else {
         toast.error(
           `Failed to update mentor: ${data.error || "Unknown error"}`
-        );
-        
-        // Log mentor update failure
-        await logError(
-          "MENTOR_UPDATE_FAILED",
-          "ADMIN",
-          `Failed to update mentor: ${formData.email}`,
-          {
-            mentorId: editingMentor.id,
-            mentorEmail: formData.email,
-            error: data.error || "Unknown error",
-            attemptedUpdates: formData
-          }
         );
       }
     } catch (error) {
@@ -364,22 +312,6 @@ export const MentorManagementSection = () => {
 
       if (data.success) {
         toast.success("Mentor deleted successfully");
-        
-        // Log mentor deletion
-        await logWarning(
-          "MENTOR_DELETED",
-          currentUserRole,
-          `Deleted mentor: ${mentorToDelete.email}`,
-          {
-            mentorId: mentorToDelete.id,
-            mentorEmail: mentorToDelete.email,
-            mentorName: mentorToDelete.name,
-            mentorType: mentorToDelete.mentorType,
-            deletionDate: new Date().toISOString(),
-            reason: `${currentUserRole.toLowerCase()}_action`
-          }
-        );
-        
         setMentors((mentors) =>
           mentors.filter((m) => m.id !== mentorToDelete.id)
         );
@@ -390,22 +322,28 @@ export const MentorManagementSection = () => {
         toast.error(
           `Failed to delete mentor: ${data.error || "Unknown error"}`
         );
-        
-        // Log mentor deletion failure
-        await logError(
-          "MENTOR_DELETION_FAILED",
-          currentUserRole,
-          `Failed to delete mentor: ${mentorToDelete.email}`,
-          {
-            mentorId: mentorToDelete.id,
-            mentorEmail: mentorToDelete.email,
-            error: data.error || "Unknown error"
-          }
-        );
       }
     } catch (error) {
       console.error("Error deleting mentor:", error);
       toast.error("An error occurred while deleting mentor");
+    }
+  };
+
+  const handleSyncMentorTypes = async () => {
+    setSyncing(true);
+    try {
+      const result = await syncMentorTypes();
+      if (result.success) {
+        toast.success("Mentor types synced successfully");
+        await loadMentorStats();
+      } else {
+        toast.error("Failed to sync mentor types");
+      }
+    } catch (error) {
+      console.error("Error syncing mentor types:", error);
+      toast.error("An error occurred while syncing");
+    } finally {
+      setSyncing(false);
     }
   };
 
@@ -427,24 +365,6 @@ export const MentorManagementSection = () => {
 
   return (
     <div className="space-y-6">
-      <div className="flex justify-between items-center">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Mentor Management
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Manage platform mentors and their information.
-          </p>
-        </div>
-        <Button
-          onClick={toggleMentorList}
-          className="flex items-center gap-2"
-        >
-          <Eye className="h-4 w-4" />
-          {showMentorList ? "Hide Mentors" : "View Mentors"}
-        </Button>
-      </div>
-
       {/* Stats Cards */}
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
         <StatCard
@@ -503,75 +423,141 @@ export const MentorManagementSection = () => {
         </CardContent>
       </Card>
 
+      {/* Type Consistency Status */}
+      <Card>
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <Database className="h-5 w-5" />
+            Data Consistency
+          </CardTitle>
+          <CardDescription>
+            Monitor and maintain mentor type consistency across applications
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              {stats?.typeConsistency ? (
+                <>
+                  <CheckCircle className="h-5 w-5 text-green-600" />
+                  <span className="text-green-600 font-medium">
+                    All mentor types are consistent
+                  </span>
+                </>
+              ) : (
+                <>
+                  <AlertTriangle className="h-5 w-5 text-yellow-600" />
+                  <span className="text-yellow-600 font-medium">
+                    Type inconsistencies detected
+                  </span>
+                </>
+              )}
+            </div>
+            <Button
+              onClick={handleSyncMentorTypes}
+              disabled={syncing}
+              variant="outline"
+              size="sm"
+            >
+              {syncing ? (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
+                  Syncing...
+                </>
+              ) : (
+                <>
+                  <RefreshCw className="h-4 w-4 mr-2" />
+                  Sync Types
+                </>
+              )}
+            </Button>
+          </div>
+        </CardContent>
+      </Card>
+
       {/* Mentor List */}
       {showMentorList && (
-        <Card className="p-6">
-          {/* Search control */}
-          <div className="flex flex-col sm:flex-row gap-4 mb-6">
-            <div className="relative flex-1">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-500" />
+        <Card>
+          <CardHeader>
+            <div className="flex items-center justify-between">
+              <div>
+                <CardTitle className="flex items-center gap-2">
+                  <Eye className="h-5 w-5" />
+                  Mentor Management
+                </CardTitle>
+                <CardDescription>
+                  View and edit mentor details
+                </CardDescription>
+              </div>
+              <Button onClick={toggleMentorList} variant="outline" size="sm">
+                Hide List
+              </Button>
+            </div>
+          </CardHeader>
+          <CardContent>
+            {/* Search */}
+            <div className="flex items-center space-x-2 mb-4">
+              <Search className="h-4 w-4 text-muted-foreground" />
               <Input
-                placeholder="Search mentors by name, email, or mentor type..."
-                className="pl-10"
+                placeholder="Search mentors by name, email, or specialization..."
                 value={searchTerm}
                 onChange={(e) => setSearchTerm(e.target.value)}
+                className="max-w-sm"
               />
             </div>
-          </div>
 
-          {filteredMentors.length === 0 ? (
-            <div className="text-center py-10">
-              <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-lg font-semibold text-gray-700">
-                No Mentors Found
-              </p>
-              <p className="text-gray-500">
-                {searchTerm
-                  ? "Try a different search term."
-                  : "No mentors available in the system."}
-              </p>
-            </div>
-          ) : (
+            {/* Mentor List */}
             <div className="space-y-4">
-              {filteredMentors.map((mentor) => (
-                <div
-                  key={mentor.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
-                >
-                  <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                      <h4 className="font-medium">{mentor.name || "Unnamed Mentor"}</h4>
-                      <Badge variant={mentor.isAvailable ? "default" : "secondary"}>
-                        {mentor.isAvailable ? "Available" : "Unavailable"}
-                      </Badge>
+              {filteredMentors.length === 0 ? (
+                <p className="text-center text-muted-foreground py-8">
+                  No mentors found matching your search.
+                </p>
+              ) : (
+                filteredMentors.map((mentor) => (
+                  <div
+                    key={mentor.id}
+                    className="flex items-center justify-between p-4 border rounded-lg hover:bg-gray-50"
+                  >
+                    <div className="flex-1">
+                      <div className="flex items-center gap-2">
+                        <h4 className="font-medium">{mentor.name || "Unnamed Mentor"}</h4>
+                        <Badge variant={mentor.isAvailable ? "default" : "secondary"}>
+                          {mentor.isAvailable ? "Available" : "Unavailable"}
+                        </Badge>
+                      </div>
+                      <p className="text-sm text-muted-foreground">{mentor.email}</p>
+                      {mentor.specialization && (
+                        <p className="text-sm text-blue-600">{mentor.specialization}</p>
+                      )}
+                      {mentor.experience && (
+                        <p className="text-xs text-muted-foreground">
+                          Experience: {mentor.experience}
+                        </p>
+                      )}
                     </div>
-                    <p className="text-sm text-muted-foreground">{mentor.email}</p>
-                    {mentor.mentorType && (
-                      <p className="text-sm text-blue-600">{mentor.mentorType}</p>
-                    )}
+                    <div className="flex items-center gap-2">
+                      <Button
+                        onClick={() => handleEditMentor(mentor)}
+                        size="sm"
+                        variant="outline"
+                      >
+                        <Edit className="h-4 w-4 mr-1" />
+                        Edit
+                      </Button>
+                      <Button
+                        onClick={() => handleDeleteMentor(mentor)}
+                        size="sm"
+                        variant="destructive"
+                      >
+                        <Trash2 className="h-4 w-4 mr-1" />
+                        Delete
+                      </Button>
+                    </div>
                   </div>
-                  <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => handleEditMentor(mentor)}
-                      size="sm"
-                      variant="outline"
-                    >
-                      <Edit className="h-4 w-4 mr-1" />
-                      Edit
-                    </Button>
-                    <Button
-                      onClick={() => handleDeleteMentor(mentor)}
-                      size="sm"
-                      variant="destructive"
-                    >
-                      <Trash2 className="h-4 w-4 mr-1" />
-                      Delete
-                    </Button>
-                  </div>
-                </div>
-              ))}
+                ))
+              )}
             </div>
-          )}
+          </CardContent>
         </Card>
       )}
 
@@ -617,22 +603,43 @@ export const MentorManagementSection = () => {
               />
             </div>
             <div>
-              <Label htmlFor="mentorType">Mentor Type</Label>
+              <Label htmlFor="specialization">Specialization</Label>
               <Select
-                value={formData.mentorType}
+                value={formData.specialization}
                 onValueChange={(value) =>
-                  setFormData({ ...formData, mentorType: value })
+                  setFormData({ ...formData, specialization: value })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select mentor type" />
+                  <SelectValue placeholder="Select specialization" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="YOGAMENTOR">Yoga Mentor</SelectItem>
-                  <SelectItem value="MEDITATIONMENTOR">Meditation Mentor</SelectItem>
-                  <SelectItem value="DIETPLANNER">Diet Planner</SelectItem>
+                  <SelectItem value="YOGA">Yoga</SelectItem>
+                  <SelectItem value="MEDITATION">Meditation</SelectItem>
+                  <SelectItem value="DIET_PLANNER">Diet Planning</SelectItem>
                 </SelectContent>
               </Select>
+            </div>
+            <div>
+              <Label htmlFor="experience">Experience</Label>
+              <Input
+                id="experience"
+                name="experience"
+                value={formData.experience}
+                onChange={handleFormChange}
+                placeholder="e.g., 5 years in yoga instruction"
+              />
+            </div>
+            <div>
+              <Label htmlFor="bio">Bio</Label>
+              <Textarea
+                id="bio"
+                name="bio"
+                value={formData.bio}
+                onChange={handleFormChange}
+                placeholder="Enter mentor bio"
+                rows={3}
+              />
             </div>
             <div className="flex items-center space-x-2">
               <Switch
