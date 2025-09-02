@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { TicketLogger, TicketAction, TicketLogLevel } from "@/lib/utils/ticket-logger";
 
 // Import types from our custom types (since Prisma types might not be available yet)
 import { 
@@ -100,25 +101,6 @@ export async function GET(request: NextRequest) {
                 name: true,
                 email: true,
                 role: true
-              }
-            },
-            messages: {
-              include: {
-                author: {
-                  select: {
-                    id: true,
-                    name: true,
-                    email: true,
-                    role: true
-                  }
-                }
-              },
-              orderBy: { createdAt: 'desc' },
-              take: 1
-            },
-            _count: {
-              select: {
-                messages: true
               }
             }
           },
@@ -240,6 +222,15 @@ export async function POST(request: NextRequest) {
             isInternal: false
           }
         });
+
+        // Log ticket creation
+        await TicketLogger.logTicketCreated(
+          ticket.id,
+          ticket.ticketNumber,
+          session.user.id,
+          { title, description, category, priority: priority || TicketPriority.MEDIUM },
+          request
+        );
       }
 
       return NextResponse.json({ 
@@ -273,6 +264,17 @@ export async function POST(request: NextRequest) {
 
     } catch (dbError) {
       console.error("Database error creating ticket:", dbError);
+      
+      // Log the error
+      await TicketLogger.logError(
+        session.user.id,
+        TicketAction.CREATED,
+        `Database error: ${(dbError as Error).message}`,
+        undefined,
+        undefined,
+        request
+      );
+      
       return NextResponse.json(
         { error: "Failed to create ticket. Database not ready." },
         { status: 503 }

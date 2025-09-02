@@ -22,7 +22,6 @@ import { ExploreMentorsSection } from '../user/sections/explore-mentors-section'
 import { ProfileSection } from '../user/sections/profile-section';
 import { SettingsSection } from '../user/sections/settings-section';
 import { UserTicketsSection } from '../user/sections/tickets-section';
-import { SupportSection } from '../user/sections/support-section';
 import { BaseHookResult } from '../shared/types';
 
 // Create a mapping of section IDs to components
@@ -37,7 +36,6 @@ const USER_SECTION_COMPONENTS = {
   "profile": ProfileSection,
   "settings": SettingsSection,
   "tickets": UserTicketsSection,
-  "support": SupportSection,
 };
 
 // Create extended hook function to add user-specific states

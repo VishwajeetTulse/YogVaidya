@@ -11,7 +11,7 @@ import { StudentsSection } from '../mentor/sections/students-section';
 import { ScheduleSection } from '../mentor/sections/schedule-section';
 import { ReviewsSection } from '../mentor/sections/reviews-section';
 import { SettingsSection } from '../mentor/sections/settings-section';
-import { SupportSection } from '../mentor/sections/support-section';
+import { TicketsSection } from '../mentor/sections/tickets-section';
 import { MentorAvailabilityToggle } from '../mentor/sections/availability-section';
 import { formatDate } from '../shared/utils';
 import { BaseHookResult } from '../shared/types';
@@ -24,7 +24,7 @@ const MENTOR_SECTION_COMPONENTS = {
   "availability": MentorAvailabilityToggle,
   "reviews": ReviewsSection,
   "settings": SettingsSection,
-  "support": SupportSection,
+  "tickets": TicketsSection,
 };
 
 // Create extended hook function to add formatDate

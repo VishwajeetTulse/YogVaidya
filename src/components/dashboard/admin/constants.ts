@@ -8,6 +8,8 @@ import {
   Settings,
   UserCheck,
   CreditCard,
+  Ticket,
+  Activity,
 } from "lucide-react";
 import { AdminSidebarMenuItem } from "./types";
 
@@ -49,10 +51,16 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     description: "Manage user subscriptions",
   },
   {
+    id: "tickets",
+    title: "Support Tickets",
+    icon: Ticket,
+    description: "Manage customer support & assign tickets",
+  },
+  {
     id: "logs",
-    title: "Logs",
+    title: "System Logs",
     icon: Database,
-    description: "View system & user logs",
+    description: "View system & user logs (including ticket activities)",
   },
   {
     id: "analytics",

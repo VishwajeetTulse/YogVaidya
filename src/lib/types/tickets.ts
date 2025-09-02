@@ -33,18 +33,6 @@ export interface TicketUser {
   role: string;
 }
 
-export interface TicketMessage {
-  id: string;
-  content: string;
-  isInternal: boolean;
-  authorId: string;
-  author: TicketUser;
-  ticketId: string;
-  attachments: string[];
-  createdAt: string;
-  updatedAt: string;
-}
-
 export interface Ticket {
   id: string;
   ticketNumber: string;
@@ -63,10 +51,6 @@ export interface Ticket {
   updatedAt: string;
   resolvedAt: string | null;
   closedAt: string | null;
-  messages: TicketMessage[];
-  _count: {
-    messages: number;
-  };
 }
 
 export interface CreateTicketRequest {

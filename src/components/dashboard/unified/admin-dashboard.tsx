@@ -14,6 +14,7 @@ import { LogsSection } from "../admin/sections/logs-section";
 import { AnalyticsSection } from "../admin/sections/analytics-section";
 import { SettingsSection } from "../admin/sections/settings-section";
 import { ApplicationsSection } from "../shared/applications-section";
+import { TicketsSection } from "../moderator/sections/tickets-section";
 // Create a mapping of section IDs to components
 const ADMIN_SECTION_COMPONENTS = {
   overview: OverviewSection,
@@ -22,6 +23,7 @@ const ADMIN_SECTION_COMPONENTS = {
   "mentor-management": MentorManagementSection,
   moderators: ModeratorManagementSection,
   subscriptions: SubscriptionManagementSection,
+  tickets: (props: any) => <TicketsSection userRole="ADMIN" currentUserId={props.userDetails?.id} />,
   logs: LogsSection,
   analytics: AnalyticsSection,
   settings: SettingsSection,

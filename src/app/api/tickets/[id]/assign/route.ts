@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketStatus } from "@/lib/types/tickets";
+import { TicketLogger, TicketAction, TicketLogLevel } from "@/lib/utils/ticket-logger";
 
 // PATCH /api/tickets/[id]/assign - Assign ticket to moderator
 export async function PATCH(
@@ -15,15 +16,30 @@ export async function PATCH(
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
-    // Only moderators and admins can assign tickets
-    if (!['MODERATOR', 'ADMIN'].includes(session.user.role)) {
-      return NextResponse.json({ error: "Forbidden" }, { status: 403 });
+    // Only admins can assign tickets (to maintain hierarchy)
+    if (session.user.role !== 'ADMIN') {
+      return NextResponse.json({ error: "Only administrators can assign tickets" }, { status: 403 });
     }
 
     const { assigneeId } = await request.json();
     const ticketId = (await params).id;
 
     try {
+      // Get ticket details and assignee information for logging
+      const currentTicket = await (prisma as any).ticket?.findUnique({
+        where: { id: ticketId },
+        select: { ticketNumber: true }
+      });
+
+      let assigneeName = null;
+      if (assigneeId) {
+        const assignee = await (prisma as any).user?.findUnique({
+          where: { id: assigneeId },
+          select: { name: true, email: true }
+        });
+        assigneeName = assignee?.name || assignee?.email || 'Unknown User';
+      }
+
       // Update the ticket assignment
       const updatedTicket = await (prisma as any).ticket?.update({
         where: { id: ticketId },
@@ -58,6 +74,16 @@ export async function PATCH(
         );
       }
 
+      // Log the assignment action
+      await TicketLogger.logAssignment(
+        ticketId,
+        currentTicket?.ticketNumber || 'Unknown',
+        session.user.id,
+        assigneeId || null,
+        assigneeName,
+        request
+      );
+
       // Create a system message about the assignment
       await (prisma as any).ticketMessage?.create({
         data: {
@@ -78,6 +104,17 @@ export async function PATCH(
 
     } catch (dbError) {
       console.error("Database error assigning ticket:", dbError);
+      
+      // Log the error
+      await TicketLogger.logError(
+        session.user.id,
+        TicketAction.ASSIGNED,
+        `Database error: ${(dbError as Error).message}`,
+        ticketId,
+        undefined,
+        request
+      );
+      
       return NextResponse.json(
         { error: "Failed to assign ticket" },
         { status: 500 }

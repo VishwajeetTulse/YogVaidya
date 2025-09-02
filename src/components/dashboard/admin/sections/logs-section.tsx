@@ -61,6 +61,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
     { value: "MENTOR", label: "Mentor Management" },
     { value: "ADMIN", label: "Admin Actions" },
     { value: "MODERATOR", label: "Moderator Actions" },
+    { value: "TICKET", label: "Ticket Activities" },
     { value: "SUBSCRIPTION", label: "Subscriptions" },
     { value: "PAYMENT", label: "Payments" },
   ];
@@ -180,8 +181,8 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
         {/* Main logs card - takes up 2/3 of the space on large screens */}
         <Card className="p-4 lg:col-span-3">
           <div className="text-sm text-muted-foreground mb-4">
-            View and filter system logs and user activities. Monitor
-            authentication events, system operations, and user actions.
+            View and filter system logs and user activities including ticket operations. Monitor
+            authentication events, system operations, user actions, and complete ticket audit trail.
           </div>
 
           {/* Filters */}
@@ -266,12 +267,13 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                   <TableHead>Level</TableHead>
                   <TableHead className="w-[120px]">User ID</TableHead>
                   <TableHead>Details</TableHead>
+                  <TableHead>Extra Info</TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {isLoading ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
+                    <TableCell colSpan={7} className="text-center py-10">
                       <div className="flex flex-col items-center justify-center">
                         <RefreshCw size={24} className="animate-spin mb-2" />
                         <span>Loading logs...</span>
@@ -280,7 +282,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                   </TableRow>
                 ) : logs.length === 0 ? (
                   <TableRow>
-                    <TableCell colSpan={6} className="text-center py-10">
+                    <TableCell colSpan={7} className="text-center py-10">
                       <div className="flex flex-col items-center justify-center">
                         <Database
                           size={24}
@@ -296,9 +298,23 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                       <TableCell className="font-mono text-xs">
                         {formatDate(log.timestamp)}
                       </TableCell>
-                      <TableCell>{log.action}</TableCell>
                       <TableCell>
-                        <Badge variant="outline">{log.category}</Badge>
+                        <div className="flex items-center gap-2">
+                          {log.category === 'TICKET' && (
+                            <Badge variant="secondary" className="text-xs">
+                              🎫
+                            </Badge>
+                          )}
+                          <span>{log.action}</span>
+                        </div>
+                      </TableCell>
+                      <TableCell>
+                        <Badge 
+                          variant="outline" 
+                          className={log.category === 'TICKET' ? 'border-blue-200 bg-blue-50 text-blue-700' : ''}
+                        >
+                          {log.category}
+                        </Badge>
                       </TableCell>
                       <TableCell>{getLevelBadge(log.level)}</TableCell>
                       <TableCell>
@@ -315,6 +331,36 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                       </TableCell>
                       <TableCell className="max-w-md truncate">
                         {log.details}
+                      </TableCell>
+                      <TableCell className="max-w-xs">
+                        {log.category === 'TICKET' && log.metadata ? (
+                          <div className="space-y-1 text-xs text-gray-600">
+                            {(log.metadata as any).ticketNumber && (
+                              <div className="flex items-center gap-1">
+                                <span className="font-semibold">Ticket:</span>
+                                <Badge variant="outline" className="text-xs">
+                                  {(log.metadata as any).ticketNumber}
+                                </Badge>
+                              </div>
+                            )}
+                            {(log.metadata as any).oldStatus && (log.metadata as any).newStatus && (
+                              <div className="text-xs">
+                                <span className="font-semibold">Status:</span> {(log.metadata as any).oldStatus} → {(log.metadata as any).newStatus}
+                              </div>
+                            )}
+                            {(log.metadata as any).assignedToName && (
+                              <div className="text-xs">
+                                <span className="font-semibold">Assigned to:</span> {(log.metadata as any).assignedToName}
+                              </div>
+                            )}
+                          </div>
+                        ) : log.ipAddress ? (
+                          <div className="text-xs text-gray-500">
+                            IP: {log.ipAddress}
+                          </div>
+                        ) : (
+                          "—"
+                        )}
                       </TableCell>
                     </TableRow>
                   ))

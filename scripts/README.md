@@ -2,6 +2,13 @@
 
 This directory contains maintenance scripts for the YogaVaidya database.
 
+## Prerequisites
+
+Before running any script, ensure:
+1. Your `.env.local` file contains the `DATABASE_URL` variable
+2. The database is accessible and running
+3. You have the necessary permissions to modify data
+
 ## Scripts Available
 
 ### 1. Cleanup Expired Trials (`cleanup-expired-trials.js/ts`)
@@ -18,6 +25,67 @@ This script cleans up users whose trial periods have expired but still have subs
 - `subscriptionPlan` → `null`
 - `subscriptionStartDate` → `null`
 - `subscriptionEndDate` → `null`
+
+### 2. Clear Tickets (`clear-all-tickets.js/ts`)
+
+Simple scripts to clear all tickets from the database.
+
+#### What it does:
+- Counts existing tickets
+- Deletes all tickets using Prisma
+- Verifies deletion was successful
+- Provides detailed logging
+
+#### Usage:
+```bash
+# JavaScript version
+node scripts/clear-all-tickets.js
+
+# TypeScript version (if ts-node is available)
+npx ts-node scripts/clear-all-tickets.ts
+```
+
+### 3. Advanced Ticket Cleanup (`clear-tickets-advanced.js`)
+
+Advanced ticket cleanup script with filtering and preview options.
+
+#### Features:
+- Filter by ticket status (OPEN, RESOLVED, CLOSED, etc.)
+- Clear tickets older than X days
+- Clear only unassigned tickets
+- Dry run mode to preview changes
+- Detailed logging and confirmation
+
+#### Usage:
+```bash
+# Clear all tickets
+node scripts/clear-tickets-advanced.js all
+
+# Clear only resolved tickets
+node scripts/clear-tickets-advanced.js resolved
+
+# Clear only closed tickets
+node scripts/clear-tickets-advanced.js closed
+
+# Clear tickets older than 30 days (default)
+node scripts/clear-tickets-advanced.js old
+
+# Clear tickets older than 7 days
+node scripts/clear-tickets-advanced.js old 7
+
+# Clear unassigned tickets only
+node scripts/clear-tickets-advanced.js unassigned
+
+# Preview what would be deleted (dry run)
+node scripts/clear-tickets-advanced.js preview
+node scripts/clear-tickets-advanced.js preview RESOLVED
+```
+
+#### Common Use Cases:
+- **Development**: Clear test tickets with `node scripts/clear-all-tickets.js`
+- **Maintenance**: Archive old resolved tickets with `node scripts/clear-tickets-advanced.js resolved`
+- **Storage Cleanup**: Remove old tickets with `node scripts/clear-tickets-advanced.js old 90`
+- **Preview Changes**: Always run with `preview` first to see what will be deleted
 - `nextBillingDate` → `null`
 - `billingPeriod` → `null`
 - `razorpaySubscriptionId` → `null`

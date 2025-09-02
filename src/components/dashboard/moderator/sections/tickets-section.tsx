@@ -28,13 +28,11 @@ import {
   AlertTriangle,
   CheckCircle,
   User,
-  MessageSquare,
   Calendar,
   Tag,
   MoreHorizontal,
   Edit,
   UserPlus,
-  MessageCircle,
   CheckSquare,
   XCircle,
   ArrowRight,
@@ -44,9 +42,10 @@ import { format } from "date-fns";
 
 interface TicketsProps {
   userRole: 'USER' | 'MODERATOR' | 'ADMIN';
+  currentUserId?: string;
 }
 
-export const TicketsSection = ({ userRole }: TicketsProps) => {
+export const TicketsSection = ({ userRole, currentUserId }: TicketsProps) => {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -198,14 +197,28 @@ export const TicketsSection = ({ userRole }: TicketsProps) => {
           </p>
         </div>
         
-        {/* Create Ticket Button */}
-        <Button 
-          onClick={() => setShowCreateForm(true)}
-          className="flex items-center gap-2"
-        >
-          <Plus className="h-4 w-4" />
-          {userRole === 'USER' ? 'Create Ticket' : 'New Ticket'}
-        </Button>
+        {/* Action Buttons */}
+        <div className="flex items-center gap-3">
+          {/* Refresh Button */}
+          <Button 
+            variant="outline"
+            onClick={fetchTickets}
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          {/* Create Ticket Button */}
+          <Button 
+            onClick={() => setShowCreateForm(true)}
+            className="flex items-center gap-2"
+          >
+            <Plus className="h-4 w-4" />
+            {userRole === 'USER' ? 'Create Ticket' : 'New Ticket'}
+          </Button>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -315,6 +328,7 @@ export const TicketsSection = ({ userRole }: TicketsProps) => {
               key={ticket.id} 
               ticket={ticket} 
               userRole={userRole}
+              currentUserId={currentUserId}
               onUpdate={fetchTickets}
             />
           ))
@@ -362,21 +376,21 @@ export const TicketsSection = ({ userRole }: TicketsProps) => {
 interface TicketCardProps {
   ticket: Ticket;
   userRole: 'USER' | 'MODERATOR' | 'ADMIN';
+  currentUserId?: string;
   onUpdate: () => void;
 }
 
-const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
+const TicketCard = ({ ticket, userRole, currentUserId, onUpdate }: TicketCardProps) => {
   const [isAssignDialogOpen, setIsAssignDialogOpen] = useState(false);
   const [isStatusDialogOpen, setIsStatusDialogOpen] = useState(false);
-  const [isCommentDialogOpen, setIsCommentDialogOpen] = useState(false);
   const [isActionsOpen, setIsActionsOpen] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
   
   // Form states
   const [assigneeId, setAssigneeId] = useState(ticket.assignedToId || "UNASSIGNED");
   const [newStatus, setNewStatus] = useState(ticket.status);
-  const [comment, setComment] = useState("");
-  const [isInternalComment, setIsInternalComment] = useState(false);
+  const [availableModerators, setAvailableModerators] = useState<Array<{id: string, name: string, email: string}>>([]);
+  const [loadingModerators, setLoadingModerators] = useState(false);
 
   // Ref for dropdown menu
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -397,12 +411,36 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
     }
   }, [isActionsOpen]);
 
-  // Mock list of available moderators - in real app, fetch from API
-  const availableModerators = [
-    { id: "mod1", name: "John Doe", email: "john@yogvaidya.com" },
-    { id: "mod2", name: "Jane Smith", email: "jane@yogvaidya.com" },
-    { id: "mod3", name: "Mike Johnson", email: "mike@yogvaidya.com" }
-  ];
+  // Fetch moderators when assign dialog opens
+  const fetchModerators = async () => {
+    try {
+      setLoadingModerators(true);
+      const response = await fetch('/api/users');
+      if (response.ok) {
+        const data = await response.json();
+        // Filter for moderators only (tickets should be assigned to moderators to resolve)
+        const moderators = data.users.filter((user: any) => 
+          user.role === 'MODERATOR'
+        ).map((user: any) => ({
+          id: user.id,
+          name: user.name || 'Unnamed User',
+          email: user.email
+        }));
+        setAvailableModerators(moderators);
+      }
+    } catch (error) {
+      console.error('Error fetching moderators:', error);
+    } finally {
+      setLoadingModerators(false);
+    }
+  };
+
+  // Fetch moderators when assign dialog opens
+  useEffect(() => {
+    if (isAssignDialogOpen && userRole === 'ADMIN') {
+      fetchModerators();
+    }
+  }, [isAssignDialogOpen, userRole]);
 
   const handleAssignTicket = async () => {
     try {
@@ -456,38 +494,6 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
     }
   };
 
-  const handleAddComment = async () => {
-    if (!comment.trim()) {
-      toast.error("Please enter a comment");
-      return;
-    }
-
-    try {
-      setIsUpdating(true);
-      const response = await fetch(`/api/tickets/${ticket.id}/messages`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ 
-          content: comment,
-          isInternal: isInternalComment
-        })
-      });
-
-      if (response.ok) {
-        toast.success("Comment added successfully");
-        setComment("");
-        setIsCommentDialogOpen(false);
-        onUpdate();
-      } else {
-        toast.error("Failed to add comment");
-      }
-    } catch (error) {
-      toast.error("Error adding comment");
-    } finally {
-      setIsUpdating(false);
-    }
-  };
-
   const getStatusBadge = (status: TicketStatus) => {
     const statusConfig = {
       [TicketStatus.OPEN]: { color: 'bg-blue-100 text-blue-800', icon: Clock },
@@ -524,9 +530,14 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
   };
 
   const canPerformActions = userRole === 'MODERATOR' || userRole === 'ADMIN';
+  const isAssignedToMe = ticket.assignedToId === currentUserId;
 
   return (
-    <Card className="p-6 hover:shadow-md transition-shadow">
+    <Card className={`p-6 hover:shadow-md transition-shadow ${
+      isAssignedToMe 
+        ? 'border-2 border-blue-500 bg-blue-50/30' 
+        : ''
+    }`}>
       <div className="flex justify-between items-start mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-2">
@@ -546,6 +557,11 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
             <Badge variant="outline" className="text-xs">
               {ticket.category.replace('_', ' ')}
             </Badge>
+            {isAssignedToMe && (
+              <Badge className="text-xs bg-blue-500 text-white">
+                Assigned to Me
+              </Badge>
+            )}
           </div>
         </div>
 
@@ -563,16 +579,21 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
             {isActionsOpen && (
               <div className="absolute right-0 top-full mt-1 bg-white border border-gray-200 rounded-md shadow-lg z-10 min-w-48">
                 <div className="py-1">
-                  <button 
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                    onClick={() => {
-                      setIsActionsOpen(false);
-                      setIsAssignDialogOpen(true);
-                    }}
-                  >
-                    <UserPlus className="h-4 w-4" />
-                    Assign Ticket
-                  </button>
+                  {/* Assignment is only available to admins and for non-resolved tickets */}
+                  {userRole === 'ADMIN' && 
+                   ticket.status !== TicketStatus.RESOLVED && 
+                   ticket.status !== TicketStatus.CLOSED && (
+                    <button 
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
+                      onClick={() => {
+                        setIsActionsOpen(false);
+                        setIsAssignDialogOpen(true);
+                      }}
+                    >
+                      <UserPlus className="h-4 w-4" />
+                      Assign Ticket
+                    </button>
+                  )}
 
                   <button 
                     className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
@@ -583,30 +604,6 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
                   >
                     <ArrowRight className="h-4 w-4" />
                     Update Status
-                  </button>
-
-                  <button 
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                    onClick={() => {
-                      setIsActionsOpen(false);
-                      setIsCommentDialogOpen(true);
-                    }}
-                  >
-                    <MessageCircle className="h-4 w-4" />
-                    Add Comment
-                  </button>
-
-                  <div className="border-t border-gray-100"></div>
-                  
-                  <button 
-                    className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 flex items-center gap-2"
-                    onClick={() => {
-                      setIsActionsOpen(false);
-                      onUpdate();
-                    }}
-                  >
-                    <RefreshCw className="h-4 w-4" />
-                    Refresh
                   </button>
                 </div>
               </div>
@@ -620,18 +617,22 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
                 </DialogHeader>
                 <div className="space-y-4">
                   <div>
-                    <Label>Assign to Moderator</Label>
-                    <Select value={assigneeId} onValueChange={setAssigneeId}>
+                    <Label>Assign to Moderator (for resolution)</Label>
+                    <Select value={assigneeId} onValueChange={setAssigneeId} disabled={loadingModerators}>
                       <SelectTrigger>
-                        <SelectValue placeholder="Select a moderator" />
+                        <SelectValue placeholder={loadingModerators ? "Loading moderators..." : "Select a moderator"} />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="UNASSIGNED">Unassigned</SelectItem>
-                        {availableModerators.map(mod => (
-                          <SelectItem key={mod.id} value={mod.id}>
-                            {mod.name} ({mod.email})
-                          </SelectItem>
-                        ))}
+                        {loadingModerators ? (
+                          <div className="px-2 py-1 text-sm text-gray-500">Loading moderators...</div>
+                        ) : (
+                          availableModerators.map(mod => (
+                            <SelectItem key={mod.id} value={mod.id}>
+                              {mod.name} ({mod.email})
+                            </SelectItem>
+                          ))
+                        )}
                       </SelectContent>
                     </Select>
                   </div>
@@ -639,7 +640,7 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
                     <Button variant="outline" onClick={() => setIsAssignDialogOpen(false)}>
                       Cancel
                     </Button>
-                    <Button onClick={handleAssignTicket} disabled={isUpdating}>
+                    <Button onClick={handleAssignTicket} disabled={isUpdating || loadingModerators}>
                       {isUpdating ? "Assigning..." : "Assign"}
                     </Button>
                   </div>
@@ -679,44 +680,6 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
                 </div>
               </DialogContent>
             </Dialog>
-
-            <Dialog open={isCommentDialogOpen} onOpenChange={setIsCommentDialogOpen}>
-              <DialogContent>
-                <DialogHeader>
-                  <DialogTitle>Add Comment</DialogTitle>
-                </DialogHeader>
-                <div className="space-y-4">
-                  <div>
-                    <Label>Comment</Label>
-                    <Textarea
-                      value={comment}
-                      onChange={(e) => setComment(e.target.value)}
-                      placeholder="Enter your comment..."
-                      rows={4}
-                    />
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <input
-                      type="checkbox"
-                      id="internal"
-                      checked={isInternalComment}
-                      onChange={(e) => setIsInternalComment(e.target.checked)}
-                    />
-                    <Label htmlFor="internal" className="text-sm">
-                      Internal comment (not visible to user)
-                    </Label>
-                  </div>
-                  <div className="flex justify-end gap-2">
-                    <Button variant="outline" onClick={() => setIsCommentDialogOpen(false)}>
-                      Cancel
-                    </Button>
-                    <Button onClick={handleAddComment} disabled={isUpdating}>
-                      {isUpdating ? "Adding..." : "Add Comment"}
-                    </Button>
-                  </div>
-                </div>
-              </DialogContent>
-            </Dialog>
           </div>
         )}
       </div>
@@ -734,11 +697,6 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
               <span>Assigned to {ticket.assignedTo.name}</span>
             </div>
           )}
-
-          <div className="flex items-center gap-1">
-            <MessageSquare className="h-3 w-3" />
-            <span>{ticket._count.messages} messages</span>
-          </div>
         </div>
 
         <div className="flex items-center gap-3">
@@ -812,7 +770,9 @@ const TicketCard = ({ ticket, userRole, onUpdate }: TicketCardProps) => {
                 </Button>
               )}
               
-              {!ticket.assignedToId && (
+              {!ticket.assignedToId && userRole === 'ADMIN' && 
+               ticket.status !== TicketStatus.RESOLVED && 
+               ticket.status !== TicketStatus.CLOSED && (
                 <Button
                   size="sm"
                   variant="outline"

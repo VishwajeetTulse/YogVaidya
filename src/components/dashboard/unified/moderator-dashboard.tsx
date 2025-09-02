@@ -23,7 +23,7 @@ const MODERATOR_SECTION_COMPONENTS = {
   "mentor-management": MentorManagementSection,
   "analytics": AnalyticsSection,
   "subscriptions": SubscriptionSection,
-  "tickets": () => <TicketsSection userRole="MODERATOR" />,
+  "tickets": (props: any) => <TicketsSection userRole="MODERATOR" currentUserId={props.userDetails?.id} />,
   "settings": SettingsSection,
   "support": SupportSection,
 };

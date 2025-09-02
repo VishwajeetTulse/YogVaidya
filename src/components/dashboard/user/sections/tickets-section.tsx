@@ -21,7 +21,14 @@ import {
   XCircle,
   MessageSquare,
   Calendar,
-  User
+  User,
+  Mail,
+  Phone,
+  BookOpen,
+  Video,
+  ChevronRight,
+  HelpCircle,
+  RefreshCw
 } from "lucide-react";
 import { 
   Ticket, 
@@ -171,19 +178,68 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
   return (
     <div className="space-y-6">
       {/* Header */}
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Help & Support</h1>
+        <p className="text-gray-600 mt-2">
+          Get help when you need it. We&apos;re here to support your wellness journey.
+        </p>
+      </div>
+
+      {/* Contact Information */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <h4 className="font-medium mb-2">Support Hours</h4>
+            <div className="space-y-1 text-sm text-gray-600">
+              <p>Monday - Friday: 9:00 AM - 6:00 PM IST</p>
+              <p>Saturday: 10:00 AM - 4:00 PM IST</p>
+              <p>Sunday: Closed</p>
+            </div>
+          </div>
+          <div>
+            <h4 className="font-medium mb-2">Contact Details</h4>
+            <div className="space-y-2 text-sm text-gray-600">
+              <div className="flex items-center gap-2">
+                <Phone className="h-4 w-4 text-[#876aff]" />
+                <span className="font-medium text-[#876aff]">+91 98765 43210</span>
+              </div>
+              <div className="flex items-center gap-2">
+                <Mail className="h-4 w-4 text-[#876aff]" />
+                <span className="font-medium text-[#876aff]">support@yogavaidya.com</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </Card>
+
+      {/* Support Tickets Section */}
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
           <h2 className="text-2xl font-bold text-gray-900">Support Tickets</h2>
           <p className="text-gray-600">Manage your support requests and track their progress</p>
         </div>
         
-        <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
-          <DialogTrigger asChild>
-            <Button className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              Create Ticket
-            </Button>
-          </DialogTrigger>
+        <div className="flex items-center gap-3">
+          {/* Refresh Button */}
+          <Button 
+            variant="outline"
+            onClick={fetchTickets}
+            disabled={loading}
+            className="flex items-center gap-2"
+          >
+            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            Refresh
+          </Button>
+          
+          {/* Create Ticket Button */}
+          <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
+            <DialogTrigger asChild>
+              <Button className="flex items-center gap-2">
+                <Plus className="h-4 w-4" />
+                Create Ticket
+              </Button>
+            </DialogTrigger>
           <DialogContent className="sm:max-w-[500px]">
             <DialogHeader>
               <DialogTitle>Create New Support Ticket</DialogTitle>
@@ -222,24 +278,6 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
               </div>
 
               <div>
-                <Label htmlFor="priority">Priority</Label>
-                <Select 
-                  value={newTicket.priority || TicketPriority.MEDIUM}
-                  onValueChange={(value) => setNewTicket(prev => ({ ...prev, priority: value as TicketPriority }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TicketPriority.LOW}>Low</SelectItem>
-                    <SelectItem value={TicketPriority.MEDIUM}>Medium</SelectItem>
-                    <SelectItem value={TicketPriority.HIGH}>High</SelectItem>
-                    <SelectItem value={TicketPriority.URGENT}>Urgent</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div>
                 <Label htmlFor="description">Description *</Label>
                 <Textarea
                   id="description"
@@ -265,6 +303,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
             </div>
           </DialogContent>
         </Dialog>
+        </div>
       </div>
 
       {/* Filters and Search */}
@@ -388,12 +427,6 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
                       <Badge variant="outline">
                         {ticket.category.replace('_', ' ').toLowerCase()}
                       </Badge>
-                      {ticket._count?.messages && (
-                        <div className="flex items-center gap-1">
-                          <MessageSquare className="h-4 w-4" />
-                          {ticket._count.messages} message{ticket._count.messages !== 1 ? 's' : ''}
-                        </div>
-                      )}
                       {ticket.assignedTo && (
                         <div className="flex items-center gap-1">
                           <User className="h-4 w-4" />

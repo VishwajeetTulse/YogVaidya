@@ -5,7 +5,7 @@ import {
   Calendar,
   Star,
   Settings,
-  HelpCircle,
+  Ticket,
   Clock,
 } from "lucide-react";
 import { MentorSidebarMenuItem } from "./types";
@@ -54,10 +54,10 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     description: "App preferences",
   },
   {
-    id: "support",
+    id: "tickets",
     title: "Help & Support",
-    icon: HelpCircle,
-    description: "Get help when needed",
+    icon: Ticket,
+    description: "Get help and manage support tickets",
   },
 ];
 

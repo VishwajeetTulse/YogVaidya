@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketStatus } from "@/lib/types/tickets";
+import { TicketLogger, TicketAction, TicketLogLevel } from "@/lib/utils/ticket-logger";
 
 // PATCH /api/tickets/[id]/status - Update ticket status
 export async function PATCH(
@@ -32,6 +33,21 @@ export async function PATCH(
     }
 
     try {
+      // First, get the current ticket to log the status change
+      const currentTicket = await (prisma as any).ticket?.findUnique({
+        where: { id: ticketId },
+        select: { status: true, ticketNumber: true }
+      });
+
+      if (!currentTicket) {
+        return NextResponse.json(
+          { error: "Ticket not found" },
+          { status: 404 }
+        );
+      }
+
+      const oldStatus = currentTicket.status;
+
       // Prepare update data
       const updateData: any = {
         status,
@@ -79,6 +95,16 @@ export async function PATCH(
         );
       }
 
+      // Log the status change
+      await TicketLogger.logStatusChange(
+        ticketId,
+        currentTicket.ticketNumber,
+        session.user.id,
+        oldStatus,
+        status,
+        request
+      );
+
       // Create a system message about the status change
       await (prisma as any).ticketMessage?.create({
         data: {
@@ -97,6 +123,17 @@ export async function PATCH(
 
     } catch (dbError) {
       console.error("Database error updating ticket status:", dbError);
+      
+      // Log the error
+      await TicketLogger.logError(
+        session.user.id,
+        TicketAction.STATUS_CHANGED,
+        `Database error: ${(dbError as Error).message}`,
+        ticketId,
+        undefined,
+        request
+      );
+      
       return NextResponse.json(
         { error: "Failed to update ticket status" },
         { status: 500 }

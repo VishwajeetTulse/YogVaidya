@@ -6,7 +6,6 @@ import {
   CreditCard,
   Target,
   Settings,
-  HelpCircle,
   Ticket,
 } from "lucide-react";
 import { SidebarMenuItem } from "./types";
@@ -62,15 +61,9 @@ export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
   },
   {
     id: "tickets",
-    title: "Support Tickets",
-    icon: Ticket,
-    description: "Manage your support requests",
-  },
-  {
-    id: "support",
     title: "Help & Support",
-    icon: HelpCircle,
-    description: "Get help when you need it",
+    icon: Ticket,
+    description: "Get help and manage support tickets",
   },
 ];
 
