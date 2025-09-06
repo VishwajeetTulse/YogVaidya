@@ -39,6 +39,36 @@ export const SessionsSection = () => {
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("upcoming");
 
+  // Format sessions data to handle Date/string conversion issues
+  const formatMentorSessionsData = (serverData: MentorSessionsData): MentorSessionsData => {
+    // Helper function to safely convert to valid Date object
+    const safeToDate = (dateValue: any): Date => {
+      if (!dateValue) {
+        console.warn('Null/undefined date value found, using current date as fallback');
+        return new Date();
+      }
+      
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+      
+      // If invalid date, log warning and return current date as fallback
+      console.warn('Invalid date value found in mentor session:', dateValue);
+      return new Date();
+    };
+
+    return {
+      ...serverData,
+      sessions: serverData.sessions.map((session: MentorSessionData) => ({
+        ...session,
+        scheduledTime: safeToDate(session.scheduledTime),
+        createdAt: safeToDate(session.createdAt),
+        updatedAt: safeToDate(session.updatedAt)
+      }))
+    };
+  };
+
 // Load mentor sessions using server action
 const loadMentorSessions = useCallback(async () => {
   if (!session?.user) return;
@@ -47,7 +77,7 @@ const loadMentorSessions = useCallback(async () => {
     const result = await getMentorSessions();
     
     if (result.success && result.data) {
-      setMentorSessionsData(result.data);
+      setMentorSessionsData(formatMentorSessionsData(result.data));
     } else {
       console.error("Failed to load sessions:", result.error);
       toast.error("Failed to load your sessions");
@@ -71,7 +101,7 @@ useEffect(() => {
         const result = await getMentorSessions();
         
         if (result.success && result.data) {
-          setMentorSessionsData(result.data);
+          setMentorSessionsData(formatMentorSessionsData(result.data));
           toast.success("Sessions refreshed successfully");
         } else {
           toast.error("Failed to refresh sessions");
@@ -156,27 +186,46 @@ useEffect(() => {
     return "Mentor";
   };
 
+  // Helper function for safe date comparison - now all dates should be valid Date objects
+  const getValidDate = (dateValue: any): Date | null => {
+    if (!dateValue) return null;
+    if (dateValue instanceof Date) {
+      return isNaN(dateValue.getTime()) ? null : dateValue;
+    }
+    const date = new Date(dateValue);
+    return isNaN(date.getTime()) ? null : date;
+  };
+
+  // Safe sorting function
+  const sortByScheduledTime = (a: MentorSessionData, b: MentorSessionData, ascending = true): number => {
+    const dateA = getValidDate(a.scheduledTime);
+    const dateB = getValidDate(b.scheduledTime);
+    
+    // Handle null dates: put them at the end
+    if (!dateA && !dateB) return 0;
+    if (!dateA) return 1;
+    if (!dateB) return -1;
+    
+    const diff = dateA.getTime() - dateB.getTime();
+    return ascending ? diff : -diff;
+  };
+
   // Filter sessions for upcoming (scheduled for future and not completed/cancelled)
   const upcomingSessions = scheduledSessions
     .filter(
-      (session: MentorSessionData) =>
-        new Date(session.scheduledTime) > new Date() &&
-        (!session.status || session.status === "SCHEDULED")
+      (session: MentorSessionData) => {
+        const scheduledDate = getValidDate(session.scheduledTime);
+        return scheduledDate && 
+          scheduledDate > new Date() &&
+          (!session.status || session.status === "SCHEDULED");
+      }
     )
-    .sort(
-      (a: MentorSessionData, b: MentorSessionData) =>
-        new Date(a.scheduledTime).getTime() -
-        new Date(b.scheduledTime).getTime()
-    );
+    .sort((a, b) => sortByScheduledTime(a, b, true));
 
   // Filter sessions for ongoing
   const ongoingSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "ONGOING")
-    .sort(
-      (a: MentorSessionData, b: MentorSessionData) =>
-        new Date(a.scheduledTime).getTime() -
-        new Date(b.scheduledTime).getTime()
-    );
+    .sort((a, b) => sortByScheduledTime(a, b, true));
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
@@ -185,29 +234,26 @@ useEffect(() => {
       if (session.status === "CANCELLED" || session.status === "ONGOING")
         return false;
       // If no status or SCHEDULED and time has passed, consider completed
-      return (
-        new Date(session.scheduledTime) <= new Date() &&
-        (!session.status || session.status === "SCHEDULED")
-      );
+      const scheduledDate = getValidDate(session.scheduledTime);
+      return scheduledDate &&
+        scheduledDate <= new Date() &&
+        (!session.status || session.status === "SCHEDULED");
     })
-    .sort(
-      (a: MentorSessionData, b: MentorSessionData) =>
-        new Date(b.scheduledTime).getTime() -
-        new Date(a.scheduledTime).getTime()
-    );
+    .sort((a, b) => sortByScheduledTime(a, b, false));
 
   // Filter sessions for cancelled
   const cancelledSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "CANCELLED")
-    .sort(
-      (a: MentorSessionData, b: MentorSessionData) =>
-        new Date(b.scheduledTime).getTime() -
-        new Date(a.scheduledTime).getTime()
-    );
+    .sort((a, b) => sortByScheduledTime(a, b, false));
 
   const renderSessionCard = (sessionItem: MentorSessionData) => {
-    const isUpcoming =
-      new Date(sessionItem.scheduledTime) > new Date() &&
+    // Defensive programming: Handle null/undefined scheduledTime first
+    const scheduledTime = sessionItem.scheduledTime ? new Date(sessionItem.scheduledTime) : null;
+    const isValidDate = scheduledTime && !isNaN(scheduledTime.getTime());
+    const currentTime = new Date();
+    
+    const isUpcoming = isValidDate &&
+      scheduledTime > currentTime &&
       (!sessionItem.status || sessionItem.status === "SCHEDULED");
     const isOngoing = sessionItem.status === "ONGOING";
     const isCompleted = (() => {
@@ -219,20 +265,26 @@ useEffect(() => {
         return false;
       // If no status or SCHEDULED and time has passed, consider completed
       return (
-        new Date(sessionItem.scheduledTime) <= new Date() &&
+        isValidDate &&
+        scheduledTime <= currentTime &&
         (!sessionItem.status || sessionItem.status === "SCHEDULED")
       );
     })();
     const isCancelled = sessionItem.status === "CANCELLED";
-    console.log(
-      "TIme ZOne " , sessionItem.scheduledTime.toLocaleString("en-US", {
-        timeZone: "Asia/Kolkata",
-        hour: "numeric",
-        minute: "2-digit",
-        hour12: true,
-      }),
-      sessionItem.scheduledTime
-    );
+    
+    if (isValidDate) {
+      console.log(
+        "Time Zone:", scheduledTime.toLocaleString("en-US", {
+          timeZone: "Asia/Kolkata",
+          hour: "numeric",
+          minute: "2-digit",
+          hour12: true,
+        }),
+        scheduledTime
+      );
+    } else {
+      console.log("Invalid or null scheduledTime for session:", sessionItem.id);
+    }
     return (
       <Card key={sessionItem.id} className="p-6">
         <div className="flex items-center justify-between">
@@ -278,15 +330,19 @@ useEffect(() => {
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
-                  {new Date(sessionItem.scheduledTime).toLocaleString("en-US", {
-                    timeZone: "Asia/Kolkata",
-                    day: "2-digit",
-                    month: "2-digit",
-                    year: "2-digit",
-                    hour: "numeric",
-                    minute: "2-digit",
-                    hour12: true,
-                  }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")}
+                  {isValidDate ? (
+                    scheduledTime.toLocaleString("en-US", {
+                      timeZone: "Asia/Kolkata",
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "2-digit",
+                      hour: "numeric",
+                      minute: "2-digit",
+                      hour12: true,
+                    }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")
+                  ) : (
+                    "Date not available"
+                  )}
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
@@ -385,15 +441,7 @@ useEffect(() => {
               </>
             )}
 
-            {/* Buttons for completed sessions */}
-            {isCompleted && !isOngoing && (
-              <Button
-                variant="outline"
-                onClick={() => window.open(sessionItem.link, "_blank")}
-              >
-                View Recording
-              </Button>
-            )}
+            {/* No buttons for completed sessions - recordings functionality removed */}
           </div>
         </div>
       </Card>

@@ -5,6 +5,7 @@ import { UnifiedDashboard } from '../shared/unified-dashboard';
 import { SIDEBAR_MENU_ITEMS } from '../user/constants';
 import { formatDate, getStatusColor } from '../shared/utils';
 import { useState } from 'react';
+import { useSessionStatusUpdates } from '@/hooks/use-session-status-updates';
 import { 
   cancelUserSubscription, 
   upgradeUserSubscription,
@@ -125,6 +126,9 @@ const useExtendUserHook = (baseHookResult: BaseHookResult) => {
 };
 
 export default function UserDashboard() {
+  // Enable automatic session status updates for users
+  useSessionStatusUpdates(true, 60000); // Check every minute
+
   return (
     <UnifiedDashboard<'user'>
       role="user"

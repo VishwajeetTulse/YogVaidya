@@ -17,6 +17,7 @@ interface SessionData {
   duration: number;
   sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
+  link?: string; // Session link for joining
   mentor: {
     id: string;
     name: string | null;
@@ -46,11 +47,35 @@ export const ClassesSection = () => {
       throw new Error("Server data is undefined");
     }
 
+    // Helper function to safely convert to valid ISO string
+    const safeToISOString = (dateValue: any): string => {
+      // If it's already a string, check if it's a valid ISO date
+      if (typeof dateValue === 'string') {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+        // If invalid string, return a fallback date
+        console.warn('Invalid date string found:', dateValue);
+        return new Date().toISOString(); // Current date as fallback
+      }
+      
+      // If it's a Date object or something else
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+      
+      // If completely invalid, use current date as fallback
+      console.warn('Invalid date value found:', dateValue);
+      return new Date().toISOString();
+    };
+
     return {
       ...serverData,
       sessions: serverData.sessions.map((session: UserSessionData) => ({
         ...session,
-        scheduledTime: (session.scheduledTime as Date).toISOString()
+        scheduledTime: safeToISOString(session.scheduledTime)
       }))
     };
   };
@@ -61,9 +86,13 @@ useEffect(() => {
     if (!session?.user) return;
     
     try {
+      console.log('📚 Loading user sessions for:', session.user.id);
       const result = await getUserSessions();
       
+      console.log('📊 User sessions result:', result);
+      
       if (result.success && result.data) {
+        console.log('✅ Formatting sessions data:', result.data.sessions?.length || 0, 'sessions');
         setSessionsData(formatSessionsData(result.data));
       } else {
         console.error("Failed to load sessions:", result.error);
@@ -131,9 +160,21 @@ useEffect(() => {
 
   // Filter sessions based on the subscription plan
   const availableSessions = sessionsData?.sessions || [];
-  const upcomingSessions = availableSessions.filter(session => 
-    session.status === "SCHEDULED" || session.status === "ONGOING"
-  );
+  
+  // Upcoming sessions: SCHEDULED or ONGOING sessions that haven't ended yet
+  const upcomingSessions = availableSessions.filter(session => {
+    if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+      return false;
+    }
+    
+    // For SCHEDULED and ONGOING sessions, check if they haven't ended yet
+    const sessionTime = new Date(session.scheduledTime);
+    const sessionEndTime = new Date(sessionTime.getTime() + session.duration * 60000);
+    const currentTime = new Date();
+    
+    return currentTime <= sessionEndTime;
+  });
+  
   const completedSessions = availableSessions.filter(session => 
     session.status === "COMPLETED"
   );
@@ -155,9 +196,25 @@ useEffect(() => {
   };
 
   const renderSessionCard = (sessionItem: SessionData) => {
+    // Defensive programming: Ensure valid date
     const sessionTime = new Date(sessionItem.scheduledTime);
-    const isUpcoming = sessionItem.status === "SCHEDULED" || sessionItem.status === "ONGOING";
-    const isOngoing = sessionItem.status === "ONGOING";
+    if (isNaN(sessionTime.getTime())) {
+      console.error('Invalid session time for session:', sessionItem.id, sessionItem.scheduledTime);
+      return null; // Skip rendering this session
+    }
+    
+    const currentTime = new Date();
+    const sessionEndTime = new Date(sessionTime.getTime() + sessionItem.duration * 60000); // Add duration in milliseconds
+    
+    // Session is "upcoming" if it's not explicitly completed and hasn't ended yet
+    // This keeps ONGOING sessions in the upcoming tab where students can join them
+    const isWithinTimeWindow = currentTime <= sessionEndTime;
+    const isUpcoming = (sessionItem.status === "SCHEDULED" || sessionItem.status === "ONGOING") && isWithinTimeWindow;
+    const isOngoing = sessionItem.status === "ONGOING" && isWithinTimeWindow;
+    
+    // Only show join button if session is ONGOING or within 15 minutes before start time
+    const joinAllowedTime = new Date(sessionTime.getTime() - 15 * 60000); // 15 minutes before start
+    const canJoin = isOngoing || (sessionItem.status === "SCHEDULED" && currentTime >= joinAllowedTime && currentTime <= sessionEndTime);
 
     return (
       <Card key={sessionItem.id} className="p-6">
@@ -210,30 +267,32 @@ useEffect(() => {
                 >
                   Reschedule
                 </Button>
-                <Button 
-                  className={`${isOngoing ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : "bg-[#876aff] hover:bg-[#7c5cff]"}`}
-                  onClick={() => {
-                    // TODO: Open session link
-                    window.open("#", "_blank");
-                    toast.success(`${isOngoing ? "Joining" : "Session will start soon"}`);
-                  }}
-                >
-                  <ExternalLink className="w-4 h-4 mr-1" />
-                  {isOngoing ? "Join Now" : "Join Class"}
-                </Button>
+                {canJoin ? (
+                  <Button 
+                    className={`${isOngoing ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : "bg-[#876aff] hover:bg-[#7c5cff]"}`}
+                    onClick={() => {
+                      if (sessionItem.link) {
+                        window.open(sessionItem.link, "_blank");
+                        toast.success(`${isOngoing ? "Joining ongoing session..." : "Opening session link..."}`);
+                      } else {
+                        toast.error("Session link not available. Please contact support.");
+                      }
+                    }}
+                  >
+                    <ExternalLink className="w-4 h-4 mr-1" />
+                    {isOngoing ? "Join Now" : "Join Class"}
+                  </Button>
+                ) : (
+                  <Button 
+                    variant="outline"
+                    disabled
+                    className="text-gray-400"
+                  >
+                    <Clock className="w-4 h-4 mr-1" />
+                    {currentTime < joinAllowedTime ? "Starts Soon" : "Session Ended"}
+                  </Button>
+                )}
               </>
-            )}
-            {sessionItem.status === "COMPLETED" && (
-              <Button 
-                variant="outline"
-                onClick={() => {
-                  // TODO: View recording functionality
-                  toast.info("Recording playback coming soon!");
-                }}
-              >
-                <PlayCircle className="w-4 h-4 mr-1" />
-                View Recording
-              </Button>
             )}
           </div>
         </div>

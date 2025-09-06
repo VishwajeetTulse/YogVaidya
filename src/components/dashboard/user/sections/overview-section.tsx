@@ -138,32 +138,64 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           </div>
         ) : dashboardData?.todaySchedule && dashboardData.todaySchedule.length > 0 ? (
           <div className="space-y-3">
-            {dashboardData.todaySchedule.slice(0, 3).map((session, index) => (
-              <div key={session.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                session.type === 'yoga' 
-                  ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
-                  : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    session.type === 'yoga' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
-                  }`}></div>
-                  <div>
-                    <p className="font-medium">{session.title}</p>
-                    <p className="text-sm text-gray-500">
-                      with Mentor {session.mentor} • {session.time} {isOnActiveTrial && "(Trial Access)"}
-                    </p>
+            {dashboardData.todaySchedule.slice(0, 3).map((session, index) => {
+              const sessionTime = new Date(session.scheduledTime);
+              const currentTime = new Date();
+              const sessionEndTime = new Date(sessionTime.getTime() + 45 * 60000); // Assume 45 minutes duration
+              const joinAllowedTime = new Date(sessionTime.getTime() - 15 * 60000); // 15 minutes before start
+              
+              const canJoin = currentTime >= joinAllowedTime && currentTime <= sessionEndTime;
+              const isWithinTimeWindow = currentTime <= sessionEndTime;
+              const isUpcoming = (session.status === 'SCHEDULED' || session.status === 'ONGOING') && isWithinTimeWindow;
+              
+              return (
+                <div key={session.id} className={`flex items-center justify-between p-3 rounded-lg border ${
+                  session.type === 'yoga' 
+                    ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
+                    : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
+                }`}>
+                  <div className="flex items-center gap-3">
+                    <div className={`w-2 h-2 rounded-full ${
+                      session.type === 'yoga' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
+                    }`}></div>
+                    <div>
+                      <p className="font-medium">{session.title}</p>
+                      <p className="text-sm text-gray-500">
+                        with Mentor {session.mentor} • {session.time} {isOnActiveTrial && "(Trial Access)"}
+                      </p>
+                    </div>
                   </div>
+                  {index === 0 && isUpcoming ? (
+                    canJoin ? (
+                      <Button 
+                        size="sm" 
+                        className={session.type === 'yoga' ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : ""}
+                        variant={session.type === 'meditation' ? "outline" : "default"}
+                      >
+                        Join
+                      </Button>
+                    ) : (
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        disabled
+                        className="text-gray-400"
+                      >
+                        {currentTime < joinAllowedTime ? "Soon" : "Ended"}
+                      </Button>
+                    )
+                  ) : (
+                    <Button 
+                      size="sm" 
+                      variant="outline"
+                      className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
+                    >
+                      {index === 0 ? "View" : "Reschedule"}
+                    </Button>
+                  )}
                 </div>
-                <Button 
-                  size="sm" 
-                  className={session.type === 'yoga' ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : ""}
-                  variant={session.type === 'meditation' ? "outline" : "default"}
-                >
-                  {index === 0 ? "Join" : "Reschedule"}
-                </Button>
-              </div>
-            ))}
+              );
+            })}
             {dashboardData.todaySchedule.length > 3 && (
               <div className="text-center pt-2">
                 <p className="text-sm text-gray-500">

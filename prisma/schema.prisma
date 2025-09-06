@@ -119,6 +119,8 @@ model User {
   trialEndDate          DateTime?
   autoRenewal           Boolean?          // Changed from default(true) to optional
   trialUsed             Boolean           @default(false)
+  
+  sessionPrice          Float?            // Price for one-on-one sessions (in rupees)
 
   sessions              Session[]
   accounts              Account[]
@@ -126,6 +128,9 @@ model User {
   schedules             Schedule[]
   tickets               Ticket[]
   assignedTickets       Ticket[]          @relation("AssignedTickets")
+  studentBookings       SessionBooking[]  @relation("StudentBookings")
+  mentorBookings        SessionBooking[]  @relation("MentorBookings")
+  mentorTimeSlots       MentorTimeSlot[]  @relation("MentorTimeSlots")
   
   
   @@unique([email])
@@ -192,6 +197,11 @@ model MentorApplication {
   userId         String?
   status         String?  // <-- Add this line for application status
   mentorType     MentorType?
+  
+  // Relations
+  timeSlots      MentorTimeSlot[]
+  sessionBookings SessionBooking[]
+  
   @@map("mentor_application")
 }
 
@@ -233,6 +243,72 @@ model Schedule {
   @@index([scheduledTime])
   @@index([status])
   @@map("schedule")
+}
+
+// Mentor available time slots
+model MentorTimeSlot {
+  id                String         @id @map("_id")
+  mentorId          String         // Mentor who created this slot
+  mentorApplicationId String?      // Reference to mentor application for compatibility
+  startTime         DateTime       // When the slot starts
+  endTime           DateTime       // When the slot ends
+  isBooked          Boolean        @default(false)  // Whether this slot is booked
+  bookedBy          String?        // User ID who booked this slot
+  sessionType       SessionType    // Type of session
+  maxStudents       Int           @default(1)      // Maximum students per slot (default 1)
+  currentStudents   Int           @default(0)      // Currently booked students
+  isRecurring       Boolean        @default(false) // Whether this is a recurring slot
+  recurringDays     String[]       @default([])    // Days of week if recurring ["MONDAY", "TUESDAY"]
+  price             Float?         // Price for this specific slot (overrides mentor default)
+  sessionLink       String?        // Meeting link for the session (Zoom, Google Meet, etc.)
+  notes             String?        // Mentor notes about this slot
+  isActive          Boolean        @default(true)  // Whether this slot is available for booking
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  mentor            User           @relation("MentorTimeSlots", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentorApplication MentorApplication? @relation(fields: [mentorApplicationId], references: [id], onDelete: SetNull)
+  sessionBookings   SessionBooking[] @relation("SlotBookings")
+
+  @@index([mentorId])
+  @@index([startTime])
+  @@index([isBooked])
+  @@index([isActive])
+  @@index([sessionType])
+  @@map("mentorTimeSlot")
+}
+
+model SessionBooking {
+  id                String         @id @map("_id")
+  userId            String         // Student who booked the session
+  mentorId          String         // Mentor for the session
+  mentorApplicationId String?      // Reference to mentor application for compatibility
+  timeSlotId        String?        // Reference to the time slot (new field)
+  sessionType       SessionType
+  scheduledAt       DateTime       // When the session is scheduled
+  status            ScheduleStatus @default(SCHEDULED)
+  isDelayed         Boolean        @default(false) // Track if session started late
+  notes             String?        // Additional notes from the student
+  paymentDetails    Json?          // Payment information
+  amount            Float?         // Payment amount
+  paymentStatus     String?        // Payment status
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+  
+  // Relations
+  user              User           @relation("StudentBookings", fields: [userId], references: [id], onDelete: Cascade)
+  mentor            User           @relation("MentorBookings", fields: [mentorId], references: [id], onDelete: Cascade)
+  mentorApplication MentorApplication? @relation(fields: [mentorApplicationId], references: [id], onDelete: SetNull)
+  timeSlot          MentorTimeSlot? @relation("SlotBookings", fields: [timeSlotId], references: [id], onDelete: SetNull)
+
+  @@index([userId])
+  @@index([mentorId])
+  @@index([timeSlotId])
+  @@index([scheduledAt])
+  @@index([status])
+  @@index([paymentStatus])
+  @@map("sessionBooking")
 }
 
 model Ticket {

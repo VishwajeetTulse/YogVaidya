@@ -6,7 +6,7 @@ import {
   Star,
   Settings,
   Ticket,
-  Clock,
+  IndianRupee,
 } from "lucide-react";
 import { MentorSidebarMenuItem } from "./types";
 
@@ -33,13 +33,13 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     id: "schedule",
     title: "Schedule",
     icon: Calendar,
-    description: "Manage your availability",
+    description: "Manage your time slots and schedule",
   },
   {
-    id: "availability",
-    title: "Availability",
-    icon: Clock,
-    description: "Control your online status",
+    id: "pricing",
+    title: "Session Pricing",
+    icon: IndianRupee,
+    description: "Set your session rates",
   },
   {
     id: "reviews",

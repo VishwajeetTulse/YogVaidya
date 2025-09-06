@@ -15,6 +15,7 @@ export interface DashboardData {
     title: string;
     mentor: string;
     time: string;
+    scheduledTime: Date;
     type: 'yoga' | 'meditation';
     status: 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED';
   }[];
@@ -255,6 +256,7 @@ export async function getUserDashboardData(): Promise<{
           title: session.title || `${session.sessionType} Session`,
           mentor: session.mentor?.name || 'Mentor',
           time: formatSessionTime(session.scheduledTime),
+          scheduledTime: session.scheduledTime, // Add full datetime for time-based logic
           type: session.sessionType.toLowerCase() as 'yoga' | 'meditation',
           status: session.status as 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
         })),

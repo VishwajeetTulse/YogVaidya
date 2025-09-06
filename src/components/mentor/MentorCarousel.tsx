@@ -15,6 +15,7 @@ type Mentor = {
   imageUrl: string;
   available: boolean;
   description: string;
+  sessionPrice?: number;
 };
 
 interface MentorCarouselProps {
@@ -227,6 +228,28 @@ export default function MentorCarousel({
                       </p>
                     )}
                     
+                    {/* Pricing Information */}
+                    {mentor.sessionPrice && mentor.sessionPrice > 0 && (
+                      <div className="flex items-center justify-center mb-3">
+                        <div className={`px-3 py-1.5 rounded-full ${
+                          colorClass === "bg-[#76d2fa]"
+                            ? "bg-blue-50 border border-blue-200"
+                            : colorClass === "bg-[#ff7dac]"
+                            ? "bg-pink-50 border border-pink-200"
+                            : "bg-purple-50 border border-purple-200"
+                        }`}>
+                          <div className="text-center">
+                            <div className="text-sm font-bold text-gray-900">
+                              ₹{mentor.sessionPrice}
+                            </div>
+                            <div className="text-xs text-gray-600">
+                              per session
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+                    
                     <div className="flex items-center justify-center text-gray-500 mb-4">
                       <div className={`flex items-center px-2 py-1 rounded-full ${
                         colorClass === "bg-[#76d2fa]"
@@ -244,7 +267,13 @@ export default function MentorCarousel({
                       </div>
                     </div>
                     
-                    <Link href="/pricing" className="block">
+                    <Link 
+                      href={mentor.sessionPrice && mentor.sessionPrice > 0 
+                        ? `/mentors/${mentor.id}/timeslots` 
+                        : "/pricing"
+                      } 
+                      className="block"
+                    >
                       <Button
                         className={`w-full font-medium py-2 text-sm transition-all duration-200 ${
                           colorClass === "bg-[#76d2fa]"
@@ -254,7 +283,10 @@ export default function MentorCarousel({
                             : "bg-purple-400 hover:bg-purple-500 text-white shadow-sm hover:shadow-md"
                         }`}
                       >
-                        Get Subscription
+                        {mentor.sessionPrice && mentor.sessionPrice > 0 
+                          ? "Book Session" 
+                          : "Get Subscription"
+                        }
                       </Button>
                     </Link>
                   </div>

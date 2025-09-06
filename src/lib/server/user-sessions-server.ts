@@ -13,6 +13,7 @@ export interface UserSessionData {
   duration: number;
   sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
+  link?: string; // Session link for joining
   mentor: {
     id: string;
     name: string | null;
@@ -145,6 +146,85 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     }
     // FLOURISH plan gets both YOGA and MEDITATION sessions (no additional filter needed)
 
+    // Get sessions from both Schedule and SessionBooking collections
+    console.log("📊 Fetching sessions from both Schedule and SessionBooking collections...");
+    console.log(`👤 User ID: ${session.user.id}`);
+    
+    // 1. Get sessions from SessionBooking collection (new time slot bookings)
+    console.log("🔍 Querying SessionBooking collection...");
+    const sessionBookingsResult = await prisma.$runCommandRaw({
+      aggregate: 'sessionBooking',
+      pipeline: [
+        {
+          $match: {
+            userId: session.user.id,
+            status: { $in: ["SCHEDULED", "ONGOING", "COMPLETED"] },
+            paymentStatus: "COMPLETED" // Only show paid sessions
+          }
+        },
+        {
+          $lookup: {
+            from: 'user',
+            localField: 'mentorId',
+            foreignField: '_id',
+            as: 'mentor'
+          }
+        },
+        {
+          $lookup: {
+            from: 'mentorTimeSlot',
+            localField: 'timeSlotId',
+            foreignField: '_id',
+            as: 'timeSlot'
+          }
+        },
+        {
+          $addFields: {
+            mentorData: { $arrayElemAt: ['$mentor', 0] },
+            timeSlotData: { $arrayElemAt: ['$timeSlot', 0] }
+          }
+        },
+        {
+          $project: {
+            id: '$_id',
+            title: {
+              $concat: [
+                { $toUpper: { $substr: ['$sessionType', 0, 1] } },
+                { $toLower: { $substr: ['$sessionType', 1, -1] } },
+                ' Session with ',
+                { $ifNull: ['$mentorData.name', 'Mentor'] }
+              ]
+            },
+            scheduledTime: '$scheduledAt',
+            duration: { $literal: 60 }, // Default 60 minutes duration
+            sessionType: 1,
+            status: 1,
+            link: '$timeSlotData.sessionLink', // Add session link from time slot
+            mentor: {
+              id: '$mentorData._id',
+              name: '$mentorData.name',
+              mentorType: '$mentorData.mentorType'
+            }
+          }
+        }
+      ],
+      cursor: {}
+    });
+
+    let sessionBookings: UserSessionData[] = [];
+    if (sessionBookingsResult && 
+        typeof sessionBookingsResult === 'object' && 
+        'cursor' in sessionBookingsResult &&
+        sessionBookingsResult.cursor &&
+        typeof sessionBookingsResult.cursor === 'object' &&
+        'firstBatch' in sessionBookingsResult.cursor &&
+        Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
+      sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
+    }
+
+    console.log(`📅 Found ${sessionBookings.length} session bookings`);
+
+    // 2. Get sessions from Schedule collection (legacy sessions) - filtered by subscription plan
     const sessions = await prisma.schedule.findMany({
       where: sessionFilters,
       include: {
@@ -167,6 +247,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       duration: session.duration,
       sessionType: session.sessionType,
       status: session.status,
+      link: session.link, // Add session link for legacy sessions
       mentor: {
         id: session.mentor.id,
         name: session.mentor.name,
@@ -174,12 +255,22 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       }
     }));
 
+    console.log(`📅 Found ${formattedSessions.length} legacy schedule sessions`);
+
+    // 3. Combine sessions from both sources
+    const allSessions = [...sessionBookings, ...formattedSessions];
+    
+    // 4. Sort by scheduled time (most recent first for display purposes)
+    allSessions.sort((a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime());
+
+    console.log(`✅ Total unified sessions: ${allSessions.length} (${sessionBookings.length} bookings + ${formattedSessions.length} legacy)`);
+
     return {
       success: true,
       data: {
         subscriptionStatus: subscription.subscriptionStatus,
         subscriptionPlan: subscription.subscriptionPlan,
-        sessions: formattedSessions,
+        sessions: allSessions,
         needsSubscription: false,
         nextBillingDate: subscription.nextBillingDate?.toISOString() || null,
         isTrialExpired: false // Active users don't have expired trials

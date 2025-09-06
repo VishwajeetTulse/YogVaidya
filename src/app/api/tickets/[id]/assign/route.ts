@@ -7,7 +7,7 @@ import { TicketLogger, TicketAction, TicketLogLevel } from "@/lib/utils/ticket-l
 // PATCH /api/tickets/[id]/assign - Assign ticket to moderator
 export async function PATCH(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });

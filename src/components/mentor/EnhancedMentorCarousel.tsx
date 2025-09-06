@@ -29,6 +29,7 @@ interface EnhancedMentorProps {
   mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null;
   certifications?: string;
   expertise?: string;
+  sessionPrice?: number;
 }
 
 interface EnhancedMentorCarouselProps {
@@ -167,32 +168,47 @@ const MentorCard: React.FC<{ mentor: EnhancedMentorProps; colorClass: string }> 
                   </p>
                 </div>
               )}
+
+              {/* Pricing Information */}
+              {mentor.sessionPrice && mentor.sessionPrice > 0 && (
+                <div className="flex items-center justify-center bg-gray-50 rounded-lg p-2 mt-2">
+                  <div className="text-center">
+                    <div className="text-sm font-bold text-gray-900">
+                      ₹{mentor.sessionPrice}
+                    </div>
+                    <div className="text-xs text-gray-600">
+                      per session
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
 
             {/* Bottom Action Section */}
             <div className="mt-3 md:mt-2 space-y-1.5 md:space-y-1">
-              <Button 
-                className={cn(
-                  "w-full border-0 font-semibold transition-all duration-200 group-hover:scale-105 text-xs md:text-xs py-1.5 md:py-1.5",
-                  mentor.available 
-                    ? cn("text-white", colorClass)
-                    : "bg-gray-400 text-white cursor-not-allowed"
-                )}
-                size="sm"
-                disabled={!mentor.available}
-              >
-                {mentor.available ? (
-                  <>
+              {mentor.available ? (
+                <Link href={`/mentors/${mentor.id}/timeslots`}>
+                  <Button 
+                    className={cn(
+                      "w-full border-0 font-semibold transition-all duration-200 group-hover:scale-105 text-xs md:text-xs py-1.5 md:py-1.5",
+                      "text-white", colorClass
+                    )}
+                    size="sm"
+                  >
                     <Heart className="w-3 h-3 md:w-3 md:h-3 mr-1.5 md:mr-1" />
                     Connect Now
-                  </>
-                ) : (
-                  <>
-                    <Clock className="w-3 h-3 md:w-3 md:h-3 mr-1.5 md:mr-1" />
-                    Currently Busy
-                  </>
-                )}
-              </Button>
+                  </Button>
+                </Link>
+              ) : (
+                <Button 
+                  className="w-full border-0 font-semibold transition-all duration-200 text-xs md:text-xs py-1.5 md:py-1.5 bg-gray-400 text-white cursor-not-allowed"
+                  size="sm"
+                  disabled
+                >
+                  <Clock className="w-3 h-3 md:w-3 md:h-3 mr-1.5 md:mr-1" />
+                  Currently Busy
+                </Button>
+              )}
               
               {/* Availability message - Compact desktop version */}
               <div className="hidden md:block">

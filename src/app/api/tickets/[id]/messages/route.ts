@@ -6,7 +6,7 @@ import crypto from "crypto";
 // POST /api/tickets/[id]/messages - Add comment/message to ticket
 export async function POST(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
@@ -113,7 +113,7 @@ export async function POST(
 // GET /api/tickets/[id]/messages - Get all messages for a ticket
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: Promise<{ id: string }> }
 ) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });

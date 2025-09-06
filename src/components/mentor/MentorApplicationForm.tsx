@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Switch } from "@/components/ui/switch";
+import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -36,6 +38,7 @@ const formSchema = z.object({
   expertise: z.string().min(2, "Please enter your areas of expertise"),
   certifications: z.string().min(2, "Please enter your certifications"),
   pow: z.any().optional(),
+  sessionPrice: z.coerce.number().min(0, "Price must be at least 0").max(10000, "Price must be less than 10,000").optional(),
   consent: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the terms." }),
   }),
@@ -85,6 +88,7 @@ export default function MentorApplicationForm() {
       expertise: "",
       certifications: "",
       pow: undefined,
+      sessionPrice: undefined,
       mentorType: undefined,
     },
   });

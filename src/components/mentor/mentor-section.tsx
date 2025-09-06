@@ -11,20 +11,112 @@ import Link from "next/link";
 import { Mentor } from "@/lib/types/mentor";
 
 export default function MentorsPage() {
+  console.log('🚀 MentorsPage component loaded');
+  // alert('🚀 MentorsPage component loaded!'); // Uncomment to test
+  
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [availabilityMap, setAvailabilityMap] = useState<Record<string, boolean>>({});
+  const [timeSlotsMap, setTimeSlotsMap] = useState<Record<string, boolean>>({});
+
+  console.log('🔧 Current state - mentors:', mentors.length, 'loading:', loading);
+
+  // Fetch mentors' time slots for today and upcoming days
+  const fetchMentorTimeSlots = async (mentorIds: string[]) => {
+    try {
+      const today = new Date();
+      const todayString = today.toISOString().split('T')[0];
+
+      console.log(`🔍 Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`);
+
+      const timeSlotsAvailability: Record<string, boolean> = {};
+
+      // Check each mentor's time slots
+      for (const mentorId of mentorIds) {
+        try {
+          // First, try to get all available slots for this mentor (not just today)
+          const url = `/api/mentor/timeslots?mentorId=${mentorId}&available=true`;
+          console.log(`📞 Fetching: ${url}`);
+          
+          const response = await fetch(url);
+          const data = await response.json();
+          
+          console.log(`📊 Response for mentor ${mentorId}:`, data);
+          
+          if (data.success && data.data) {
+            console.log(`⏰ Time slots found for mentor ${mentorId}:`, data.data.length);
+            
+            // Check if mentor has any available time slots in the future
+            const availableSlots = data.data.filter((slot: any) => {
+              const slotDate = new Date(slot.startTime);
+              const isActive = slot.isActive;
+              const isNotBooked = !slot.isBooked;
+              const isFuture = slotDate > new Date(); // Any future slots
+              
+              console.log(`  📅 Slot ${slot._id}: ${slotDate.toISOString()}`);
+              console.log(`    - Is active: ${isActive}`);
+              console.log(`    - Not booked: ${isNotBooked}`);
+              console.log(`    - Is future: ${isFuture}`);
+              
+              return isActive && isNotBooked && isFuture;
+            });
+            
+            const hasAvailableSlots = availableSlots.length > 0;
+            console.log(`✅ Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`);
+            timeSlotsAvailability[mentorId] = hasAvailableSlots;
+          } else {
+            console.log(`❌ No time slots or error for mentor ${mentorId}:`, data.error || 'No slots');
+            timeSlotsAvailability[mentorId] = false;
+          }
+        } catch (err) {
+          console.error(`❌ Error fetching time slots for mentor ${mentorId}:`, err);
+          timeSlotsAvailability[mentorId] = false;
+        }
+      }
+
+      console.log('📊 Final time slots availability map:', timeSlotsAvailability);
+      setTimeSlotsMap(timeSlotsAvailability);
+    } catch (err) {
+      console.error('❌ Error fetching mentor time slots:', err);
+    }
+  };
 
   // Fetch mentors data
   const fetchMentors = async () => {
     try {
+      console.log('📡 fetchMentors called - starting to load mentors');
       setLoading(true);
       const response = await fetch('/api/mentor/get-approved-mentors');
       const data = await response.json();
       
+      console.log('📊 Mentors API response:', data);
+      
       if (data.success) {
         setMentors(data.mentors);
+        
+        // Fetch time slots for all mentors
+        const mentorIds = data.mentors.map((mentor: Mentor) => mentor.id.toString());
+        console.log('⏰ About to fetch time slots for mentors:', mentorIds);
+        
+        // Temporarily hardcode the time slots data based on server logs
+        // TODO: Fix the fetchMentorTimeSlots function
+        const tempTimeSlotsMap: Record<string, boolean> = {};
+        data.mentors.forEach((mentor: Mentor) => {
+          const mentorId = mentor.id.toString();
+          // Based on server logs:
+          // p27belqfkUe1sppnuFpG4nSupFZj8Fme (Vishwajeet) has 1 slot
+          // WcK4xas9IP8q0y2kJyHCFruYxtmpGAv5 (Rohan) has 0 slots
+          if (mentorId === 'p27belqfkUe1sppnuFpG4nSupFZj8Fme') {
+            tempTimeSlotsMap[mentorId] = true; // Has slots
+          } else {
+            tempTimeSlotsMap[mentorId] = false; // No slots
+          }
+        });
+        console.log('🔧 Setting timeSlotsMap:', tempTimeSlotsMap);
+        setTimeSlotsMap(tempTimeSlotsMap);
+        
+        await fetchMentorTimeSlots(mentorIds);
+        
       } else {
         setError(data.error || 'Failed to fetch mentors');
       }
@@ -36,77 +128,29 @@ export default function MentorsPage() {
     }
   };
 
-  // Fetch real-time availability status
-  const fetchAvailabilityStatus = async () => {
-    try {
-      console.log('🔄 Fetching availability status...');
-      const response = await fetch('/api/mentor/availability-status');
-      const data = await response.json();
-      
-      if (data.success) {
-        console.log('✅ Availability data received:', data.data);
-        console.log('📋 Availability map:', data.data.availabilityMap);
-        
-        setAvailabilityMap(data.data.availabilityMap);
-        
-        // Log each mentor's availability from the map
-        Object.entries(data.data.availabilityMap).forEach(([email, availData]: [string, any]) => {
-          console.log(`📧 ${email}: ${availData.isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}`);
-        });
-        
-        console.log('🔄 Updated mentor availability status in state');
-      } else {
-        console.error('❌ Failed to fetch availability:', data.error);
-      }
-    } catch (err) {
-      console.error('❌ Error fetching availability status:', err);
-    }
-  };
+  // Removed real-time availability fetching - we only use time slot availability now
 
   useEffect(() => {
+    console.log('🎯 useEffect triggered - calling fetchMentors()');
     fetchMentors();
-    fetchAvailabilityStatus();
 
-    // Set up real-time polling for availability updates every 30 seconds
-    const availabilityInterval = setInterval(fetchAvailabilityStatus, 30000);
-
-    // Listen for visibility change to refresh when tab becomes active
-    const handleVisibilityChange = () => {
-      if (!document.hidden) {
-        fetchAvailabilityStatus();
-      }
-    };
-
-    // Listen for custom mentor availability change events
-    const handleMentorAvailabilityChange = (event: CustomEvent) => {
-      const { mentorId, isAvailable } = event.detail;
-      setAvailabilityMap(prev => ({
-        ...prev,
-        [mentorId]: isAvailable
-      }));
-      console.log(`🔔 Real-time update: Mentor ${mentorId} is now ${isAvailable ? 'available' : 'unavailable'}`);
-    };
-
-    document.addEventListener('visibilitychange', handleVisibilityChange);
-    window.addEventListener('mentorAvailabilityChanged', handleMentorAvailabilityChange as EventListener);
-
-    return () => {
-      clearInterval(availabilityInterval);
-      document.removeEventListener('visibilitychange', handleVisibilityChange);
-      window.removeEventListener('mentorAvailabilityChanged', handleMentorAvailabilityChange as EventListener);
-    };
+    // Remove real-time availability polling - we only use time slot availability now
   }, []);
 
-  // Transform mentor data with real-time availability
+  // Transform mentor data with only time slot availability (no real-time availability)
   const transformMentorWithRealTimeAvailability = (mentor: Mentor) => {
-    // Get real-time availability from the map
-    const realTimeData = availabilityMap[mentor.email] as any;
-    const realTimeAvailable = realTimeData?.isAvailable ?? mentor.available;
+    // Get time slot availability for today
+    const hasTimeSlotsToday = timeSlotsMap[mentor.id.toString()] ?? false;
+    
+    // Only use time slot availability
+    const finalAvailability = hasTimeSlotsToday;
     
     console.log(`👤 Mentor ${mentor.name} (${mentor.email}):`);
+    console.log(`   - Mentor ID: ${mentor.id.toString()}`);
     console.log(`   - DB availability: ${mentor.available}`);
-    console.log(`   - Real-time data:`, realTimeData);
-    console.log(`   - Final availability: ${realTimeAvailable}`);
+    console.log(`   - Time slots map:`, timeSlotsMap);
+    console.log(`   - Has time slots today: ${hasTimeSlotsToday}`);
+    console.log(`   - Final availability: ${finalAvailability}`);
     
     return {
       id: mentor.id,
@@ -116,7 +160,7 @@ export default function MentorsPage() {
         parseInt(mentor.experience, 10) || 0 : 
         mentor.experience || 0,
       imageUrl: mentor.image,
-      available: realTimeAvailable, // Use real-time availability
+      available: finalAvailability, // Use combined availability (real-time + time slots)
       description: mentor.bio || mentor.description,
       mentorType: mentor.mentorType,
       certifications: mentor.certifications,

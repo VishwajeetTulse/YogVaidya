@@ -18,7 +18,10 @@ export async function GET() {
       approvedApplications.map(async (application) => {
         const user = await prisma.user.findFirst({
           where: {
-            email: application.email
+            OR: [
+              { email: application.email },
+              { id: application.userId || "" } // Use userId if available
+            ]
           },
           select: {
             id: true,
@@ -26,7 +29,8 @@ export async function GET() {
             image: true,
             phone: true,
             role: true,
-            mentorType: true
+            mentorType: true,
+            sessionPrice: true
           }
         });
 
@@ -34,7 +38,7 @@ export async function GET() {
         let isAvailable = true; // Default value
         try {
           const availabilityData = await prisma.user.findUnique({
-            where: { email: application.email },
+            where: { id: user?.id || "" },
             select: { isAvailable: true }
           });
           isAvailable = availabilityData?.isAvailable ?? true;
@@ -44,7 +48,7 @@ export async function GET() {
         }
 
         return {
-          id: application.id,
+          id: user?.id || application.userId, // Use actual user ID, not application ID
           name: application.name,
           email: application.email,
           phone: application.phone,
@@ -57,6 +61,7 @@ export async function GET() {
           bio: application.profile || `Experienced ${application.expertise} practitioner dedicated to helping students achieve their wellness goals through personalized guidance and proven techniques.`,
           mentorType: application.mentorType,
           profile: application.profile,
+          sessionPrice: user?.sessionPrice || null,
           createdAt: application.createdAt,
           updatedAt: application.updatedAt,
           userRole: user?.role
