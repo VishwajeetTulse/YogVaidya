@@ -117,6 +117,20 @@ useEffect(() => {
     );
   }
 
+  // If there are no mentors available, show the subscription prompt screen
+  const hasAnyMentors = mentorData?.assignedMentor || (mentorData?.availableMentors && mentorData.availableMentors.length > 0);
+  
+  if (!hasAnyMentors) {
+    return (
+      <SubscriptionPrompt 
+        subscriptionStatus={mentorData?.subscriptionInfo.status || "INACTIVE"}
+        subscriptionPlan={mentorData?.subscriptionInfo.plan || null}
+        nextBillingDate={mentorData?.subscriptionInfo.nextBillingDate}
+        isTrialExpired={mentorData?.subscriptionInfo.isTrialExpired}
+      />
+    );
+  }
+
   const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";

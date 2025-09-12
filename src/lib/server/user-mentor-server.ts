@@ -75,26 +75,195 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
                (!subscription.subscriptionPlan || subscription.paymentAmount === 0));
     };
 
+    // Helper function to fetch mentors from paid session bookings
+    const fetchMentorsFromPaidBookings = async (userId: string): Promise<UserMentorData[]> => {
+      try {
+        console.log("🔍 Fetching mentors from paid session bookings for user:", userId);
+
+        // First, let's check if there are any session bookings for this user at all
+        const allUserBookings = await prisma.$runCommandRaw({
+          aggregate: 'sessionBooking',
+          pipeline: [
+            {
+              $match: {
+                userId: userId
+              }
+            }
+          ],
+          cursor: {}
+        });
+
+        let allBookings: any[] = [];
+        if (allUserBookings &&
+            typeof allUserBookings === 'object' &&
+            'cursor' in allUserBookings &&
+            allUserBookings.cursor &&
+            typeof allUserBookings.cursor === 'object' &&
+            'firstBatch' in allUserBookings.cursor &&
+            Array.isArray(allUserBookings.cursor.firstBatch)) {
+          allBookings = allUserBookings.cursor.firstBatch;
+        }
+
+        console.log(`🔍 Total session bookings for user: ${allBookings.length}`);
+        if (allBookings.length > 0) {
+          console.log("📋 Sample booking:", JSON.stringify(allBookings[0], null, 2));
+        }
+
+        // Use raw MongoDB aggregation to fetch session bookings with mentor details
+        const sessionBookingsResult = await prisma.$runCommandRaw({
+          aggregate: 'sessionBooking',
+          pipeline: [
+            {
+              $match: {
+                userId: userId,
+                paymentStatus: "COMPLETED", // Only paid bookings
+                scheduledAt: { $exists: true }
+              }
+            },
+            {
+              $lookup: {
+                from: 'user',
+                localField: 'mentorId',
+                foreignField: '_id',
+                as: 'mentor'
+              }
+            },
+            {
+              $lookup: {
+                from: 'mentorTimeSlot',
+                localField: 'timeSlotId',
+                foreignField: '_id',
+                as: 'timeSlot'
+              }
+            },
+            {
+              $addFields: {
+                mentorData: { $arrayElemAt: ['$mentor', 0] },
+                timeSlotData: { $arrayElemAt: ['$timeSlot', 0] }
+              }
+            },
+            {
+              $match: {
+                mentorData: { $ne: null }
+              }
+            },
+            {
+              $group: {
+                _id: "$mentorData._id",
+                mentor: { $first: "$mentorData" },
+                sessionCount: { $sum: 1 }
+              }
+            },
+            {
+              $project: {
+                id: { $toString: "$_id" },
+                name: "$mentor.name",
+                email: "$mentor.email",
+                mentorType: "$mentor.mentorType",
+                image: "$mentor.image",
+                phone: "$mentor.phone",
+                createdAt: "$mentor.createdAt",
+                sessionCount: 1
+              }
+            }
+          ],
+          cursor: {}
+        });
+
+        let mentorsFromBookings: any[] = [];
+        if (sessionBookingsResult &&
+            typeof sessionBookingsResult === 'object' &&
+            'cursor' in sessionBookingsResult &&
+            sessionBookingsResult.cursor &&
+            typeof sessionBookingsResult.cursor === 'object' &&
+            'firstBatch' in sessionBookingsResult.cursor &&
+            Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
+          mentorsFromBookings = sessionBookingsResult.cursor.firstBatch;
+        }
+
+        console.log(`📅 Found ${mentorsFromBookings.length} mentors from paid bookings`);
+        
+        // Debug: Log the raw result for troubleshooting
+        console.log("🔍 Raw sessionBookingsResult:", JSON.stringify(sessionBookingsResult, null, 2));
+        console.log("🔍 Mentors from bookings:", JSON.stringify(mentorsFromBookings, null, 2));
+
+        // Get mentor applications for additional data
+        const mentorEmails = mentorsFromBookings.map(m => m.email);
+        const mentorApplications = await prisma.mentorApplication.findMany({
+          where: {
+            email: { in: mentorEmails },
+            status: "APPROVED"
+          },
+          select: {
+            email: true,
+            experience: true,
+            expertise: true,
+            certifications: true,
+            profile: true,
+            mentorType: true
+          }
+        });
+
+        const mentorApplicationMap = new Map(
+          mentorApplications.map(app => [app.email, app])
+        );
+
+        // Format the mentors data
+        return mentorsFromBookings.map(mentor => {
+          const mentorApplication = mentorApplicationMap.get(mentor.email);
+          return {
+            id: mentor.id,
+            name: mentor.name,
+            email: mentor.email,
+            mentorType: mentor.mentorType || mentorApplication?.mentorType || null,
+            image: mentor.image,
+            phone: mentor.phone,
+            createdAt: new Date(mentor.createdAt),
+            experience: mentorApplication?.experience || undefined,
+            expertise: mentorApplication?.expertise || undefined,
+            certifications: mentorApplication?.certifications || undefined,
+            profile: mentorApplication?.profile || undefined,
+            totalSessions: mentor.sessionCount,
+            upcomingSessions: 0 // Will be calculated separately if needed
+          };
+        });
+
+      } catch (error) {
+        console.error("Error fetching mentors from paid bookings:", error);
+        return [];
+      }
+    };
+
     // Check if user needs subscription
     let needsSubscription = false;
     
     if (!subscription) {
-      // Try to start a trial for users without any subscription
-      // try {
-      //   const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
-      //   const trialResult = await startAutoTrialForNewUser(session.user.id);
-        
-      //   if (trialResult.success) {
-      //     // Re-fetch subscription after starting trial
-      //     const newSubscriptionResult = await getUserSubscription(session.user.id);
-      //     if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
-      //       // Continue with the new trial subscription
-      //       return getUserMentor(); // Recursive call with new subscription
-      //     }
-      //   }
-      // } catch (error) {
-      //   console.error("Failed to start trial for user:", error);
-      // }
+      // User has no subscription record, check for paid mentor bookings
+      console.log("👤 User has no subscription, checking for paid mentor bookings...");
+      const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
+      
+      if (paidMentors.length > 0) {
+        console.log(`✅ Found ${paidMentors.length} mentors from paid bookings, showing mentors`);
+        return {
+          success: true,
+          data: {
+            subscriptionInfo: {
+              plan: null,
+              status: "INACTIVE",
+              needsSubscription: false, // Don't require subscription if they have paid mentor sessions
+              nextBillingDate: null,
+              isTrialExpired: false
+            },
+            assignedMentor: paidMentors[0] || null,
+            availableMentors: paidMentors,
+            sessionStats: {
+              totalScheduled: paidMentors.reduce((sum, m) => sum + m.totalSessions, 0),
+              upcomingWithMentor: 0,
+              completedWithMentor: paidMentors.reduce((sum, m) => sum + m.totalSessions, 0)
+            }
+          }
+        };
+      }
       
       needsSubscription = true;
     } else if (subscription.subscriptionStatus === "INACTIVE" || 
@@ -110,8 +279,36 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       needsSubscription = subscription.subscriptionEndDate ? new Date(subscription.subscriptionEndDate) <= now : false;
     }
     console.log("Needs Subscription:", needsSubscription);
-    // If user needs subscription, return early with subscription prompt data
+    
+    // If user needs subscription, check for paid mentor bookings first
     if (needsSubscription) {
+      console.log("👤 User needs subscription, checking for paid mentor bookings...");
+      const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
+      
+      if (paidMentors.length > 0) {
+        console.log(`✅ Found ${paidMentors.length} mentors from paid bookings, showing mentors despite expired subscription`);
+        return {
+          success: true,
+          data: {
+            subscriptionInfo: {
+              plan: subscription?.subscriptionPlan || null,
+              status: subscription?.subscriptionStatus || "INACTIVE",
+              needsSubscription: false, // Override since they have paid mentor sessions
+              nextBillingDate: subscription?.nextBillingDate?.toString() || null,
+              isTrialExpired: isTrialExpired()
+            },
+            assignedMentor: paidMentors[0] || null, // Use first mentor as assigned
+            availableMentors: paidMentors,
+            sessionStats: {
+              totalScheduled: paidMentors.reduce((sum, m) => sum + m.totalSessions, 0),
+              upcomingWithMentor: 0, // Can be calculated if needed
+              completedWithMentor: paidMentors.reduce((sum, m) => sum + m.totalSessions, 0)
+            }
+          }
+        };
+      }
+      
+      // No paid bookings, show subscription needed
       return {
         success: true,
         data: {

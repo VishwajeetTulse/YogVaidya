@@ -16,6 +16,8 @@ interface SessionData {
   timeSlotId: string;
   status: string;
   isDelayed?: boolean;
+  manualStartTime?: string | Date;
+  actualEndTime?: string | Date;
   [key: string]: any;
 }
 
@@ -90,6 +92,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
                 $set: { 
                   status: 'ONGOING',
                   isDelayed: true,
+                  manualStartTime: currentTime, // Record the time when marked as delayed for auto-completion calculation
                   updatedAt: currentTime
                 } 
               }
@@ -174,6 +177,131 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             newStatus: 'COMPLETED',
             timestamp: currentTime,
             reason: `Session ended at ${endTime.toISOString()}`
+          });
+        }
+      }
+    }
+
+    // 3. Complete delayed ongoing sessions based on their manual start time + planned duration
+    const delayedOngoingSessionsResult = await prisma.$runCommandRaw({
+      find: 'sessionBooking',
+      filter: {
+        status: 'ONGOING',
+        timeSlotId: { $ne: null },
+        isDelayed: true,
+        manualStartTime: { $exists: true, $ne: null } // Only sessions that have been manually started
+      }
+    });
+
+    let delayedOngoingSessions: SessionData[] = [];
+    if (delayedOngoingSessionsResult && 
+        typeof delayedOngoingSessionsResult === 'object' && 
+        'cursor' in delayedOngoingSessionsResult &&
+        delayedOngoingSessionsResult.cursor &&
+        typeof delayedOngoingSessionsResult.cursor === 'object' &&
+        'firstBatch' in delayedOngoingSessionsResult.cursor &&
+        Array.isArray(delayedOngoingSessionsResult.cursor.firstBatch)) {
+      delayedOngoingSessions = delayedOngoingSessionsResult.cursor.firstBatch as SessionData[];
+    }
+
+    for (const session of delayedOngoingSessions) {
+      if (!session.timeSlotId || !session.manualStartTime) continue;
+      
+      // Get time slot details to calculate planned duration
+      const timeSlotResult = await prisma.$runCommandRaw({
+        find: 'mentorTimeSlot',
+        filter: { _id: session.timeSlotId }
+      });
+
+      let timeSlot: TimeSlotData | null = null;
+      if (timeSlotResult && 
+          typeof timeSlotResult === 'object' && 
+          'cursor' in timeSlotResult &&
+          timeSlotResult.cursor &&
+          typeof timeSlotResult.cursor === 'object' &&
+          'firstBatch' in timeSlotResult.cursor &&
+          Array.isArray(timeSlotResult.cursor.firstBatch) &&
+          timeSlotResult.cursor.firstBatch.length > 0) {
+        timeSlot = timeSlotResult.cursor.firstBatch[0] as TimeSlotData;
+      }
+
+      if (timeSlot) {
+        const originalStartTime = new Date(timeSlot.startTime);
+        const originalEndTime = new Date(timeSlot.endTime);
+        const manualStartTime = new Date(session.manualStartTime);
+        
+        // Calculate planned duration: originalEndTime - originalStartTime
+        const plannedDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
+        
+        // Calculate when this delayed session should end: manualStartTime + plannedDuration
+        const calculatedEndTime = new Date(manualStartTime.getTime() + plannedDurationMs);
+
+        // Check if the calculated end time has passed
+        if (calculatedEndTime <= currentTime) {
+          await prisma.$runCommandRaw({
+            update: 'sessionBooking',
+            updates: [{
+              q: { _id: session.id },
+              u: { 
+                $set: { 
+                  status: 'COMPLETED',
+                  actualEndTime: currentTime,
+                  updatedAt: currentTime
+                } 
+              }
+            }]
+          });
+
+          updates.push({
+            sessionId: session.id,
+            oldStatus: 'ONGOING',
+            newStatus: 'COMPLETED',
+            timestamp: currentTime,
+            reason: `Delayed session auto-completed - started manually at ${manualStartTime.toISOString()}, planned duration ${plannedDurationMs/60000} minutes, calculated end time ${calculatedEndTime.toISOString()}`
+          });
+        }
+      } else {
+        // Time slot not found - use default duration based on session type
+        console.log(`⚠️ Time slot not found for session ${session.id}, using default duration`);
+        
+        const manualStartTime = new Date(session.manualStartTime);
+        let defaultDurationMinutes = 60; // Default 60 minutes
+        
+        // Set duration based on session type
+        if (session.sessionType === 'YOGA') {
+          defaultDurationMinutes = 60; // 1 hour for yoga
+        } else if (session.sessionType === 'MEDITATION') {
+          defaultDurationMinutes = 30; // 30 minutes for meditation
+        } else if (session.sessionType === 'DIET') {
+          defaultDurationMinutes = 45; // 45 minutes for diet consultation
+        }
+
+        const defaultDurationMs = defaultDurationMinutes * 60 * 1000;
+        const calculatedEndTime = new Date(manualStartTime.getTime() + defaultDurationMs);
+
+        // Check if the calculated end time has passed
+        if (calculatedEndTime <= currentTime) {
+          await prisma.$runCommandRaw({
+            update: 'sessionBooking',
+            updates: [{
+              q: { _id: session.id },
+              u: { 
+                $set: { 
+                  status: 'COMPLETED',
+                  actualEndTime: currentTime,
+                  completionReason: `Default duration for ${session.sessionType}: ${defaultDurationMinutes} minutes`,
+                  updatedAt: currentTime
+                } 
+              }
+            }]
+          });
+
+          updates.push({
+            sessionId: session.id,
+            oldStatus: 'ONGOING',
+            newStatus: 'COMPLETED',
+            timestamp: currentTime,
+            reason: `Delayed session auto-completed with default duration - started manually at ${manualStartTime.toISOString()}, default duration ${defaultDurationMinutes} minutes for ${session.sessionType}, calculated end time ${calculatedEndTime.toISOString()}`
           });
         }
       }

@@ -46,6 +46,89 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       return { success: false, error: "Authentication required" };
     }
 
+    // Helper function to fetch paid one-on-one session bookings
+    const fetchPaidSessionBookings = async (userId: string): Promise<UserSessionData[]> => {
+      try {
+        console.log("🔍 Fetching paid session bookings for user:", userId);
+        
+        const sessionBookingsResult = await prisma.$runCommandRaw({
+          aggregate: 'sessionBooking',
+          pipeline: [
+            {
+              $match: {
+                userId: userId,
+                status: { $in: ["SCHEDULED", "ONGOING", "COMPLETED"] },
+                paymentStatus: "COMPLETED"
+              }
+            },
+            {
+              $lookup: {
+                from: 'user',
+                localField: 'mentorId',
+                foreignField: '_id',
+                as: 'mentor'
+              }
+            },
+            {
+              $lookup: {
+                from: 'mentorTimeSlot',
+                localField: 'timeSlotId',
+                foreignField: '_id',
+                as: 'timeSlot'
+              }
+            },
+            {
+              $addFields: {
+                mentorData: { $arrayElemAt: ['$mentor', 0] },
+                timeSlotData: { $arrayElemAt: ['$timeSlot', 0] }
+              }
+            },
+            {
+              $project: {
+                id: '$_id',
+                title: {
+                  $concat: [
+                    { $toUpper: { $substr: ['$sessionType', 0, 1] } },
+                    { $toLower: { $substr: ['$sessionType', 1, -1] } },
+                    ' Session with ',
+                    { $ifNull: ['$mentorData.name', 'Mentor'] }
+                  ]
+                },
+                scheduledTime: '$scheduledAt',
+                duration: { $literal: 60 },
+                sessionType: 1,
+                status: 1,
+                link: '$timeSlotData.sessionLink',
+                mentor: {
+                  id: '$mentorData._id',
+                  name: '$mentorData.name',
+                  mentorType: '$mentorData.mentorType'
+                }
+              }
+            }
+          ],
+          cursor: {}
+        });
+
+        let sessionBookings: UserSessionData[] = [];
+        if (sessionBookingsResult &&
+            typeof sessionBookingsResult === 'object' &&
+            'cursor' in sessionBookingsResult &&
+            sessionBookingsResult.cursor &&
+            typeof sessionBookingsResult.cursor === 'object' &&
+            'firstBatch' in sessionBookingsResult.cursor &&
+            Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
+          sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
+        }
+
+        console.log(`📅 Found ${sessionBookings.length} paid session bookings`);
+        return sessionBookings;
+      } catch (error) {
+        console.error("Error fetching paid session bookings:", error);
+        return [];
+      }
+    };
+
     // Get user subscription details
     const subscriptionResult = await getUserSubscription(session.user.id);
     
@@ -66,24 +149,26 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     };
 
     if (!subscription) {
-      // Try to start a trial for users without any subscription
-      // try {
-      //   const { startAutoTrialForNewUser } = await import("@/lib/subscriptions");
-      //   const trialResult = await startAutoTrialForNewUser(session.user.id);
-        
-      //   if (trialResult.success) {
-      //     // Re-fetch subscription after starting trial
-      //     const newSubscriptionResult = await getUserSubscription(session.user.id);
-      //     if (newSubscriptionResult.success && newSubscriptionResult.subscription) {
-      //       // Continue with the new trial subscription
-      //       return getUserSessions(); // Recursive call with new subscription
-      //     }
-      //   }
-      // } catch (error) {
-      //   console.error("Failed to start trial for user:", error);
-      // }
-
-      // If trial creation failed or user already had a trial, return subscription needed
+      // User has no subscription record, check for paid one-on-one bookings
+      console.log("👤 User has no subscription, checking for paid bookings...");
+      const paidBookings = await fetchPaidSessionBookings(session.user.id);
+      
+      if (paidBookings.length > 0) {
+        console.log(`✅ Found ${paidBookings.length} paid bookings, showing sessions`);
+        return {
+          success: true,
+          data: {
+            subscriptionStatus: "INACTIVE",
+            subscriptionPlan: null,
+            sessions: paidBookings,
+            needsSubscription: false, // Don't require subscription if they have paid bookings
+            nextBillingDate: null,
+            isTrialExpired: false
+          }
+        };
+      }
+      
+      // No subscription and no paid bookings
       return {
         success: true,
         data: {
@@ -115,6 +200,26 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     }
 
     if (needsSubscription) {
+      // User needs subscription, but check for paid one-on-one bookings first
+      console.log("👤 User needs subscription, checking for paid bookings...");
+      const paidBookings = await fetchPaidSessionBookings(session.user.id);
+      
+      if (paidBookings.length > 0) {
+        console.log(`✅ Found ${paidBookings.length} paid bookings, showing sessions despite expired subscription`);
+        return {
+          success: true,
+          data: {
+            subscriptionStatus: subscription.subscriptionStatus,
+            subscriptionPlan: subscription.subscriptionPlan,
+            sessions: paidBookings,
+            needsSubscription: false, // Override since they have paid sessions
+            nextBillingDate: subscription.nextBillingDate?.toISOString() || null,
+            isTrialExpired: isTrialExpired()
+          }
+        };
+      }
+      
+      // No paid bookings, show subscription needed
       return {
         success: true,
         data: {

@@ -123,6 +123,34 @@ useEffect(() => {
     toast.success("Session started successfully");
   };
 
+  // Function to handle end session (works for both regular and delayed sessions)
+  const handleEndSession = async (sessionItem: MentorSessionData) => {
+    try {
+      // Use the proper completion API which handles delayed sessions
+      const response = await fetch(`/api/sessions/${sessionItem.id}/complete`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Session completed successfully");
+        // Reload sessions to reflect the change
+        setTimeout(() => {
+          loadMentorSessions();
+        }, 1000);
+      } else {
+        throw new Error(result.error || 'Failed to complete session');
+      }
+    } catch (error) {
+      console.error("Error completing session:", error);
+      toast.error("Failed to complete session");
+    }
+  };
+
 
 
   // Show loading state
@@ -414,13 +442,7 @@ useEffect(() => {
                 </Button>
                 <Button
                   className="bg-green-600 hover:bg-green-700 text-white"
-                  onClick={() => {
-                    UpdateSessionStatus("COMPLETED", sessionItem.id);
-                    setTimeout(() => {
-                      loadMentorSessions();
-                    }, 1000);
-                    toast.success("Session marked as completed");
-                  }}
+                  onClick={() => handleEndSession(sessionItem)}
                 >
                   <CheckCircle className="w-4 h-4 mr-1" />
                   End Session

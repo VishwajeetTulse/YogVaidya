@@ -52,7 +52,8 @@ export async function POST(
       );
     }
 
-    // Update session to ONGOING without delay flag
+    // Update session to ONGOING without delay flag and record manual start time
+    const manualStartTime = new Date();
     await prisma.$runCommandRaw({
       update: 'sessionBooking',
       updates: [{
@@ -61,7 +62,8 @@ export async function POST(
           $set: { 
             status: 'ONGOING',
             isDelayed: false,
-            updatedAt: new Date()
+            manualStartTime: manualStartTime, // Record when the session was manually started
+            updatedAt: manualStartTime
           } 
         }
       }]

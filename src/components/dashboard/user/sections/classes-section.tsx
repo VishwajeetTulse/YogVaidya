@@ -48,16 +48,16 @@ export const ClassesSection = () => {
     }
 
     // Helper function to safely convert to valid ISO string
-    const safeToISOString = (dateValue: any): string => {
+    const safeToISOString = (dateValue: any): string | null => {
       // If it's already a string, check if it's a valid ISO date
       if (typeof dateValue === 'string') {
         const date = new Date(dateValue);
         if (!isNaN(date.getTime())) {
           return date.toISOString();
         }
-        // If invalid string, return a fallback date
-        console.warn('Invalid date string found:', dateValue);
-        return new Date().toISOString(); // Current date as fallback
+        // If invalid string, return null to filter out this session
+        console.warn('Invalid date string found, skipping session:', dateValue);
+        return null;
       }
       
       // If it's a Date object or something else
@@ -66,17 +66,25 @@ export const ClassesSection = () => {
         return date.toISOString();
       }
       
-      // If completely invalid, use current date as fallback
-      console.warn('Invalid date value found:', dateValue);
-      return new Date().toISOString();
+      // If completely invalid, return null to filter out this session
+      console.warn('Invalid date value found, skipping session:', dateValue);
+      return null;
     };
 
     return {
       ...serverData,
-      sessions: serverData.sessions.map((session: UserSessionData) => ({
-        ...session,
-        scheduledTime: safeToISOString(session.scheduledTime)
-      }))
+      sessions: serverData.sessions
+        .map((session: UserSessionData) => {
+          const scheduledTime = safeToISOString(session.scheduledTime);
+          if (scheduledTime === null) {
+            return null; // Mark for filtering
+          }
+          return {
+            ...session,
+            scheduledTime
+          };
+        })
+        .filter((session): session is SessionData => session !== null) // Remove invalid sessions
     };
   };
 
@@ -160,6 +168,18 @@ useEffect(() => {
 
   // Filter sessions based on the subscription plan
   const availableSessions = sessionsData?.sessions || [];
+  
+  // If there are no sessions available, show the subscription prompt screen
+  if (availableSessions.length === 0) {
+    return (
+      <SubscriptionPrompt 
+        subscriptionStatus={sessionsData?.subscriptionStatus || "INACTIVE"}
+        subscriptionPlan={sessionsData?.subscriptionPlan || null}
+        nextBillingDate={sessionsData?.nextBillingDate}
+        isTrialExpired={sessionsData?.isTrialExpired}
+      />
+    );
+  }
   
   // Upcoming sessions: SCHEDULED or ONGOING sessions that haven't ended yet
   const upcomingSessions = availableSessions.filter(session => {
