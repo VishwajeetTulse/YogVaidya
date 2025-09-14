@@ -50,7 +50,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     const fetchPaidSessionBookings = async (userId: string): Promise<UserSessionData[]> => {
       try {
         console.log("🔍 Fetching paid session bookings for user:", userId);
-        
+
         const sessionBookingsResult = await prisma.$runCommandRaw({
           aggregate: 'sessionBooking',
           pipeline: [
@@ -95,7 +95,17 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
                   ]
                 },
                 scheduledTime: '$scheduledAt',
-                duration: { $literal: 60 },
+                duration: {
+                  $divide: [
+                    {
+                      $subtract: [
+                        { $toDate: '$timeSlotData.endTime' },
+                        { $toDate: '$timeSlotData.startTime' }
+                      ]
+                    },
+                    60000 // Convert milliseconds to minutes
+                  ]
+                },
                 sessionType: 1,
                 status: 1,
                 link: '$timeSlotData.sessionLink',
@@ -110,6 +120,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           cursor: {}
         });
 
+        console.log("🔍 Raw aggregation result:", JSON.stringify(sessionBookingsResult, null, 2));
+
         let sessionBookings: UserSessionData[] = [];
         if (sessionBookingsResult &&
             typeof sessionBookingsResult === 'object' &&
@@ -119,6 +131,15 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
             'firstBatch' in sessionBookingsResult.cursor &&
             Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
           sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
+          console.log("📋 Extracted session bookings:", sessionBookings.map(b => ({ id: b.id, status: b.status, title: b.title })));
+        } else {
+          console.log("⚠️ Unexpected aggregation result structure:", {
+            hasCursor: 'cursor' in (sessionBookingsResult as any),
+            cursorType: typeof (sessionBookingsResult as any)?.cursor,
+            hasFirstBatch: 'firstBatch' in ((sessionBookingsResult as any)?.cursor || {}),
+            firstBatchType: typeof (sessionBookingsResult as any)?.cursor?.firstBatch,
+            isArray: Array.isArray((sessionBookingsResult as any)?.cursor?.firstBatch)
+          });
         }
 
         console.log(`📅 Found ${sessionBookings.length} paid session bookings`);
@@ -152,9 +173,10 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       // User has no subscription record, check for paid one-on-one bookings
       console.log("👤 User has no subscription, checking for paid bookings...");
       const paidBookings = await fetchPaidSessionBookings(session.user.id);
-      
+
       if (paidBookings.length > 0) {
         console.log(`✅ Found ${paidBookings.length} paid bookings, showing sessions`);
+        console.log("📋 Paid bookings details:", paidBookings.map(b => ({ id: b.id, status: b.status, title: b.title })));
         return {
           success: true,
           data: {
@@ -167,8 +189,9 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           }
         };
       }
-      
+
       // No subscription and no paid bookings
+      console.log("❌ No subscription and no paid bookings found");
       return {
         success: true,
         data: {
@@ -181,6 +204,12 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         }
       };
     }
+
+    console.log("👤 User has subscription:", {
+      status: subscription.subscriptionStatus,
+      plan: subscription.subscriptionPlan,
+      id: subscription.id
+    });
 
     // Check if user needs subscription
     // For cancelled subscriptions, check nextBillingDate instead of subscriptionEndDate
@@ -254,6 +283,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     // Get sessions from both Schedule and SessionBooking collections
     console.log("📊 Fetching sessions from both Schedule and SessionBooking collections...");
     console.log(`👤 User ID: ${session.user.id}`);
+    console.log(`📋 Session filters:`, sessionFilters);
     
     // 1. Get sessions from SessionBooking collection (new time slot bookings)
     console.log("🔍 Querying SessionBooking collection...");
@@ -301,7 +331,17 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
               ]
             },
             scheduledTime: '$scheduledAt',
-            duration: { $literal: 60 }, // Default 60 minutes duration
+            duration: {
+              $divide: [
+                {
+                  $subtract: [
+                    { $toDate: '$timeSlotData.endTime' },
+                    { $toDate: '$timeSlotData.startTime' }
+                  ]
+                },
+                60000 // Convert milliseconds to minutes
+              ]
+            }, // Calculate actual duration from time slot
             sessionType: 1,
             status: 1,
             link: '$timeSlotData.sessionLink', // Add session link from time slot
@@ -315,6 +355,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       ],
       cursor: {}
     });
+
+    console.log("🔍 Active subscriber - Raw SessionBooking aggregation result:", JSON.stringify(sessionBookingsResult, null, 2));
 
     let sessionBookings: UserSessionData[] = [];
     if (sessionBookingsResult && 
@@ -345,6 +387,9 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       take: 50 // Limit to 50 sessions
     });
 
+    console.log(`📅 Active subscriber - Found ${sessions.length} legacy schedule sessions`);
+    console.log("📋 Legacy sessions details:", sessions.map(s => ({ id: s.id, status: s.status, title: s.title, scheduledTime: s.scheduledTime })));
+
     const formattedSessions: UserSessionData[] = sessions.map(session => ({
       id: session.id,
       title: session.title,
@@ -369,6 +414,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     allSessions.sort((a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime());
 
     console.log(`✅ Total unified sessions: ${allSessions.length} (${sessionBookings.length} bookings + ${formattedSessions.length} legacy)`);
+    console.log("📋 Final sessions being returned:", allSessions.map(s => ({ id: s.id, status: s.status, title: s.title, scheduledTime: s.scheduledTime })));
 
     return {
       success: true,

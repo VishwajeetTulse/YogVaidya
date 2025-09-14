@@ -49,6 +49,20 @@ export const ClassesSection = () => {
 
     // Helper function to safely convert to valid ISO string
     const safeToISOString = (dateValue: any): string | null => {
+      // Handle MongoDB extended JSON date format: {$date: 'ISO_STRING'}
+      if (typeof dateValue === 'object' && dateValue !== null && '$date' in dateValue) {
+        const isoString = dateValue.$date;
+        if (typeof isoString === 'string') {
+          const date = new Date(isoString);
+          if (!isNaN(date.getTime())) {
+            console.log('✅ Converted MongoDB date format:', isoString);
+            return date.toISOString();
+          }
+        }
+        console.warn('Invalid MongoDB date format found, skipping session:', dateValue);
+        return null;
+      }
+
       // If it's already a string, check if it's a valid ISO date
       if (typeof dateValue === 'string') {
         const date = new Date(dateValue);
@@ -59,13 +73,13 @@ export const ClassesSection = () => {
         console.warn('Invalid date string found, skipping session:', dateValue);
         return null;
       }
-      
+
       // If it's a Date object or something else
       const date = new Date(dateValue);
       if (!isNaN(date.getTime())) {
         return date.toISOString();
       }
-      
+
       // If completely invalid, return null to filter out this session
       console.warn('Invalid date value found, skipping session:', dateValue);
       return null;
@@ -101,6 +115,7 @@ useEffect(() => {
       
       if (result.success && result.data) {
         console.log('✅ Formatting sessions data:', result.data.sessions?.length || 0, 'sessions');
+        console.log('📋 Raw sessions from server:', result.data.sessions?.map(s => ({ id: s.id, status: s.status, title: s.title })));
         setSessionsData(formatSessionsData(result.data));
       } else {
         console.error("Failed to load sessions:", result.error);
@@ -154,53 +169,63 @@ useEffect(() => {
     );
   }
 
-  // Show subscription prompt if user needs subscription
-  if (sessionsData?.needsSubscription) {
-    return (
-      <SubscriptionPrompt 
-        subscriptionStatus={sessionsData.subscriptionStatus}
-        subscriptionPlan={sessionsData.subscriptionPlan}
-        nextBillingDate={sessionsData.nextBillingDate}
-        isTrialExpired={sessionsData.isTrialExpired}
-      />
-    );
-  }
-
   // Filter sessions based on the subscription plan
   const availableSessions = sessionsData?.sessions || [];
   
-  // If there are no sessions available, show the subscription prompt screen
-  if (availableSessions.length === 0) {
-    return (
-      <SubscriptionPrompt 
-        subscriptionStatus={sessionsData?.subscriptionStatus || "INACTIVE"}
-        subscriptionPlan={sessionsData?.subscriptionPlan || null}
-        nextBillingDate={sessionsData?.nextBillingDate}
-        isTrialExpired={sessionsData?.isTrialExpired}
-      />
-    );
+  // If there are sessions available (including paid one-on-one sessions), show them
+  // This handles the case where users without subscription have booked paid sessions
+  if (availableSessions.length > 0) {
+    // User has sessions, show them regardless of subscription status
+    console.log(`📚 User has ${availableSessions.length} sessions, displaying them`);
+  } else {
+    // No sessions available - check if user needs subscription
+    if (sessionsData?.needsSubscription) {
+      return (
+        <SubscriptionPrompt 
+          subscriptionStatus={sessionsData.subscriptionStatus}
+          subscriptionPlan={sessionsData.subscriptionPlan}
+          nextBillingDate={sessionsData.nextBillingDate}
+          isTrialExpired={sessionsData.isTrialExpired}
+        />
+      );
+    }
   }
   
-  // Upcoming sessions: SCHEDULED or ONGOING sessions that haven't ended yet
+  // Upcoming sessions: SCHEDULED or ONGOING sessions
   const upcomingSessions = availableSessions.filter(session => {
+    console.log(`🔍 Filtering session ${session.id}: status=${session.status}, title=${session.title}`);
+
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
+      console.log(`❌ Session ${session.id} filtered out: ${session.status}`);
       return false;
     }
-    
-    // For SCHEDULED and ONGOING sessions, check if they haven't ended yet
+
+    // For ONGOING sessions, always show them in upcoming (they're active and joinable)
+    if (session.status === "ONGOING") {
+      console.log(`✅ Session ${session.id} included: ONGOING session`);
+      return true;
+    }
+
+    // For SCHEDULED sessions, check if they haven't ended yet
     const sessionTime = new Date(session.scheduledTime);
     const sessionEndTime = new Date(sessionTime.getTime() + session.duration * 60000);
     const currentTime = new Date();
-    
-    return currentTime <= sessionEndTime;
+
+    const shouldInclude = currentTime <= sessionEndTime;
+    console.log(`⏰ Session ${session.id} time check: current=${currentTime.toISOString()}, end=${sessionEndTime.toISOString()}, include=${shouldInclude}`);
+
+    return shouldInclude;
   });
-  
-  const completedSessions = availableSessions.filter(session => 
+
+  const completedSessions = availableSessions.filter(session =>
     session.status === "COMPLETED"
   );
-  const cancelledSessions = availableSessions.filter(session => 
+  const cancelledSessions = availableSessions.filter(session =>
     session.status === "CANCELLED"
   );
+
+  console.log(`📊 Session counts: Total=${availableSessions.length}, Upcoming=${upcomingSessions.length}, Completed=${completedSessions.length}, Cancelled=${cancelledSessions.length}`);
+  console.log(`🎯 Upcoming sessions:`, upcomingSessions.map(s => ({ id: s.id, status: s.status, title: s.title })));
 
   const getSessionTypeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
     if (type === "YOGA") return "from-[#76d2fa] to-[#5a9be9]";
@@ -226,15 +251,14 @@ useEffect(() => {
     const currentTime = new Date();
     const sessionEndTime = new Date(sessionTime.getTime() + sessionItem.duration * 60000); // Add duration in milliseconds
     
-    // Session is "upcoming" if it's not explicitly completed and hasn't ended yet
-    // This keeps ONGOING sessions in the upcoming tab where students can join them
-    const isWithinTimeWindow = currentTime <= sessionEndTime;
+    // Session is "upcoming" if it's not explicitly completed
+    // For ONGOING sessions, always consider them within time window (they're active)
+    const isWithinTimeWindow = sessionItem.status === "ONGOING" || currentTime <= sessionEndTime;
     const isUpcoming = (sessionItem.status === "SCHEDULED" || sessionItem.status === "ONGOING") && isWithinTimeWindow;
     const isOngoing = sessionItem.status === "ONGOING" && isWithinTimeWindow;
     
-    // Only show join button if session is ONGOING or within 15 minutes before start time
-    const joinAllowedTime = new Date(sessionTime.getTime() - 15 * 60000); // 15 minutes before start
-    const canJoin = isOngoing || (sessionItem.status === "SCHEDULED" && currentTime >= joinAllowedTime && currentTime <= sessionEndTime);
+    // Only show join button if session is ONGOING (started by mentor)
+    const canJoin = sessionItem.status === "ONGOING" && isWithinTimeWindow;
 
     return (
       <Card key={sessionItem.id} className="p-6">
@@ -303,13 +327,16 @@ useEffect(() => {
                     {isOngoing ? "Join Now" : "Join Class"}
                   </Button>
                 ) : (
-                  <Button 
+                  <Button
                     variant="outline"
                     disabled
                     className="text-gray-400"
                   >
                     <Clock className="w-4 h-4 mr-1" />
-                    {currentTime < joinAllowedTime ? "Starts Soon" : "Session Ended"}
+                    {sessionItem.status === "SCHEDULED"
+                      ? (currentTime < sessionTime ? "Waiting for Mentor to Start" : "Session Not Started Yet")
+                      : "Session Ended"
+                    }
                   </Button>
                 )}
               </>

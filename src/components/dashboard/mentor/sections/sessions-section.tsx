@@ -238,14 +238,12 @@ useEffect(() => {
     return ascending ? diff : -diff;
   };
 
-  // Filter sessions for upcoming (scheduled for future and not completed/cancelled)
+  // Filter sessions for upcoming (all scheduled sessions, including delayed ones)
   const upcomingSessions = scheduledSessions
     .filter(
       (session: MentorSessionData) => {
-        const scheduledDate = getValidDate(session.scheduledTime);
-        return scheduledDate && 
-          scheduledDate > new Date() &&
-          (!session.status || session.status === "SCHEDULED");
+        // Include all sessions with SCHEDULED status, even if delayed/past due
+        return session.status === "SCHEDULED";
       }
     )
     .sort((a, b) => sortByScheduledTime(a, b, true));
@@ -257,16 +255,7 @@ useEffect(() => {
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
-    .filter((session: MentorSessionData) => {
-      if (session.status === "COMPLETED") return true;
-      if (session.status === "CANCELLED" || session.status === "ONGOING")
-        return false;
-      // If no status or SCHEDULED and time has passed, consider completed
-      const scheduledDate = getValidDate(session.scheduledTime);
-      return scheduledDate &&
-        scheduledDate <= new Date() &&
-        (!session.status || session.status === "SCHEDULED");
-    })
+    .filter((session: MentorSessionData) => session.status === "COMPLETED")
     .sort((a, b) => sortByScheduledTime(a, b, false));
 
   // Filter sessions for cancelled
@@ -280,24 +269,9 @@ useEffect(() => {
     const isValidDate = scheduledTime && !isNaN(scheduledTime.getTime());
     const currentTime = new Date();
     
-    const isUpcoming = isValidDate &&
-      scheduledTime > currentTime &&
-      (!sessionItem.status || sessionItem.status === "SCHEDULED");
+    const isUpcoming = sessionItem.status === "SCHEDULED";
     const isOngoing = sessionItem.status === "ONGOING";
-    const isCompleted = (() => {
-      if (sessionItem.status === "COMPLETED") return true;
-      if (
-        sessionItem.status === "CANCELLED" ||
-        sessionItem.status === "ONGOING"
-      )
-        return false;
-      // If no status or SCHEDULED and time has passed, consider completed
-      return (
-        isValidDate &&
-        scheduledTime <= currentTime &&
-        (!sessionItem.status || sessionItem.status === "SCHEDULED")
-      );
-    })();
+    const isCompleted = sessionItem.status === "COMPLETED";
     const isCancelled = sessionItem.status === "CANCELLED";
     
     if (isValidDate) {

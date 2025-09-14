@@ -83,35 +83,37 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
         const startTime = new Date(timeSlot.startTime);
 
         // Check if session should be marked as delayed (past start time but not manually started)
+        // NOTE: Sessions will remain SCHEDULED until mentor manually starts them
         if (startTime <= currentTime) {
-          await prisma.$runCommandRaw({
-            update: 'sessionBooking',
-            updates: [{
-              q: { _id: session.id },
-              u: { 
-                $set: { 
-                  status: 'ONGOING',
-                  isDelayed: true,
-                  manualStartTime: currentTime, // Record the time when marked as delayed for auto-completion calculation
-                  updatedAt: currentTime
-                } 
-              }
-            }]
-          });
+          // Only mark as delayed if not already marked, but keep status as SCHEDULED
+          if (!session.isDelayed) {
+            await prisma.$runCommandRaw({
+              update: 'sessionBooking',
+              updates: [{
+                q: { _id: session.id },
+                u: {
+                  $set: {
+                    isDelayed: true, // Mark as delayed for UI indication
+                    updatedAt: currentTime
+                  }
+                }
+              }]
+            });
 
-          updates.push({
-            sessionId: session.id,
-            oldStatus: 'SCHEDULED',
-            newStatus: 'ONGOING',
-            timestamp: currentTime,
-            reason: `Session marked as delayed - started late at ${currentTime.toISOString()}`,
-            isDelayed: true
-          });
+            updates.push({
+              sessionId: session.id,
+              oldStatus: 'SCHEDULED',
+              newStatus: 'SCHEDULED', // Keep as SCHEDULED until mentor starts
+              timestamp: currentTime,
+              reason: `Session marked as delayed - waiting for mentor to start at ${currentTime.toISOString()}`,
+              isDelayed: true
+            });
+          }
         }
       }
     }
 
-    // 2. Complete ongoing sessions that have ended (only non-delayed ones complete automatically)
+    // 2. Complete ongoing sessions that have ended
     const ongoingSessionsResult = await prisma.$runCommandRaw({
       find: 'sessionBooking',
       filter: {
@@ -122,8 +124,8 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     });
 
     let ongoingSessions: SessionData[] = [];
-    if (ongoingSessionsResult && 
-        typeof ongoingSessionsResult === 'object' && 
+    if (ongoingSessionsResult &&
+        typeof ongoingSessionsResult === 'object' &&
         'cursor' in ongoingSessionsResult &&
         ongoingSessionsResult.cursor &&
         typeof ongoingSessionsResult.cursor === 'object' &&
@@ -134,7 +136,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
     for (const session of ongoingSessions) {
       if (!session.timeSlotId) continue;
-      
+
       // Get time slot details
       const timeSlotResult = await prisma.$runCommandRaw({
         find: 'mentorTimeSlot',
@@ -142,8 +144,8 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       });
 
       let timeSlot: TimeSlotData | null = null;
-      if (timeSlotResult && 
-          typeof timeSlotResult === 'object' && 
+      if (timeSlotResult &&
+          typeof timeSlotResult === 'object' &&
           'cursor' in timeSlotResult &&
           timeSlotResult.cursor &&
           typeof timeSlotResult.cursor === 'object' &&
@@ -162,11 +164,11 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             update: 'sessionBooking',
             updates: [{
               q: { _id: session.id },
-              u: { 
-                $set: { 
+              u: {
+                $set: {
                   status: 'COMPLETED',
                   updatedAt: currentTime
-                } 
+                }
               }
             }]
           });
@@ -176,7 +178,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             oldStatus: 'ONGOING',
             newStatus: 'COMPLETED',
             timestamp: currentTime,
-            reason: `Session ended at ${endTime.toISOString()}`
+            reason: `Session ended at scheduled time ${endTime.toISOString()}`
           });
         }
       }
@@ -194,8 +196,8 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     });
 
     let delayedOngoingSessions: SessionData[] = [];
-    if (delayedOngoingSessionsResult && 
-        typeof delayedOngoingSessionsResult === 'object' && 
+    if (delayedOngoingSessionsResult &&
+        typeof delayedOngoingSessionsResult === 'object' &&
         'cursor' in delayedOngoingSessionsResult &&
         delayedOngoingSessionsResult.cursor &&
         typeof delayedOngoingSessionsResult.cursor === 'object' &&
@@ -206,7 +208,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
     for (const session of delayedOngoingSessions) {
       if (!session.timeSlotId || !session.manualStartTime) continue;
-      
+
       // Get time slot details to calculate planned duration
       const timeSlotResult = await prisma.$runCommandRaw({
         find: 'mentorTimeSlot',
@@ -214,8 +216,8 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       });
 
       let timeSlot: TimeSlotData | null = null;
-      if (timeSlotResult && 
-          typeof timeSlotResult === 'object' && 
+      if (timeSlotResult &&
+          typeof timeSlotResult === 'object' &&
           'cursor' in timeSlotResult &&
           timeSlotResult.cursor &&
           typeof timeSlotResult.cursor === 'object' &&
@@ -229,10 +231,10 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
         const originalStartTime = new Date(timeSlot.startTime);
         const originalEndTime = new Date(timeSlot.endTime);
         const manualStartTime = new Date(session.manualStartTime);
-        
+
         // Calculate planned duration: originalEndTime - originalStartTime
         const plannedDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
-        
+
         // Calculate when this delayed session should end: manualStartTime + plannedDuration
         const calculatedEndTime = new Date(manualStartTime.getTime() + plannedDurationMs);
 
@@ -242,12 +244,12 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             update: 'sessionBooking',
             updates: [{
               q: { _id: session.id },
-              u: { 
-                $set: { 
+              u: {
+                $set: {
                   status: 'COMPLETED',
                   actualEndTime: currentTime,
                   updatedAt: currentTime
-                } 
+                }
               }
             }]
           });
@@ -257,16 +259,16 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             oldStatus: 'ONGOING',
             newStatus: 'COMPLETED',
             timestamp: currentTime,
-            reason: `Delayed session auto-completed - started manually at ${manualStartTime.toISOString()}, planned duration ${plannedDurationMs/60000} minutes, calculated end time ${calculatedEndTime.toISOString()}`
+            reason: `Delayed session auto-completed - started manually at ${manualStartTime.toISOString()}, planned duration ${Math.round(plannedDurationMs/60000)} minutes, calculated end time ${calculatedEndTime.toISOString()}`
           });
         }
       } else {
         // Time slot not found - use default duration based on session type
         console.log(`⚠️ Time slot not found for session ${session.id}, using default duration`);
-        
+
         const manualStartTime = new Date(session.manualStartTime);
         let defaultDurationMinutes = 60; // Default 60 minutes
-        
+
         // Set duration based on session type
         if (session.sessionType === 'YOGA') {
           defaultDurationMinutes = 60; // 1 hour for yoga
@@ -285,13 +287,13 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
             update: 'sessionBooking',
             updates: [{
               q: { _id: session.id },
-              u: { 
-                $set: { 
+              u: {
+                $set: {
                   status: 'COMPLETED',
                   actualEndTime: currentTime,
                   completionReason: `Default duration for ${session.sessionType}: ${defaultDurationMinutes} minutes`,
                   updatedAt: currentTime
-                } 
+                }
               }
             }]
           });
