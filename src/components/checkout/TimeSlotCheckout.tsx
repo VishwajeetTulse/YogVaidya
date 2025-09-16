@@ -58,7 +58,7 @@ export default function TimeSlotCheckout() {
     const fetchTimeSlot = async () => {
       if (!timeSlotId) {
         toast.error("No time slot selected");
-        router.push("/mentors");
+        router.push("/dashboard");
         return;
       }
 
@@ -72,17 +72,17 @@ export default function TimeSlotCheckout() {
           // Check if slot is still available
           if (result.data.isBooked) {
             toast.error("This time slot has already been booked");
-            router.push("/mentors");
+            router.push("/dashboard");
             return;
           }
         } else {
           toast.error("Failed to load time slot details");
-          router.push("/mentors");
+          router.push("/dashboard");
         }
       } catch (error) {
         console.error("Error fetching time slot:", error);
         toast.error("Error loading time slot data");
-        router.push("/mentors");
+        router.push("/dashboard");
       } finally {
         setLoadingSlot(false);
       }
@@ -272,8 +272,8 @@ export default function TimeSlotCheckout() {
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Session not found</p>
-          <Button onClick={() => router.push("/mentors")} className="mt-4">
-            Browse Mentors
+          <Button onClick={() => router.push("/dashboard")} className="mt-4">
+            Back to Dashboard
           </Button>
         </div>
       </div>

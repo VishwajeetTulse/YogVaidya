@@ -20,7 +20,7 @@ export default async function MentorTimeSlotsPage({
   const { mentorId } = resolvedParams;
 
   if (!mentorId) {
-    redirect("/mentors");
+    redirect("/dashboard");
   }
 
   return (

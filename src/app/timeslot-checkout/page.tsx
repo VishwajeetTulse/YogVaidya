@@ -20,7 +20,7 @@ export default async function TimeSlotCheckoutPage({
   const { timeSlotId, mentorId } = resolvedParams;
 
   if (!timeSlotId) {
-    redirect("/mentors");
+    redirect("/dashboard");
   }
 
   return (

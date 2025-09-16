@@ -25,7 +25,7 @@ export default async function SessionCheckoutPage({
 
   // Validate mentorId
   if (!mentorId || typeof mentorId !== 'string') {
-    redirect("/mentors");
+    redirect("/dashboard");
   }
 
   return (

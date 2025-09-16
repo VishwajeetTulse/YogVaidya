@@ -8,6 +8,7 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
 import { getUserSessions, UserSessionData, UserSessionsResponse } from "@/lib/server/user-sessions-server";
+import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
 // import { Prisma } from "@prisma/client";
 
 interface SessionData {
@@ -40,6 +41,35 @@ export const ClassesSection = () => {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("upcoming");
+
+  // Enable automatic session status updates
+  useSessionStatusUpdates(true, 30000); // Check every 30 seconds for more responsive updates
+
+  // Helper function to load sessions (extracted for reuse)
+  const loadUserSessions = async () => {
+    if (!session?.user) return;
+    
+    try {
+      console.log('📚 Loading user sessions for:', session.user.id);
+      const result = await getUserSessions();
+      
+      console.log('📊 User sessions result:', result);
+      
+      if (result.success && result.data) {
+        console.log('✅ Formatting sessions data:', result.data.sessions?.length || 0, 'sessions');
+        console.log('📋 Raw sessions from server:', result.data.sessions?.map(s => ({ id: s.id, status: s.status, title: s.title })));
+        setSessionsData(formatSessionsData(result.data));
+      } else {
+        console.error("Failed to load sessions:", result.error);
+        toast.error("Failed to load your sessions");
+      }
+    } catch (error) {
+      console.error("Error loading sessions:", error);
+      toast.error("Failed to load your sessions");
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Helper function to convert server data to component format
   const formatSessionsData = (serverData: UserSessionsResponse["data"]): UserSessionsData => {
@@ -104,46 +134,37 @@ export const ClassesSection = () => {
 
 // Load user sessions using server action
 useEffect(() => {
-  const loadUserSessions = async () => {
-    if (!session?.user) return;
-    
-    try {
-      console.log('📚 Loading user sessions for:', session.user.id);
-      const result = await getUserSessions();
-      
-      console.log('📊 User sessions result:', result);
-      
-      if (result.success && result.data) {
-        console.log('✅ Formatting sessions data:', result.data.sessions?.length || 0, 'sessions');
-        console.log('📋 Raw sessions from server:', result.data.sessions?.map(s => ({ id: s.id, status: s.status, title: s.title })));
-        setSessionsData(formatSessionsData(result.data));
-      } else {
-        console.error("Failed to load sessions:", result.error);
-        toast.error("Failed to load your sessions");
-      }
-    } catch (error) {
-      console.error("Error loading sessions:", error);
-      toast.error("Failed to load your sessions");
-    } finally {
-      setLoading(false);
-    }
-  };
-  
   loadUserSessions();
 }, [session]);
+
+  // Listen for session status updates and refresh automatically
+  useEffect(() => {
+    const handleSessionStatusUpdate = (event: CustomEvent) => {
+      const { started, completed } = event.detail;
+      console.log(`🔄 Session status updated: ${started} started, ${completed} completed`);
+      
+      if (started > 0 || completed > 0) {
+        console.log('♻️ Auto-refreshing sessions due to status update...');
+        // Refresh sessions data without showing toast to avoid spam
+        loadUserSessions();
+      }
+    };
+
+    // Add event listener for session status updates
+    window.addEventListener('session-status-updated', handleSessionStatusUpdate as EventListener);
+
+    // Cleanup event listener
+    return () => {
+      window.removeEventListener('session-status-updated', handleSessionStatusUpdate as EventListener);
+    };
+  }, [session]);
   
   // Refresh function for manual updates
   const refreshSessions = async () => {
     startTransition(async () => {
       try {
-        const result = await getUserSessions();
-        
-        if (result.success && result.data) {
-          setSessionsData(formatSessionsData(result.data));
-          toast.success("Sessions refreshed successfully");
-        } else {
-          toast.error("Failed to refresh sessions");
-        }
+        await loadUserSessions();
+        toast.success("Sessions refreshed successfully");
       } catch (error) {
         console.error("Error refreshing sessions:", error);
         toast.error("Failed to refresh sessions");
@@ -295,6 +316,11 @@ useEffect(() => {
                 }`}>
                   {sessionItem.sessionType}
                 </span>
+                {sessionItem.status === "COMPLETED" && (
+                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
+                    Auto-completed
+                  </span>
+                )}
               </div>
             </div>
           </div>
@@ -374,9 +400,15 @@ useEffect(() => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
+          <div className="flex items-center gap-3">
+            <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
+            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
+              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
+              <span className="text-xs text-green-700 font-medium">Auto-updating</span>
+            </div>
+          </div>
           <p className="text-gray-600 mt-2">
-            Manage your scheduled and completed {sessionsData?.subscriptionPlan?.toLowerCase()} sessions.
+            Manage your scheduled and completed {sessionsData?.subscriptionPlan?.toLowerCase()} sessions. Sessions automatically complete when their duration ends.
           </p>
         </div>
         <Button

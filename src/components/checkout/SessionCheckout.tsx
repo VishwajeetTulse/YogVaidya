@@ -173,17 +173,17 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
               setMentorData(mentor);
             } else {
               toast.error("Mentor not found");
-              router.push("/mentors");
+              router.push("/dashboard");
             }
           } else {
             toast.error("Failed to load mentor data");
-            router.push("/mentors");
+            router.push("/dashboard");
           }
         }
       } catch (error) {
         console.error("Error fetching mentor:", error);
         toast.error("Error loading mentor data");
-        router.push("/mentors");
+        router.push("/dashboard");
       } finally {
         setLoadingMentor(false);
       }

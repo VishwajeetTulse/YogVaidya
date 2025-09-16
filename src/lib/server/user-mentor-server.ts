@@ -76,9 +76,15 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     };
 
     // Helper function to fetch mentors from paid session bookings
+    // IMPORTANT: Only returns mentors with ongoing relationships, not just completed one-to-one sessions
+    // A mentor is considered to have an "ongoing relationship" if:
+    // 1. Has recurring sessions (indicates ongoing mentoring)
+    // 2. Has group sessions (maxStudents > 1)
+    // 3. Has future scheduled sessions
+    // 4. Has multiple sessions with the user (indicates ongoing relationship)
     const fetchMentorsFromPaidBookings = async (userId: string): Promise<UserMentorData[]> => {
       try {
-        console.log("🔍 Fetching mentors from paid session bookings for user:", userId);
+        console.log("🔍 Fetching mentors with ongoing relationships from paid session bookings for user:", userId);
 
         // First, let's check if there are any session bookings for this user at all
         const allUserBookings = await prisma.$runCommandRaw({
@@ -110,6 +116,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         }
 
         // Use raw MongoDB aggregation to fetch session bookings with mentor details
+        // Only include mentors with ongoing relationships (not just completed one-to-one sessions)
         const sessionBookingsResult = await prisma.$runCommandRaw({
           aggregate: 'sessionBooking',
           pipeline: [
@@ -144,14 +151,47 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
             },
             {
               $match: {
-                mentorData: { $ne: null }
+                mentorData: { $ne: null },
+                timeSlotData: { $ne: null }
               }
             },
+            // Group by mentor and analyze session types
             {
               $group: {
                 _id: "$mentorData._id",
                 mentor: { $first: "$mentorData" },
-                sessionCount: { $sum: 1 }
+                sessions: {
+                  $push: {
+                    sessionId: "$_id",
+                    status: "$status",
+                    scheduledAt: "$scheduledAt",
+                    maxStudents: "$timeSlotData.maxStudents",
+                    isRecurring: "$timeSlotData.isRecurring"
+                  }
+                }
+              }
+            },
+            // Filter out mentors who only have completed one-to-one sessions
+            {
+              $addFields: {
+                hasOngoingRelationship: {
+                  $or: [
+                    // Has recurring sessions (indicates ongoing relationship)
+                    { $gt: [{ $size: { $filter: { input: "$sessions", cond: { $eq: ["$$this.isRecurring", true] } } } }, 0] },
+                    // Has group sessions (maxStudents > 1)
+                    { $gt: [{ $size: { $filter: { input: "$sessions", cond: { $gt: ["$$this.maxStudents", 1] } } } }, 0] },
+                    // Has future sessions (scheduled for later)
+                    { $gt: [{ $size: { $filter: { input: "$sessions", cond: { $gt: ["$$this.scheduledAt", new Date()] } } } }, 0] },
+                    // Has multiple sessions with the same mentor (indicates ongoing relationship)
+                    { $gt: [{ $size: "$sessions" }, 1] }
+                  ]
+                }
+              }
+            },
+            // Only include mentors with ongoing relationships
+            {
+              $match: {
+                hasOngoingRelationship: true
               }
             },
             {
@@ -163,7 +203,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
                 image: "$mentor.image",
                 phone: "$mentor.phone",
                 createdAt: "$mentor.createdAt",
-                sessionCount: 1
+                sessionCount: { $size: "$sessions" },
+                hasOngoingRelationship: 1
               }
             }
           ],
@@ -181,11 +222,20 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           mentorsFromBookings = sessionBookingsResult.cursor.firstBatch;
         }
 
-        console.log(`📅 Found ${mentorsFromBookings.length} mentors from paid bookings`);
+        console.log(`📅 Found ${mentorsFromBookings.length} mentors with ongoing relationships (excluding completed one-to-one sessions)`);
         
         // Debug: Log the raw result for troubleshooting
-        console.log("🔍 Raw sessionBookingsResult:", JSON.stringify(sessionBookingsResult, null, 2));
-        console.log("🔍 Mentors from bookings:", JSON.stringify(mentorsFromBookings, null, 2));
+        if (mentorsFromBookings.length > 0) {
+          console.log("🔍 Mentors with ongoing relationships:", JSON.stringify(mentorsFromBookings.map(m => ({
+            id: m.id,
+            name: m.name,
+            email: m.email,
+            sessionCount: m.sessionCount,
+            hasOngoingRelationship: m.hasOngoingRelationship
+          })), null, 2));
+        } else {
+          console.log("🔍 No mentors with ongoing relationships found - user may only have completed one-to-one sessions");
+        }
 
         // Get mentor applications for additional data
         const mentorEmails = mentorsFromBookings.map(m => m.email);

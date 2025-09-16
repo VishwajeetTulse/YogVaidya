@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Video, Plus, Trash2, Edit, Users, User } from "lucide-react";
+import { Calendar, Clock, Video, Plus, Trash2, Edit, Users, User, RefreshCw } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -83,9 +83,11 @@ export const ScheduleSection = () => {
   const { data: session } = useSession();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
+  const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [mentorSessionType, setMentorSessionType] = useState<SessionType>("YOGA");
+  const [showAllSlots, setShowAllSlots] = useState(false);
   
   const form = useForm<TimeSlotFormData>({
     resolver: zodResolver(timeSlotSchema),
@@ -153,20 +155,25 @@ export const ScheduleSection = () => {
     }
   }, [session?.user]);
 
+  // Manual refresh function
+  const handleManualRefresh = async () => {
+    setRefreshing(true);
+    try {
+      await loadTimeSlots();
+      toast.success('Time slots refreshed successfully');
+    } catch (error) {
+      toast.error('Failed to refresh time slots');
+    } finally {
+      setRefreshing(false);
+    }
+  };
+
   useEffect(() => {
     console.log('🎯 Mentor dashboard: Loading data...', {
       hasSession: !!session?.user,
       userId: session?.user?.id
     });
     loadTimeSlots();
-    
-    // Set up auto-refresh every 30 seconds for real-time updates
-    const interval = setInterval(() => {
-      console.log('🔄 Auto-refreshing mentor data...');
-      loadTimeSlots();
-    }, 30000);
-    
-    return () => clearInterval(interval);
   }, [loadTimeSlots, session]);
 
   const onSubmit = async (data: TimeSlotFormData) => {
@@ -527,9 +534,26 @@ export const ScheduleSection = () => {
       {/* Available Time Slots List */}
       <Card>
         <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <Calendar className="h-5 w-5" />
-            Your Available Time Slots ({timeSlots.filter(slot => slot.isActive).length})
+          <CardTitle className="flex items-center justify-between">
+            <div className="flex items-center gap-2">
+              <Calendar className="h-5 w-5" />
+              Your Available Time Slots ({timeSlots.filter(slot => slot.isActive).length})
+              {timeSlots.filter(slot => slot.isActive).length > 3 && !showAllSlots && (
+                <span className="text-sm font-normal text-gray-500">- Showing Recent 3</span>
+              )}
+            </div>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={handleManualRefresh}
+              disabled={refreshing}
+              className="h-8 px-2 sm:px-3"
+            >
+              <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline ml-1">
+                {refreshing ? 'Refreshing...' : 'Refresh'}
+              </span>
+            </Button>
           </CardTitle>
         </CardHeader>
         <CardContent>
@@ -550,6 +574,7 @@ export const ScheduleSection = () => {
               {timeSlots
                 .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
                 .filter((slot) => slot.isActive)
+                .slice(0, showAllSlots ? undefined : 3) // Show only 3 recent available slots unless showAllSlots is true
                 .map((slot) => {
                   const startTime = new Date(slot.startTime);
                   const endTime = new Date(slot.endTime);
@@ -703,6 +728,26 @@ export const ScheduleSection = () => {
                     </div>
                   );
                 })}
+              
+              {/* Show "View All" / "Show Less" button if there are more than 3 active slots */}
+              {timeSlots.filter(slot => slot.isActive).length > 3 && (
+                <div className="mt-4 pt-4 border-t border-gray-200 text-center">
+                  <p className="text-sm text-gray-600 mb-2">
+                    {showAllSlots 
+                      ? `Showing all ${timeSlots.filter(slot => slot.isActive).length} available time slots`
+                      : `Showing 3 of ${timeSlots.filter(slot => slot.isActive).length} available time slots`
+                    }
+                  </p>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => setShowAllSlots(!showAllSlots)}
+                    className="text-[#876aff] border-[#876aff] hover:bg-[#876aff] hover:text-white"
+                  >
+                    {showAllSlots ? 'Show Less' : 'View All Time Slots'}
+                  </Button>
+                </div>
+              )}
             </div>
           )}
         </CardContent>

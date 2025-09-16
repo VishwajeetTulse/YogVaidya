@@ -8,30 +8,81 @@ export async function getUserBillingHistory(userEmail: string) {
       throw new Error("User email is required");
     }
 
+    // Validate email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(userEmail)) {
+      throw new Error("Invalid email format");
+    }
+
+    console.log(`Fetching billing history for user: ${userEmail}`);
+
     // Get payment history from Razorpay
-    const paymentHistory = await getPaymentHistory(userEmail, 20);
+    const paymentHistory = await getPaymentHistory(userEmail, 50); // Increased limit to get more complete history
+
+    console.log(`Found ${paymentHistory.length} payments for user: ${userEmail}`);
 
     // Transform the data for better display
-    const billingHistory = paymentHistory.map(payment => ({
-      id: payment.id,
-      amount: payment.amount,
-      currency: payment.currency,
-      status: payment.status,
-      method: payment.method,
-      createdAt: payment.createdAt,
-      description: payment.description || `${payment.method} Payment`,
-      orderId: payment.orderId,
-      planName: getPlanNameFromDescription(payment.description),
-      planType: getPlanTypeFromAmount(payment.amount),
-      paymentMethod: formatPaymentMethod(payment.method),
-      formattedStatus: formatPaymentStatus(payment.status),
-      razorpayPaymentId: payment.id
-    }));
+    const billingHistory = paymentHistory.map(payment => {
+      try {
+        return {
+          id: payment.id,
+          amount: payment.amount,
+          currency: payment.currency || 'INR',
+          status: payment.status,
+          method: payment.method,
+          createdAt: payment.createdAt,
+          description: payment.description || `${formatPaymentMethod(payment.method)} Payment`,
+          orderId: payment.orderId,
+          planName: getPlanNameFromDescription(payment.description),
+          planType: getPlanTypeFromAmount(payment.amount),
+          paymentMethod: formatPaymentMethod(payment.method),
+          formattedStatus: formatPaymentStatus(payment.status),
+          razorpayPaymentId: payment.id
+        };
+      } catch (mappingError) {
+        console.error('Error mapping payment data:', mappingError, payment);
+        // Return a fallback object for corrupted payment data
+        return {
+          id: payment.id || 'unknown',
+          amount: Number(payment.amount) || 0,
+          currency: payment.currency || 'INR',
+          status: payment.status || 'unknown',
+          method: payment.method || 'unknown',
+          createdAt: payment.createdAt || new Date(),
+          description: 'Payment (Data Error)',
+          orderId: payment.orderId,
+          planName: 'Unknown Plan',
+          planType: 'UNKNOWN',
+          paymentMethod: 'Unknown Method',
+          formattedStatus: 'Unknown Status',
+          razorpayPaymentId: payment.id || 'unknown'
+        };
+      }
+    });
 
-    return billingHistory;
+    // Filter out any null/undefined entries and sort by date
+    const validBillingHistory = billingHistory
+      .filter(bill => bill && bill.id)
+      .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+
+    console.log(`Returning ${validBillingHistory.length} valid billing records for user: ${userEmail}`);
+
+    return validBillingHistory;
   } catch (error) {
     console.error('Error fetching billing history:', error);
-    throw new Error('Failed to fetch billing history');
+    
+    // Provide more specific error handling
+    if (error instanceof Error) {
+      if (error.message.includes('authentication') || error.message.includes('credentials')) {
+        throw new Error('Payment service authentication error. Please contact support.');
+      } else if (error.message.includes('Network') || error.message.includes('timeout')) {
+        throw new Error('Network error while fetching payment history. Please try again.');
+      } else if (error.message.includes('Invalid email')) {
+        throw error; // Re-throw validation errors as-is
+      }
+    }
+    
+    throw new Error('Failed to fetch billing history. Please try again or contact support.');
   }
 }
 

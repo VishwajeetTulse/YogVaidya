@@ -353,19 +353,27 @@ export const PlansSection = ({
                     </Button>
                   </Link>
                 ) : (
+                  // TODO: Temporarily hidden - uncomment to re-enable upgrade functionality
+                  // <Button
+                  //   className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
+                  //   onClick={() => handleUpgrade(plan.id)}
+                  //   disabled={isUpgrading}
+                  // >
+                  //   {isUpgrading ? (
+                  //     <>
+                  //       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                  //       UPGRADING...
+                  //     </>
+                  //   ) : (
+                  //     "UPGRADE NOW"
+                  //   )}
+                  // </Button>
                   <Button
-                    className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
-                    onClick={() => handleUpgrade(plan.id)}
-                    disabled={isUpgrading}
+                    className={`mt-auto w-full py-3 sm:py-4 rounded-xl bg-gray-400 text-white cursor-not-allowed transition-all duration-300 font-semibold text-xs sm:text-sm md:text-base`}
+                    disabled={true}
                   >
-                    {isUpgrading ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        UPGRADING...
-                      </>
-                    ) : (
-                      "UPGRADE NOW"
-                    )}
+                    <span className="hidden sm:inline">UPGRADE TEMPORARILY UNAVAILABLE</span>
+                    <span className="sm:hidden">UPGRADE UNAVAILABLE</span>
                   </Button>
                 )}
               </div>
@@ -453,19 +461,28 @@ export const PlansSection = ({
                           </Button>
                         </Link>
                       ) : (
+                        // TODO: Temporarily hidden - uncomment to re-enable upgrade functionality
+                        // <Button
+                        //   className={`w-full bg-gradient-to-r ${plan.gradient} text-white hover:opacity-90`}
+                        //   onClick={() => handleUpgrade(plan.id)}
+                        //   disabled={isUpgrading}
+                        // >
+                        //   {isUpgrading ? (
+                        //     <>
+                        //       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                        //       UPGRADING...
+                        //     </>
+                        //   ) : (
+                        //     "UPGRADE"
+                        //   )}
+                        // </Button>
                         <Button
-                          className={`w-full bg-gradient-to-r ${plan.gradient} text-white hover:opacity-90`}
-                          onClick={() => handleUpgrade(plan.id)}
-                          disabled={isUpgrading}
+                          className="w-full bg-gray-400 text-white cursor-not-allowed text-xs sm:text-sm md:text-base py-2 sm:py-3"
+                          disabled={true}
                         >
-                          {isUpgrading ? (
-                            <>
-                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                              UPGRADING...
-                            </>
-                          ) : (
-                            "UPGRADE"
-                          )}
+                          <span className="hidden md:inline">UPGRADE TEMPORARILY UNAVAILABLE</span>
+                          <span className="md:hidden hidden sm:inline">UPGRADE UNAVAILABLE</span>
+                          <span className="sm:hidden">UNAVAILABLE</span>
                         </Button>
                       )}
                     </td>

@@ -65,12 +65,12 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
           setMentorData(result.data);
         } else {
           toast.error("Failed to load mentor data");
-          router.push("/mentors");
+          router.push("/dashboard");
         }
       } catch (error) {
         console.error("Error fetching mentor:", error);
         toast.error("Error loading mentor data");
-        router.push("/mentors");
+        router.push("/dashboard");
       } finally {
         setLoadingMentor(false);
       }
@@ -156,8 +156,8 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-600">Mentor not found</p>
-          <Button onClick={() => router.push("/mentors")} className="mt-4">
-            Browse All Mentors
+          <Button onClick={() => router.push("/dashboard")} className="mt-4">
+            Back to Dashboard
           </Button>
         </div>
       </div>
@@ -171,11 +171,11 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
         <div className="mb-8">
           <Button 
             variant="outline" 
-            onClick={() => router.push("/mentors")}
+            onClick={() => router.push("/dashboard")}
             className="mb-4"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Mentors
+            Back to Dashboard
           </Button>
         </div>
 

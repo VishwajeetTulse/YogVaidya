@@ -75,21 +75,31 @@ export const SubscriptionSection = ({
   useEffect(() => {
     const fetchBillingHistory = async () => {
       if (userDetails.email) {
+        console.log('Fetching billing history for:', userDetails.email);
         setLoadingHistory(true);
         try {
           const result = await getBillingHistoryAction(userDetails.email);
+          console.log('Billing history result:', result);
+          
           if (result.success) {
             setBillingHistory(result.history || []);
+            console.log('Set billing history:', result.history?.length || 0, 'records');
           } else {
             console.error('Failed to fetch billing history:', result.error);
+            toast.error(`Failed to load payment history: ${result.error}`);
+            setBillingHistory([]); // Ensure we set empty array on error
           }
         } catch (error) {
           console.error('Error fetching billing history:', error);
+          toast.error('Error loading payment history. Please try refreshing the page.');
+          setBillingHistory([]); // Ensure we set empty array on error
         } finally {
           setLoadingHistory(false);
         }
       } else {
+        console.log('No user email available, skipping billing history fetch');
         setLoadingHistory(false);
+        setBillingHistory([]);
       }
     };
 
@@ -366,11 +376,19 @@ export const SubscriptionSection = ({
                   )}
                   
                   <div className="space-y-3">
-                    <Button
+                    {/* TODO: Temporarily hidden - uncomment to re-enable upgrade functionality */}
+                    {/* <Button
                       className="w-full h-12 bg-gradient-to-r from-[#876aff] to-[#76d2fa] hover:from-[#7c61ff] hover:to-[#6bc8f0] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
                       onClick={() => setActiveSection?.("plans")}
                     >
                       ✨ Upgrade Your Plan
+                    </Button> */}
+                    <Button
+                      className="w-full h-10 sm:h-12 bg-gray-400 text-white cursor-not-allowed rounded-xl shadow-lg transition-all duration-300 text-sm sm:text-base"
+                      disabled={true}
+                    >
+                      <span className="hidden sm:inline">✨ Upgrade Temporarily Unavailable</span>
+                      <span className="sm:hidden">✨ Upgrade Unavailable</span>
                     </Button>
                     {userDetails.subscriptionStatus === "ACTIVE" && (
                       <Button
