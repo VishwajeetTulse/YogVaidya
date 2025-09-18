@@ -52,7 +52,43 @@ export async function POST(
       );
     }
 
-    // Update session to ONGOING without delay flag and record manual start time
+    // Calculate expected duration from time slot or use defaults
+    let expectedDurationMinutes = 60; // Default 60 minutes
+    
+    if (session.timeSlotId) {
+      // Get time slot details to calculate duration
+      const timeSlotResult = await prisma.$runCommandRaw({
+        find: 'mentorTimeSlot',
+        filter: { _id: session.timeSlotId }
+      });
+
+      if (timeSlotResult &&
+          typeof timeSlotResult === 'object' &&
+          'cursor' in timeSlotResult &&
+          timeSlotResult.cursor &&
+          typeof timeSlotResult.cursor === 'object' &&
+          'firstBatch' in timeSlotResult.cursor &&
+          Array.isArray(timeSlotResult.cursor.firstBatch) &&
+          timeSlotResult.cursor.firstBatch.length > 0) {
+        
+        const timeSlot = timeSlotResult.cursor.firstBatch[0] as any;
+        const originalStartTime = new Date(timeSlot.startTime);
+        const originalEndTime = new Date(timeSlot.endTime);
+        const durationMs = originalEndTime.getTime() - originalStartTime.getTime();
+        expectedDurationMinutes = Math.round(durationMs / (60 * 1000));
+      }
+    } else {
+      // Use default durations based on session type
+      if (session.sessionType === 'YOGA') {
+        expectedDurationMinutes = 60; // 1 hour for yoga
+      } else if (session.sessionType === 'MEDITATION') {
+        expectedDurationMinutes = 30; // 30 minutes for meditation
+      } else if (session.sessionType === 'DIET') {
+        expectedDurationMinutes = 45; // 45 minutes for diet consultation
+      }
+    }
+
+    // Update session to ONGOING and record manual start time with expected duration
     const manualStartTime = new Date();
     await prisma.$runCommandRaw({
       update: 'sessionBooking',
@@ -63,6 +99,7 @@ export async function POST(
             status: 'ONGOING',
             isDelayed: false,
             manualStartTime: manualStartTime, // Record when the session was manually started
+            expectedDuration: expectedDurationMinutes, // Store expected duration
             updatedAt: manualStartTime
           } 
         }

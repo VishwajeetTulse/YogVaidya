@@ -113,13 +113,12 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       }
     }
 
-    // 2. Complete ongoing sessions that have ended
+    // 2. Complete all ongoing sessions based on their actual start time + duration
     const ongoingSessionsResult = await prisma.$runCommandRaw({
       find: 'sessionBooking',
       filter: {
         status: 'ONGOING',
-        timeSlotId: { $ne: null },
-        isDelayed: { $ne: true } // Only complete sessions that aren't delayed
+        manualStartTime: { $exists: true, $ne: null } // Only sessions that have been actually started
       }
     });
 
@@ -135,179 +134,87 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     }
 
     for (const session of ongoingSessions) {
-      if (!session.timeSlotId) continue;
+      if (!session.manualStartTime) continue;
 
-      // Get time slot details
-      const timeSlotResult = await prisma.$runCommandRaw({
-        find: 'mentorTimeSlot',
-        filter: { _id: session.timeSlotId }
-      });
+      const actualStartTime = new Date(session.manualStartTime);
+      let sessionDurationMs = 0;
 
-      let timeSlot: TimeSlotData | null = null;
-      if (timeSlotResult &&
-          typeof timeSlotResult === 'object' &&
-          'cursor' in timeSlotResult &&
-          timeSlotResult.cursor &&
-          typeof timeSlotResult.cursor === 'object' &&
-          'firstBatch' in timeSlotResult.cursor &&
-          Array.isArray(timeSlotResult.cursor.firstBatch) &&
-          timeSlotResult.cursor.firstBatch.length > 0) {
-        timeSlot = timeSlotResult.cursor.firstBatch[0] as TimeSlotData;
+      // First try to get duration from time slot
+      if (session.timeSlotId) {
+        const timeSlotResult = await prisma.$runCommandRaw({
+          find: 'mentorTimeSlot',
+          filter: { _id: session.timeSlotId }
+        });
+
+        let timeSlot: TimeSlotData | null = null;
+        if (timeSlotResult &&
+            typeof timeSlotResult === 'object' &&
+            'cursor' in timeSlotResult &&
+            timeSlotResult.cursor &&
+            typeof timeSlotResult.cursor === 'object' &&
+            'firstBatch' in timeSlotResult.cursor &&
+            Array.isArray(timeSlotResult.cursor.firstBatch) &&
+            timeSlotResult.cursor.firstBatch.length > 0) {
+          timeSlot = timeSlotResult.cursor.firstBatch[0] as TimeSlotData;
+        }
+
+        if (timeSlot) {
+          const originalStartTime = new Date(timeSlot.startTime);
+          const originalEndTime = new Date(timeSlot.endTime);
+          sessionDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
+        }
       }
 
-      if (timeSlot) {
-        const endTime = new Date(timeSlot.endTime);
+      // If no time slot duration found, use stored expected duration or defaults
+      if (sessionDurationMs === 0) {
+        let durationMinutes = session.expectedDuration || 60; // Default 60 minutes
 
-        // Check if session should be completed (only non-delayed sessions)
-        if (endTime <= currentTime) {
-          await prisma.$runCommandRaw({
-            update: 'sessionBooking',
-            updates: [{
-              q: { _id: session.id },
-              u: {
-                $set: {
-                  status: 'COMPLETED',
-                  updatedAt: currentTime
-                }
-              }
-            }]
-          });
-
-          updates.push({
-            sessionId: session.id,
-            oldStatus: 'ONGOING',
-            newStatus: 'COMPLETED',
-            timestamp: currentTime,
-            reason: `Session ended at scheduled time ${endTime.toISOString()}`
-          });
+        // Set duration based on session type if not stored
+        if (!session.expectedDuration) {
+          if (session.sessionType === 'YOGA') {
+            durationMinutes = 60; // 1 hour for yoga
+          } else if (session.sessionType === 'MEDITATION') {
+            durationMinutes = 30; // 30 minutes for meditation
+          } else if (session.sessionType === 'DIET') {
+            durationMinutes = 45; // 45 minutes for diet consultation
+          }
         }
+
+        sessionDurationMs = durationMinutes * 60 * 1000;
+      }
+
+      // Calculate when this session should end: actualStartTime + sessionDuration
+      const calculatedEndTime = new Date(actualStartTime.getTime() + sessionDurationMs);
+
+      // Check if the calculated end time has passed
+      if (calculatedEndTime <= currentTime) {
+        await prisma.$runCommandRaw({
+          update: 'sessionBooking',
+          updates: [{
+            q: { _id: session.id },
+            u: {
+              $set: {
+                status: 'COMPLETED',
+                actualEndTime: currentTime,
+                completionReason: `Auto-completed after ${Math.round(sessionDurationMs/60000)} minutes duration`,
+                updatedAt: currentTime
+              }
+            }
+          }]
+        });
+
+        updates.push({
+          sessionId: session.id,
+          oldStatus: 'ONGOING',
+          newStatus: 'COMPLETED',
+          timestamp: currentTime,
+          reason: `Session auto-completed - started at ${actualStartTime.toISOString()}, duration ${Math.round(sessionDurationMs/60000)} minutes, ended at ${calculatedEndTime.toISOString()}`
+        });
       }
     }
 
-    // 3. Complete delayed ongoing sessions based on their manual start time + planned duration
-    const delayedOngoingSessionsResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
-      filter: {
-        status: 'ONGOING',
-        timeSlotId: { $ne: null },
-        isDelayed: true,
-        manualStartTime: { $exists: true, $ne: null } // Only sessions that have been manually started
-      }
-    });
-
-    let delayedOngoingSessions: SessionData[] = [];
-    if (delayedOngoingSessionsResult &&
-        typeof delayedOngoingSessionsResult === 'object' &&
-        'cursor' in delayedOngoingSessionsResult &&
-        delayedOngoingSessionsResult.cursor &&
-        typeof delayedOngoingSessionsResult.cursor === 'object' &&
-        'firstBatch' in delayedOngoingSessionsResult.cursor &&
-        Array.isArray(delayedOngoingSessionsResult.cursor.firstBatch)) {
-      delayedOngoingSessions = delayedOngoingSessionsResult.cursor.firstBatch as SessionData[];
-    }
-
-    for (const session of delayedOngoingSessions) {
-      if (!session.timeSlotId || !session.manualStartTime) continue;
-
-      // Get time slot details to calculate planned duration
-      const timeSlotResult = await prisma.$runCommandRaw({
-        find: 'mentorTimeSlot',
-        filter: { _id: session.timeSlotId }
-      });
-
-      let timeSlot: TimeSlotData | null = null;
-      if (timeSlotResult &&
-          typeof timeSlotResult === 'object' &&
-          'cursor' in timeSlotResult &&
-          timeSlotResult.cursor &&
-          typeof timeSlotResult.cursor === 'object' &&
-          'firstBatch' in timeSlotResult.cursor &&
-          Array.isArray(timeSlotResult.cursor.firstBatch) &&
-          timeSlotResult.cursor.firstBatch.length > 0) {
-        timeSlot = timeSlotResult.cursor.firstBatch[0] as TimeSlotData;
-      }
-
-      if (timeSlot) {
-        const originalStartTime = new Date(timeSlot.startTime);
-        const originalEndTime = new Date(timeSlot.endTime);
-        const manualStartTime = new Date(session.manualStartTime);
-
-        // Calculate planned duration: originalEndTime - originalStartTime
-        const plannedDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
-
-        // Calculate when this delayed session should end: manualStartTime + plannedDuration
-        const calculatedEndTime = new Date(manualStartTime.getTime() + plannedDurationMs);
-
-        // Check if the calculated end time has passed
-        if (calculatedEndTime <= currentTime) {
-          await prisma.$runCommandRaw({
-            update: 'sessionBooking',
-            updates: [{
-              q: { _id: session.id },
-              u: {
-                $set: {
-                  status: 'COMPLETED',
-                  actualEndTime: currentTime,
-                  updatedAt: currentTime
-                }
-              }
-            }]
-          });
-
-          updates.push({
-            sessionId: session.id,
-            oldStatus: 'ONGOING',
-            newStatus: 'COMPLETED',
-            timestamp: currentTime,
-            reason: `Delayed session auto-completed - started manually at ${manualStartTime.toISOString()}, planned duration ${Math.round(plannedDurationMs/60000)} minutes, calculated end time ${calculatedEndTime.toISOString()}`
-          });
-        }
-      } else {
-        // Time slot not found - use default duration based on session type
-        console.log(`⚠️ Time slot not found for session ${session.id}, using default duration`);
-
-        const manualStartTime = new Date(session.manualStartTime);
-        let defaultDurationMinutes = 60; // Default 60 minutes
-
-        // Set duration based on session type
-        if (session.sessionType === 'YOGA') {
-          defaultDurationMinutes = 60; // 1 hour for yoga
-        } else if (session.sessionType === 'MEDITATION') {
-          defaultDurationMinutes = 30; // 30 minutes for meditation
-        } else if (session.sessionType === 'DIET') {
-          defaultDurationMinutes = 45; // 45 minutes for diet consultation
-        }
-
-        const defaultDurationMs = defaultDurationMinutes * 60 * 1000;
-        const calculatedEndTime = new Date(manualStartTime.getTime() + defaultDurationMs);
-
-        // Check if the calculated end time has passed
-        if (calculatedEndTime <= currentTime) {
-          await prisma.$runCommandRaw({
-            update: 'sessionBooking',
-            updates: [{
-              q: { _id: session.id },
-              u: {
-                $set: {
-                  status: 'COMPLETED',
-                  actualEndTime: currentTime,
-                  completionReason: `Default duration for ${session.sessionType}: ${defaultDurationMinutes} minutes`,
-                  updatedAt: currentTime
-                }
-              }
-            }]
-          });
-
-          updates.push({
-            sessionId: session.id,
-            oldStatus: 'ONGOING',
-            newStatus: 'COMPLETED',
-            timestamp: currentTime,
-            reason: `Delayed session auto-completed with default duration - started manually at ${manualStartTime.toISOString()}, default duration ${defaultDurationMinutes} minutes for ${session.sessionType}, calculated end time ${calculatedEndTime.toISOString()}`
-          });
-        }
-      }
-    }
+    // NOTE: The logic above now handles both on-time and delayed sessions uniformly
+    // All sessions are completed based on their actual start time + intended duration
 
   } catch (error) {
     console.error('Error updating session statuses:', error);

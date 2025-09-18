@@ -293,6 +293,13 @@ model SessionBooking {
   paymentDetails    Json?          // Payment information
   amount            Float?         // Payment amount
   paymentStatus     String?        // Payment status
+  
+  // Auto-completion tracking fields
+  manualStartTime   DateTime?      // When the session was actually started
+  actualEndTime     DateTime?      // When the session actually ended
+  expectedDuration  Int?           // Expected duration in minutes
+  completionReason  String?        // Reason for auto-completion
+  
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
   
@@ -308,6 +315,7 @@ model SessionBooking {
   @@index([scheduledAt])
   @@index([status])
   @@index([paymentStatus])
+  @@index([manualStartTime])
   @@map("sessionBooking")
 }
 
