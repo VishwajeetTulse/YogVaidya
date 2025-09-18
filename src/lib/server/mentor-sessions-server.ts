@@ -132,7 +132,18 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
                 { $ifNull: ['$studentData.name', 'Student'] }
               ]
             },
-            scheduledTime: '$scheduledAt',
+            scheduledTime: {
+              $cond: {
+                if: { $and: [{ $ne: ['$scheduledAt', null] }, { $ne: ['$scheduledAt', ''] }] },
+                then: {
+                  $dateToString: {
+                    format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                    date: '$scheduledAt'
+                  }
+                },
+                else: null
+              }
+            },
             duration: { $literal: 60 }, // Default 60 minutes duration
             sessionType: 1,
             status: 1,
@@ -177,12 +188,22 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         paymentStatus: null
       })),
       // Session bookings from SessionBooking collection  
-      ...sessionBookings.map(booking => ({
-        ...booking,
-        source: 'booking', // Mark as session booking
-        scheduledTime: booking.scheduledTime ? new Date(booking.scheduledTime) : null,
-        id: booking.id ? String(booking.id) : undefined
-      }))
+      ...sessionBookings.map(booking => {
+        console.log('🔍 Raw booking data:', {
+          id: booking.id,
+          scheduledTime: booking.scheduledTime,
+          scheduledTimeType: typeof booking.scheduledTime,
+          status: booking.status,
+          rawScheduledTime: booking.scheduledTime,
+          dateConversion: booking.scheduledTime ? new Date(booking.scheduledTime).toISOString() : 'null'
+        });
+        return {
+          ...booking,
+          source: 'booking', // Mark as session booking
+          scheduledTime: booking.scheduledTime ? new Date(booking.scheduledTime) : null,
+          id: booking.id ? String(booking.id) : undefined
+        };
+      })
     ].sort((a, b) => {
       // Sort by scheduledTime descending (newest first)
       const timeA = a.scheduledTime ? new Date(a.scheduledTime) : new Date(0);

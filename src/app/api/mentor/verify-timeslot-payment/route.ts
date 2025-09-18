@@ -51,6 +51,27 @@ export async function POST(request: NextRequest) {
 
     const { prisma } = await import("@/lib/config/prisma");
 
+    // Fetch time slot details to get the correct price
+    const timeSlotResult = await prisma.$runCommandRaw({
+      find: 'mentorTimeSlot',
+      filter: { _id: timeSlotId }
+    });
+
+    let timeSlotPrice = 500; // Default fallback (matches other routes)
+    if (timeSlotResult &&
+        typeof timeSlotResult === 'object' &&
+        'cursor' in timeSlotResult &&
+        timeSlotResult.cursor &&
+        typeof timeSlotResult.cursor === 'object' &&
+        'firstBatch' in timeSlotResult.cursor &&
+        Array.isArray(timeSlotResult.cursor.firstBatch) &&
+        timeSlotResult.cursor.firstBatch.length > 0) {
+      const timeSlot = timeSlotResult.cursor.firstBatch[0] as any;
+      timeSlotPrice = (timeSlot && typeof timeSlot === 'object' && 'price' in timeSlot && typeof timeSlot.price === 'number')
+        ? timeSlot.price
+        : 500;
+    }
+
     // Update session booking with payment details
     const updateResult = await prisma.$runCommandRaw({
       update: 'sessionBooking',
@@ -61,7 +82,7 @@ export async function POST(request: NextRequest) {
             paymentDetails: {
               razorpayOrderId: razorpay_order_id,
               razorpayPaymentId: razorpay_payment_id,
-              amount: 1500, // We'll get this from the order later
+              amount: timeSlotPrice, // Use actual time slot price
               currency: "INR"
             },
             paymentStatus: "COMPLETED",

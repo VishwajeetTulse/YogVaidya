@@ -39,7 +39,7 @@ export async function GET(request: NextRequest) {
     // Fetch scheduled sessions from database
     const scheduledSessions = await prisma.schedule.findMany({
       where: { mentorId: user.id },
-      orderBy: { scheduledTime: 'asc' },
+      orderBy: { scheduledTime: 'desc' }, // Changed to desc to show recent sessions first
     });
 
     // Transform the data to match the expected format

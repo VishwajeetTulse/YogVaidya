@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
           }
         },
         {
-          $sort: { scheduledAt: 1 }
+          $sort: { scheduledAt: -1 } // Changed to -1 to show recent sessions first
         }
       ],
       cursor: {}

@@ -44,28 +44,60 @@ export const SessionsSection = () => {
     // Helper function to safely convert to valid Date object
     const safeToDate = (dateValue: any): Date => {
       if (!dateValue) {
-        console.warn('Null/undefined date value found, using current date as fallback');
-        return new Date();
+        console.warn('⚠️ Null/undefined date value found for scheduledTime:', dateValue);
+        // Return a date far in the past to indicate an error, not current time
+        return new Date('2000-01-01T00:00:00Z');
       }
-      
-      const date = new Date(dateValue);
-      if (!isNaN(date.getTime())) {
-        return date;
+
+      // If it's already a Date object, return it
+      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+        return dateValue;
       }
-      
-      // If invalid date, log warning and return current date as fallback
-      console.warn('Invalid date value found in mentor session:', dateValue);
-      return new Date();
+
+      // Try to parse as Date from string
+      if (typeof dateValue === 'string') {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date;
+        }
+      }
+
+      // If it's a MongoDB date object with $date property
+      if (typeof dateValue === 'object' && dateValue !== null && '$date' in dateValue) {
+        const mongoDate = new Date(dateValue.$date);
+        if (!isNaN(mongoDate.getTime())) {
+          return mongoDate;
+        }
+      }
+
+      // Last resort: log the issue and return a past date to indicate error
+      console.error('❌ Unable to parse date value:', {
+        value: dateValue,
+        type: typeof dateValue,
+        stringified: JSON.stringify(dateValue)
+      });
+      return new Date('2000-01-01T00:00:00Z');
     };
 
     return {
       ...serverData,
-      sessions: serverData.sessions.map((session: MentorSessionData) => ({
-        ...session,
-        scheduledTime: safeToDate(session.scheduledTime),
-        createdAt: safeToDate(session.createdAt),
-        updatedAt: safeToDate(session.updatedAt)
-      }))
+      sessions: serverData.sessions.map((session: MentorSessionData) => {
+        console.log('🔍 Processing session:', {
+          id: session.id,
+          status: session.status,
+          scheduledTime: session.scheduledTime,
+          scheduledTimeType: typeof session.scheduledTime,
+          scheduledTimeValue: session.scheduledTime,
+          isValidDate: session.scheduledTime instanceof Date,
+          parsedDate: session.scheduledTime ? new Date(session.scheduledTime).toISOString() : 'null'
+        });
+        return {
+          ...session,
+          scheduledTime: safeToDate(session.scheduledTime),
+          createdAt: safeToDate(session.createdAt),
+          updatedAt: safeToDate(session.updatedAt)
+        };
+      })
     };
   };
 
@@ -246,12 +278,12 @@ useEffect(() => {
         return session.status === "SCHEDULED";
       }
     )
-    .sort((a, b) => sortByScheduledTime(a, b, true));
+    .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
 
   // Filter sessions for ongoing
   const ongoingSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "ONGOING")
-    .sort((a, b) => sortByScheduledTime(a, b, true));
+    .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
@@ -333,17 +365,22 @@ useEffect(() => {
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   {isValidDate ? (
-                    scheduledTime.toLocaleString("en-US", {
-                      timeZone: "Asia/Kolkata",
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "2-digit",
-                      hour: "numeric",
-                      minute: "2-digit",
-                      hour12: true,
-                    }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")
+                    // Check if this is our error date (2000-01-01)
+                    scheduledTime.getFullYear() === 2000 ? (
+                      <span className="text-red-500">Date unavailable</span>
+                    ) : (
+                      scheduledTime.toLocaleString("en-US", {
+                        timeZone: "Asia/Kolkata",
+                        day: "2-digit",
+                        month: "2-digit",
+                        year: "2-digit",
+                        hour: "numeric",
+                        minute: "2-digit",
+                        hour12: true,
+                      }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")
+                    )
                   ) : (
-                    "Date not available"
+                    <span className="text-red-500">Date not available</span>
                   )}
                 </span>
                 <span className="flex items-center gap-1">

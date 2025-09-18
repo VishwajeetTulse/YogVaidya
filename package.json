@@ -7,7 +7,9 @@
     "build": "prisma generate && next build",
     "start": "next start",
     "lint": "next lint",
-    "fix-user": "node scripts/fix-user.js"
+    "fix-user": "node scripts/fix-user.js",
+    "db:push": "npx prisma db push",
+    "db:generate": "npx prisma generate"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",

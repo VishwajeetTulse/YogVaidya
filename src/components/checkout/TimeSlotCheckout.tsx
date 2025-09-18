@@ -144,7 +144,7 @@ export default function TimeSlotCheckout() {
         },
         body: JSON.stringify({
           bookingId: bookingData.data.bookingId,
-          amount: timeSlot.price || timeSlot.mentor.sessionPrice || 999,
+          amount: timeSlot.price || timeSlot.mentor.sessionPrice || 500,
           mentorId: timeSlot.mentor.id,
           timeSlotId: timeSlotId,
         }),

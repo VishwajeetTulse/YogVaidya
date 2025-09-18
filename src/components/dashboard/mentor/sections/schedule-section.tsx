@@ -572,7 +572,7 @@ export const ScheduleSection = () => {
           ) : ( 
             <div className="space-y-4">
               {timeSlots
-                .sort((a, b) => new Date(a.startTime).getTime() - new Date(b.startTime).getTime())
+                .sort((a, b) => new Date(b.startTime).getTime() - new Date(a.startTime).getTime())
                 .filter((slot) => slot.isActive)
                 .slice(0, showAllSlots ? undefined : 3) // Show only 3 recent available slots unless showAllSlots is true
                 .map((slot) => {

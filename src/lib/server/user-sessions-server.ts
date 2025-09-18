@@ -94,7 +94,18 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
                     { $ifNull: ['$mentorData.name', 'Mentor'] }
                   ]
                 },
-                scheduledTime: '$scheduledAt',
+                scheduledTime: {
+                  $cond: {
+                    if: { $and: [{ $ne: ['$scheduledAt', null] }, { $ne: ['$scheduledAt', ''] }] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$scheduledAt'
+                      }
+                    },
+                    else: null
+                  }
+                },
                 duration: {
                   $divide: [
                     {
@@ -330,7 +341,18 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
                 { $ifNull: ['$mentorData.name', 'Mentor'] }
               ]
             },
-            scheduledTime: '$scheduledAt',
+            scheduledTime: {
+              $cond: {
+                if: { $and: [{ $ne: ['$scheduledAt', null] }, { $ne: ['$scheduledAt', ''] }] },
+                then: {
+                  $dateToString: {
+                    format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                    date: '$scheduledAt'
+                  }
+                },
+                else: null
+              }
+            },
             duration: {
               $divide: [
                 {

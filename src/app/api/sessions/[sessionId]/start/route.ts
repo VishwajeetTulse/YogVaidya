@@ -7,10 +7,10 @@ import { prisma } from "@/lib/config/prisma";
  */
 export async function POST(
   request: NextRequest,
-  { params }: { params: { sessionId: string } }
+  { params }: { params: Promise<{ sessionId: string }> }
 ) {
   try {
-    const { sessionId } = params;
+    const { sessionId } = await params;
 
     if (!sessionId) {
       return NextResponse.json(
@@ -89,6 +89,7 @@ export async function POST(
     }
 
     // Update session to ONGOING and record manual start time with expected duration
+    // Keep the original scheduledAt time, just record when manually started
     const manualStartTime = new Date();
     await prisma.$runCommandRaw({
       update: 'sessionBooking',
@@ -101,6 +102,7 @@ export async function POST(
             manualStartTime: manualStartTime, // Record when the session was manually started
             expectedDuration: expectedDurationMinutes, // Store expected duration
             updatedAt: manualStartTime
+            // NOTE: We keep scheduledAt unchanged - it should remain the original scheduled time
           } 
         }
       }]
