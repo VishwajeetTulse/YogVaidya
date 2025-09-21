@@ -158,11 +158,20 @@ export async function GET(request: NextRequest) {
     }
 
     console.log(`📊 Found ${bookings.length} session bookings for mentor ${mentorId}`);
-    console.log("📋 Session bookings:", JSON.stringify(bookings, null, 2));
+    console.log("📋 Raw session bookings:", JSON.stringify(bookings, null, 2));
+
+    // Preserve Date objects instead of converting to ISO strings
+    const processedBookings = bookings.map(booking => ({
+      ...booking,
+      startTime: booking.startTime,
+      endTime: booking.endTime,
+      createdAt: booking.createdAt,
+      updatedAt: booking.updatedAt
+    }));
 
     return NextResponse.json({
       success: true,
-      data: bookings,
+      data: processedBookings,
     });
   } catch (error) {
     console.error("Error fetching mentor sessions:", error);

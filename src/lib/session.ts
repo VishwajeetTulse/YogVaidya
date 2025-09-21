@@ -4,21 +4,32 @@ import { ScheduleStatus } from "@prisma/client";
 import { prisma } from "./config/prisma";
 export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: string): Promise<{ success: boolean; source: 'schedule' | 'booking' }> {
     try {
+        // Validate sessionId is not undefined or empty
+        if (!sessionId || sessionId.trim() === '') {
+            console.error(`Invalid sessionId provided: ${sessionId}`);
+            throw new Error(`Invalid session ID: ${sessionId}`);
+        }
+
         // First try to find and update in Schedule collection (legacy sessions)
+        console.log(`🔍 Looking for session ${sessionId} in Schedule collection`);
         const scheduleSession = await prisma.schedule.findUnique({
             where: { id: sessionId }
         });
 
         if (scheduleSession) {
+            console.log(`✅ Found session ${sessionId} in Schedule collection, updating status to ${status}`);
             await prisma.schedule.update({
                 where: { id: sessionId },
                 data: { status: status }
             });
-            console.log(`Schedule session ${sessionId} status updated to ${status}`);
+            console.log(`✅ Schedule session ${sessionId} status updated to ${status}`);
             return { success: true, source: 'schedule' };
         }
 
+        console.log(`❌ Session ${sessionId} not found in Schedule collection, trying SessionBooking collection`);
+
         // If not found in Schedule, try SessionBooking collection
+        console.log(`🔍 Looking for session ${sessionId} in SessionBooking collection`);
         const sessionBooking = await prisma.sessionBooking.findUnique({
             where: { id: sessionId }
         }).catch(async (error) => {
@@ -122,6 +133,15 @@ export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: str
 
     } catch (error) {
         console.error(`Error updating session ${sessionId} status:`, error);
+        // Provide more specific error messages
+        if (error instanceof Error) {
+            if (error.message.includes('Invalid session ID')) {
+                throw new Error(`Invalid session ID provided: ${sessionId}`);
+            }
+            if (error.message.includes('not found')) {
+                throw new Error(`Session ${sessionId} not found in database`);
+            }
+        }
         throw error;
     }
 }

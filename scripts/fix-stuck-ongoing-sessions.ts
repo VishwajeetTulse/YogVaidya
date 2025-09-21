@@ -69,10 +69,10 @@ async function main() {
               $set: {
                 status: 'COMPLETED',
                 manualStartTime: scheduledTime,
-                actualEndTime: currentTime,
+                actualEndTime: new Date(), // Ensure this is a proper Date object
                 expectedDuration: expectedDurationMinutes,
                 completionReason: 'Auto-completed by fix script - session was overdue',
-                updatedAt: currentTime
+                updatedAt: new Date() // Ensure this is a proper Date object
               }
             }
           }]
@@ -91,7 +91,7 @@ async function main() {
               $set: {
                 manualStartTime: scheduledTime, // Assume started at scheduled time
                 expectedDuration: expectedDurationMinutes,
-                updatedAt: currentTime
+                updatedAt: new Date() // Ensure this is a proper Date object
               }
             }
           }]

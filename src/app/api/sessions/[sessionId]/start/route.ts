@@ -1,5 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { SessionService } from "@/lib/services/session-service";
 import { prisma } from "@/lib/config/prisma";
+import { convertMongoDate } from "@/lib/utils/datetime-utils";
 
 /**
  * POST /api/sessions/[sessionId]/start
@@ -19,30 +21,17 @@ export async function POST(
       );
     }
 
-    // Find the session
-    const sessionResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
-      filter: { _id: sessionId }
-    });
+    // Find the session using the robust service
+    const lookupResult = await SessionService.findSession(sessionId);
 
-    let session: any = null;
-    if (sessionResult && 
-        typeof sessionResult === 'object' && 
-        'cursor' in sessionResult &&
-        sessionResult.cursor &&
-        typeof sessionResult.cursor === 'object' &&
-        'firstBatch' in sessionResult.cursor &&
-        Array.isArray(sessionResult.cursor.firstBatch) &&
-        sessionResult.cursor.firstBatch.length > 0) {
-      session = sessionResult.cursor.firstBatch[0];
-    }
-
-    if (!session) {
+    if (!lookupResult.found) {
       return NextResponse.json(
-        { error: "Session not found" },
+        { error: lookupResult.error || "Session not found" },
         { status: 404 }
       );
     }
+
+    const session = lookupResult.session;
 
     // Check if session is in SCHEDULED status
     if (session.status !== 'SCHEDULED') {
@@ -54,7 +43,7 @@ export async function POST(
 
     // Calculate expected duration from time slot or use defaults
     let expectedDurationMinutes = 60; // Default 60 minutes
-    
+
     if (session.timeSlotId) {
       // Get time slot details to calculate duration
       const timeSlotResult = await prisma.$runCommandRaw({
@@ -70,12 +59,15 @@ export async function POST(
           'firstBatch' in timeSlotResult.cursor &&
           Array.isArray(timeSlotResult.cursor.firstBatch) &&
           timeSlotResult.cursor.firstBatch.length > 0) {
-        
+
         const timeSlot = timeSlotResult.cursor.firstBatch[0] as any;
-        const originalStartTime = new Date(timeSlot.startTime);
-        const originalEndTime = new Date(timeSlot.endTime);
-        const durationMs = originalEndTime.getTime() - originalStartTime.getTime();
-        expectedDurationMinutes = Math.round(durationMs / (60 * 1000));
+        const originalStartTime = convertMongoDate(timeSlot.startTime);
+        const originalEndTime = convertMongoDate(timeSlot.endTime);
+
+        if (originalStartTime && originalEndTime) {
+          const durationMs = originalEndTime.getTime() - originalStartTime.getTime();
+          expectedDurationMinutes = Math.round(durationMs / (60 * 1000));
+        }
       }
     } else {
       // Use default durations based on session type
@@ -88,25 +80,15 @@ export async function POST(
       }
     }
 
-    // Update session to ONGOING and record manual start time with expected duration
-    // Keep the original scheduledAt time, just record when manually started
-    const manualStartTime = new Date();
-    await prisma.$runCommandRaw({
-      update: 'sessionBooking',
-      updates: [{
-        q: { _id: sessionId },
-        u: { 
-          $set: { 
-            status: 'ONGOING',
-            isDelayed: false,
-            manualStartTime: manualStartTime, // Record when the session was manually started
-            expectedDuration: expectedDurationMinutes, // Store expected duration
-            updatedAt: manualStartTime
-            // NOTE: We keep scheduledAt unchanged - it should remain the original scheduled time
-          } 
-        }
-      }]
-    });
+    // Start the session using the robust service
+    const updateResult = await SessionService.startSession(sessionId);
+
+    if (!updateResult.success) {
+      return NextResponse.json(
+        { error: updateResult.error || "Failed to start session" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

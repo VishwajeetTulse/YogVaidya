@@ -118,7 +118,7 @@ export const SupportSection = () => {
             },
             {
               question: "How do I upgrade my subscription plan?",
-              answer: "Visit the 'Upgrade Plans' section in your dashboard to view available plans and upgrade instantly. Your new benefits will be available immediately."
+              answer: "Visit our pricing page to view available plans and upgrade your subscription. Your new benefits will be available immediately after upgrading."
             }
           ].map((faq, index) => (
             <div key={index} className="border border-gray-200 rounded-lg">

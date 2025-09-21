@@ -36,22 +36,60 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fetch scheduled sessions from database
-    const scheduledSessions = await prisma.schedule.findMany({
-      where: { mentorId: user.id },
-      orderBy: { scheduledTime: 'desc' }, // Changed to desc to show recent sessions first
+    // Fetch scheduled sessions from database using raw query to handle datetime conversion
+    const scheduledSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'Schedule',
+      pipeline: [
+        {
+          $match: { mentorId: user.id }
+        },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                then: '$scheduledTime',
+                else: {
+                  $dateFromString: {
+                    dateString: '$scheduledTime',
+                    onError: null
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          $sort: { scheduledTime: -1 }
+        }
+      ],
+      cursor: {}
     });
+
+    let scheduledSessions: any[] = [];
+    if (scheduledSessionsResult &&
+        typeof scheduledSessionsResult === 'object' &&
+        'cursor' in scheduledSessionsResult &&
+        scheduledSessionsResult.cursor &&
+        typeof scheduledSessionsResult.cursor === 'object' &&
+        'firstBatch' in scheduledSessionsResult.cursor &&
+        Array.isArray(scheduledSessionsResult.cursor.firstBatch)) {
+      scheduledSessions = scheduledSessionsResult.cursor.firstBatch.map((session: any) => ({
+        ...session,
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+      }));
+    }
 
     // Transform the data to match the expected format
     const formattedSessions = scheduledSessions.map(session => ({
       id: session.id,
       title: session.title,
-      scheduledTime: session.scheduledTime.toString(),
+      scheduledTime: session.scheduledTime,
       link: session.link,
       duration: session.duration,
       status: session.status,
       sessionType: session.sessionType,
-      createdAt: session.createdAt.toISOString(),
+      createdAt: session.createdAt,
     }));
 
     return NextResponse.json({
@@ -141,11 +179,11 @@ export async function POST(request: NextRequest) {
     const formattedSession = {
       id: newSession.id,
       title: newSession.title,
-      scheduledTime: newSession.scheduledTime.toISOString(),
+      scheduledTime: newSession.scheduledTime,
       link: newSession.link,
       duration: newSession.duration,
       sessionType: newSession.sessionType,
-      createdAt: newSession.createdAt.toISOString(),
+      createdAt: newSession.createdAt,
     };
     scheduleEmailReminder(newSession);
     return NextResponse.json({
@@ -261,11 +299,11 @@ export async function PUT(request: NextRequest) {
     const formattedSession = {
       id: updatedSession.id,
       title: updatedSession.title,
-      scheduledTime: updatedSession.scheduledTime.toISOString(),
+      scheduledTime: updatedSession.scheduledTime,
       link: updatedSession.link,
       duration: updatedSession.duration,
       sessionType: updatedSession.sessionType,
-      createdAt: updatedSession.createdAt.toISOString(),
+      createdAt: updatedSession.createdAt,
     };
 
     return NextResponse.json({

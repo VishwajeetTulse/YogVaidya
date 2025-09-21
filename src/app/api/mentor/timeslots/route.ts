@@ -70,50 +70,97 @@ export async function POST(request: Request) {
       }
     });
 
-    // Create time slot data
-    const timeSlotData = {
-      _id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-      mentorId: session.user.id,
-      mentorApplicationId: mentorApplication?.id || null,
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
-      sessionType: sessionType,
-      maxStudents: maxStudents,
-      currentStudents: 0,
-      isRecurring: isRecurring,
-      recurringDays: recurringDays,
-      price: user.sessionPrice || 500, // Use mentor's default session price
-      sessionLink: sessionLink,
-      notes: notes || "",
-      isActive: true,
-      isBooked: false,
-      bookedBy: null,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    };
+    if (isRecurring && recurringDays.length > 0) {
+      // ENHANCED: Generate multiple time slots for recurring schedule
+      console.log(`🔄 Creating recurring time slots for days: ${recurringDays.join(', ')}`);
+      
+      const { generateRecurringTimeSlots } = await import("@/lib/recurring-slots-generator");
+      
+      const result = await generateRecurringTimeSlots({
+        mentorId: session.user.id,
+        sessionType,
+        startTime,
+        endTime,
+        sessionLink,
+        notes,
+        recurringDays,
+        maxStudents,
+        price: user.sessionPrice || 500,
+        generateForDays: 7, // Generate for next 7 days as requested
+        mentorApplicationId: mentorApplication?.id || undefined
+      });
 
-    // Create the time slot using raw MongoDB operation
-    await prisma.$runCommandRaw({
-      insert: 'mentorTimeSlot',
-      documents: [timeSlotData]
-    });
+      if (result.success) {
+        console.log(`✅ Successfully created ${result.slotsCreated} recurring time slots`);
+        
+        return NextResponse.json({
+          success: true,
+          message: `Created ${result.slotsCreated} recurring time slots for the next 7 days`,
+          data: {
+            slotsCreated: result.slotsCreated,
+            recurringDays,
+            generatedForDays: 7,
+            isRecurring: true,
+            sessionType,
+            timeRange: `${new Date(startTime).toLocaleTimeString()} - ${new Date(endTime).toLocaleTimeString()}`
+          },
+        });
+      } else {
+        console.error("❌ Failed to create recurring slots:", result.error);
+        return NextResponse.json(
+          { success: false, error: result.error || "Failed to create recurring slots" },
+          { status: 500 }
+        );
+      }
+    } else {
+      // EXISTING: Create single time slot (non-recurring)
+      console.log("📅 Creating single time slot (non-recurring)");
+      
+      const timeSlotData = {
+        _id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        mentorId: session.user.id,
+        mentorApplicationId: mentorApplication?.id || null,
+        startTime: new Date(startTime),
+        endTime: new Date(endTime),
+        sessionType: sessionType,
+        maxStudents: maxStudents,
+        currentStudents: 0,
+        isRecurring: false, // Single slots are not recurring
+        recurringDays: [],
+        price: user.sessionPrice || 500,
+        sessionLink: sessionLink,
+        notes: notes || "",
+        isActive: true,
+        isBooked: false,
+        bookedBy: null,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
 
-    console.log("✅ Time slot created successfully:", timeSlotData._id);
+      // Create the time slot using raw MongoDB operation
+      await prisma.$runCommandRaw({
+        insert: 'mentorTimeSlot',
+        documents: [timeSlotData]
+      });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        id: timeSlotData._id,
-        startTime: timeSlotData.startTime,
-        endTime: timeSlotData.endTime,
-        sessionType: timeSlotData.sessionType,
-        maxStudents: timeSlotData.maxStudents,
-        price: timeSlotData.price,
-        sessionLink: timeSlotData.sessionLink,
-        isRecurring: timeSlotData.isRecurring,
-        recurringDays: timeSlotData.recurringDays,
-      },
-    });
+      console.log("✅ Single time slot created successfully:", timeSlotData._id);
+
+      return NextResponse.json({
+        success: true,
+        message: "Single time slot created successfully",
+        data: {
+          id: timeSlotData._id,
+          startTime: timeSlotData.startTime,
+          endTime: timeSlotData.endTime,
+          sessionType: timeSlotData.sessionType,
+          maxStudents: timeSlotData.maxStudents,
+          price: timeSlotData.price,
+          sessionLink: timeSlotData.sessionLink,
+          isRecurring: timeSlotData.isRecurring,
+          recurringDays: timeSlotData.recurringDays,
+        },
+      });
+    }
 
   } catch (error) {
     console.error("Error creating time slot:", error);

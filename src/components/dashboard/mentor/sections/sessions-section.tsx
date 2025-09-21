@@ -147,12 +147,47 @@ useEffect(() => {
 
   // Function to handle start session
   const handleStartSession = (sessionItem: MentorSessionData) => {
-    UpdateSessionStatus("ONGOING", sessionItem.id);
-    // Reload sessions after 1 second to ensure the status is updated
-    setTimeout(() => {
-      loadMentorSessions();
-    }, 1000);
-    toast.success("Session started successfully");
+    console.log('🔍 handleStartSession called with:', {
+      sessionItem,
+      sessionItemType: typeof sessionItem,
+      sessionItemKeys: sessionItem ? Object.keys(sessionItem) : 'undefined',
+      id: sessionItem?.id,
+      idType: typeof sessionItem?.id,
+      idTrimmed: sessionItem?.id?.trim(),
+      isValid: !!(sessionItem?.id && sessionItem.id.trim())
+    });
+
+    // Check if sessionItem exists
+    if (!sessionItem) {
+      console.error('❌ sessionItem is undefined/null');
+      toast.error('Session data is missing');
+      return;
+    }
+
+    // Check if id exists and is valid
+    if (!sessionItem.id || typeof sessionItem.id !== 'string' || sessionItem.id.trim() === '') {
+      console.error('❌ Invalid session ID:', {
+        id: sessionItem.id,
+        idType: typeof sessionItem.id,
+        fullSessionItem: sessionItem
+      });
+      toast.error(`Cannot start session: Invalid session ID (${sessionItem.id})`);
+      return;
+    }
+
+    console.log('✅ All validations passed, calling UpdateSessionStatus with ID:', sessionItem.id);
+
+    try {
+      UpdateSessionStatus("ONGOING", sessionItem.id);
+      // Reload sessions after 1 second to ensure the status is updated
+      setTimeout(() => {
+        loadMentorSessions();
+      }, 1000);
+      toast.success("Session started successfully");
+    } catch (error) {
+      console.error('❌ Error calling UpdateSessionStatus:', error);
+      toast.error('Failed to start session');
+    }
   };
 
   // Function to handle end session (works for both regular and delayed sessions)
@@ -280,29 +315,43 @@ useEffect(() => {
     )
     .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
 
+  // Separate upcoming sessions by category (handle missing sessionCategory gracefully)
+  const upcomingSubscriptionSessions = upcomingSessions.filter(session => (session as any).sessionCategory === "subscription");
+  const upcomingIndividualSessions = upcomingSessions.filter(session => (session as any).sessionCategory === "individual");
+
   // Filter sessions for ongoing
   const ongoingSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "ONGOING")
     .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
+
+  // Separate ongoing sessions by category
+  const ongoingSubscriptionSessions = ongoingSessions.filter(session => (session as any).sessionCategory === "subscription");
+  const ongoingIndividualSessions = ongoingSessions.filter(session => (session as any).sessionCategory === "individual");
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "COMPLETED")
     .sort((a, b) => sortByScheduledTime(a, b, false));
 
+  // Separate completed sessions by category
+  const completedSubscriptionSessions = completedSessions.filter(session => (session as any).sessionCategory === "subscription");
+  const completedIndividualSessions = completedSessions.filter(session => (session as any).sessionCategory === "individual");
+
   // Filter sessions for cancelled
   const cancelledSessions = scheduledSessions
     .filter((session: MentorSessionData) => session.status === "CANCELLED")
     .sort((a, b) => sortByScheduledTime(a, b, false));
 
-  const renderSessionCard = (sessionItem: MentorSessionData) => {
+  // Separate cancelled sessions by category
+  const cancelledSubscriptionSessions = cancelledSessions.filter(session => (session as any).sessionCategory === "subscription");
+  const cancelledIndividualSessions = cancelledSessions.filter(session => (session as any).sessionCategory === "individual");
+
+  const renderSessionCard = (sessionItem: MentorSessionData, isUpcoming: boolean = false, isOngoing: boolean = false) => {
     // Defensive programming: Handle null/undefined scheduledTime first
     const scheduledTime = sessionItem.scheduledTime ? new Date(sessionItem.scheduledTime) : null;
     const isValidDate = scheduledTime && !isNaN(scheduledTime.getTime());
     const currentTime = new Date();
-    
-    const isUpcoming = sessionItem.status === "SCHEDULED";
-    const isOngoing = sessionItem.status === "ONGOING";
+
     const isCompleted = sessionItem.status === "COMPLETED";
     const isCancelled = sessionItem.status === "CANCELLED";
     
@@ -461,11 +510,22 @@ useEffect(() => {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    UpdateSessionStatus("CANCELLED", sessionItem.id);
-                    setTimeout(() => {
-                      loadMentorSessions();
-                    }, 1000);
-                    toast.success("Session cancelled");
+                    if (!sessionItem?.id || typeof sessionItem.id !== 'string' || sessionItem.id.trim() === '') {
+                      console.error('❌ Invalid session ID for cancel:', sessionItem?.id);
+                      toast.error(`Cannot cancel session: Invalid session ID (${sessionItem?.id})`);
+                      return;
+                    }
+
+                    try {
+                      UpdateSessionStatus("CANCELLED", sessionItem.id);
+                      setTimeout(() => {
+                        loadMentorSessions();
+                      }, 1000);
+                      toast.success("Session cancelled");
+                    } catch (error) {
+                      console.error('❌ Error cancelling session:', error);
+                      toast.error('Failed to cancel session');
+                    }
                   }}
                 >
                   <XCircle className="w-4 h-4 mr-1" />
@@ -572,19 +632,163 @@ useEffect(() => {
         </TabsList>
 
         <TabsContent value="upcoming">
-          {renderTabContent(upcomingSessions, "No upcoming sessions")}
+          <div className="space-y-6">
+            {/* Subscription Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Subscription Group Sessions ({upcomingSubscriptionSessions.length})
+              </h3>
+              {upcomingSubscriptionSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {upcomingSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, true, false))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No upcoming subscription sessions</p>
+                </div>
+              )}
+            </div>
+
+            {/* Individual Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-green-600" />
+                Individual One-to-One Sessions ({upcomingIndividualSessions.length})
+              </h3>
+              {upcomingIndividualSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {upcomingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <UserCheck className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No upcoming individual sessions</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="ongoing">
-          {renderTabContent(ongoingSessions, "No ongoing sessions")}
+          <div className="space-y-6">
+            {/* Subscription Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Ongoing Subscription Sessions ({ongoingSubscriptionSessions.length})
+              </h3>
+              {ongoingSubscriptionSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {ongoingSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No ongoing subscription sessions</p>
+                </div>
+              )}
+            </div>
+
+            {/* Individual Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-green-600" />
+                Ongoing Individual Sessions ({ongoingIndividualSessions.length})
+              </h3>
+              {ongoingIndividualSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {ongoingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <UserCheck className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No ongoing individual sessions</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="completed">
-          {renderTabContent(completedSessions, "No completed sessions")}
+          <div className="space-y-6">
+            {/* Subscription Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Completed Subscription Sessions ({completedSubscriptionSessions.length})
+              </h3>
+              {completedSubscriptionSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {completedSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No completed subscription sessions</p>
+                </div>
+              )}
+            </div>
+
+            {/* Individual Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-green-600" />
+                Completed Individual Sessions ({completedIndividualSessions.length})
+              </h3>
+              {completedIndividualSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {completedIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <UserCheck className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No completed individual sessions</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
 
         <TabsContent value="cancelled">
-          {renderTabContent(cancelledSessions, "No cancelled sessions")}
+          <div className="space-y-6">
+            {/* Subscription Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <Users className="w-5 h-5 text-blue-600" />
+                Cancelled Subscription Sessions ({cancelledSubscriptionSessions.length})
+              </h3>
+              {cancelledSubscriptionSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {cancelledSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <Users className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No cancelled subscription sessions</p>
+                </div>
+              )}
+            </div>
+
+            {/* Individual Sessions */}
+            <div>
+              <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center gap-2">
+                <UserCheck className="w-5 h-5 text-green-600" />
+                Cancelled Individual Sessions ({cancelledIndividualSessions.length})
+              </h3>
+              {cancelledIndividualSessions.length > 0 ? (
+                <div className="grid gap-4">
+                  {cancelledIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                </div>
+              ) : (
+                <div className="text-center py-6 bg-gray-50 rounded-lg">
+                  <UserCheck className="h-8 w-8 text-gray-400 mx-auto mb-2" />
+                  <p className="text-gray-500">No cancelled individual sessions</p>
+                </div>
+              )}
+            </div>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

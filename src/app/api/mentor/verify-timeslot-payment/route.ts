@@ -86,7 +86,7 @@ export async function POST(request: NextRequest) {
               currency: "INR"
             },
             paymentStatus: "COMPLETED",
-            updatedAt: new Date()
+            updatedAt: new Date() // Ensure this is a proper Date object
           }
         }
       }]

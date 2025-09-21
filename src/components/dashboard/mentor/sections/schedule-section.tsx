@@ -4,7 +4,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { Calendar, Clock, Video, Plus, Trash2, Edit, Users, User, RefreshCw } from "lucide-react";
+import { Calendar, Clock, Video, Plus, Trash2, Edit, Users, User, RefreshCw, Crown, Star, Sparkles } from "lucide-react";
 import { useSession } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,8 @@ import { SessionType } from "@prisma/client";
 import { getMentorType } from "@/lib/mentor-type";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Textarea } from "@/components/ui/textarea";
 
 // Form validation schema for time slots
 const timeSlotSchema = z.object({
@@ -39,8 +41,8 @@ const timeSlotSchema = z.object({
     required_error: "Session type is required",
     invalid_type_error: "Please select a valid session type",
   }),
-  maxStudents: z.enum(["one", "all"], {
-    required_error: "Please select session type - one student or all students",
+  maxStudents: z.enum(["one"], {
+    required_error: "Please select session type - individual session only",
   }),
   isRecurring: z.boolean(),
   recurringDays: z.array(z.string()),
@@ -49,6 +51,22 @@ const timeSlotSchema = z.object({
 });
 
 type TimeSlotFormData = z.infer<typeof timeSlotSchema>;
+
+// Form validation schema for subscription sessions
+const subscriptionSessionSchema = z.object({
+  title: z.string().min(3, "Title must be at least 3 characters"),
+  scheduledDate: z.string().min(1, "Please select a date"),
+  scheduledTime: z.string().min(1, "Please select a time"),
+  duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
+  sessionType: z.nativeEnum(SessionType, {
+    required_error: "Session type is required",
+    invalid_type_error: "Please select a valid session type",
+  }),
+  sessionLink: z.string().url("Please enter a valid session link").min(1, "Session link is required"),
+  notes: z.string().optional(),
+});
+
+type SubscriptionSessionFormData = z.infer<typeof subscriptionSessionSchema>;
 
 interface TimeSlot {
   _id: string;
@@ -69,6 +87,31 @@ interface TimeSlot {
   updatedAt: string;
 }
 
+interface SubscriptionSession {
+  id: string;
+  title: string;
+  scheduledTime: string;
+  sessionType: string;
+  duration: number;
+  link: string;
+  status: string;
+  totalBookings: number;
+  planCounts: {
+    SEED: number;
+    BLOOM: number;
+    FLOURISH: number;
+  };
+  bookings: Array<{
+    id: string;
+    userId: string;
+    userName: string;
+    userEmail: string;
+    subscriptionPlan: string;
+    status: string;
+    paymentStatus: string;
+  }>;
+}
+
 const WEEKDAYS = [
   { value: "MONDAY", label: "Monday" },
   { value: "TUESDAY", label: "Tuesday" },
@@ -82,12 +125,16 @@ const WEEKDAYS = [
 export const ScheduleSection = () => {
   const { data: session } = useSession();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
+  const [subscriptionSessions, setSubscriptionSessions] = useState<SubscriptionSession[]>([]);
   const [loading, setLoading] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
+  const [subscriptionSubmitting, setSubscriptionSubmitting] = useState(false);
   const [editingSlot, setEditingSlot] = useState<TimeSlot | null>(null);
   const [mentorSessionType, setMentorSessionType] = useState<SessionType>("YOGA");
+  const [mentorType, setMentorType] = useState<string | null>(null);
   const [showAllSlots, setShowAllSlots] = useState(false);
+  const [activeTab, setActiveTab] = useState("individual");
   
   const form = useForm<TimeSlotFormData>({
     resolver: zodResolver(timeSlotSchema),
@@ -104,13 +151,33 @@ export const ScheduleSection = () => {
     },
   });
 
+  const subscriptionForm = useForm<SubscriptionSessionFormData>({
+    resolver: zodResolver(subscriptionSessionSchema),
+    defaultValues: {
+      title: "",
+      scheduledDate: "",
+      scheduledTime: "",
+      duration: 60,
+      sessionType: "YOGA" as SessionType,
+      sessionLink: "",
+      notes: "",
+    },
+  });
+
   // Set the session type based on mentor type when component mounts
   useEffect(() => {
     const initializeSessionType = async () => {
-      const mentorType = await getMentorType(session?.user || { email: "" });
-      const sessionType = mentorType === "YOGAMENTOR" ? "YOGA" : mentorType === "DIETPLANNER" ? "DIET" : "MEDITATION";
+      const fetchedMentorType = await getMentorType(session?.user || { email: "" });
+      const sessionType = fetchedMentorType === "YOGAMENTOR" ? "YOGA" : fetchedMentorType === "DIETPLANNER" ? "DIET" : "MEDITATION";
+      setMentorType(fetchedMentorType);
       form.setValue("sessionType", sessionType as SessionType);
+      subscriptionForm.setValue("sessionType", sessionType as SessionType);
       setMentorSessionType(sessionType as SessionType);
+      
+      // Ensure DIET mentors can only access individual tab
+      if (fetchedMentorType === "DIETPLANNER" && activeTab === "subscription") {
+        setActiveTab("individual");
+      }
     };
     
     initializeSessionType();
@@ -124,7 +191,7 @@ export const ScheduleSection = () => {
       form.setValue("startTime", startTime.toTimeString().slice(0, 5));
       form.setValue("endTime", endTime.toTimeString().slice(0, 5));
       form.setValue("sessionType", editingSlot.sessionType as SessionType);
-      form.setValue("maxStudents", editingSlot.maxStudents === 1 ? "one" : "all");
+      form.setValue("maxStudents", "one");
       form.setValue("isRecurring", editingSlot.isRecurring);
       form.setValue("recurringDays", editingSlot.recurringDays);
       form.setValue("sessionLink", editingSlot.sessionLink || "");
@@ -155,14 +222,38 @@ export const ScheduleSection = () => {
     }
   }, [session?.user]);
 
+  // Load subscription sessions from API
+  const loadSubscriptionSessions = useCallback(async () => {
+    if (!session?.user) return;
+    
+    setLoading(true);
+    try {
+      const response = await fetch('/api/mentor/subscription-sessions');
+      const data = await response.json();
+      
+      if (data.success) {
+        setSubscriptionSessions(data.data);
+      } else {
+        console.error('Failed to load subscription sessions:', data.error);
+        toast.error('Failed to load subscription sessions');
+      }
+    } catch (error) {
+      console.error('Error loading subscription sessions:', error);
+      toast.error('Failed to load subscription sessions');
+    } finally {
+      setLoading(false);
+    }
+  }, [session?.user]);
+
   // Manual refresh function
   const handleManualRefresh = async () => {
     setRefreshing(true);
     try {
       await loadTimeSlots();
-      toast.success('Time slots refreshed successfully');
+      await loadSubscriptionSessions();
+      toast.success('Data refreshed successfully');
     } catch (error) {
-      toast.error('Failed to refresh time slots');
+      toast.error('Failed to refresh data');
     } finally {
       setRefreshing(false);
     }
@@ -174,7 +265,8 @@ export const ScheduleSection = () => {
       userId: session?.user?.id
     });
     loadTimeSlots();
-  }, [loadTimeSlots, session]);
+    loadSubscriptionSessions();
+  }, [loadTimeSlots, loadSubscriptionSessions, session]);
 
   const onSubmit = async (data: TimeSlotFormData) => {
     setSubmitting(true);
@@ -194,7 +286,7 @@ export const ScheduleSection = () => {
         startTime: startDateTime.toISOString(),
         endTime: endDateTime.toISOString(),
         sessionType: data.sessionType,
-        maxStudents: data.maxStudents === "one" ? 1 : 50, // Convert "one" to 1, "all" to high number
+        maxStudents: 1, // Individual sessions only
         isRecurring: data.isRecurring,
         recurringDays: data.recurringDays,
         sessionLink: data.sessionLink,
@@ -250,6 +342,74 @@ export const ScheduleSection = () => {
     }
   };
 
+  const onSubscriptionSubmit = async (data: SubscriptionSessionFormData) => {
+    setSubscriptionSubmitting(true);
+    try {
+      // Combine date and time to create full datetime string
+      const scheduledDateTime = new Date(`${data.scheduledDate}T${data.scheduledTime}`);
+      
+      // Validate the scheduled time is in the future
+      if (scheduledDateTime <= new Date()) {
+        toast.error("Scheduled time must be in the future");
+        return;
+      }
+
+      // Prepare the payload
+      const payload = {
+        title: data.title,
+        scheduledTime: scheduledDateTime.toISOString(),
+        link: data.sessionLink,
+        duration: data.duration,
+        sessionType: data.sessionType,
+        notes: data.notes || "",
+      };
+
+      const response = await fetch('/api/mentor/subscription-sessions', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(payload),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success(`Subscription session created! Scheduled for ${result.data.eligibleUsers} users`);
+        
+        // Reset form
+        subscriptionForm.reset({
+          title: "",
+          scheduledDate: "",
+          scheduledTime: "",
+          duration: 60,
+          sessionType: mentorSessionType,
+          sessionLink: "",
+          notes: "",
+        });
+        
+        // Refresh the subscription sessions list
+        loadSubscriptionSessions();
+
+        // Show success details
+        const { summary } = result.data;
+        let message = `Session created for ${summary.totalBookings} users`;
+        if (summary.byPlan.SEED > 0) message += ` • ${summary.byPlan.SEED} SEED`;
+        if (summary.byPlan.BLOOM > 0) message += ` • ${summary.byPlan.BLOOM} BLOOM`;
+        if (summary.byPlan.FLOURISH > 0) message += ` • ${summary.byPlan.FLOURISH} FLOURISH`;
+        
+        toast.success(message);
+      } else {
+        toast.error(result.error || 'Failed to create subscription session');
+      }
+    } catch (error) {
+      console.error('Error creating subscription session:', error);
+      toast.error('Failed to create subscription session. Please try again.');
+    } finally {
+      setSubscriptionSubmitting(false);
+    }
+  };
+
   const cancelEdit = () => {
     setEditingSlot(null);
     form.reset({
@@ -268,13 +428,28 @@ export const ScheduleSection = () => {
   return (
     <div className="space-y-6">
       <div>
-        <h1 className="text-3xl font-bold text-gray-900">Schedule & Time Slots</h1>
+        <h1 className="text-3xl font-bold text-gray-900">Schedule & Sessions</h1>
         <p className="text-gray-600 mt-2">
-          Create available time slots for students to book one-on-one sessions.
+          Create individual time slots or schedule sessions for all subscription users.
         </p>
       </div>
 
-      {/* Create Time Slot Form */}
+      <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
+        <TabsList className={`grid w-full ${mentorType === "DIETPLANNER" ? "grid-cols-1" : "grid-cols-2"}`}>
+          <TabsTrigger value="individual" className="flex items-center gap-2">
+            <User className="h-4 w-4" />
+            Individual Time Slots
+          </TabsTrigger>
+          {mentorType !== "DIETPLANNER" && (
+            <TabsTrigger value="subscription" className="flex items-center gap-2">
+              <Crown className="h-4 w-4" />
+              Subscription Sessions
+            </TabsTrigger>
+          )}
+        </TabsList>
+
+        <TabsContent value="individual" className="space-y-6">
+          {/* Create Time Slot Form */}
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
@@ -387,14 +562,14 @@ export const ScheduleSection = () => {
                   name="maxStudents"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>Session Type</FormLabel>
+                      <FormLabel>Session Format</FormLabel>
                       <Select
                         onValueChange={field.onChange}
                         value={field.value}
                       >
                         <FormControl>
                           <SelectTrigger>
-                            <SelectValue placeholder="Select session type" />
+                            <SelectValue placeholder="Individual session" />
                           </SelectTrigger>
                         </FormControl>
                         <SelectContent>
@@ -402,12 +577,6 @@ export const ScheduleSection = () => {
                             <div className="flex items-center gap-2">
                               <User className="h-4 w-4" />
                               One Student (Individual Session)
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="all">
-                            <div className="flex items-center gap-2">
-                              <Users className="h-4 w-4" />
-                              All Students (Group Session)
                             </div>
                           </SelectItem>
                         </SelectContent>
@@ -752,6 +921,321 @@ export const ScheduleSection = () => {
           )}
         </CardContent>
       </Card>
+        </TabsContent>
+
+        {mentorType !== "DIETPLANNER" && (
+          <TabsContent value="subscription" className="space-y-6">
+          {/* Create Subscription Session Form */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center gap-2">
+                <Crown className="h-5 w-5" />
+                Schedule Session for Subscription Users
+              </CardTitle>
+              <p className="text-sm text-gray-600 mt-2">
+                Create a session that will be automatically scheduled for all active users with matching subscription plans:
+              </p>
+              <div className="flex gap-4 mt-3">
+                <div className="flex items-center gap-2 px-3 py-1 bg-blue-50 rounded-lg border border-blue-200">
+                  <Sparkles className="h-4 w-4 text-blue-600" />
+                  <span className="text-sm font-medium text-blue-700">SEED</span>
+                  <span className="text-xs text-blue-600">→ Meditation</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-green-50 rounded-lg border border-green-200">
+                  <Star className="h-4 w-4 text-green-600" />
+                  <span className="text-sm font-medium text-green-700">BLOOM</span>
+                  <span className="text-xs text-green-600">→ Yoga</span>
+                </div>
+                <div className="flex items-center gap-2 px-3 py-1 bg-purple-50 rounded-lg border border-purple-200">
+                  <Crown className="h-4 w-4 text-purple-600" />
+                  <span className="text-sm font-medium text-purple-700">FLOURISH</span>
+                  <span className="text-xs text-purple-600">→ Both</span>
+                </div>
+              </div>
+            </CardHeader>
+            <CardContent>
+              <Form {...subscriptionForm}>
+                <form onSubmit={subscriptionForm.handleSubmit(onSubscriptionSubmit)} className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="title"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Session Title *</FormLabel>
+                          <FormControl>
+                            <Input
+                              placeholder="e.g., Morning Yoga Flow"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="sessionType"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Session Type *</FormLabel>
+                          <Select
+                            onValueChange={field.onChange}
+                            value={field.value}
+                            disabled={true} // Auto-filled based on mentor type
+                          >
+                            <FormControl>
+                              <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                                <SelectValue placeholder="Auto-filled based on mentor type" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="YOGA">
+                                <div className="flex items-center gap-2">
+                                  <Video className="h-4 w-4" />
+                                  Yoga
+                                </div>
+                              </SelectItem>
+                              <SelectItem value="MEDITATION">
+                                <div className="flex items-center gap-2">
+                                  <Calendar className="h-4 w-4" />
+                                  Meditation
+                                </div>
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="scheduledDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Session Date *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="date"
+                              {...field}
+                              min={new Date().toISOString().split('T')[0]}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="scheduledTime"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Session Time *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="time"
+                              {...field}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={subscriptionForm.control}
+                      name="duration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Duration (minutes) *</FormLabel>
+                          <FormControl>
+                            <Input
+                              type="number"
+                              min="15"
+                              max="180"
+                              {...field}
+                              value={field.value?.toString() || ''}
+                              onChange={(e) => {
+                                const value = parseInt(e.target.value);
+                                field.onChange(isNaN(value) ? undefined : value);
+                              }}
+                            />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <FormField
+                    control={subscriptionForm.control}
+                    name="sessionLink"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Session Link *</FormLabel>
+                        <FormControl>
+                          <Input
+                            placeholder="https://zoom.us/j/your-meeting-link"
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={subscriptionForm.control}
+                    name="notes"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Notes (Optional)</FormLabel>
+                        <FormControl>
+                          <Textarea
+                            placeholder="Additional notes about the session..."
+                            rows={3}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <div className="flex gap-2">
+                    <Button type="submit" disabled={subscriptionSubmitting} className="w-full md:w-auto">
+                      {subscriptionSubmitting ? "Creating Session..." : "Schedule for All Subscribers"}
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </CardContent>
+          </Card>
+
+          {/* Subscription Sessions List */}
+          <Card>
+            <CardHeader>
+              <CardTitle className="flex items-center justify-between">
+                <div className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Subscription Sessions ({subscriptionSessions.length})
+                </div>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={handleManualRefresh}
+                  disabled={refreshing}
+                  className="h-8 px-2 sm:px-3"
+                >
+                  <RefreshCw className={`h-4 w-4 ${refreshing ? 'animate-spin' : ''}`} />
+                  <span className="hidden sm:inline ml-1">
+                    {refreshing ? 'Refreshing...' : 'Refresh'}
+                  </span>
+                </Button>
+              </CardTitle>
+            </CardHeader>
+            <CardContent>
+              {loading ? (
+                <div className="text-center py-8">
+                  <p className="text-gray-500">Loading subscription sessions...</p>
+                </div>
+              ) : subscriptionSessions.length === 0 ? (
+                <div className="text-center py-8">
+                  <Crown className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                  <p className="text-gray-500 text-lg mb-2">No subscription sessions created</p>
+                  <p className="text-gray-400">
+                    Create your first subscription session using the form above!
+                  </p>
+                </div>
+              ) : (
+                <div className="space-y-4">
+                  {subscriptionSessions
+                    .sort((a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime())
+                    .map((session) => (
+                      <div key={session.id} className="border border-gray-200 rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <h3 className="font-semibold text-gray-900">{session.title}</h3>
+                              <Badge className={`${
+                                session.sessionType === 'YOGA' 
+                                  ? 'bg-blue-100 text-blue-800' 
+                                  : 'bg-purple-100 text-purple-800'
+                              }`}>
+                                {session.sessionType}
+                              </Badge>
+                              <Badge className={`${
+                                session.status === 'SCHEDULED' 
+                                  ? 'bg-green-100 text-green-800'
+                                  : session.status === 'COMPLETED'
+                                  ? 'bg-gray-100 text-gray-800'
+                                  : 'bg-yellow-100 text-yellow-800'
+                              }`}>
+                                {session.status}
+                              </Badge>
+                            </div>
+                            
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm text-gray-600">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1">
+                                  <Clock className="w-3 h-3" />
+                                  {new Date(session.scheduledTime).toLocaleDateString('en-US', {
+                                    weekday: 'short',
+                                    year: 'numeric',
+                                    month: 'short',
+                                    day: 'numeric'
+                                  })} at {new Date(session.scheduledTime).toLocaleTimeString('en-US', {
+                                    hour: 'numeric',
+                                    minute: '2-digit',
+                                    hour12: true
+                                  })}
+                                </div>
+                                <div className="flex items-center gap-1">
+                                  <Video className="w-3 h-3" />
+                                  Duration: {session.duration} minutes
+                                </div>
+                              </div>
+                              
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-1">
+                                  <Users className="w-3 h-3" />
+                                  Total Users: {session.totalBookings}
+                                </div>
+                                <div className="flex items-center gap-2 text-xs">
+                                  {session.planCounts.SEED > 0 && (
+                                    <span className="bg-blue-100 text-blue-800 px-2 py-1 rounded">
+                                      {session.planCounts.SEED} SEED
+                                    </span>
+                                  )}
+                                  {session.planCounts.BLOOM > 0 && (
+                                    <span className="bg-green-100 text-green-800 px-2 py-1 rounded">
+                                      {session.planCounts.BLOOM} BLOOM
+                                    </span>
+                                  )}
+                                  {session.planCounts.FLOURISH > 0 && (
+                                    <span className="bg-purple-100 text-purple-800 px-2 py-1 rounded">
+                                      {session.planCounts.FLOURISH} FLOURISH
+                                    </span>
+                                  )}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+        )}
+      </Tabs>
     </div>
   );
 };

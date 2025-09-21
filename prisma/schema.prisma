@@ -236,6 +236,7 @@ model Schedule {
   status        ScheduleStatus @default(SCHEDULED)
   mentorId      String
   mentor        User           @relation(fields: [mentorId], references: [id], onDelete: Cascade)
+  sessionBookings SessionBooking[] @relation("ScheduleBookings")
   createdAt     DateTime       @default(now())
   updatedAt     DateTime       @updatedAt
 
@@ -285,6 +286,7 @@ model SessionBooking {
   mentorId          String         // Mentor for the session
   mentorApplicationId String?      // Reference to mentor application for compatibility
   timeSlotId        String?        // Reference to the time slot (new field)
+  scheduleId        String?        // Reference to schedule for group sessions
   sessionType       SessionType
   scheduledAt       DateTime       // When the session is scheduled
   status            ScheduleStatus @default(SCHEDULED)
@@ -308,10 +310,12 @@ model SessionBooking {
   mentor            User           @relation("MentorBookings", fields: [mentorId], references: [id], onDelete: Cascade)
   mentorApplication MentorApplication? @relation(fields: [mentorApplicationId], references: [id], onDelete: SetNull)
   timeSlot          MentorTimeSlot? @relation("SlotBookings", fields: [timeSlotId], references: [id], onDelete: SetNull)
+  schedule          Schedule?      @relation("ScheduleBookings", fields: [scheduleId], references: [id], onDelete: SetNull)
 
   @@index([userId])
   @@index([mentorId])
   @@index([timeSlotId])
+  @@index([scheduleId])
   @@index([scheduledAt])
   @@index([status])
   @@index([paymentStatus])

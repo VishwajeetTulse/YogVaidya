@@ -29,7 +29,6 @@ export const SubscriptionSection = ({
   cancellingSubscription,
   handleCancelSubscription,
   formatDate, 
-  setActiveSection,
   refreshSubscriptionData
 }: SectionProps) => {
   const [billingHistory, setBillingHistory] = useState<BillingHistoryItem[]>([]);
@@ -320,7 +319,7 @@ export const SubscriptionSection = ({
                   <div className="space-y-3">
                     <Button
                       className="w-full h-12 bg-gradient-to-r from-[#876aff] to-[#76d2fa] hover:from-[#7c61ff] hover:to-[#6bc8f0] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                      onClick={() => setActiveSection?.("plans")}
+                      onClick={() => window.location.href = '/pricing'}
                     >
                       🚀 Subscribe Now - Restore Access
                     </Button>
@@ -426,7 +425,7 @@ export const SubscriptionSection = ({
                   </div>
                   <Button
                     className="w-full h-12 bg-gradient-to-r from-[#76d2fa] to-[#876aff] hover:from-[#6bc8f0] hover:to-[#7c61ff] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl transition-all duration-300"
-                    onClick={() => setActiveSection?.("plans")}
+                    onClick={() => window.location.href = '/pricing'}
                   >
                     🚀 Choose Your Plan
                   </Button>
@@ -601,7 +600,7 @@ export const SubscriptionSection = ({
                     ? "bg-gradient-to-r from-gray-400 to-gray-500 text-white cursor-not-allowed opacity-60" 
                     : "bg-gradient-to-r from-[#876aff] to-[#76d2fa] hover:from-[#7c61ff] hover:to-[#6bc8f0] text-white hover:shadow-xl"
                 }`}
-                onClick={isTrialActiveAndValid ? undefined : () => setActiveSection?.("plans")}
+                onClick={isTrialActiveAndValid ? undefined : () => window.location.href = '/pricing'}
                 disabled={isTrialActiveAndValid || false}
                 title={isTrialActiveAndValid ? "You cannot purchase a plan during your trial period. Please wait until your trial ends to subscribe." : undefined}
               >

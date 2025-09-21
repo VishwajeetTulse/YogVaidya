@@ -123,21 +123,33 @@ export async function GET(request: NextRequest) {
 
     console.log(`📊 Found ${sessions.length} booked sessions for student`);
 
+    // Preserve Date objects instead of converting to ISO strings
+    const processedSessions = sessions.map(session => ({
+      ...session,
+      scheduledTime: session.scheduledTime,
+      createdAt: session.createdAt,
+      timeSlot: session.timeSlot ? {
+        ...session.timeSlot,
+        startTime: session.timeSlot.startTime,
+        endTime: session.timeSlot.endTime
+      } : session.timeSlot
+    }));
+
     // Separate sessions by status for better organization
-    const upcomingSessions = sessions.filter(s => s.status === 'SCHEDULED');
-    const ongoingSessions = sessions.filter(s => s.status === 'ONGOING');
-    const completedSessions = sessions.filter(s => s.status === 'COMPLETED');
+    const upcomingSessions = processedSessions.filter(s => s.status === 'SCHEDULED');
+    const ongoingSessions = processedSessions.filter(s => s.status === 'ONGOING');
+    const completedSessions = processedSessions.filter(s => s.status === 'COMPLETED');
 
     console.log(`📅 Sessions breakdown: ${upcomingSessions.length} upcoming, ${ongoingSessions.length} ongoing, ${completedSessions.length} completed`);
 
     return NextResponse.json({
       success: true,
       data: {
-        allSessions: sessions,
+        allSessions: processedSessions,
         upcomingSessions,
         ongoingSessions,
         completedSessions,
-        total: sessions.length
+        total: processedSessions.length
       }
     });
 

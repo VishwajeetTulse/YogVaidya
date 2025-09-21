@@ -18,7 +18,6 @@ import { ClassesSection } from '../user/sections/classes-section';
 import { MentorsSection } from '../user/sections/mentors-section';
 import { LibrarySection } from '../user/sections/library-section';
 import { SubscriptionSection } from '../user/sections/subscription-section';
-import { PlansSection } from '../user/sections/plans-section';
 import { ExploreMentorsSection } from '../user/sections/explore-mentors-section';
 import { ProfileSection } from '../user/sections/profile-section';
 import { SettingsSection } from '../user/sections/settings-section';
@@ -32,7 +31,6 @@ const USER_SECTION_COMPONENTS = {
   "mentors": MentorsSection,
   "library": LibrarySection,
   "subscription": SubscriptionSection,
-  "plans": PlansSection,
   "explore-mentors": ExploreMentorsSection,
   "profile": ProfileSection,
   "settings": SettingsSection,

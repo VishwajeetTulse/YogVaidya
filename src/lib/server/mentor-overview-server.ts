@@ -154,41 +154,86 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     const mentorStudentsData = await getMentorStudents(user.id, );
     const totalMentorStudents = mentorStudentsData.totalActiveStudents;
 
-    // Get sessions this week
-    const sessionsThisWeek = await prisma.schedule.count({
-      where: {
-        mentorId: user.id,
-        status: "SCHEDULED", 
-        scheduledTime: {
-          gte: startOfWeek,
-          lte: endOfWeek
+    // Get sessions this week using raw query to handle datetime conversion
+    const sessionsThisWeekResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            mentorId: user.id,
+            status: "SCHEDULED",
+            scheduledTime: {
+              $gte: startOfWeek,
+              $lte: endOfWeek
+            }
+          }
+        },
+        {
+          $count: "totalSessions"
         }
+      ],
+      cursor: {}
+    });
+
+    let sessionsThisWeek = 0;
+    if (sessionsThisWeekResult &&
+        typeof sessionsThisWeekResult === 'object' &&
+        'cursor' in sessionsThisWeekResult &&
+        sessionsThisWeekResult.cursor &&
+        typeof sessionsThisWeekResult.cursor === 'object' &&
+        'firstBatch' in sessionsThisWeekResult.cursor &&
+        Array.isArray(sessionsThisWeekResult.cursor.firstBatch) &&
+        sessionsThisWeekResult.cursor.firstBatch.length > 0 &&
+        sessionsThisWeekResult.cursor.firstBatch[0] &&
+        typeof sessionsThisWeekResult.cursor.firstBatch[0] === 'object' &&
+        'totalSessions' in sessionsThisWeekResult.cursor.firstBatch[0]) {
+      sessionsThisWeek = (sessionsThisWeekResult.cursor.firstBatch[0] as any).totalSessions || 0;
+    }
+
+    // Get today's sessions using raw query to handle datetime conversion
+    const todaysSessionsResult = await prisma.schedule.findRaw({
+      filter: {
+        mentorId: user.id,
+        scheduledTime: {
+          $gte: { $date: startOfDay.toISOString() },
+          $lte: { $date: endOfDay.toISOString() }
+        }
+      },
+      options: {
+        sort: { scheduledTime: 1 },
+        limit: 5
       }
     });
 
-    // Get today's sessions
-    const todaysSessions = await prisma.schedule.findMany({
-      where: {
+    let todaysSessions: any[] = [];
+    if (Array.isArray(todaysSessionsResult)) {
+      todaysSessions = todaysSessionsResult.map((session: any) => ({
+        ...session,
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+      }));
+    }
+    // Get upcoming sessions (next 7 days) - using raw query to handle datetime conversion
+    const upcomingSessionsResult = await prisma.schedule.findRaw({
+      filter: {
         mentorId: user.id,
         scheduledTime: {
-          gte: startOfDay,
-          lte: endOfDay
+          $gt: { $date: now.toISOString() },
+          $lte: { $date: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)).toISOString() }
         }
       },
-      orderBy: { scheduledTime: 'asc' }
+      options: {
+        sort: { scheduledTime: 1 },
+        limit: 5
+      }
     });
-    // Get upcoming sessions (next 7 days)
-    const upcomingSessions = await prisma.schedule.findMany({
-      where: {
-        mentorId: user.id,
-        scheduledTime: {
-          gt: now,
-          lte: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000))
-        }
-      },
-      orderBy: { scheduledTime: 'asc' },
-      take: 5
-    });
+
+    let upcomingSessions: any[] = [];
+    if (Array.isArray(upcomingSessionsResult)) {
+      upcomingSessions = upcomingSessionsResult.map((session: any) => ({
+        ...session,
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+      }));
+    }
 
     // Get recent activity from system logs
     const recentActivity = await prisma.systemLog.findMany({
@@ -206,7 +251,7 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
       }
     });
 
-    // Get monthly stats
+    // Get monthly stats using Prisma count with better error handling
     const currentMonthSessions = await prisma.schedule.count({
       where: {
         mentorId: user.id,

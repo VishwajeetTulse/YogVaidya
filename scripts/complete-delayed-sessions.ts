@@ -102,8 +102,8 @@ async function completeDelayedSessions() {
             u: { 
               $set: { 
                 status: 'COMPLETED',
-                updatedAt: currentTime,
-                completedAt: currentTime, // Add completion timestamp
+                updatedAt: new Date(), // Ensure this is a proper Date object
+                completedAt: new Date(), // Ensure this is a proper Date object
                 completedBy: 'script' // Mark as completed by script
               } 
             }

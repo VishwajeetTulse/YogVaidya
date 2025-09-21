@@ -14,6 +14,7 @@ export interface MentorSessionData {
   link: string;
   createdAt: Date;
   updatedAt: Date;
+  sessionCategory: "subscription" | "individual"; // Add category to distinguish session types
   eligibleStudents: {
     total: number;
     active: number;
@@ -79,13 +80,94 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     console.log("📊 Fetching mentor sessions from both Schedule and SessionBooking collections...");
     console.log(`👤 Mentor ID: ${user.id}`);
     
-    // 1. Get sessions from Schedule collection (legacy sessions)
-    const legacySessions = await prisma.schedule.findMany({
-      where: { mentorId: user.id },
-      orderBy: { scheduledTime: 'desc' },
-      take: 100 // Limit to 100 sessions
+    // 1. Get sessions from Schedule collection using raw query to handle datetime conversion
+    const scheduleResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            mentorId: user.id
+          }
+        },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $and: [{ $ne: ['$scheduledTime', null] }, { $ne: ['$scheduledTime', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$scheduledTime'
+                      }
+                    },
+                    else: '$scheduledTime' // If it's already a string, keep it as is
+                  }
+                },
+                else: null
+              }
+            },
+            createdAt: {
+              $cond: {
+                if: { $and: [{ $ne: ['$createdAt', null] }, { $ne: ['$createdAt', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$createdAt'
+                      }
+                    },
+                    else: '$createdAt' // If it's already a string, keep it as is
+                  }
+                },
+                else: null
+              }
+            },
+            updatedAt: {
+              $cond: {
+                if: { $and: [{ $ne: ['$updatedAt', null] }, { $ne: ['$updatedAt', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$updatedAt'
+                      }
+                    },
+                    else: '$updatedAt' // If it's already a string, keep it as is
+                  }
+                },
+                else: null
+              }
+            }
+          }
+        },
+        {
+          $sort: { scheduledTime: -1 }
+        },
+        {
+          $limit: 100
+        }
+      ],
+      cursor: {}
     });
-    
+
+    let legacySessions: any[] = [];
+    if (scheduleResult && 
+        typeof scheduleResult === 'object' && 
+        'cursor' in scheduleResult &&
+        scheduleResult.cursor &&
+        typeof scheduleResult.cursor === 'object' &&
+        'firstBatch' in scheduleResult.cursor &&
+        Array.isArray(scheduleResult.cursor.firstBatch)) {
+      legacySessions = scheduleResult.cursor.firstBatch;
+    }
+
     console.log(`📅 Found ${legacySessions.length} legacy sessions from Schedule collection`);
 
     // 2. Get sessions from SessionBooking collection (new time slot bookings)
@@ -123,7 +205,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         },
         {
           $project: {
-            id: '$_id',
+            _id: 1, // Ensure _id is included
+            id: '$_id', // Also project as id for consistency
             title: {
               $concat: [
                 { $toUpper: { $substr: ['$sessionType', 0, 1] } },
@@ -164,54 +247,96 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     });
 
     let sessionBookings: any[] = [];
-    if (sessionBookingsResult && 
-        typeof sessionBookingsResult === 'object' && 
+    if (sessionBookingsResult &&
+        typeof sessionBookingsResult === 'object' &&
         'cursor' in sessionBookingsResult &&
         sessionBookingsResult.cursor &&
         typeof sessionBookingsResult.cursor === 'object' &&
         'firstBatch' in sessionBookingsResult.cursor &&
         Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
       sessionBookings = sessionBookingsResult.cursor.firstBatch;
+
+      // Debug: Check the structure of the first booking
+      if (sessionBookings.length > 0) {
+        console.log('🔍 First booking structure:', {
+          keys: Object.keys(sessionBookings[0]),
+          id: sessionBookings[0].id,
+          _id: sessionBookings[0]._id,
+          hasId: 'id' in sessionBookings[0],
+          hasUnderscoreId: '_id' in sessionBookings[0],
+          fullBooking: sessionBookings[0]
+        });
+      }
     }
 
     console.log(`📅 Found ${sessionBookings.length} session bookings from SessionBooking collection`);
 
-    // 3. Combine both session types into unified format
-    const allSessions = [
-      // Legacy sessions from Schedule collection
-      ...legacySessions.map(session => ({
+    console.log(`🔄 Processing: ${legacySessions.length} subscription sessions + ${sessionBookings.length} individual sessions`);
+
+    // Process subscription sessions (from Schedule collection) separately
+    const subscriptionSessions = legacySessions.map(session => {
+      // Ensure we have a valid ID for legacy sessions
+      const sessionId = session.id || session._id;
+      console.log('🔍 Processing legacy session:', {
+        originalId: session.id,
+        underscoreId: session._id,
+        finalId: sessionId,
+        sessionKeys: Object.keys(session),
+        hasId: 'id' in session,
+        hasUnderscoreId: '_id' in session
+      });
+
+      return {
         ...session,
-        source: 'schedule', // Mark as legacy session
+        id: sessionId ? String(sessionId) : `legacy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
+        source: 'schedule',
+        sessionCategory: 'subscription' as const,
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
+        createdAt: session.createdAt ? new Date(session.createdAt) : null,
+        updatedAt: session.updatedAt ? new Date(session.updatedAt) : null,
         studentId: null, // Legacy sessions don't have pre-assigned students
         studentName: null,
         studentEmail: null,
         paymentStatus: null
-      })),
-      // Session bookings from SessionBooking collection  
-      ...sessionBookings.map(booking => {
-        console.log('🔍 Raw booking data:', {
-          id: booking.id,
-          scheduledTime: booking.scheduledTime,
-          scheduledTimeType: typeof booking.scheduledTime,
-          status: booking.status,
-          rawScheduledTime: booking.scheduledTime,
-          dateConversion: booking.scheduledTime ? new Date(booking.scheduledTime).toISOString() : 'null'
-        });
-        return {
-          ...booking,
-          source: 'booking', // Mark as session booking
-          scheduledTime: booking.scheduledTime ? new Date(booking.scheduledTime) : null,
-          id: booking.id ? String(booking.id) : undefined
-        };
-      })
-    ].sort((a, b) => {
-      // Sort by scheduledTime descending (newest first)
+      };
+    });
+
+    // Process individual sessions (from SessionBooking collection) separately
+    const individualSessions = sessionBookings.map(booking => {
+      // Ensure we have a valid ID - use _id as fallback if id is missing
+      const sessionId = booking.id || booking._id;
+      console.log('🔍 Processing individual session:', {
+        originalId: booking.id,
+        underscoreId: booking._id,
+        finalId: sessionId,
+        idType: typeof sessionId,
+        hasValidId: !!sessionId,
+        bookingKeys: Object.keys(booking)
+      });
+
+      return {
+        ...booking,
+        source: 'booking',
+        sessionCategory: 'individual' as const,
+        scheduledTime: booking.scheduledTime ? new Date(booking.scheduledTime) : null,
+        id: sessionId ? String(sessionId) : `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
+      };
+    });
+
+    // Sort each category separately by scheduledTime descending (newest first)
+    const sortByScheduledTime = (a: any, b: any) => {
       const timeA = a.scheduledTime ? new Date(a.scheduledTime) : new Date(0);
       const timeB = b.scheduledTime ? new Date(b.scheduledTime) : new Date(0);
       return timeB.getTime() - timeA.getTime();
-    });
+    };
 
-    console.log(`🔄 Combined total: ${allSessions.length} sessions (${legacySessions.length} legacy + ${sessionBookings.length} bookings)`);
+    const sortedSubscriptionSessions = subscriptionSessions.sort(sortByScheduledTime);
+    const sortedIndividualSessions = individualSessions.sort(sortByScheduledTime);
+
+    // Combine all sessions but keep them categorized
+    const allSessions = [...sortedSubscriptionSessions, ...sortedIndividualSessions];
+
+    console.log(`📊 Session breakdown: ${subscriptionSessions.length} subscription + ${individualSessions.length} individual = ${allSessions.length} total`);
 
     // Get all users with active subscriptions that might be eligible for this mentor's sessions
     // Filter by role "USER" to exclude mentors (who have role "MENTOR")
@@ -253,10 +378,23 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     });
 
     // Process sessions with eligible student information
-    const formattedSessions: MentorSessionData[] = allSessions.map((session: any) => {
-      // For session bookings, we already have student info
-      if (session.source === 'booking') {
-        return {
+    const formattedSessions: MentorSessionData[] = allSessions
+      .filter(session => {
+        // Filter out sessions with invalid IDs
+        const hasValidId = session.id && typeof session.id === 'string' && session.id.trim().length > 0;
+        if (!hasValidId) {
+          console.error('❌ Filtering out session with invalid ID:', {
+            session,
+            id: session.id,
+            idType: typeof session.id
+          });
+        }
+        return hasValidId;
+      })
+      .map((session: any) => {
+      // For individual session bookings, we already have student info
+      if (session.sessionCategory === 'individual') {
+        const result = {
           id: session.id,
           title: session.title || `${session.sessionType || 'Session'} with ${session.studentName || 'Student'}`,
           scheduledTime: session.scheduledTime,
@@ -266,6 +404,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
           link: session.link,
           createdAt: session.createdAt,
           updatedAt: session.updatedAt,
+          sessionCategory: session.sessionCategory,
           eligibleStudents: {
             total: 1, // Already booked by one student
             active: 1,
@@ -283,19 +422,28 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
             subscriptionStatus: "ACTIVE" // Assume active since they booked
           }]
         };
+
+        console.log('📤 Returning individual session:', {
+          id: result.id,
+          idType: typeof result.id,
+          title: result.title,
+          sessionCategory: result.sessionCategory
+        });
+
+        return result;
       }
-      
-      // For legacy sessions, calculate eligible users
+
+      // For subscription sessions, calculate eligible users
       let sessionEligibleUsers = eligibleUsers;
 
       if (session.sessionType === "MEDITATION") {
         // MEDITATION sessions are available to SEED and FLOURISH users
-        sessionEligibleUsers = eligibleUsers.filter(user => 
+        sessionEligibleUsers = eligibleUsers.filter(user =>
           user.subscriptionPlan === "SEED" || user.subscriptionPlan === "FLOURISH"
         );
       } else if (session.sessionType === "YOGA") {
         // YOGA sessions are available to BLOOM and FLOURISH users
-        sessionEligibleUsers = eligibleUsers.filter(user => 
+        sessionEligibleUsers = eligibleUsers.filter(user =>
           user.subscriptionPlan === "BLOOM" || user.subscriptionPlan === "FLOURISH"
         );
       } else if (session.sessionType === "DIET") {
@@ -324,6 +472,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         link: session.link,
         createdAt: session.createdAt,
         updatedAt: session.updatedAt,
+        sessionCategory: session.sessionCategory,
         eligibleStudents: {
           total: sessionEligibleUsers.length,
           active: activeUsers.length,
@@ -331,6 +480,11 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         },
         potentialStudents: sessionEligibleUsers.slice(0, 10) // Show first 10 potential students
       };
+    });
+
+    console.log(`📊 Final session data: ${formattedSessions.length} sessions`);
+    formattedSessions.forEach((session, index) => {
+      console.log(`   Session ${index}: id=${session.id}, category=${session.sessionCategory}, title=${session.title?.substring(0, 50)}...`);
     });
 
     return {

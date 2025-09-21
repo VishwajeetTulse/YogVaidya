@@ -457,15 +457,57 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       }
       // FLOURISH gets both types (no filter)
 
-      const sessionsWithMentor = await prisma.schedule.findMany({
-        where: {
-          mentorId: assignedMentor.id,
-          ...sessionTypeFilter,
-          scheduledTime: {
-            gte: subscription!.subscriptionStartDate || new Date(0)
-          }
+      // Get sessions with mentor using raw query to handle datetime conversion
+      const matchConditions: any = {
+        mentorId: assignedMentor.id,
+        scheduledTime: {
+          $gte: subscription!.subscriptionStartDate || new Date(0)
         }
+      };
+
+      if (sessionTypeFilter.sessionType) {
+        matchConditions.sessionType = sessionTypeFilter.sessionType;
+      }
+
+      const sessionsWithMentorResult = await prisma.$runCommandRaw({
+        aggregate: 'Schedule',
+        pipeline: [
+          {
+            $match: matchConditions
+          },
+          {
+            $addFields: {
+              scheduledTime: {
+                $cond: {
+                  if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                  then: '$scheduledTime',
+                  else: {
+                    $dateFromString: {
+                      dateString: '$scheduledTime',
+                      onError: null
+                    }
+                  }
+                }
+              }
+            }
+          }
+        ],
+        cursor: {}
       });
+
+      let sessionsWithMentor: any[] = [];
+      if (sessionsWithMentorResult &&
+          typeof sessionsWithMentorResult === 'object' &&
+          'cursor' in sessionsWithMentorResult &&
+          sessionsWithMentorResult.cursor &&
+          typeof sessionsWithMentorResult.cursor === 'object' &&
+          'firstBatch' in sessionsWithMentorResult.cursor &&
+          Array.isArray(sessionsWithMentorResult.cursor.firstBatch)) {
+        sessionsWithMentor = sessionsWithMentorResult.cursor.firstBatch.map((session: any) => ({
+          ...session,
+          scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+        }));
+      }
 
       const currentTime = new Date();
       sessionStats = {

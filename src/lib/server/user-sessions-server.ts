@@ -97,12 +97,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
                 scheduledTime: {
                   $cond: {
                     if: { $and: [{ $ne: ['$scheduledAt', null] }, { $ne: ['$scheduledAt', ''] }] },
-                    then: {
-                      $dateToString: {
-                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
-                        date: '$scheduledAt'
-                      }
-                    },
+                    then: '$scheduledAt', // Return the date as-is instead of converting to string
                     else: null
                   }
                 },
@@ -344,12 +339,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
             scheduledTime: {
               $cond: {
                 if: { $and: [{ $ne: ['$scheduledAt', null] }, { $ne: ['$scheduledAt', ''] }] },
-                then: {
-                  $dateToString: {
-                    format: '%Y-%m-%dT%H:%M:%S.%LZ',
-                    date: '$scheduledAt'
-                  }
-                },
+                then: '$scheduledAt', // Return the date as-is instead of converting to string
                 else: null
               }
             },
@@ -415,7 +405,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     const formattedSessions: UserSessionData[] = sessions.map(session => ({
       id: session.id,
       title: session.title,
-      scheduledTime: session.scheduledTime,
+      scheduledTime: new Date(session.scheduledTime),
       duration: session.duration,
       sessionType: session.sessionType,
       status: session.status,

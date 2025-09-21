@@ -9,7 +9,15 @@
     "lint": "next lint",
     "fix-user": "node scripts/fix-user.js",
     "db:push": "npx prisma db push",
-    "db:generate": "npx prisma generate"
+    "db:generate": "npx prisma generate",
+    "truncate-schedule": "node scripts/truncate-schedule.js",
+    "truncate-schedule-ts": "tsx scripts/truncate-schedule.ts",
+    "truncate-schedule-advanced": "node scripts/truncate-schedule-advanced.js",
+    "truncate-schedule-dry-run": "node scripts/truncate-schedule-advanced.js --dry-run",
+    "truncate-schedule-force": "node scripts/truncate-schedule-advanced.js --force",
+    "truncate-schedule-robust": "node scripts/truncate-schedule-robust.js",
+    "truncate-schedule-robust-dry": "node scripts/truncate-schedule-robust.js --dry-run",
+    "delete-session-bookings": "tsx scripts/delete-session-bookings.ts"
   },
   "dependencies": {
     "@ai-sdk/google": "^1.2.22",

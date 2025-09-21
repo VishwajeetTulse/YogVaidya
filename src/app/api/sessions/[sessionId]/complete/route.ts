@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { prisma } from "@/lib/config/prisma";
+import { SessionService } from "@/lib/services/session-service";
 
 /**
  * POST /api/sessions/[sessionId]/complete
@@ -19,30 +19,17 @@ export async function POST(
       );
     }
 
-    // Find the session
-    const sessionResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
-      filter: { _id: sessionId }
-    });
+    // Find the session using the robust service
+    const lookupResult = await SessionService.findSession(sessionId);
 
-    let session: any = null;
-    if (sessionResult && 
-        typeof sessionResult === 'object' && 
-        'cursor' in sessionResult &&
-        sessionResult.cursor &&
-        typeof sessionResult.cursor === 'object' &&
-        'firstBatch' in sessionResult.cursor &&
-        Array.isArray(sessionResult.cursor.firstBatch) &&
-        sessionResult.cursor.firstBatch.length > 0) {
-      session = sessionResult.cursor.firstBatch[0];
-    }
-
-    if (!session) {
+    if (!lookupResult.found) {
       return NextResponse.json(
-        { error: "Session not found" },
+        { error: lookupResult.error || "Session not found" },
         { status: 404 }
       );
     }
+
+    const session = lookupResult.session;
 
     // Check if session is in ONGOING status
     if (session.status !== 'ONGOING') {
@@ -52,19 +39,15 @@ export async function POST(
       );
     }
 
-    // Update session to COMPLETED
-    await prisma.$runCommandRaw({
-      update: 'sessionBooking',
-      updates: [{
-        q: { _id: sessionId },
-        u: { 
-          $set: { 
-            status: 'COMPLETED',
-            updatedAt: new Date()
-          } 
-        }
-      }]
-    });
+    // Complete the session using the robust service
+    const updateResult = await SessionService.completeSession(sessionId);
+
+    if (!updateResult.success) {
+      return NextResponse.json(
+        { error: updateResult.error || "Failed to complete session" },
+        { status: 500 }
+      );
+    }
 
     return NextResponse.json({
       success: true,

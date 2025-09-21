@@ -2,6 +2,9 @@
  * Utility functions for managing session status transitions
  */
 
+import { convertMongoDate } from "@/lib/utils/datetime-utils";
+import { createDateUpdate } from "@/lib/utils/date-utils";
+
 export interface SessionStatusUpdate {
   sessionId: string;
   oldStatus: string;
@@ -80,11 +83,11 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       }
 
       if (timeSlot) {
-        const startTime = new Date(timeSlot.startTime);
+        const startTime = convertMongoDate(timeSlot.startTime);
 
         // Check if session should be marked as delayed (past start time but not manually started)
         // NOTE: Sessions will remain SCHEDULED until mentor manually starts them
-        if (startTime <= currentTime) {
+        if (startTime && startTime <= currentTime) {
           // Only mark as delayed if not already marked, but keep status as SCHEDULED
           if (!session.isDelayed) {
             await prisma.$runCommandRaw({
@@ -92,10 +95,9 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
               updates: [{
                 q: { _id: session.id },
                 u: {
-                  $set: {
-                    isDelayed: true, // Mark as delayed for UI indication
-                    updatedAt: currentTime
-                  }
+                  $set: createDateUpdate({
+                    isDelayed: true // Mark as delayed for UI indication
+                  })
                 }
               }]
             });
@@ -158,21 +160,20 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       }
 
       if (timeSlot) {
-        const plannedEndTime = new Date(timeSlot.endTime);
+        const plannedEndTime = convertMongoDate(timeSlot.endTime);
 
         // Complete on-time session at planned end time
-        if (plannedEndTime <= currentTime) {
+        if (plannedEndTime && plannedEndTime <= currentTime) {
           await prisma.$runCommandRaw({
             update: 'sessionBooking',
             updates: [{
               q: { _id: session.id },
               u: {
-                $set: {
+                $set: createDateUpdate({
                   status: 'COMPLETED',
-                  actualEndTime: currentTime,
-                  completionReason: 'Auto-completed at planned end time',
-                  updatedAt: currentTime
-                }
+                  actualEndTime: new Date(), // Ensure this is a proper Date object
+                  completionReason: 'Auto-completed at planned end time'
+                })
               }
             }]
           });
@@ -213,8 +214,10 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     for (const session of delayedOngoingSessions) {
       if (!session.manualStartTime || !session.timeSlotId) continue;
 
-      const actualStartTime = new Date(session.manualStartTime);
+      const actualStartTime = convertMongoDate(session.manualStartTime);
       let sessionDurationMs = 0;
+
+      if (!actualStartTime) continue;
 
       // Get time slot details to calculate planned duration
       const timeSlotResult = await prisma.$runCommandRaw({
@@ -235,9 +238,12 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       }
 
       if (timeSlot) {
-        const originalStartTime = new Date(timeSlot.startTime);
-        const originalEndTime = new Date(timeSlot.endTime);
-        sessionDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
+        const originalStartTime = convertMongoDate(timeSlot.startTime);
+        const originalEndTime = convertMongoDate(timeSlot.endTime);
+
+        if (originalStartTime && originalEndTime) {
+          sessionDurationMs = originalEndTime.getTime() - originalStartTime.getTime();
+        }
       }
 
       // If no time slot duration found, use defaults based on session type
@@ -266,12 +272,11 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
           updates: [{
             q: { _id: session.id },
             u: {
-              $set: {
+              $set: createDateUpdate({
                 status: 'COMPLETED',
-                actualEndTime: currentTime,
-                completionReason: `Auto-completed after planned duration from manual start`,
-                updatedAt: currentTime
-              }
+                actualEndTime: new Date(), // Ensure this is a proper Date object
+                completionReason: `Auto-completed after planned duration from manual start`
+              })
             }
           }]
         });

@@ -169,6 +169,90 @@ If the script fails:
 3. Review error messages for specific issues
 4. Run in development mode first to test
 
+### 6. Delete Session Bookings (`delete-session-bookings.ts`)
+
+Flexible script to delete data from the sessionBooking collection with multiple deletion modes.
+
+#### What it does:
+- Provides multiple deletion modes (all, by status, by payment status, by age, by user, by mentor)
+- Shows sample records before deletion
+- Supports dry-run mode to preview changes
+- Verifies deletion success
+- Provides detailed logging throughout the process
+
+#### Deletion Modes:
+- `all` - Delete all session booking records
+- `status <status>` - Delete bookings with specific status (SCHEDULED, ONGOING, COMPLETED, CANCELLED)
+- `paymentStatus <status>` - Delete bookings with specific payment status (PENDING, COMPLETED, FAILED)
+- `olderThan <days>` - Delete bookings older than specified number of days
+- `user <userId>` - Delete bookings for a specific user
+- `mentor <mentorId>` - Delete bookings for a specific mentor
+
+#### Usage:
+```bash
+# Delete all session bookings
+npm run delete-session-bookings all
+
+# Delete only cancelled bookings
+npm run delete-session-bookings status CANCELLED
+
+# Delete bookings with failed payments
+npm run delete-session-bookings paymentStatus FAILED
+
+# Delete bookings older than 30 days
+npm run delete-session-bookings olderThan 30
+
+# Delete bookings for a specific user
+npm run delete-session-bookings user user123
+
+# Preview what would be deleted (dry run)
+npm run delete-session-bookings all --dry-run
+```
+
+#### Safety Features:
+- Environment check (warns if DATABASE_URL not set)
+- Production environment detection with warnings
+- Sample record preview before deletion
+- Dry-run mode to preview changes without deleting
+- Final count verification after deletion
+- Detailed error handling and logging
+
+#### Example Output:
+```
+🗑️  SessionBooking Data Deletion Script
+==================================================
+⚠️  WARNING: This will permanently delete session bookings with status: CANCELLED
+==================================================
+
+📊 Checking matching records...
+📅 Found 15 matching session booking records
+
+📋 Sample records that will be affected:
+   1. YOGA Session
+      User ID: user123
+      Mentor ID: mentor456
+      Status: CANCELLED
+      Payment Status: COMPLETED
+      Scheduled: 2025-01-15T10:00:00.000Z
+      Created: 2025-01-10T08:30:00.000Z
+      ID: 507f1f77bcf86cd799439011
+
+🗑️  Deleting matching session booking records...
+✅ Successfully deleted 15 session booking records
+📊 Final count verification: 0 matching records remaining
+✅ All matching records successfully deleted!
+```
+
+#### When to Use:
+- Development/testing environment cleanup
+- Removing test or invalid bookings
+- Cleaning up old cancelled bookings
+- Removing bookings for deactivated users
+- Emergency data cleanup (with proper backups)
+- Selective data removal based on criteria
+
+⚠️ **Critical Warning**: This permanently deletes session booking data including payment information, user bookings, and session history. Always backup first and use dry-run mode to preview changes!
+
 ## Future Maintenance
 
 With the updated trial expiration logic in place, this cleanup should happen automatically when trials expire. This script is mainly for:

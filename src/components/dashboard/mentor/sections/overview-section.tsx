@@ -65,7 +65,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
         {/* Loading Stats Cards */}
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
           {[...Array(2)].map((_, index) => (
-            <Card key={index} className="p-4">
+            <Card key={`loading-stats-${index}`} className="p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="w-9 h-9 rounded-lg" />
                 <div className="flex-1">
@@ -85,7 +85,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
           </div>
           <div className="space-y-3">
             {[...Array(2)].map((_, index) => (
-              <div key={index} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div key={`loading-schedule-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                 <div className="flex items-center gap-3">
                   <Skeleton className="w-2 h-2 rounded-full" />
                   <div>
@@ -102,7 +102,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
         {/* Loading Quick Actions */}
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           {[...Array(3)].map((_, index) => (
-            <Card key={index} className="p-4">
+            <Card key={`loading-action-${index}`} className="p-4">
               <div className="flex items-center gap-3">
                 <Skeleton className="w-8 h-8" />
                 <div className="flex-1">

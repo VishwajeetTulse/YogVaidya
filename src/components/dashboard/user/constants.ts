@@ -4,7 +4,6 @@ import {
   Users,
   BookOpen,
   CreditCard,
-  Target,
   Settings,
   Ticket,
 } from "lucide-react";
@@ -40,12 +39,6 @@ export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
     title: "Subscription",
     icon: CreditCard,
     description: "Manage your plan",
-  },
-  {
-    id: "plans",
-    title: "Upgrade Plans",
-    icon: Target,
-    description: "Explore premium plans",
   },
   {
     id: "explore-mentors",
