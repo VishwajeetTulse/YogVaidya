@@ -138,16 +138,14 @@ export async function getUserDashboardData(): Promise<{
     const goalsAchieved = Math.min(classesThisWeek, totalGoals);
 
     // Calculate streak days based on recent activity
+    const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+    
     const recentSessions = await prisma.schedule.findMany({
       where: {
-        scheduledTime: {
-          gte: new Date(Date.now() - 30 * 24 * 60 * 60 * 1000) // Last 30 days
-        },
+        scheduledTime: { gte: thirtyDaysAgo },
         status: 'COMPLETED'
       },
-      orderBy: {
-        scheduledTime: 'desc'
-      }
+      orderBy: { scheduledTime: 'desc' }
     });
 
     // Calculate streak (simplified - count consecutive days with sessions)

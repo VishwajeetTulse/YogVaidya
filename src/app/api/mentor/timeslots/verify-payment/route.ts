@@ -120,14 +120,29 @@ export async function POST(request: Request) {
         amount: timeSlot.price || mentor.sessionPrice || 500,
         currency: "INR",
       },
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      // Removed createdAt and updatedAt - let Prisma auto-generate these
     };
 
-    // Create the session booking
-    await prisma.$runCommandRaw({
-      insert: 'sessionBooking',
-      documents: [sessionBookingData]
+    // Import date utility for consistent date handling
+    const { createDateUpdate } = await import("@/lib/utils/date-utils");
+
+    // Create the session booking using Prisma to ensure proper date handling
+    const sessionBooking = await prisma.sessionBooking.create({
+      data: {
+        id: sessionBookingData._id,
+        userId: sessionBookingData.userId,
+        mentorId: sessionBookingData.mentorId,
+        mentorApplicationId: sessionBookingData.mentorApplicationId,
+        timeSlotId: sessionBookingData.timeSlotId,
+        sessionType: sessionBookingData.sessionType,
+        scheduledAt: sessionBookingData.scheduledAt,
+        status: "SCHEDULED", // Use proper enum value
+        notes: sessionBookingData.notes,
+        paymentStatus: sessionBookingData.paymentStatus,
+        amount: sessionBookingData.amount,
+        paymentDetails: sessionBookingData.paymentDetails,
+        isDelayed: false // Add missing field with default value
+      }
     });
 
     // Update the time slot to mark as booked
@@ -138,12 +153,11 @@ export async function POST(request: Request) {
       update: 'mentorTimeSlot',
       filter: { _id: timeSlotId },
       updates: {
-        $set: {
+        $set: createDateUpdate({
           currentStudents: updatedCurrentStudents,
           isBooked: isNowBooked,
-          bookedBy: timeSlot.maxStudents === 1 ? session.user.id : timeSlot.bookedBy,
-          updatedAt: new Date()
-        }
+          bookedBy: timeSlot.maxStudents === 1 ? session.user.id : timeSlot.bookedBy
+        })
       }
     });
 

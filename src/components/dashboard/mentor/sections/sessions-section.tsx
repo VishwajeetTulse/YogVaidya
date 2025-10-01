@@ -659,7 +659,7 @@ useEffect(() => {
               </h3>
               {upcomingIndividualSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {upcomingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                  {upcomingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, true, false))}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">

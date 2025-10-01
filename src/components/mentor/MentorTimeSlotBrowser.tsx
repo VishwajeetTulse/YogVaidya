@@ -18,8 +18,8 @@ import {
 
 interface TimeSlot {
   _id: string;
-  startTime: string;
-  endTime: string;
+  startTime: string | { $date: string }; // Support both formats
+  endTime: string | { $date: string };   // Support both formats
   sessionType: 'YOGA' | 'MEDITATION' | 'DIET';
   maxStudents: number;
   currentStudents: number;
@@ -105,9 +105,29 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
     router.push(`/timeslot-checkout?timeSlotId=${timeSlotId}&mentorId=${mentorId}`);
   };
 
-  // Format date and time
-  const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+  // Format date and time with robust date handling
+  const formatDateTime = (dateTime: string | any) => {
+    let date: Date;
+    
+    // Handle different date formats
+    if (typeof dateTime === 'object' && dateTime.$date) {
+      // MongoDB Extended JSON format
+      date = new Date(dateTime.$date);
+    } else if (typeof dateTime === 'string') {
+      // ISO string format
+      date = new Date(dateTime);
+    } else {
+      // Fallback to current date if invalid
+      console.warn('Invalid date format received:', dateTime);
+      date = new Date();
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.warn('Invalid date created from:', dateTime);
+      date = new Date(); // Fallback to current date
+    }
+    
     return {
       date: date.toLocaleDateString('en-US', { 
         weekday: 'short', 
@@ -128,10 +148,29 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
     }
   };
 
-  // Get duration
-  const getDuration = (startTime: string, endTime: string) => {
-    const start = new Date(startTime);
-    const end = new Date(endTime);
+  // Get duration with robust date handling
+  const getDuration = (startTime: string | any, endTime: string | any) => {
+    let start: Date, end: Date;
+    
+    // Handle MongoDB Extended JSON format
+    if (typeof startTime === 'object' && startTime.$date) {
+      start = new Date(startTime.$date);
+    } else {
+      start = new Date(startTime);
+    }
+    
+    if (typeof endTime === 'object' && endTime.$date) {
+      end = new Date(endTime.$date);
+    } else {
+      end = new Date(endTime);
+    }
+    
+    // Validate dates
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      console.warn('Invalid dates for duration calculation:', { startTime, endTime });
+      return '60 min'; // Default duration
+    }
+    
     const diff = end.getTime() - start.getTime();
     const minutes = Math.round(diff / (1000 * 60));
     return `${minutes} min`;

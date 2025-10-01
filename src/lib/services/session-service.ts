@@ -164,17 +164,20 @@ export class SessionService {
 
       // If this is a schedule entry, also update related session bookings
       if (lookupResult.collection === 'schedule') {
-        const relatedBookingsUpdate = await prisma.$runCommandRaw({
-          update: 'sessionBooking',
-          updates: [{
-            q: { timeSlotId: sessionId },
-            u: updateData,
-            multi: true
-          }]
-        });
+        // Use Prisma client operations to avoid string date conversion
+        try {
+          const relatedBookingsUpdate = await prisma.sessionBooking.updateMany({
+            where: { timeSlotId: sessionId },
+            data: {
+              status: status as any, // Type cast to handle ScheduleStatus enum
+              updatedAt: new Date() // Ensure proper Date object
+            }
+          });
 
-        const relatedUpdatedCount = relatedBookingsUpdate?.nModified || 0;
-        console.log(`✅ Updated ${relatedUpdatedCount} related session booking(s)`);
+          console.log(`✅ Updated ${relatedBookingsUpdate.count} related session booking(s)`);
+        } catch (error) {
+          console.log('⚠️ Could not update related bookings (non-critical):', (error as Error).message);
+        }
       }
 
       return {

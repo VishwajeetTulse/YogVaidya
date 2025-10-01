@@ -116,48 +116,45 @@ export async function POST(request: Request) {
       // EXISTING: Create single time slot (non-recurring)
       console.log("📅 Creating single time slot (non-recurring)");
       
-      const timeSlotData = {
-        _id: `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
-        mentorId: session.user.id,
-        mentorApplicationId: mentorApplication?.id || null,
-        startTime: new Date(startTime),
-        endTime: new Date(endTime),
-        sessionType: sessionType,
-        maxStudents: maxStudents,
-        currentStudents: 0,
-        isRecurring: false, // Single slots are not recurring
-        recurringDays: [],
-        price: user.sessionPrice || 500,
-        sessionLink: sessionLink,
-        notes: notes || "",
-        isActive: true,
-        isBooked: false,
-        bookedBy: null,
-        createdAt: new Date(),
-        updatedAt: new Date(),
-      };
+      const timeSlotId = `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
-      // Create the time slot using raw MongoDB operation
-      await prisma.$runCommandRaw({
-        insert: 'mentorTimeSlot',
-        documents: [timeSlotData]
+      // Create the time slot using Prisma to ensure proper date handling
+      const timeSlot = await prisma.mentorTimeSlot.create({
+        data: {
+          id: timeSlotId,
+          mentorId: session.user.id,
+          mentorApplicationId: mentorApplication?.id || null,
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          sessionType: sessionType,
+          maxStudents: maxStudents,
+          currentStudents: 0,
+          isRecurring: false, // Single slots are not recurring
+          recurringDays: [],
+          price: user.sessionPrice || 500,
+          sessionLink: sessionLink,
+          notes: notes || "",
+          isActive: true,
+          isBooked: false,
+          bookedBy: null,
+        }
       });
 
-      console.log("✅ Single time slot created successfully:", timeSlotData._id);
+      console.log("✅ Single time slot created successfully:", timeSlot.id);
 
       return NextResponse.json({
         success: true,
         message: "Single time slot created successfully",
         data: {
-          id: timeSlotData._id,
-          startTime: timeSlotData.startTime,
-          endTime: timeSlotData.endTime,
-          sessionType: timeSlotData.sessionType,
-          maxStudents: timeSlotData.maxStudents,
-          price: timeSlotData.price,
-          sessionLink: timeSlotData.sessionLink,
-          isRecurring: timeSlotData.isRecurring,
-          recurringDays: timeSlotData.recurringDays,
+          id: timeSlot.id,
+          startTime: timeSlot.startTime,
+          endTime: timeSlot.endTime,
+          sessionType: timeSlot.sessionType,
+          maxStudents: timeSlot.maxStudents,
+          price: timeSlot.price,
+          sessionLink: timeSlot.sessionLink,
+          isRecurring: timeSlot.isRecurring,
+          recurringDays: timeSlot.recurringDays,
         },
       });
     }
@@ -258,8 +255,21 @@ export async function GET(request: Request) {
     // Enhance time slots with mentor data and availability check
     let enhancedTimeSlots = timeSlots.map((slot: any) => {
       const mentor = mentors.find(m => m.id === slot.mentorId);
+      
+      // Convert MongoDB Extended JSON dates to ISO strings for frontend
+      const convertDateToString = (dateValue: any): string => {
+        if (dateValue && typeof dateValue === 'object' && dateValue.$date) {
+          return dateValue.$date;
+        }
+        return dateValue;
+      };
+      
       return {
         ...slot,
+        startTime: convertDateToString(slot.startTime),
+        endTime: convertDateToString(slot.endTime),
+        createdAt: convertDateToString(slot.createdAt),
+        updatedAt: convertDateToString(slot.updatedAt),
         mentor: mentor
       };
     });

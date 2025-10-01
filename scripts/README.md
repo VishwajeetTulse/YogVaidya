@@ -49,6 +49,38 @@ npx ts-node scripts/clear-all-tickets.ts
 
 Advanced ticket cleanup script with filtering and preview options.
 
+### 4. Fix Date Inconsistencies (`fix-date-inconsistencies.js/ts`)
+
+This script fixes inconsistent date field types in the database where some dates are stored as strings instead of proper DateTime objects, which causes Prisma type conversion errors.
+
+#### What it does:
+- Audits all collections for date field inconsistencies
+- Converts string dates to proper DateTime objects
+- Handles null values gracefully
+- Provides detailed progress reporting
+- Runs a final audit to verify fixes
+
+#### Collections and fields fixed:
+- **Schedule**: `scheduledTime`, `createdAt`, `updatedAt`
+- **SessionBooking**: `scheduledAt`, `createdAt`, `updatedAt`, `manualStartTime`, `actualEndTime`
+- **MentorTimeSlot**: `startTime`, `endTime`, `createdAt`, `updatedAt`
+- **User**: `createdAt`, `updatedAt`, `subscriptionStartDate`, `subscriptionEndDate`, `lastPaymentDate`, `nextBillingDate`, `trialEndDate`
+
+#### Usage:
+```bash
+# JavaScript version (recommended)
+node scripts/fix-date-inconsistencies.js
+
+# TypeScript version
+npx ts-node scripts/fix-date-inconsistencies.ts
+```
+
+#### Safety features:
+- Pre-fix audit to show what will be changed
+- Error handling for invalid date strings
+- Post-fix audit to verify results
+- Non-destructive conversion (preserves null values)
+
 #### Features:
 - Filter by ticket status (OPEN, RESOLVED, CLOSED, etc.)
 - Clear tickets older than X days

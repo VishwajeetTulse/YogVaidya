@@ -227,7 +227,29 @@ export default function TimeSlotCheckout() {
 
   // Helper functions
   const formatDateTime = (dateTime: string) => {
-    const date = new Date(dateTime);
+    let date: Date;
+    
+    // Handle MongoDB extended JSON format
+    if (typeof dateTime === 'string' && dateTime.includes('$date')) {
+      try {
+        const parsed = JSON.parse(dateTime);
+        date = new Date(parsed.$date);
+      } catch {
+        date = new Date(dateTime);
+      }
+    } else {
+      date = new Date(dateTime);
+    }
+    
+    // Check if date is valid
+    if (isNaN(date.getTime())) {
+      console.error('Invalid date received:', dateTime);
+      return {
+        date: 'Invalid Date',
+        time: 'Invalid Time',
+      };
+    }
+    
     return {
       date: date.toLocaleDateString('en-US', { 
         weekday: 'long',
@@ -250,10 +272,50 @@ export default function TimeSlotCheckout() {
 
   const getDuration = () => {
     if (!timeSlot) return '';
-    const start = new Date(timeSlot.startTime);
-    const end = new Date(timeSlot.endTime);
+    
+    let start: Date, end: Date;
+    
+    // Handle MongoDB extended JSON format for startTime
+    if (typeof timeSlot.startTime === 'string' && timeSlot.startTime.includes('$date')) {
+      try {
+        const parsed = JSON.parse(timeSlot.startTime);
+        start = new Date(parsed.$date);
+      } catch {
+        start = new Date(timeSlot.startTime);
+      }
+    } else {
+      start = new Date(timeSlot.startTime);
+    }
+    
+    // Handle MongoDB extended JSON format for endTime
+    if (typeof timeSlot.endTime === 'string' && timeSlot.endTime.includes('$date')) {
+      try {
+        const parsed = JSON.parse(timeSlot.endTime);
+        end = new Date(parsed.$date);
+      } catch {
+        end = new Date(timeSlot.endTime);
+      }
+    } else {
+      end = new Date(timeSlot.endTime);
+    }
+    
+    // Check if dates are valid
+    if (isNaN(start.getTime()) || isNaN(end.getTime())) {
+      console.error('Invalid dates for duration calculation:', {
+        startTime: timeSlot.startTime,
+        endTime: timeSlot.endTime
+      });
+      return 'Invalid Duration';
+    }
+    
     const diff = end.getTime() - start.getTime();
     const minutes = Math.round(diff / (1000 * 60));
+    
+    if (minutes <= 0) {
+      console.error('Invalid duration calculated:', minutes, 'minutes');
+      return 'Invalid Duration';
+    }
+    
     return `${minutes} minutes`;
   };
 

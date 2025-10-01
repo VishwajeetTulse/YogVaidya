@@ -15,13 +15,19 @@ export interface SessionStatusUpdate {
 }
 
 interface SessionData {
-  id: string;
+  _id: string;  // MongoDB uses _id
+  id?: string;  // Prisma uses id (optional for compatibility)
   timeSlotId: string;
   status: string;
   isDelayed?: boolean;
   manualStartTime?: string | Date;
   actualEndTime?: string | Date;
   [key: string]: any;
+}
+
+// Helper function to get session ID from either _id or id field
+function getSessionId(session: SessionData): string {
+  return session.id || session._id;
 }
 
 interface TimeSlotData {
@@ -90,20 +96,17 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
         if (startTime && startTime <= currentTime) {
           // Only mark as delayed if not already marked, but keep status as SCHEDULED
           if (!session.isDelayed) {
-            await prisma.$runCommandRaw({
-              update: 'sessionBooking',
-              updates: [{
-                q: { _id: session.id },
-                u: {
-                  $set: createDateUpdate({
-                    isDelayed: true // Mark as delayed for UI indication
-                  })
-                }
-              }]
+            // Use Prisma client to avoid string date conversion
+            await prisma.sessionBooking.update({
+              where: { id: getSessionId(session) },
+              data: {
+                isDelayed: true, // Mark as delayed for UI indication
+                updatedAt: new Date() // Ensure proper Date object
+              }
             });
 
             updates.push({
-              sessionId: session.id,
+              sessionId: getSessionId(session),
               oldStatus: 'SCHEDULED',
               newStatus: 'SCHEDULED', // Keep as SCHEDULED until mentor starts
               timestamp: currentTime,
@@ -164,22 +167,19 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
         // Complete on-time session at planned end time
         if (plannedEndTime && plannedEndTime <= currentTime) {
-          await prisma.$runCommandRaw({
-            update: 'sessionBooking',
-            updates: [{
-              q: { _id: session.id },
-              u: {
-                $set: createDateUpdate({
-                  status: 'COMPLETED',
-                  actualEndTime: new Date(), // Ensure this is a proper Date object
-                  completionReason: 'Auto-completed at planned end time'
-                })
-              }
-            }]
+          // Use Prisma client to avoid string date conversion
+          await prisma.sessionBooking.update({
+            where: { id: getSessionId(session) },
+            data: {
+              status: 'COMPLETED',
+              actualEndTime: new Date(), // Ensure this is a proper Date object
+              completionReason: 'Auto-completed at planned end time',
+              updatedAt: new Date() // Ensure proper Date object
+            }
           });
 
           updates.push({
-            sessionId: session.id,
+            sessionId: getSessionId(session),
             oldStatus: 'ONGOING',
             newStatus: 'COMPLETED',
             timestamp: currentTime,
@@ -267,22 +267,19 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
       // Check if the calculated end time has passed
       if (calculatedEndTime <= currentTime) {
-        await prisma.$runCommandRaw({
-          update: 'sessionBooking',
-          updates: [{
-            q: { _id: session.id },
-            u: {
-              $set: createDateUpdate({
-                status: 'COMPLETED',
-                actualEndTime: new Date(), // Ensure this is a proper Date object
-                completionReason: `Auto-completed after planned duration from manual start`
-              })
-            }
-          }]
+        // Use Prisma client to avoid string date conversion
+        await prisma.sessionBooking.update({
+          where: { id: getSessionId(session) },
+          data: {
+            status: 'COMPLETED',
+            actualEndTime: new Date(), // Ensure this is a proper Date object
+            completionReason: `Auto-completed after planned duration from manual start`,
+            updatedAt: new Date() // Ensure proper Date object
+          }
         });
 
         updates.push({
-          sessionId: session.id,
+          sessionId: getSessionId(session),
           oldStatus: 'ONGOING',
           newStatus: 'COMPLETED',
           timestamp: currentTime,
@@ -291,8 +288,84 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       }
     }
 
-    // NOTE: The logic above now handles both on-time and delayed sessions uniformly
-    // All sessions are completed based on their actual start time + intended duration
+    // 2c. Handle inconsistent sessions: ONGOING + delayed but no manual start time
+    // These sessions shouldn't exist but we need to clean them up
+    const inconsistentSessionsResult = await prisma.$runCommandRaw({
+      find: 'sessionBooking',
+      filter: {
+        status: 'ONGOING',
+        timeSlotId: { $ne: null },
+        isDelayed: true, // Marked as delayed
+        $or: [
+          { manualStartTime: { $exists: false } }, // No manual start time field
+          { manualStartTime: null } // Null manual start time
+        ]
+      }
+    });
+
+    let inconsistentSessions: SessionData[] = [];
+    if (inconsistentSessionsResult &&
+        typeof inconsistentSessionsResult === 'object' &&
+        'cursor' in inconsistentSessionsResult &&
+        inconsistentSessionsResult.cursor &&
+        typeof inconsistentSessionsResult.cursor === 'object' &&
+        'firstBatch' in inconsistentSessionsResult.cursor &&
+        Array.isArray(inconsistentSessionsResult.cursor.firstBatch)) {
+      inconsistentSessions = inconsistentSessionsResult.cursor.firstBatch as SessionData[];
+    }
+
+    for (const session of inconsistentSessions) {
+      if (!session.timeSlotId) continue;
+
+      // Get the time slot to determine planned end time
+      const timeSlotResult = await prisma.$runCommandRaw({
+        find: 'mentorTimeSlot',
+        filter: { _id: session.timeSlotId }
+      });
+
+      let timeSlot: TimeSlotData | null = null;
+      if (timeSlotResult &&
+          typeof timeSlotResult === 'object' &&
+          'cursor' in timeSlotResult &&
+          timeSlotResult.cursor &&
+          typeof timeSlotResult.cursor === 'object' &&
+          'firstBatch' in timeSlotResult.cursor &&
+          Array.isArray(timeSlotResult.cursor.firstBatch) &&
+          timeSlotResult.cursor.firstBatch.length > 0) {
+        timeSlot = timeSlotResult.cursor.firstBatch[0] as TimeSlotData;
+      }
+
+      if (timeSlot) {
+        const plannedEndTime = convertMongoDate(timeSlot.endTime);
+
+        // Complete inconsistent session if past planned end time
+        if (plannedEndTime && plannedEndTime <= currentTime) {
+          // Use Prisma client to avoid string date conversion
+          await prisma.sessionBooking.update({
+            where: { id: getSessionId(session) },
+            data: {
+              status: 'COMPLETED',
+              actualEndTime: new Date(), // Ensure this is a proper Date object
+              completionReason: 'Auto-completed - inconsistent session state (delayed but no manual start)',
+              updatedAt: new Date() // Ensure proper Date object
+            }
+          });
+
+          updates.push({
+            sessionId: getSessionId(session),
+            oldStatus: 'ONGOING',
+            newStatus: 'COMPLETED',
+            timestamp: currentTime,
+            reason: `Inconsistent session auto-completed - was marked delayed but never manually started, completed at planned end time ${plannedEndTime.toISOString()}`
+          });
+        }
+      }
+    }
+
+    // NOTE: The logic above now handles all session types:
+    // 1. On-time sessions (completed at planned end time)
+    // 2. Delayed sessions with manual start (completed after planned duration from manual start)
+    // 3. Inconsistent sessions (delayed but no manual start - completed at planned end time)
 
   } catch (error) {
     console.error('Error updating session statuses:', error);

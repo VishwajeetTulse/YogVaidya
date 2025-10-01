@@ -4,6 +4,103 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { headers } from "next/headers";
 
+/**
+ * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
+ */
+function convertMongoDate(dateValue: any): Date | null {
+  if (!dateValue) return null;
+  
+  try {
+    // Handle MongoDB extended JSON format like { "$date": "2024-01-01T00:00:00.000Z" }
+    if (typeof dateValue === 'object' && dateValue.$date && typeof dateValue.$date === 'string') {
+      return new Date(dateValue.$date);
+    }
+    
+    // Handle regular date strings and Date objects
+    return new Date(dateValue);
+  } catch (error) {
+    console.error('Error converting date:', error);
+    return null;
+  }
+}
+
+/**
+ * Calculate actual session duration based on session status and timing data
+ */
+function calculateActualDuration(session: any): number {
+  try {
+    const now = new Date();
+    
+    // For completed sessions: use actual duration from start to end
+    if (session.status === 'COMPLETED' && session.actualEndTime) {
+      const endTime = convertMongoDate(session.actualEndTime);
+      let startTime = null;
+      
+      // Priority order for start time:
+      // 1. Manual start time (if session was manually started)
+      // 2. Time slot start time (for sessions booked through time slots)
+      // 3. Scheduled at (fallback for other session types)
+      if (session.manualStartTime) {
+        startTime = convertMongoDate(session.manualStartTime);
+      } else if (session.timeSlotData?.startTime) {
+        startTime = convertMongoDate(session.timeSlotData.startTime);
+      } else if (session.scheduledAt) {
+        startTime = convertMongoDate(session.scheduledAt);
+      } else if (session.scheduledTime) {
+        startTime = convertMongoDate(session.scheduledTime);
+      }
+      
+      if (endTime && startTime && !isNaN(endTime.getTime()) && !isNaN(startTime.getTime())) {
+        const durationMs = endTime.getTime() - startTime.getTime();
+        const durationMinutes = Math.round(durationMs / (1000 * 60));
+        return Math.max(durationMinutes, 1); // Minimum 1 minute
+      }
+    }
+    
+    // For ongoing sessions: show elapsed time since start
+    if (session.status === 'ONGOING') {
+      const startTime = session.manualStartTime 
+        ? convertMongoDate(session.manualStartTime)
+        : convertMongoDate(session.scheduledAt || session.scheduledTime);
+      
+      if (startTime && !isNaN(startTime.getTime())) {
+        const elapsedMs = now.getTime() - startTime.getTime();
+        const elapsedMinutes = Math.round(elapsedMs / (1000 * 60));
+        return Math.max(elapsedMinutes, 1); // Minimum 1 minute
+      }
+    }
+    
+    // For scheduled sessions: use planned duration if available from timeslot
+    if (session.status === 'SCHEDULED') {
+      // Try to get duration from timeslot data if available
+      if (session.timeSlotData?.startTime && session.timeSlotData?.endTime) {
+        const startTime = convertMongoDate(session.timeSlotData.startTime);
+        const endTime = convertMongoDate(session.timeSlotData.endTime);
+        
+        if (startTime && endTime && !isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
+          const durationMs = endTime.getTime() - startTime.getTime();
+          const durationMinutes = Math.round(durationMs / (1000 * 60));
+          return Math.max(durationMinutes, 1);
+        }
+      }
+      
+      // Fallback to session type defaults
+      if (session.sessionType === 'MEDITATION') return 30;
+      if (session.sessionType === 'DIET') return 45;
+      return 60; // Default for YOGA
+    }
+    
+    // Default fallbacks based on session type
+    if (session.sessionType === 'MEDITATION') return 30;
+    if (session.sessionType === 'DIET') return 45;
+    return 60; // Default for YOGA
+    
+  } catch (error) {
+    console.warn('Error calculating session duration:', error);
+    return 60; // Safe fallback
+  }
+}
+
 export interface MentorSessionData {
   id: string;
   title: string;
@@ -227,7 +324,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
                 else: null
               }
             },
-            duration: { $literal: 60 }, // Default 60 minutes duration
+
             sessionType: 1,
             status: 1,
             link: '$timeSlotData.sessionLink',
@@ -236,7 +333,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
             studentId: '$userId',
             studentName: '$studentData.name',
             studentEmail: '$studentData.email',
-            paymentStatus: 1
+            paymentStatus: 1,
+            timeSlotData: 1  // Include time slot data for duration calculation
           }
         },
         {
@@ -286,7 +384,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         hasUnderscoreId: '_id' in session
       });
 
-      return {
+      const processedSession = {
         ...session,
         id: sessionId ? String(sessionId) : `legacy_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
         source: 'schedule',
@@ -299,6 +397,11 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         studentEmail: null,
         paymentStatus: null
       };
+
+      // Calculate actual duration using our helper function
+      processedSession.duration = calculateActualDuration(processedSession);
+
+      return processedSession;
     });
 
     // Process individual sessions (from SessionBooking collection) separately
@@ -314,13 +417,18 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         bookingKeys: Object.keys(booking)
       });
 
-      return {
+      const processedBooking = {
         ...booking,
         source: 'booking',
         sessionCategory: 'individual' as const,
         scheduledTime: booking.scheduledTime ? new Date(booking.scheduledTime) : null,
         id: sessionId ? String(sessionId) : `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       };
+
+      // Recalculate duration using our helper function for accuracy
+      processedBooking.duration = calculateActualDuration(processedBooking);
+
+      return processedBooking;
     });
 
     // Sort each category separately by scheduledTime descending (newest first)
@@ -398,7 +506,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
           id: session.id,
           title: session.title || `${session.sessionType || 'Session'} with ${session.studentName || 'Student'}`,
           scheduledTime: session.scheduledTime,
-          duration: session.duration || 60,
+          duration: calculateActualDuration(session),
           sessionType: session.sessionType,
           status: session.status,
           link: session.link,
@@ -466,7 +574,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         id: session.id,
         title: session.title,
         scheduledTime: session.scheduledTime,
-        duration: session.duration,
+        duration: calculateActualDuration(session),
         sessionType: session.sessionType,
         status: session.status,
         link: session.link,

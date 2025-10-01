@@ -66,12 +66,20 @@ export async function GET(
 
     console.log("✅ Time slot found with mentor details");
 
+    // Helper function to convert MongoDB date to proper format (consistent with timeslots route)
+    const convertDateToString = (dateValue: any): string => {
+      if (dateValue && typeof dateValue === 'object' && dateValue.$date) {
+        return dateValue.$date;
+      }
+      return dateValue;
+    };
+
     return NextResponse.json({
       success: true,
       data: {
         _id: timeSlot._id,
-        startTime: timeSlot.startTime,
-        endTime: timeSlot.endTime,
+        startTime: convertDateToString(timeSlot.startTime),
+        endTime: convertDateToString(timeSlot.endTime),
         sessionType: timeSlot.sessionType,
         maxStudents: timeSlot.maxStudents,
         currentStudents: timeSlot.currentStudents,
@@ -251,24 +259,24 @@ export async function PUT(
       );
     }
 
-    // Update the time slot
-    const updateData = {
-      startTime: new Date(startTime),
-      endTime: new Date(endTime),
-      sessionType,
-      maxStudents: parseInt(maxStudents),
-      isRecurring: Boolean(isRecurring),
-      recurringDays: recurringDays || [],
-      sessionLink: sessionLink,
-      notes: notes || "",
-      updatedAt: new Date()
-    };
+    // Import date utility for consistent date handling
+    const { createDateUpdate } = await import("@/lib/utils/date-utils");
 
+    // Update the time slot with proper date handling
     await prisma.$runCommandRaw({
       update: 'mentorTimeSlot',
       updates: [{
         q: { _id: resolvedParams.slotId },
-        u: { $set: updateData }
+        u: { $set: createDateUpdate({
+          startTime: new Date(startTime),
+          endTime: new Date(endTime),
+          sessionType,
+          maxStudents: parseInt(maxStudents),
+          isRecurring: Boolean(isRecurring),
+          recurringDays: recurringDays || [],
+          sessionLink: sessionLink,
+          notes: notes || ""
+        })}
       }]
     });
 

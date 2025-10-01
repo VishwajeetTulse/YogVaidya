@@ -72,22 +72,24 @@ export async function POST(request: NextRequest) {
         : 500;
     }
 
+    // Import date utility
+    const { createDateUpdate } = await import("@/lib/utils/date-utils");
+
     // Update session booking with payment details
     const updateResult = await prisma.$runCommandRaw({
       update: 'sessionBooking',
       updates: [{
         q: { _id: bookingId, userId: session.user.id },
         u: { 
-          $set: { 
+          $set: createDateUpdate({
             paymentDetails: {
               razorpayOrderId: razorpay_order_id,
               razorpayPaymentId: razorpay_payment_id,
               amount: timeSlotPrice, // Use actual time slot price
               currency: "INR"
             },
-            paymentStatus: "COMPLETED",
-            updatedAt: new Date() // Ensure this is a proper Date object
-          }
+            paymentStatus: "COMPLETED"
+          })
         }
       }]
     });
@@ -101,7 +103,7 @@ export async function POST(request: NextRequest) {
         q: { _id: timeSlotId },
         u: { 
           $inc: { currentStudents: 1 },
-          $set: { updatedAt: new Date() }
+          $set: createDateUpdate({})
         }
       }]
     });

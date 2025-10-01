@@ -18,9 +18,18 @@ export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: str
 
         if (scheduleSession) {
             console.log(`✅ Found session ${sessionId} in Schedule collection, updating status to ${status}`);
-            await prisma.schedule.update({
-                where: { id: sessionId },
-                data: { status: status }
+            // Use raw MongoDB operation to ensure proper date handling
+            await prisma.$runCommandRaw({
+                update: 'schedule',
+                updates: [{
+                    q: { _id: sessionId },
+                    u: {
+                        $set: {
+                            status: status,
+                            updatedAt: new Date() // Ensure Date object, not string
+                        }
+                    }
+                }]
             });
             console.log(`✅ Schedule session ${sessionId} status updated to ${status}`);
             return { success: true, source: 'schedule' };
@@ -119,9 +128,18 @@ export async function UpdateSessionStatus(status: ScheduleStatus, sessionId: str
 
         if (sessionBooking) {
             // SessionBooking uses the same ScheduleStatus enum
-            await prisma.sessionBooking.update({
-                where: { id: sessionId },
-                data: { status: status }
+            // Use raw MongoDB operation to ensure proper date handling
+            await prisma.$runCommandRaw({
+                update: 'sessionBooking',
+                updates: [{
+                    q: { _id: sessionId },
+                    u: {
+                        $set: {
+                            status: status,
+                            updatedAt: new Date() // Ensure Date object, not string
+                        }
+                    }
+                }]
             });
             console.log(`SessionBooking ${sessionId} status updated to ${status}`);
             return { success: true, source: 'booking' };

@@ -86,7 +86,7 @@ export async function POST(request: Request) {
       }
     };
 
-    // Create a new session booking entry using raw MongoDB operation
+    // Create a new session booking entry using Prisma
     const sessionBookingData = {
       _id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: session.user.id,
@@ -101,14 +101,24 @@ export async function POST(request: Request) {
         amount: mentor.sessionPrice,
         currency: "INR",
       },
-      createdAt: new Date(),
-      updatedAt: new Date(),
+      // Removed createdAt and updatedAt - let Prisma auto-generate these
     };
 
-    // Use raw MongoDB operation as fallback
-    const sessionBooking = await prisma.$runCommandRaw({
-      insert: 'sessionBooking',
-      documents: [sessionBookingData]
+    // Create the session booking using Prisma to ensure proper date handling
+    const sessionBooking = await prisma.sessionBooking.create({
+      data: {
+        id: sessionBookingData._id,
+        userId: sessionBookingData.userId,
+        mentorId: sessionBookingData.mentorId,
+        sessionType: sessionBookingData.sessionType,
+        scheduledAt: sessionBookingData.scheduledAt,
+        status: "SCHEDULED",
+        notes: sessionBookingData.notes,
+        paymentStatus: "COMPLETED",
+        amount: mentor.sessionPrice,
+        paymentDetails: sessionBookingData.paymentDetails,
+        isDelayed: false
+      }
     });
 
     return NextResponse.json({

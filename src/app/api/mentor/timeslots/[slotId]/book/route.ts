@@ -24,26 +24,110 @@ export async function POST(
     
     const { prisma } = await import("@/lib/config/prisma");
     
-    // Get the time slot details
-    const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
-      filter: {
-        _id: resolvedParams.slotId,
-        isActive: true,
-        $expr: { $lt: ['$currentStudents', '$maxStudents'] }
-      }
-    });
-
+    // Try Prisma first, with explicit DateTime conversion fallback
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch) &&
-        timeSlotResult.cursor.firstBatch.length > 0) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+    
+    try {
+      // Attempt normal Prisma query
+      timeSlot = await prisma.mentorTimeSlot.findFirst({
+        where: {
+          id: resolvedParams.slotId,
+          isActive: true
+        },
+        include: {
+          mentor: {
+            select: {
+              id: true,
+              name: true
+            }
+          }
+        }
+      });
+    } catch (error: any) {
+      // If DateTime conversion fails, fall back to raw query
+      if (error.code === 'P2023' && error.message.includes('DateTime')) {
+        console.warn("🔧 DateTime conversion failed, using raw query fallback");
+        
+        const timeSlotResult = await prisma.$runCommandRaw({
+          find: 'mentorTimeSlot',
+          filter: {
+            _id: resolvedParams.slotId,
+            isActive: true
+          }
+        });
+
+        if (timeSlotResult && 
+            typeof timeSlotResult === 'object' && 
+            'cursor' in timeSlotResult &&
+            timeSlotResult.cursor &&
+            typeof timeSlotResult.cursor === 'object' &&
+            'firstBatch' in timeSlotResult.cursor &&
+            Array.isArray(timeSlotResult.cursor.firstBatch) &&
+            timeSlotResult.cursor.firstBatch.length > 0) {
+          
+          const rawSlot = timeSlotResult.cursor.firstBatch[0] as any;
+          
+          // Convert MongoDB _id to id for compatibility
+          rawSlot.id = rawSlot._id;
+          
+          // Convert string dates to proper Date objects for consistency
+          const dateFields = ['startTime', 'endTime', 'createdAt', 'updatedAt'];
+          for (const field of dateFields) {
+            if (rawSlot[field]) {
+              if (typeof rawSlot[field] === 'string') {
+                rawSlot[field] = new Date(rawSlot[field]);
+              } else if (typeof rawSlot[field] === 'object' && rawSlot[field].$date) {
+                rawSlot[field] = new Date(rawSlot[field].$date);
+              }
+            }
+          }
+          
+          // Get mentor details separately
+          const mentor = await prisma.user.findFirst({
+            where: {
+              id: rawSlot.mentorId,
+              role: "MENTOR"
+            },
+            select: {
+              id: true,
+              name: true
+            }
+          });
+          
+          if (mentor) {
+            rawSlot.mentor = mentor;
+          }
+          
+          timeSlot = rawSlot;
+        }
+      } else {
+        throw error; // Re-throw non-DateTime errors
+      }
+    }
+
+    if (!timeSlot) {
+      console.log("❌ Time slot not found");
+      return NextResponse.json(
+        { success: false, error: "Time slot not found" },
+        { status: 404 }
+      );
+    }
+
+    if (!timeSlot.mentor) {
+      console.log("❌ Mentor not found for this time slot");
+      return NextResponse.json(
+        { success: false, error: "Mentor not found" },
+        { status: 404 }
+      );
+    }
+
+    // Check if slot has capacity
+    if (timeSlot && timeSlot.currentStudents >= timeSlot.maxStudents) {
+      console.log("❌ Time slot fully booked by capacity check");
+      return NextResponse.json(
+        { success: false, error: "Time slot is fully booked" },
+        { status: 409 }
+      );
     }
 
     if (!timeSlot) {
@@ -54,29 +138,17 @@ export async function POST(
       );
     }
 
-    // Additional check: Count pending bookings for this time slot
-    const pendingBookingsResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
-      filter: {
+    // Additional check: Count pending bookings for this time slot using Prisma
+    const pendingBookingsCount = await prisma.sessionBooking.count({
+      where: {
         timeSlotId: resolvedParams.slotId,
-        status: { $in: ["SCHEDULED", "ONGOING"] },
-        $or: [
+        status: { in: ["SCHEDULED", "ONGOING"] },
+        OR: [
           { paymentStatus: "COMPLETED" },
           { paymentStatus: "PENDING" }
         ]
       }
     });
-
-    let pendingBookingsCount = 0;
-    if (pendingBookingsResult && 
-        typeof pendingBookingsResult === 'object' && 
-        'cursor' in pendingBookingsResult &&
-        pendingBookingsResult.cursor &&
-        typeof pendingBookingsResult.cursor === 'object' &&
-        'firstBatch' in pendingBookingsResult.cursor &&
-        Array.isArray(pendingBookingsResult.cursor.firstBatch)) {
-      pendingBookingsCount = pendingBookingsResult.cursor.firstBatch.length;
-    }
 
     const totalBooked = (timeSlot.currentStudents || 0) + pendingBookingsCount;
     if (totalBooked >= timeSlot.maxStudents) {
@@ -92,13 +164,12 @@ export async function POST(
       );
     }
 
-    // Create the session booking
+    // Create the session booking using Prisma to ensure proper date handling
     const bookingId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
-    await prisma.$runCommandRaw({
-      insert: 'sessionBooking',
-      documents: [{
-        _id: bookingId,
+    const booking = await prisma.sessionBooking.create({
+      data: {
+        id: bookingId,
         userId: session.user.id,
         mentorId: timeSlot.mentorId,
         timeSlotId: resolvedParams.slotId,
@@ -107,10 +178,8 @@ export async function POST(
         status: "SCHEDULED",
         notes: notes || "",
         paymentStatus: "PENDING",
-        createdAt: new Date(),
-        updatedAt: new Date(),
         isDelayed: false
-      }]
+      }
     });
     
     console.log("📋 Session booking created with ID:", bookingId);
@@ -128,7 +197,7 @@ export async function POST(
         },
         mentor: {
           id: timeSlot.mentorId,
-          name: timeSlot.mentorName || "Mentor",
+          name: timeSlot.mentor?.name || "Mentor",
           mentorType: timeSlot.sessionType + "MENTOR",
         },
         scheduledAt: timeSlot.startTime,
