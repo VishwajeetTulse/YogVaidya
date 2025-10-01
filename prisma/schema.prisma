@@ -131,6 +131,8 @@ model User {
   studentBookings       SessionBooking[]  @relation("StudentBookings")
   mentorBookings        SessionBooking[]  @relation("MentorBookings")
   mentorTimeSlots       MentorTimeSlot[]  @relation("MentorTimeSlots")
+  studentDietPlans      DietPlan[]        @relation("StudentDietPlans")
+  mentorDietPlans       DietPlan[]        @relation("MentorDietPlans")
   
   
   @@unique([email])
@@ -311,6 +313,7 @@ model SessionBooking {
   mentorApplication MentorApplication? @relation(fields: [mentorApplicationId], references: [id], onDelete: SetNull)
   timeSlot          MentorTimeSlot? @relation("SlotBookings", fields: [timeSlotId], references: [id], onDelete: SetNull)
   schedule          Schedule?      @relation("ScheduleBookings", fields: [scheduleId], references: [id], onDelete: SetNull)
+  dietPlans         DietPlan[]     @relation("SessionDietPlans")
 
   @@index([userId])
   @@index([mentorId])
@@ -357,4 +360,41 @@ model Ticket {
   @@index([category])
   @@index([createdAt(sort: Desc)])
   @@map("ticket")
+}
+
+model DietPlan {
+  id              String          @id @default(auto()) @map("_id") @db.ObjectId
+  
+  // Relationships
+  studentId       String
+  student         User            @relation("StudentDietPlans", fields: [studentId], references: [id], onDelete: Cascade)
+  mentorId        String
+  mentor          User            @relation("MentorDietPlans", fields: [mentorId], references: [id], onDelete: Cascade)
+  sessionId       String?         @db.ObjectId // Optional - link to specific booking
+  session         SessionBooking? @relation("SessionDietPlans", fields: [sessionId], references: [id], onDelete: SetNull)
+  
+  // Content - TipTap stores as JSON
+  content         Json            // Rich text content (ProseMirror JSON format)
+  
+  // Metadata
+  title           String          // e.g., "7-Day Weight Loss Plan"
+  description     String?         // Brief summary for list view
+  tags            String[]        @default([]) // e.g., ["weight-loss", "vegetarian", "1800-cal"]
+  
+  // Status
+  isActive        Boolean         @default(true)
+  isDraft         Boolean         @default(false)
+  
+  // Tracking
+  viewCount       Int             @default(0)
+  lastViewedAt    DateTime?
+  createdAt       DateTime        @default(now())
+  updatedAt       DateTime        @updatedAt
+  
+  @@index([studentId])
+  @@index([mentorId])
+  @@index([sessionId])
+  @@index([createdAt(sort: Desc)])
+  @@index([isDraft])
+  @@map("dietPlan")
 }

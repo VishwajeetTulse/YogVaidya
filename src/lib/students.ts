@@ -13,7 +13,7 @@ export async function getStudents(mentortype : string) : Promise<User[]> {
             role: "USER", // Only users with USER role (mentors have MENTOR role)
             subscriptionStatus: "ACTIVE",
             subscriptionPlan: {
-                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : "SEED" , "FLOURISH" ]
+                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : mentortype == "DIETPLANNER" ? "FLOURISH" : "SEED" , "FLOURISH" ]
             },
         },
     })

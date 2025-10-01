@@ -7,6 +7,7 @@ import {
   Settings,
   Ticket,
   IndianRupee,
+  FileText,
 } from "lucide-react";
 import { MentorSidebarMenuItem } from "./types";
 
@@ -40,6 +41,12 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     title: "Session Pricing",
     icon: IndianRupee,
     description: "Set your session rates",
+  },
+  {
+    id: "diet-plans",
+    title: "Diet Plans",
+    icon: FileText,
+    description: "Create and manage diet plans",
   },
   {
     id: "reviews",

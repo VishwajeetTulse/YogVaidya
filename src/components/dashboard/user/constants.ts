@@ -6,6 +6,7 @@ import {
   CreditCard,
   Settings,
   Ticket,
+  FileText,
 } from "lucide-react";
 import { SidebarMenuItem } from "./types";
 
@@ -33,6 +34,12 @@ export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
     title: "Content Library",
     icon: BookOpen,
     description: "Videos, articles, and resources",
+  },
+  {
+    id: "diet-plans",
+    title: "Diet Plans",
+    icon: FileText,
+    description: "Your personalized diet plans",
   },
   {
     id: "subscription",

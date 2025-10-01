@@ -22,6 +22,7 @@ import { ExploreMentorsSection } from '../user/sections/explore-mentors-section'
 import { ProfileSection } from '../user/sections/profile-section';
 import { SettingsSection } from '../user/sections/settings-section';
 import { UserTicketsSection } from '../user/sections/tickets-section';
+import { DietPlansSection } from '../user/sections/diet-plans-section';
 import { BaseHookResult } from '../shared/types';
 
 // Create a mapping of section IDs to components
@@ -30,6 +31,7 @@ const USER_SECTION_COMPONENTS = {
   "classes": ClassesSection,
   "mentors": MentorsSection,
   "library": LibrarySection,
+  "diet-plans": DietPlansSection,
   "subscription": SubscriptionSection,
   "explore-mentors": ExploreMentorsSection,
   "profile": ProfileSection,
