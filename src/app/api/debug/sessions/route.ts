@@ -154,7 +154,7 @@ export async function GET() {
           scheduled: mongoDateToISOString(s.scheduledAt),
           created: mongoDateToISOString(s.createdAt),
           timeSlotId: s.timeSlotId,
-          isDelayed: s.isDelayed,
+          duration: s.duration,
           amount: s.amount,
           paymentStatus: s.paymentStatus
         })),

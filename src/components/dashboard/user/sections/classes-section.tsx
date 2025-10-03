@@ -15,6 +15,7 @@ interface SessionData {
   id: string;
   title: string;
   scheduledTime: string;
+  manualStartTime: string | null; // When session was actually started by mentor
   duration: number;
   sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
@@ -41,9 +42,20 @@ export const ClassesSection = () => {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [, setUpdateTrigger] = useState(0); // Force re-render for duration updates
 
   // Enable automatic session status updates
   useSessionStatusUpdates(true, 30000); // Check every 30 seconds for more responsive updates
+
+  // Update duration display every minute for ongoing sessions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Force re-render to update elapsed time for ongoing sessions
+      setUpdateTrigger(prev => prev + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Helper function to load sessions (extracted for reuse)
   const loadUserSessions = async () => {
@@ -123,9 +135,24 @@ export const ClassesSection = () => {
           if (scheduledTime === null) {
             return null; // Mark for filtering
           }
+          
+          // Debug: Log session data including duration
+          console.log(`📊 Processing session ${session.id}:`, {
+            status: session.status,
+            duration: session.duration,
+            title: session.title,
+            manualStartTime: session.manualStartTime
+          });
+          
+          // Convert manualStartTime if it exists
+          const manualStartTime = session.manualStartTime 
+            ? safeToISOString(session.manualStartTime) 
+            : null;
+          
           return {
             ...session,
-            scheduledTime
+            scheduledTime,
+            manualStartTime
           };
         })
         .filter((session): session is SessionData => session !== null) // Remove invalid sessions
@@ -261,7 +288,36 @@ useEffect(() => {
     return "Mentor";
   };
 
+  // Helper function to calculate real-time duration for ONGOING sessions
+  const calculateDisplayDuration = (sessionItem: SessionData): number => {
+    // For ONGOING sessions, calculate elapsed time from actual start time
+    if (sessionItem.status === "ONGOING") {
+      // Use manualStartTime (when mentor started) if available, otherwise scheduledTime
+      const startTimeStr = sessionItem.manualStartTime || sessionItem.scheduledTime;
+      const startTime = new Date(startTimeStr);
+      const currentTime = new Date();
+      
+      if (!isNaN(startTime.getTime())) {
+        const elapsedMs = currentTime.getTime() - startTime.getTime();
+        const elapsedMinutes = Math.round(elapsedMs / (1000 * 60));
+        return Math.max(elapsedMinutes, 1); // Minimum 1 minute
+      }
+    }
+    
+    // For COMPLETED: uses actualDuration stored in DB when session ended
+    // For SCHEDULED: uses planned duration from time slot
+    // For all cases: duration is provided by server
+    return sessionItem.duration || 60;
+  };
+
   const renderSessionCard = (sessionItem: SessionData) => {
+    // Debug logging for duration
+    console.log(`🎯 Rendering session ${sessionItem.id}:`, {
+      status: sessionItem.status,
+      duration: sessionItem.duration,
+      title: sessionItem.title
+    });
+    
     // Defensive programming: Ensure valid date
     const sessionTime = new Date(sessionItem.scheduledTime);
     if (isNaN(sessionTime.getTime())) {
@@ -291,7 +347,6 @@ useEffect(() => {
             <div>
               <h3 className="font-semibold text-lg">{sessionItem.title}</h3>
               <p className="text-gray-500">
-                with {getMentorTypeDisplay(sessionItem.mentor.mentorType)} {sessionItem.mentor.name || "TBD"}
               </p>
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
@@ -307,7 +362,8 @@ useEffect(() => {
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {sessionItem.duration} minutes
+                  {Math.round(calculateDisplayDuration(sessionItem))} minutes
+                  {sessionItem.status === "ONGOING" && " (ongoing)"}
                 </span>
                 <span className={`px-2 py-1 rounded-full text-xs font-medium ${
                   sessionItem.sessionType === "YOGA" 
@@ -316,11 +372,6 @@ useEffect(() => {
                 }`}>
                   {sessionItem.sessionType}
                 </span>
-                {sessionItem.status === "COMPLETED" && (
-                  <span className="px-2 py-1 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                    Auto-completed
-                  </span>
-                )}
               </div>
             </div>
           </div>
@@ -402,10 +453,6 @@ useEffect(() => {
         <div>
           <div className="flex items-center gap-3">
             <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
-            <div className="flex items-center gap-1 px-2 py-1 bg-green-50 border border-green-200 rounded-full">
-              <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse"></div>
-              <span className="text-xs text-green-700 font-medium">Auto-updating</span>
-            </div>
           </div>
           <p className="text-gray-600 mt-2">
             Manage your scheduled and completed {sessionsData?.subscriptionPlan?.toLowerCase()} sessions. Sessions automatically complete when their duration ends.

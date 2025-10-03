@@ -126,6 +126,11 @@ export async function POST(request: Request) {
     // Import date utility for consistent date handling
     const { createDateUpdate } = await import("@/lib/utils/date-utils");
 
+    // Calculate duration from timeSlot
+    const sessionDuration = Math.round(
+      (timeSlot.endTime.getTime() - timeSlot.startTime.getTime()) / (1000 * 60)
+    );
+
     // Create the session booking using Prisma to ensure proper date handling
     const sessionBooking = await prisma.sessionBooking.create({
       data: {
@@ -136,12 +141,12 @@ export async function POST(request: Request) {
         timeSlotId: sessionBookingData.timeSlotId,
         sessionType: sessionBookingData.sessionType,
         scheduledAt: sessionBookingData.scheduledAt,
+        duration: sessionDuration,
         status: "SCHEDULED", // Use proper enum value
         notes: sessionBookingData.notes,
         paymentStatus: sessionBookingData.paymentStatus,
         amount: sessionBookingData.amount,
-        paymentDetails: sessionBookingData.paymentDetails,
-        isDelayed: false // Add missing field with default value
+        paymentDetails: sessionBookingData.paymentDetails
       }
     });
 

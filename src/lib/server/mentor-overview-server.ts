@@ -190,8 +190,8 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
       sessionsThisWeek = (sessionsThisWeekResult.cursor.firstBatch[0] as any).totalSessions || 0;
     }
 
-    // Get today's sessions using raw query to handle datetime conversion
-    const todaysSessionsResult = await prisma.schedule.findRaw({
+    // Get today's sessions from both schedule and sessionBooking collections
+    const todaysScheduleSessionsResult = await prisma.schedule.findRaw({
       filter: {
         mentorId: user.id,
         scheduledTime: {
@@ -200,20 +200,57 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         }
       },
       options: {
-        sort: { scheduledTime: 1 },
-        limit: 5
+        sort: { scheduledTime: 1 }
+      }
+    });
+
+    const todaysBookingSessionsResult = await prisma.sessionBooking.findRaw({
+      filter: {
+        mentorId: user.id,
+        scheduledAt: {
+          $gte: { $date: startOfDay.toISOString() },
+          $lte: { $date: endOfDay.toISOString() }
+        }
+      },
+      options: {
+        sort: { scheduledAt: 1 }
       }
     });
 
     let todaysSessions: any[] = [];
-    if (Array.isArray(todaysSessionsResult)) {
-      todaysSessions = todaysSessionsResult.map((session: any) => ({
+    
+    // Process schedule sessions
+    if (Array.isArray(todaysScheduleSessionsResult)) {
+      const scheduleSessions = todaysScheduleSessionsResult.map((session: any) => ({
         ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
+        sessionCategory: 'subscription'
       }));
+      todaysSessions.push(...scheduleSessions);
     }
-    // Get upcoming sessions (next 7 days) - using raw query to handle datetime conversion
-    const upcomingSessionsResult = await prisma.schedule.findRaw({
+    
+    // Process booking sessions (individual slots)
+    if (Array.isArray(todaysBookingSessionsResult)) {
+      const bookingSessions = todaysBookingSessionsResult.map((session: any) => ({
+        ...session,
+        id: session._id || session.id,
+        title: `${session.sessionType} Session`, // Generate title since bookings might not have titles
+        scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
+        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
+        sessionCategory: 'individual'
+      }));
+      todaysSessions.push(...bookingSessions);
+    }
+    
+    // Sort all sessions by scheduled time and limit to 5
+    todaysSessions.sort((a, b) => {
+      const timeA = a.scheduledTime ? a.scheduledTime.getTime() : 0;
+      const timeB = b.scheduledTime ? b.scheduledTime.getTime() : 0;
+      return timeA - timeB;
+    });
+    todaysSessions = todaysSessions.slice(0, 5);
+    // Get upcoming sessions (next 7 days) from both schedule and sessionBooking collections
+    const upcomingScheduleSessionsResult = await prisma.schedule.findRaw({
       filter: {
         mentorId: user.id,
         scheduledTime: {
@@ -222,18 +259,55 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         }
       },
       options: {
-        sort: { scheduledTime: 1 },
-        limit: 5
+        sort: { scheduledTime: 1 }
+      }
+    });
+
+    const upcomingBookingSessionsResult = await prisma.sessionBooking.findRaw({
+      filter: {
+        mentorId: user.id,
+        scheduledAt: {
+          $gt: { $date: now.toISOString() },
+          $lte: { $date: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)).toISOString() }
+        }
+      },
+      options: {
+        sort: { scheduledAt: 1 }
       }
     });
 
     let upcomingSessions: any[] = [];
-    if (Array.isArray(upcomingSessionsResult)) {
-      upcomingSessions = upcomingSessionsResult.map((session: any) => ({
+    
+    // Process schedule sessions
+    if (Array.isArray(upcomingScheduleSessionsResult)) {
+      const scheduleSessions = upcomingScheduleSessionsResult.map((session: any) => ({
         ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
+        sessionCategory: 'subscription'
       }));
+      upcomingSessions.push(...scheduleSessions);
     }
+    
+    // Process booking sessions (individual slots)
+    if (Array.isArray(upcomingBookingSessionsResult)) {
+      const bookingSessions = upcomingBookingSessionsResult.map((session: any) => ({
+        ...session,
+        id: session._id || session.id,
+        title: `${session.sessionType} Session`,
+        scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
+        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
+        sessionCategory: 'individual'
+      }));
+      upcomingSessions.push(...bookingSessions);
+    }
+    
+    // Sort all sessions by scheduled time and limit to 5
+    upcomingSessions.sort((a, b) => {
+      const timeA = a.scheduledTime ? a.scheduledTime.getTime() : 0;
+      const timeB = b.scheduledTime ? b.scheduledTime.getTime() : 0;
+      return timeA - timeB;
+    });
+    upcomingSessions = upcomingSessions.slice(0, 5);
 
     // Get recent activity from system logs
     const recentActivity = await prisma.systemLog.findMany({
@@ -299,18 +373,18 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
       sessionsThisWeek,
       averageRating: 4.8, // Placeholder - you might want to add a reviews/ratings table
       todaysSessions: todaysSessions.map(session => ({
-        id: session.id,
-        title: session.title,
+        id: session.id || session._id,
+        title: session.title || `${session.sessionType} Session`,
         scheduledTime: session.scheduledTime,
-        duration: session.duration,
+        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
         sessionType: session.sessionType,
         status: session.status
       })),
       upcomingSessions: upcomingSessions.map(session => ({
-        id: session.id,
-        title: session.title,
+        id: session.id || session._id,
+        title: session.title || `${session.sessionType} Session`,
         scheduledTime: session.scheduledTime,
-        duration: session.duration,
+        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
         sessionType: session.sessionType,
         status: session.status
       })),

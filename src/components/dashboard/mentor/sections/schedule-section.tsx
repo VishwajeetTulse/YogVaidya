@@ -36,13 +36,10 @@ import { Textarea } from "@/components/ui/textarea";
 const timeSlotSchema = z.object({
   startDate: z.string().min(1, "Please select a start date"),
   startTime: z.string().min(1, "Please select a start time"),
-  endTime: z.string().min(1, "Please select an end time"),
+  duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
   sessionType: z.nativeEnum(SessionType, {
     required_error: "Session type is required",
     invalid_type_error: "Please select a valid session type",
-  }),
-  maxStudents: z.enum(["one"], {
-    required_error: "Please select session type - individual session only",
   }),
   isRecurring: z.boolean(),
   recurringDays: z.array(z.string()),
@@ -141,9 +138,8 @@ export const ScheduleSection = () => {
     defaultValues: {
       startDate: "",
       startTime: "",
-      endTime: "",
+      duration: 60,
       sessionType: "YOGA" as SessionType,
-      maxStudents: "one",
       isRecurring: false,
       recurringDays: [],
       sessionLink: "",
@@ -186,12 +182,12 @@ export const ScheduleSection = () => {
     if (editingSlot) {
       const startTime = new Date(editingSlot.startTime);
       const endTime = new Date(editingSlot.endTime);
+      const duration = Math.round((endTime.getTime() - startTime.getTime()) / (1000 * 60)); // minutes
       
       form.setValue("startDate", startTime.toISOString().split('T')[0]);
       form.setValue("startTime", startTime.toTimeString().slice(0, 5));
-      form.setValue("endTime", endTime.toTimeString().slice(0, 5));
+      form.setValue("duration", duration);
       form.setValue("sessionType", editingSlot.sessionType as SessionType);
-      form.setValue("maxStudents", "one");
       form.setValue("isRecurring", editingSlot.isRecurring);
       form.setValue("recurringDays", editingSlot.recurringDays);
       form.setValue("sessionLink", editingSlot.sessionLink || "");
@@ -273,13 +269,8 @@ export const ScheduleSection = () => {
     try {
       // Combine date and time to create full datetime strings
       const startDateTime = new Date(`${data.startDate}T${data.startTime}`);
-      const endDateTime = new Date(`${data.startDate}T${data.endTime}`);
-      
-      // Validate end time is after start time
-      if (endDateTime <= startDateTime) {
-        toast.error("End time must be after start time");
-        return;
-      }
+      // Calculate end time by adding duration to start time
+      const endDateTime = new Date(startDateTime.getTime() + data.duration * 60 * 1000);
 
       // Prepare the payload with combined datetime
       const payload = {
@@ -320,9 +311,8 @@ export const ScheduleSection = () => {
         form.reset({
           startDate: "",
           startTime: "",
-          endTime: "",
+          duration: 60,
           sessionType: mentorSessionType,
-          maxStudents: "one",
           isRecurring: false,
           recurringDays: [],
           sessionLink: "",
@@ -415,9 +405,8 @@ export const ScheduleSection = () => {
     form.reset({
       startDate: "",
       startTime: "",
-      endTime: "",
+      duration: 60,
       sessionType: mentorSessionType,
-      maxStudents: "one",
       isRecurring: false,
       recurringDays: [],
       sessionLink: "",
@@ -498,14 +487,22 @@ export const ScheduleSection = () => {
 
                 <FormField
                   control={form.control}
-                  name="endTime"
+                  name="duration"
                   render={({ field }) => (
                     <FormItem>
-                      <FormLabel>End Time</FormLabel>
+                      <FormLabel>Duration (minutes)</FormLabel>
                       <FormControl>
                         <Input
-                          type="time"
+                          type="number"
+                          min="15"
+                          max="180"
+                          placeholder="e.g., 60"
                           {...field}
+                          value={field.value?.toString() || ''}
+                          onChange={(e) => {
+                            const value = parseInt(e.target.value);
+                            field.onChange(isNaN(value) ? undefined : value);
+                          }}
                         />
                       </FormControl>
                       <FormMessage />
@@ -514,78 +511,47 @@ export const ScheduleSection = () => {
                 />
               </div>
 
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <FormField
-                  control={form.control}
-                  name="sessionType"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Session Type *</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                        disabled={true} // Auto-filled based on mentor type
-                      >
-                        <FormControl>
-                          <SelectTrigger className="bg-gray-100 cursor-not-allowed">
-                            <SelectValue placeholder="Auto-filled based on mentor type" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="YOGA">
-                            <div className="flex items-center gap-2">
-                              <Video className="h-4 w-4" />
-                              Yoga
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="MEDITATION">
-                            <div className="flex items-center gap-2">
-                              <Calendar className="h-4 w-4" />
-                              Meditation
-                            </div>
-                          </SelectItem>
-                          <SelectItem value="DIET">
-                            <div className="flex items-center gap-2">
-                              <Clock className="h-4 w-4" />
-                              Diet Planning
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-
-                <FormField
-                  control={form.control}
-                  name="maxStudents"
-                  render={({ field }) => (
-                    <FormItem>
-                      <FormLabel>Session Format</FormLabel>
-                      <Select
-                        onValueChange={field.onChange}
-                        value={field.value}
-                      >
-                        <FormControl>
-                          <SelectTrigger>
-                            <SelectValue placeholder="Individual session" />
-                          </SelectTrigger>
-                        </FormControl>
-                        <SelectContent>
-                          <SelectItem value="one">
-                            <div className="flex items-center gap-2">
-                              <User className="h-4 w-4" />
-                              One Student (Individual Session)
-                            </div>
-                          </SelectItem>
-                        </SelectContent>
-                      </Select>
-                      <FormMessage />
-                    </FormItem>
-                  )}
-                />
-              </div>
+              <FormField
+                control={form.control}
+                name="sessionType"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Session Type *</FormLabel>
+                    <Select
+                      onValueChange={field.onChange}
+                      value={field.value}
+                      disabled={true} // Auto-filled based on mentor type
+                    >
+                      <FormControl>
+                        <SelectTrigger className="bg-gray-100 cursor-not-allowed">
+                          <SelectValue placeholder="Auto-filled based on mentor type" />
+                        </SelectTrigger>
+                      </FormControl>
+                      <SelectContent>
+                        <SelectItem value="YOGA">
+                          <div className="flex items-center gap-2">
+                            <Video className="h-4 w-4" />
+                            Yoga
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="MEDITATION">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="h-4 w-4" />
+                            Meditation
+                          </div>
+                        </SelectItem>
+                        <SelectItem value="DIET">
+                          <div className="flex items-center gap-2">
+                            <Clock className="h-4 w-4" />
+                            Diet Planning
+                          </div>
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
 
               <FormField
                 control={form.control}
@@ -808,14 +774,11 @@ export const ScheduleSection = () => {
                               {startTime.toLocaleTimeString([], {
                                 hour: '2-digit',
                                 minute: '2-digit'
-                              })} - {endTime.toLocaleTimeString([], {
-                                hour: '2-digit',
-                                minute: '2-digit'
                               })}
                             </span>
                             <span className="flex items-center gap-1">
-                              <Users className="w-3 h-3" />
-                              {slot.maxStudents === 1 ? 'Individual' : 'Group'} ({slot.currentStudents}/{slot.maxStudents === 1 ? '1' : slot.maxStudents} students)
+                              <Video className="w-3 h-3" />
+                              Duration: {duration} minutes
                             </span>
                             {slot.sessionLink && (
                               <span className="flex items-center gap-1">

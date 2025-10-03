@@ -3,6 +3,7 @@
 import { prisma } from '@/lib/config/prisma';
 import { auth } from '@/lib/config/auth';
 import { headers } from 'next/headers';
+import { convertMongoDate } from '@/lib/utils/datetime-utils';
 
 export interface DashboardData {
   classesThisWeek: number;
@@ -97,28 +98,70 @@ export async function getUserDashboardData(): Promise<{
     const endOfPreviousMonth = new Date(now.getFullYear(), now.getMonth(), 0);
 
     // Get user's scheduled sessions for this week (as a student)
-    const userScheduledSessions = await prisma.schedule.findMany({
-      where: {
-        // Add studentId field when available, for now using a different approach
-        scheduledTime: {
-          gte: startOfWeek,
-          lte: endOfWeek
+    const userScheduledSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: {
+              $gte: startOfWeek,
+              $lte: endOfWeek
+            },
+            status: {
+              $in: ['SCHEDULED', 'COMPLETED']
+            }
+          }
         },
-        status: {
-          in: ['SCHEDULED', 'COMPLETED']
-        }
-      },
-      include: {
-        mentor: {
-          select: {
-            name: true
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'mentorId',
+            foreignField: '_id',
+            as: 'mentor'
+          }
+        },
+        { $unwind: { path: '$mentor', preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$scheduledTime' } },
+                else: '$scheduledTime'
+              }
+            },
+            createdAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$createdAt' } },
+                else: '$createdAt'
+              }
+            },
+            updatedAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$updatedAt' } },
+                else: '$updatedAt'
+              }
+            }
           }
         }
-      }
+      ],
+      cursor: {}
     });
 
+    let userScheduledSessions = (userScheduledSessionsResult as any)?.cursor?.firstBatch || [];
+    userScheduledSessions = userScheduledSessions.map((session: any) => ({
+      ...session,
+      id: session._id.toString(),
+      scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
+      createdAt: convertMongoDate(session.createdAt) || new Date(),
+      updatedAt: convertMongoDate(session.updatedAt) || new Date(),
+      mentor: session.mentor ? { name: session.mentor.name } : null
+    }));
+
     // Calculate classes this week based on actual scheduled sessions
-    const classesThisWeek = userScheduledSessions.filter(session => 
+    const classesThisWeek = userScheduledSessions.filter((session: any) => 
       session.status === 'COMPLETED' || session.scheduledTime <= now
     ).length;
 
@@ -140,19 +183,43 @@ export async function getUserDashboardData(): Promise<{
     // Calculate streak days based on recent activity
     const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
     
-    const recentSessions = await prisma.schedule.findMany({
-      where: {
-        scheduledTime: { gte: thirtyDaysAgo },
-        status: 'COMPLETED'
-      },
-      orderBy: { scheduledTime: 'desc' }
+    const recentSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: { $gte: thirtyDaysAgo },
+            status: 'COMPLETED'
+          }
+        },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$scheduledTime' } },
+                else: '$scheduledTime'
+              }
+            }
+          }
+        },
+        { $sort: { scheduledTime: -1 } }
+      ],
+      cursor: {}
     });
+
+    let recentSessions = (recentSessionsResult as any)?.cursor?.firstBatch || [];
+    recentSessions = recentSessions.map((session: any) => ({
+      ...session,
+      id: session._id.toString(),
+      scheduledTime: convertMongoDate(session.scheduledTime) || new Date()
+    }));
 
     // Calculate streak (simplified - count consecutive days with sessions)
     let streakDays = 0;
     if (recentSessions.length > 0) {
       const today = new Date();
-      const sessionDates = recentSessions.map(s => 
+      const sessionDates = recentSessions.map((s: any) => 
         new Date(s.scheduledTime).toDateString()
       );
       
@@ -171,66 +238,164 @@ export async function getUserDashboardData(): Promise<{
     }
 
     // Get today's scheduled sessions
-    const todaySchedule = await prisma.schedule.findMany({
-      where: {
-        scheduledTime: {
-          gte: startOfDay,
-          lte: endOfDay
-        }
-      },
-      include: {
-        mentor: {
-          select: {
-            name: true
+    const todayScheduleResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: {
+              $gte: startOfDay,
+              $lte: endOfDay
+            }
           }
-        }
-      },
-      orderBy: {
-        scheduledTime: 'asc'
-      }
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'mentorId',
+            foreignField: '_id',
+            as: 'mentor'
+          }
+        },
+        { $unwind: { path: '$mentor', preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$scheduledTime' } },
+                else: '$scheduledTime'
+              }
+            },
+            createdAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$createdAt' } },
+                else: '$createdAt'
+              }
+            },
+            updatedAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$updatedAt' } },
+                else: '$updatedAt'
+              }
+            }
+          }
+        },
+        { $sort: { scheduledTime: 1 } }
+      ],
+      cursor: {}
     });
+
+    let todaySchedule = (todayScheduleResult as any)?.cursor?.firstBatch || [];
+    todaySchedule = todaySchedule.map((session: any) => ({
+      ...session,
+      id: session._id.toString(),
+      scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
+      createdAt: convertMongoDate(session.createdAt) || new Date(),
+      updatedAt: convertMongoDate(session.updatedAt) || new Date(),
+      mentor: session.mentor ? { name: session.mentor.name } : null
+    }));
 
     // Get upcoming sessions (next 7 days)
-    const upcomingSessions = await prisma.schedule.findMany({
-      where: {
-        scheduledTime: {
-          gt: now,
-          lte: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000))
-        }
-      },
-      include: {
-        mentor: {
-          select: {
-            name: true
+    const upcomingSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: {
+              $gt: now,
+              $lte: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000))
+            }
           }
-        }
-      },
-      orderBy: {
-        scheduledTime: 'asc'
-      },
-      take: 5
+        },
+        {
+          $lookup: {
+            from: 'users',
+            localField: 'mentorId',
+            foreignField: '_id',
+            as: 'mentor'
+          }
+        },
+        { $unwind: { path: '$mentor', preserveNullAndEmptyArrays: true } },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$scheduledTime' } },
+                else: '$scheduledTime'
+              }
+            },
+            createdAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$createdAt' } },
+                else: '$createdAt'
+              }
+            },
+            updatedAt: {
+              $cond: {
+                if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                then: { $dateToString: { format: '%Y-%m-%dT%H:%M:%S.%LZ', date: '$updatedAt' } },
+                else: '$updatedAt'
+              }
+            }
+          }
+        },
+        { $sort: { scheduledTime: 1 } },
+        { $limit: 5 }
+      ],
+      cursor: {}
     });
+
+    let upcomingSessions = (upcomingSessionsResult as any)?.cursor?.firstBatch || [];
+    upcomingSessions = upcomingSessions.map((session: any) => ({
+      ...session,
+      id: session._id.toString(),
+      scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
+      createdAt: convertMongoDate(session.createdAt) || new Date(),
+      updatedAt: convertMongoDate(session.updatedAt) || new Date(),
+      mentor: session.mentor ? { name: session.mentor.name } : null
+    }));
 
     // Get monthly stats
-    const currentMonthSessions = await prisma.schedule.count({
-      where: {
-        scheduledTime: {
-          gte: startOfMonth,
-          lt: new Date(now.getFullYear(), now.getMonth() + 1, 1)
+    const currentMonthSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: {
+              $gte: startOfMonth,
+              $lt: new Date(now.getFullYear(), now.getMonth() + 1, 1)
+            },
+            status: 'COMPLETED'
+          }
         },
-        status: 'COMPLETED'
-      }
+        { $count: 'total' }
+      ],
+      cursor: {}
     });
+    const currentMonthSessions = ((currentMonthSessionsResult as any)?.cursor?.firstBatch?.[0]?.total || 0);
 
-    const previousMonthSessions = await prisma.schedule.count({
-      where: {
-        scheduledTime: {
-          gte: startOfPreviousMonth,
-          lte: endOfPreviousMonth
+    const previousMonthSessionsResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            scheduledTime: {
+              $gte: startOfPreviousMonth,
+              $lte: endOfPreviousMonth
+            },
+            status: 'COMPLETED'
+          }
         },
-        status: 'COMPLETED'
-      }
+        { $count: 'total' }
+      ],
+      cursor: {}
     });
+    const previousMonthSessions = ((previousMonthSessionsResult as any)?.cursor?.firstBatch?.[0]?.total || 0);
 
     // Format the data
     const formatSessionTime = (date: Date) => {
@@ -249,7 +414,7 @@ export async function getUserDashboardData(): Promise<{
         goalsAchieved,
         totalGoals,
         streakDays,
-        todaySchedule: todaySchedule.map(session => ({
+        todaySchedule: todaySchedule.map((session: any) => ({
           id: session.id,
           title: session.title || `${session.sessionType} Session`,
           mentor: session.mentor?.name || 'Mentor',
@@ -258,7 +423,7 @@ export async function getUserDashboardData(): Promise<{
           type: session.sessionType.toLowerCase() as 'yoga' | 'meditation',
           status: session.status as 'SCHEDULED' | 'ONGOING' | 'COMPLETED' | 'CANCELLED'
         })),
-        upcomingSessions: upcomingSessions.map(session => ({
+        upcomingSessions: upcomingSessions.map((session: any) => ({
           id: session.id,
           title: session.title || `${session.sessionType} Session`,
           mentor: session.mentor?.name || 'Mentor',

@@ -197,14 +197,115 @@ export async function GET(request: Request) {
     }
 
     // Get all schedules created by this mentor
-    const schedules = await prisma.schedule.findMany({
-      where: {
-        mentorId: session.user.id
-      },
-      orderBy: {
-        scheduledTime: 'desc'
-      }
+    // Use $runCommandRaw to handle corrupted date strings in the database
+    const scheduleResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: {
+            mentorId: session.user.id
+          }
+        },
+        {
+          $addFields: {
+            scheduledTime: {
+              $cond: {
+                if: { $and: [{ $ne: ['$scheduledTime', null] }, { $ne: ['$scheduledTime', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$scheduledTime'
+                      }
+                    },
+                    else: '$scheduledTime'
+                  }
+                },
+                else: null
+              }
+            },
+            createdAt: {
+              $cond: {
+                if: { $and: [{ $ne: ['$createdAt', null] }, { $ne: ['$createdAt', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$createdAt'
+                      }
+                    },
+                    else: '$createdAt'
+                  }
+                },
+                else: null
+              }
+            },
+            updatedAt: {
+              $cond: {
+                if: { $and: [{ $ne: ['$updatedAt', null] }, { $ne: ['$updatedAt', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$updatedAt'
+                      }
+                    },
+                    else: '$updatedAt'
+                  }
+                },
+                else: null
+              }
+            }
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            id: '$_id',
+            title: 1,
+            scheduledTime: 1,
+            duration: 1,
+            sessionType: 1,
+            status: 1,
+            link: 1,
+            notes: 1,
+            mentorId: 1,
+            createdAt: 1,
+            updatedAt: 1
+          }
+        },
+        {
+          $sort: { scheduledTime: -1 }
+        }
+      ],
+      cursor: {}
     });
+
+    let schedules: any[] = [];
+    if (scheduleResult &&
+        typeof scheduleResult === 'object' &&
+        'cursor' in scheduleResult &&
+        scheduleResult.cursor &&
+        typeof scheduleResult.cursor === 'object' &&
+        'firstBatch' in scheduleResult.cursor &&
+        Array.isArray(scheduleResult.cursor.firstBatch)) {
+      schedules = scheduleResult.cursor.firstBatch;
+    }
+    
+    // Convert date strings to Date objects
+    schedules = schedules.map(schedule => ({
+      ...schedule,
+      id: schedule.id || schedule._id,
+      scheduledTime: convertMongoDate(schedule.scheduledTime) || new Date(),
+      createdAt: convertMongoDate(schedule.createdAt) || new Date(),
+      updatedAt: convertMongoDate(schedule.updatedAt) || new Date()
+    }));
 
     // For subscription sessions, we don't create individual bookings
     // Instead, we return the schedule info with eligible user counts

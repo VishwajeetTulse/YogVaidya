@@ -25,80 +25,28 @@ function convertMongoDate(dateValue: any): Date | null {
 }
 
 /**
- * Calculate actual session duration based on session status and timing data
+ * Get session duration from stored field or default based on session type
  */
-function calculateActualDuration(session: any): number {
-  try {
-    const now = new Date();
-    
-    // For completed sessions: use actual duration from start to end
-    if (session.status === 'COMPLETED' && session.actualEndTime) {
-      const endTime = convertMongoDate(session.actualEndTime);
-      let startTime = null;
-      
-      // Priority order for start time:
-      // 1. Manual start time (if session was manually started)
-      // 2. Time slot start time (for sessions booked through time slots)
-      // 3. Scheduled at (fallback for other session types)
-      if (session.manualStartTime) {
-        startTime = convertMongoDate(session.manualStartTime);
-      } else if (session.timeSlotData?.startTime) {
-        startTime = convertMongoDate(session.timeSlotData.startTime);
-      } else if (session.scheduledAt) {
-        startTime = convertMongoDate(session.scheduledAt);
-      } else if (session.scheduledTime) {
-        startTime = convertMongoDate(session.scheduledTime);
-      }
-      
-      if (endTime && startTime && !isNaN(endTime.getTime()) && !isNaN(startTime.getTime())) {
-        const durationMs = endTime.getTime() - startTime.getTime();
-        const durationMinutes = Math.round(durationMs / (1000 * 60));
-        return Math.max(durationMinutes, 1); // Minimum 1 minute
-      }
-    }
-    
-    // For ongoing sessions: show elapsed time since start
-    if (session.status === 'ONGOING') {
-      const startTime = session.manualStartTime 
-        ? convertMongoDate(session.manualStartTime)
-        : convertMongoDate(session.scheduledAt || session.scheduledTime);
-      
-      if (startTime && !isNaN(startTime.getTime())) {
-        const elapsedMs = now.getTime() - startTime.getTime();
-        const elapsedMinutes = Math.round(elapsedMs / (1000 * 60));
-        return Math.max(elapsedMinutes, 1); // Minimum 1 minute
-      }
-    }
-    
-    // For scheduled sessions: use planned duration if available from timeslot
-    if (session.status === 'SCHEDULED') {
-      // Try to get duration from timeslot data if available
-      if (session.timeSlotData?.startTime && session.timeSlotData?.endTime) {
-        const startTime = convertMongoDate(session.timeSlotData.startTime);
-        const endTime = convertMongoDate(session.timeSlotData.endTime);
-        
-        if (startTime && endTime && !isNaN(startTime.getTime()) && !isNaN(endTime.getTime())) {
-          const durationMs = endTime.getTime() - startTime.getTime();
-          const durationMinutes = Math.round(durationMs / (1000 * 60));
-          return Math.max(durationMinutes, 1);
-        }
-      }
-      
-      // Fallback to session type defaults
-      if (session.sessionType === 'MEDITATION') return 30;
-      if (session.sessionType === 'DIET') return 45;
-      return 60; // Default for YOGA
-    }
-    
-    // Default fallbacks based on session type
-    if (session.sessionType === 'MEDITATION') return 30;
-    if (session.sessionType === 'DIET') return 45;
-    return 60; // Default for YOGA
-    
-  } catch (error) {
-    console.warn('Error calculating session duration:', error);
-    return 60; // Safe fallback
+function getSessionDuration(session: any): number {
+  // Use stored duration if available and valid
+  if (session.duration && typeof session.duration === 'number' && session.duration > 0) {
+    return session.duration;
   }
+  
+  // For sessions booked through time slots, try to get duration from schedule
+  if (session.scheduleData?.duration && typeof session.scheduleData.duration === 'number' && session.scheduleData.duration > 0) {
+    return session.scheduleData.duration;
+  }
+  
+  // For sessions from time slots, check if timeSlotData has duration
+  if (session.timeSlotData?.duration && typeof session.timeSlotData.duration === 'number' && session.timeSlotData.duration > 0) {
+    return session.timeSlotData.duration;
+  }
+  
+  // Fallback to defaults based on session type
+  if (session.sessionType === 'MEDITATION') return 30;
+  if (session.sessionType === 'DIET') return 45;
+  return 60; // Default for YOGA
 }
 
 export interface MentorSessionData {
@@ -112,6 +60,7 @@ export interface MentorSessionData {
   createdAt: Date;
   updatedAt: Date;
   sessionCategory: "subscription" | "individual"; // Add category to distinguish session types
+  manualStartTime?: Date | null; // When the session was actually started
   eligibleStudents: {
     total: number;
     active: number;
@@ -245,6 +194,22 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
           }
         },
         {
+          $project: {
+            _id: 1,
+            id: 1,
+            title: 1,
+            scheduledTime: 1,
+            link: 1,
+            duration: 1, // Explicitly include duration field
+            sessionType: 1,
+            status: 1,
+            mentorId: 1,
+            manualStartTime: 1, // Include manual start time for duration calculation
+            createdAt: 1,
+            updatedAt: 1
+          }
+        },
+        {
           $sort: { scheduledTime: -1 }
         },
         {
@@ -327,7 +292,9 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
 
             sessionType: 1,
             status: 1,
+            duration: 1, // Explicitly include duration field
             link: '$timeSlotData.sessionLink',
+            manualStartTime: 1, // Include manual start time for duration calculation
             createdAt: 1,
             updatedAt: 1,
             studentId: '$userId',
@@ -398,8 +365,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         paymentStatus: null
       };
 
-      // Calculate actual duration using our helper function
-      processedSession.duration = calculateActualDuration(processedSession);
+      // Get duration from stored field or defaults
+      processedSession.duration = getSessionDuration(processedSession);
 
       return processedSession;
     });
@@ -425,8 +392,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         id: sessionId ? String(sessionId) : `temp_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`
       };
 
-      // Recalculate duration using our helper function for accuracy
-      processedBooking.duration = calculateActualDuration(processedBooking);
+      // Get duration from stored field or defaults
+      processedBooking.duration = getSessionDuration(processedBooking);
 
       return processedBooking;
     });
@@ -506,7 +473,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
           id: session.id,
           title: session.title || `${session.sessionType || 'Session'} with ${session.studentName || 'Student'}`,
           scheduledTime: session.scheduledTime,
-          duration: calculateActualDuration(session),
+          duration: getSessionDuration(session),
           sessionType: session.sessionType,
           status: session.status,
           link: session.link,
@@ -574,7 +541,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         id: session.id,
         title: session.title,
         scheduledTime: session.scheduledTime,
-        duration: calculateActualDuration(session),
+        duration: getSessionDuration(session),
         sessionType: session.sessionType,
         status: session.status,
         link: session.link,

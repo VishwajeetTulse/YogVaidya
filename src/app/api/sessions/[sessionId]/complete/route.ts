@@ -51,10 +51,9 @@ export async function POST(
 
     return NextResponse.json({
       success: true,
-      message: session.isDelayed ? "Delayed session completed successfully" : "Session completed successfully",
+      message: "Session completed successfully",
       sessionId,
-      newStatus: "COMPLETED",
-      wasDelayed: Boolean(session.isDelayed)
+      newStatus: "COMPLETED"
     });
 
   } catch (error) {

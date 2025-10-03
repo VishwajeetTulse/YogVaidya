@@ -38,6 +38,7 @@ export const SessionsSection = () => {
   const [loading, setLoading] = useState(true);
   const [isPending, startTransition] = useTransition();
   const [activeTab, setActiveTab] = useState("upcoming");
+  const [, setUpdateTrigger] = useState(0); // Force re-render for duration updates
 
   // Format sessions data to handle Date/string conversion issues
   const formatMentorSessionsData = (serverData: MentorSessionsData): MentorSessionsData => {
@@ -125,6 +126,16 @@ const loadMentorSessions = useCallback(async () => {
 useEffect(() => {
   loadMentorSessions();
 }, [loadMentorSessions, session]);
+
+  // Update duration display every minute for ongoing sessions
+  useEffect(() => {
+    const interval = setInterval(() => {
+      // Force re-render to update elapsed time for ongoing sessions
+      setUpdateTrigger(prev => prev + 1);
+    }, 60000); // Update every minute
+
+    return () => clearInterval(interval);
+  }, []);
 
   // Refresh function for manual updates
   const refreshSessions = async () => {
@@ -281,6 +292,26 @@ useEffect(() => {
     return "Mentor";
   };
 
+  // Helper function to calculate real-time duration for ONGOING sessions
+  const calculateDisplayDuration = (sessionItem: MentorSessionData): number => {
+    // For ONGOING sessions, calculate elapsed time from actual start time
+    if (sessionItem.status === "ONGOING") {
+      // Use manualStartTime (when mentor started) if available, otherwise scheduledTime
+      const startTimeValue = sessionItem.manualStartTime || sessionItem.scheduledTime;
+      if (startTimeValue && startTimeValue instanceof Date && !isNaN(startTimeValue.getTime())) {
+        const currentTime = new Date();
+        const elapsedMs = currentTime.getTime() - startTimeValue.getTime();
+        const elapsedMinutes = Math.round(elapsedMs / (1000 * 60));
+        return Math.max(elapsedMinutes, 1); // Minimum 1 minute
+      }
+    }
+    
+    // For COMPLETED sessions: uses stored duration
+    // For SCHEDULED sessions: uses planned duration 
+    // For all cases: duration is provided by server
+    return sessionItem.duration || 60;
+  };
+
   // Helper function for safe date comparison - now all dates should be valid Date objects
   const getValidDate = (dateValue: any): Date | null => {
     if (!dateValue) return null;
@@ -434,7 +465,8 @@ useEffect(() => {
                 </span>
                 <span className="flex items-center gap-1">
                   <Clock className="w-4 h-4" />
-                  {sessionItem.duration} minutes
+                  {Math.round(calculateDisplayDuration(sessionItem))} minutes
+                  {sessionItem.status === "ONGOING" && " (ongoing)"}
                 </span>
                 <span className="flex items-center gap-1">
                   <Users className="w-4 h-4" />

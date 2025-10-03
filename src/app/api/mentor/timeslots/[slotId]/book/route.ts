@@ -167,6 +167,11 @@ export async function POST(
     // Create the session booking using Prisma to ensure proper date handling
     const bookingId = `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     
+    // Calculate duration from timeSlot
+    const sessionDuration = Math.round(
+      (timeSlot.endTime.getTime() - timeSlot.startTime.getTime()) / (1000 * 60)
+    );
+    
     const booking = await prisma.sessionBooking.create({
       data: {
         id: bookingId,
@@ -175,10 +180,10 @@ export async function POST(
         timeSlotId: resolvedParams.slotId,
         sessionType: timeSlot.sessionType,
         scheduledAt: new Date(timeSlot.startTime),
+        duration: sessionDuration,
         status: "SCHEDULED",
         notes: notes || "",
-        paymentStatus: "PENDING",
-        isDelayed: false
+        paymentStatus: "PENDING"
       }
     });
     

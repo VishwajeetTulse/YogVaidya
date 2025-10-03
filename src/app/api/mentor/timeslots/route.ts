@@ -87,7 +87,8 @@ export async function POST(request: Request) {
         maxStudents,
         price: user.sessionPrice || 500,
         generateForDays: 7, // Generate for next 7 days as requested
-        mentorApplicationId: mentorApplication?.id || undefined
+        mentorApplicationId: mentorApplication?.id || undefined,
+        startFromDate: startTime // Use the date from the form as the starting point
       });
 
       if (result.success) {

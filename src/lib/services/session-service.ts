@@ -200,7 +200,6 @@ export class SessionService {
    */
   static async startSession(sessionId: string): Promise<SessionUpdateResult> {
     return this.updateSessionStatus(sessionId, 'ONGOING', {
-      isDelayed: false,
       manualStartTime: new Date()
     });
   }
@@ -209,10 +208,8 @@ export class SessionService {
    * Complete a session (mark as COMPLETED)
    */
   static async completeSession(sessionId: string): Promise<SessionUpdateResult> {
-    return this.updateSessionStatus(sessionId, 'COMPLETED', {
-      actualEndTime: new Date(),
-      completionReason: 'Manually completed'
-    });
+    console.log(`✅ Completing session ${sessionId}`);
+    return this.updateSessionStatus(sessionId, 'COMPLETED', {});
   }
 
   /**

@@ -41,45 +41,6 @@ export async function POST(
       );
     }
 
-    // Calculate expected duration from time slot or use defaults
-    let expectedDurationMinutes = 60; // Default 60 minutes
-
-    if (session.timeSlotId) {
-      // Get time slot details to calculate duration
-      const timeSlotResult = await prisma.$runCommandRaw({
-        find: 'mentorTimeSlot',
-        filter: { _id: session.timeSlotId }
-      });
-
-      if (timeSlotResult &&
-          typeof timeSlotResult === 'object' &&
-          'cursor' in timeSlotResult &&
-          timeSlotResult.cursor &&
-          typeof timeSlotResult.cursor === 'object' &&
-          'firstBatch' in timeSlotResult.cursor &&
-          Array.isArray(timeSlotResult.cursor.firstBatch) &&
-          timeSlotResult.cursor.firstBatch.length > 0) {
-
-        const timeSlot = timeSlotResult.cursor.firstBatch[0] as any;
-        const originalStartTime = convertMongoDate(timeSlot.startTime);
-        const originalEndTime = convertMongoDate(timeSlot.endTime);
-
-        if (originalStartTime && originalEndTime) {
-          const durationMs = originalEndTime.getTime() - originalStartTime.getTime();
-          expectedDurationMinutes = Math.round(durationMs / (60 * 1000));
-        }
-      }
-    } else {
-      // Use default durations based on session type
-      if (session.sessionType === 'YOGA') {
-        expectedDurationMinutes = 60; // 1 hour for yoga
-      } else if (session.sessionType === 'MEDITATION') {
-        expectedDurationMinutes = 30; // 30 minutes for meditation
-      } else if (session.sessionType === 'DIET') {
-        expectedDurationMinutes = 45; // 45 minutes for diet consultation
-      }
-    }
-
     // Start the session using the robust service
     const updateResult = await SessionService.startSession(sessionId);
 

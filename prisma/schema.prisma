@@ -237,6 +237,10 @@ model Schedule {
   sessionType   SessionType
   status        ScheduleStatus @default(SCHEDULED)
   mentorId      String
+  
+  // Manual start tracking (prevents auto-completion if session manually started)
+  manualStartTime   DateTime?      // When the session was actually started
+  
   mentor        User           @relation(fields: [mentorId], references: [id], onDelete: Cascade)
   sessionBookings SessionBooking[] @relation("ScheduleBookings")
   createdAt     DateTime       @default(now())
@@ -245,6 +249,7 @@ model Schedule {
   @@index([mentorId])
   @@index([scheduledTime])
   @@index([status])
+  @@index([manualStartTime])
   @@map("schedule")
 }
 
@@ -292,17 +297,14 @@ model SessionBooking {
   sessionType       SessionType
   scheduledAt       DateTime       // When the session is scheduled
   status            ScheduleStatus @default(SCHEDULED)
-  isDelayed         Boolean        @default(false) // Track if session started late
+  duration          Int?           // Duration in minutes (from time slot or schedule)
   notes             String?        // Additional notes from the student
   paymentDetails    Json?          // Payment information
   amount            Float?         // Payment amount
   paymentStatus     String?        // Payment status
   
-  // Auto-completion tracking fields
+  // Manual start tracking (prevents auto-completion if session manually started)
   manualStartTime   DateTime?      // When the session was actually started
-  actualEndTime     DateTime?      // When the session actually ended
-  expectedDuration  Int?           // Expected duration in minutes
-  completionReason  String?        // Reason for auto-completion
   
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt

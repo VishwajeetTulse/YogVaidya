@@ -112,12 +112,12 @@ export async function POST(request: Request) {
         mentorId: sessionBookingData.mentorId,
         sessionType: sessionBookingData.sessionType,
         scheduledAt: sessionBookingData.scheduledAt,
+        duration: 60, // Default duration for direct bookings (no timeSlot)
         status: "SCHEDULED",
         notes: sessionBookingData.notes,
         paymentStatus: "COMPLETED",
         amount: mentor.sessionPrice,
-        paymentDetails: sessionBookingData.paymentDetails,
-        isDelayed: false
+        paymentDetails: sessionBookingData.paymentDetails
       }
     });
 

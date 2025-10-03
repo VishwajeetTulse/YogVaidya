@@ -6,10 +6,31 @@ import { getUserSubscription } from "@/lib/subscriptions";
 import { Prisma } from "@prisma/client";
 import { headers } from "next/headers";
 
+/**
+ * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
+ */
+function convertMongoDate(dateValue: any): Date | null {
+  if (!dateValue) return null;
+  
+  try {
+    // Handle MongoDB extended JSON format like { "$date": "2024-01-01T00:00:00.000Z" }
+    if (typeof dateValue === 'object' && dateValue.$date && typeof dateValue.$date === 'string') {
+      return new Date(dateValue.$date);
+    }
+    
+    // Handle regular date strings and Date objects
+    return new Date(dateValue);
+  } catch (error) {
+    console.error('Error converting date:', error);
+    return null;
+  }
+}
+
 export interface UserSessionData {
   id: string;
   title: string;
   scheduledTime: Date;
+  manualStartTime?: Date | null; // When session was actually started by mentor
   duration: number;
   sessionType: "YOGA" | "MEDITATION" | "DIET";
   status: "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED";
@@ -102,16 +123,80 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
                   }
                 },
                 duration: {
-                  $divide: [
-                    {
-                      $subtract: [
-                        { $toDate: '$timeSlotData.endTime' },
-                        { $toDate: '$timeSlotData.startTime' }
-                      ]
+                  $cond: {
+                    // Case 1: COMPLETED session - use stored actualDuration if available
+                    if: { $eq: ['$status', 'COMPLETED'] },
+                    then: {
+                      $ifNull: ['$actualDuration', 60] // Use stored duration or fallback to 60
                     },
-                    60000 // Convert milliseconds to minutes
-                  ]
+                    // Case 2: ONGOING session with manualStartTime - show elapsed duration
+                    else: {
+                      $cond: {
+                        if: { $and: [
+                          { $eq: ['$status', 'ONGOING'] },
+                          { $ne: ['$manualStartTime', null] }
+                        ]},
+                        then: {
+                          $cond: {
+                            if: { $ne: [{ $type: '$manualStartTime' }, 'missing'] },
+                            then: {
+                              $divide: [
+                                {
+                                  $subtract: [
+                                    '$$NOW',
+                                    { $toDate: '$manualStartTime' }
+                                  ]
+                                },
+                                60000
+                              ]
+                            },
+                            else: 60
+                          }
+                        },
+                        // Case 3: SCHEDULED or fallback - use planned duration from time slot
+                        else: {
+                          $cond: {
+                            if: { $and: [
+                              { $ne: ['$timeSlotData', null] },
+                              { $ne: ['$timeSlotData.endTime', null] },
+                              { $ne: ['$timeSlotData.startTime', null] }
+                            ]},
+                            then: {
+                              $divide: [
+                                {
+                                  $subtract: [
+                                    { $toDate: '$timeSlotData.endTime' },
+                                    { $toDate: '$timeSlotData.startTime' }
+                                  ]
+                                },
+                                60000
+                              ]
+                            },
+                            else: 60
+                          }
+                        }
+                      }
+                    }
+                  }
                 },
+                manualStartTime: {
+                  $cond: {
+                    if: { $ne: ['$manualStartTime', null] },
+                    then: {
+                      $cond: {
+                        if: { $eq: [{ $type: '$manualStartTime' }, 'date'] },
+                        then: {
+                          $dateToString: {
+                            format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                            date: '$manualStartTime'
+                          }
+                        },
+                        else: '$manualStartTime'
+                      }
+                    },
+                    else: null
+                  }
+                }, // Include actual start time for client-side elapsed calculation
                 sessionType: 1,
                 status: 1,
                 link: '$timeSlotData.sessionLink',
@@ -137,7 +222,12 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
             'firstBatch' in sessionBookingsResult.cursor &&
             Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
           sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
-          console.log("📋 Extracted session bookings:", sessionBookings.map(b => ({ id: b.id, status: b.status, title: b.title })));
+          console.log("📋 Extracted session bookings:", sessionBookings.map(b => ({ 
+            id: b.id, 
+            status: b.status, 
+            title: b.title,
+            duration: b.duration 
+          })));
         } else {
           console.log("⚠️ Unexpected aggregation result structure:", {
             hasCursor: 'cursor' in (sessionBookingsResult as any),
@@ -344,16 +434,80 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
               }
             },
             duration: {
-              $divide: [
-                {
-                  $subtract: [
-                    { $toDate: '$timeSlotData.endTime' },
-                    { $toDate: '$timeSlotData.startTime' }
-                  ]
+              $cond: {
+                // Case 1: COMPLETED session - use stored actualDuration if available
+                if: { $eq: ['$status', 'COMPLETED'] },
+                then: {
+                  $ifNull: ['$actualDuration', 60] // Use stored duration or fallback to 60
                 },
-                60000 // Convert milliseconds to minutes
-              ]
-            }, // Calculate actual duration from time slot
+                // Case 2: ONGOING session with manualStartTime - show elapsed duration
+                else: {
+                  $cond: {
+                    if: { $and: [
+                      { $eq: ['$status', 'ONGOING'] },
+                      { $ne: ['$manualStartTime', null] }
+                    ]},
+                    then: {
+                      $cond: {
+                        if: { $ne: [{ $type: '$manualStartTime' }, 'missing'] },
+                        then: {
+                          $divide: [
+                            {
+                              $subtract: [
+                                '$$NOW',
+                                { $toDate: '$manualStartTime' }
+                              ]
+                            },
+                            60000
+                          ]
+                        },
+                        else: 60
+                      }
+                    },
+                    // Case 3: SCHEDULED or fallback - use planned duration from time slot
+                    else: {
+                      $cond: {
+                        if: { $and: [
+                          { $ne: ['$timeSlotData', null] },
+                          { $ne: ['$timeSlotData.endTime', null] },
+                          { $ne: ['$timeSlotData.startTime', null] }
+                        ]},
+                        then: {
+                          $divide: [
+                            {
+                              $subtract: [
+                                { $toDate: '$timeSlotData.endTime' },
+                                { $toDate: '$timeSlotData.startTime' }
+                              ]
+                            },
+                            60000
+                          ]
+                        },
+                        else: 60
+                      }
+                    }
+                  }
+                }
+              }
+            }, // Calculate actual/elapsed/planned duration based on session status
+            manualStartTime: {
+              $cond: {
+                if: { $ne: ['$manualStartTime', null] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$manualStartTime' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$manualStartTime'
+                      }
+                    },
+                    else: '$manualStartTime'
+                  }
+                },
+                else: null
+              }
+            }, // Include actual start time for client-side elapsed calculation
             sessionType: 1,
             status: 1,
             link: '$timeSlotData.sessionLink', // Add session link from time slot
@@ -379,43 +533,144 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         'firstBatch' in sessionBookingsResult.cursor &&
         Array.isArray(sessionBookingsResult.cursor.firstBatch)) {
       sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
+      console.log("📋 Active subscriber session bookings:", sessionBookings.map(b => ({ 
+        id: b.id, 
+        status: b.status, 
+        title: b.title,
+        duration: b.duration 
+      })));
     }
 
     console.log(`📅 Found ${sessionBookings.length} session bookings`);
 
     // 2. Get sessions from Schedule collection (legacy sessions) - filtered by subscription plan
-    const sessions = await prisma.schedule.findMany({
-      where: sessionFilters,
-      include: {
-        mentor: {
-          select: {
-            id: true,
-            name: true,
-            mentorType: true
-          }
+    // Use $runCommandRaw to handle corrupted date strings in the database
+    
+    // Build MongoDB match filter from Prisma where clause
+    const buildMongoMatch = (filters: any) => {
+      const match: any = {};
+      
+      if (filters.userId) match.userId = filters.userId;
+      if (filters.mentorId) match.mentorId = filters.mentorId;
+      
+      // Handle status filter
+      if (filters.status) {
+        if (typeof filters.status === 'string') {
+          match.status = filters.status;
+        } else if (filters.status.in && Array.isArray(filters.status.in)) {
+          match.status = { $in: filters.status.in };
         }
-      },
-      orderBy: { scheduledTime: 'desc' }, // Most recent first
-      take: 50 // Limit to 50 sessions
+      }
+      
+      return match;
+    };
+    
+    const scheduleResult = await prisma.$runCommandRaw({
+      aggregate: 'schedule',
+      pipeline: [
+        {
+          $match: buildMongoMatch(sessionFilters)
+        },
+        {
+          $lookup: {
+            from: 'user',
+            localField: 'mentorId',
+            foreignField: '_id',
+            as: 'mentor'
+          }
+        },
+        {
+          $addFields: {
+            mentorData: { $arrayElemAt: ['$mentor', 0] }
+          }
+        },
+        {
+          $project: {
+            _id: 1,
+            id: '$_id',
+            title: 1,
+            scheduledTime: {
+              $cond: {
+                if: { $and: [{ $ne: ['$scheduledTime', null] }, { $ne: ['$scheduledTime', ''] }] },
+                then: {
+                  $cond: {
+                    if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                    then: {
+                      $dateToString: {
+                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
+                        date: '$scheduledTime'
+                      }
+                    },
+                    else: '$scheduledTime'
+                  }
+                },
+                else: null
+              }
+            },
+            duration: { $ifNull: ['$duration', 60] }, // Default to 60 if not present
+            sessionType: 1,
+            status: 1,
+            link: 1,
+            createdAt: 1,
+            updatedAt: 1,
+            mentorId: 1,
+            mentorName: '$mentorData.name',
+            mentorType: '$mentorData.mentorType'
+          }
+        },
+        {
+          $sort: { scheduledTime: -1 }
+        },
+        {
+          $limit: 50
+        }
+      ],
+      cursor: {}
     });
 
-    console.log(`📅 Active subscriber - Found ${sessions.length} legacy schedule sessions`);
-    console.log("📋 Legacy sessions details:", sessions.map(s => ({ id: s.id, status: s.status, title: s.title, scheduledTime: s.scheduledTime })));
+    let sessions: any[] = [];
+    if (scheduleResult &&
+        typeof scheduleResult === 'object' &&
+        'cursor' in scheduleResult &&
+        scheduleResult.cursor &&
+        typeof scheduleResult.cursor === 'object' &&
+        'firstBatch' in scheduleResult.cursor &&
+        Array.isArray(scheduleResult.cursor.firstBatch)) {
+      sessions = scheduleResult.cursor.firstBatch;
+    }
 
-    const formattedSessions: UserSessionData[] = sessions.map(session => ({
-      id: session.id,
-      title: session.title,
-      scheduledTime: new Date(session.scheduledTime),
-      duration: session.duration,
-      sessionType: session.sessionType,
-      status: session.status,
-      link: session.link, // Add session link for legacy sessions
-      mentor: {
-        id: session.mentor.id,
-        name: session.mentor.name,
-        mentorType: session.mentor.mentorType
-      }
-    }));
+    console.log(`📅 Active subscriber - Found ${sessions.length} legacy schedule sessions`);
+    console.log("📋 Legacy sessions details:", sessions.map(s => ({ 
+      id: s.id || s._id, 
+      status: s.status, 
+      title: s.title, 
+      duration: s.duration,
+      scheduledTime: s.scheduledTime 
+    })));
+
+    const formattedSessions: UserSessionData[] = sessions.map(session => {
+      const scheduledTime = convertMongoDate(session.scheduledTime);
+      
+      console.log(`🔧 Formatting legacy session ${session.id || session._id}:`, {
+        rawDuration: session.duration,
+        status: session.status
+      });
+      
+      return {
+        id: session.id || session._id,
+        title: session.title,
+        scheduledTime: scheduledTime || new Date(), // Fallback to current date if conversion fails
+        duration: session.duration || 60, // Default to 60 minutes if not available
+        sessionType: session.sessionType,
+        status: session.status,
+        link: session.link, // Add session link for legacy sessions
+        mentor: {
+          id: session.mentorId,
+          name: session.mentorName,
+          mentorType: session.mentorType
+        }
+      };
+    });
 
     console.log(`📅 Found ${formattedSessions.length} legacy schedule sessions`);
 

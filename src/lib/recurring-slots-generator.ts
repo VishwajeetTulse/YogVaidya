@@ -57,8 +57,13 @@ export async function generateRecurringTimeSlots(
     const now = new Date();
     
     // Use custom start date if provided, otherwise start from tomorrow
+    // When startFromDate is provided, extract just the date part (ignore time)
     const generationStartDate = startFromDate ? 
-      new Date(startFromDate) : 
+      (() => {
+        const date = new Date(startFromDate);
+        date.setHours(0, 0, 0, 0); // Reset to start of day for date comparison
+        return date;
+      })() : 
       (() => {
         const tomorrow = new Date(now);
         tomorrow.setDate(now.getDate() + 1);

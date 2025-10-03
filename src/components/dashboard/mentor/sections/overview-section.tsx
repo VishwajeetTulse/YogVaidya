@@ -188,50 +188,50 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
         </h2>
         <div className="space-y-3">
           {overviewData?.todaysSessions.length === 0 ? (
-        <div className="text-center py-8 text-gray-500">
-          <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
-          <p>No sessions scheduled for today</p>
-          <Button 
-            variant="outline" 
-            className="mt-2"
-            onClick={() => setActiveSection("schedule")}
-          >
-            Schedule a Session
-          </Button>
-        </div>
+            <div className="text-center py-8 text-gray-500">
+              <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
+              <p>No sessions scheduled for today</p>
+              <Button 
+                variant="outline" 
+                className="mt-2"
+                onClick={() => setActiveSection("schedule")}
+              >
+                Schedule a Session
+              </Button>
+            </div>
           ) : (
-        overviewData?.todaysSessions.slice(0, 3).map((session) => (
-          <div 
-            key={session.id}
-            className={`flex items-center justify-between p-3 rounded-lg border ${
-          session.sessionType === 'YOGA' 
-            ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
-            : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
-            }`}
-          >
-            <div className="flex items-center gap-3">
-          <div className={`w-2 h-2 rounded-full ${
-            session.sessionType === 'YOGA' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
-          }`}></div>
-          <div>
-            <p className="font-medium">{session.title}</p>
-            <p className="text-sm text-gray-500">
-              {formatTime(session.scheduledTime)} • {session.duration} min • {session.sessionType}
-            </p>
+            overviewData?.todaysSessions.slice(0, 3).map((session) => (
+              <div 
+                key={session.id}
+                className={`flex items-center justify-between p-3 rounded-lg border ${
+        session.sessionType === 'YOGA' 
+          ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
+          : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
+          }`}
+        >
+          <div className="flex items-center gap-3">
+        <div className={`w-2 h-2 rounded-full ${
+          session.sessionType === 'YOGA' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
+        }`}></div>
+        <div>
+          <p className="font-medium">{session.title}</p>
+          <p className="text-sm text-gray-500">
+            {formatTime(session.scheduledTime)} • {session.duration} min • {session.sessionType}
+          </p>
+        </div>
           </div>
-            </div>
-            <div className="flex items-center gap-2">
-          <span className={`px-2 py-1 text-xs rounded-full ${
-            session.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
-            session.status === 'ONGOING' ? 'bg-green-100 text-green-800' :
-            session.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
-            'bg-red-100 text-red-800'
-          }`}>
-            {session.status}
-          </span>
-            </div>
-          </div>
-        ))
+          <div className="flex items-center gap-2">
+        <span className={`px-2 py-1 text-xs rounded-full ${
+          session.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
+          session.status === 'ONGOING' ? 'bg-green-100 text-green-800' :
+          session.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
+          'bg-red-100 text-red-800'
+        }`}>
+          {session.status}
+        </span>
+                </div>
+              </div>
+            ))
           )}
         </div>
         {overviewData?.todaysSessions && overviewData.todaysSessions.length > 3 && (
