@@ -11,11 +11,11 @@ import {
   SidebarMenuItem,
 } from "@/components/ui/sidebar";
 import { Button } from "@/components/ui/button";
-import { BaseSidebarProps } from "./types";
+import { type BaseSidebarProps } from "./types";
 import { LogOut } from "lucide-react";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils/utils";
-import { type SidebarMenuItem as SidebarMenuItemType} from "../user/types";
+import { type SidebarMenuItem as SidebarMenuItemType } from "../user/types";
 import { SubscriptionCountdown } from "./subscription-countdown";
 
 interface GenericSidebarProps extends BaseSidebarProps {
@@ -35,7 +35,6 @@ export const GenericSidebar = ({
   roleLabel,
   getIcon = () => LogOut,
 }: GenericSidebarProps) => {
-
   return (
     <ShadcnSidebar>
       <SidebarHeader className="p-4">
@@ -124,4 +123,3 @@ export const GenericSidebar = ({
     </ShadcnSidebar>
   );
 };
-

@@ -15,17 +15,14 @@ const verifyTimeSlotPaymentSchema = z.object({
 export async function POST(request: Request) {
   try {
     console.log("🔍 Verifying time slot payment...");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, timeSlotId, notes } = 
+    const { razorpay_order_id, razorpay_payment_id, razorpay_signature, timeSlotId, notes } =
       verifyTimeSlotPaymentSchema.parse(body);
 
     // Verify payment signature
@@ -46,59 +43,52 @@ export async function POST(request: Request) {
 
     // Get the time slot details
     const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
-      filter: { _id: timeSlotId }
+      find: "mentorTimeSlot",
+      filter: { _id: timeSlotId },
     });
 
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch)) {
+    if (
+      timeSlotResult &&
+      typeof timeSlotResult === "object" &&
+      "cursor" in timeSlotResult &&
+      timeSlotResult.cursor &&
+      typeof timeSlotResult.cursor === "object" &&
+      "firstBatch" in timeSlotResult.cursor &&
+      Array.isArray(timeSlotResult.cursor.firstBatch)
+    ) {
       timeSlot = timeSlotResult.cursor.firstBatch[0];
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
     // Get mentor details
     const mentor = await prisma.user.findFirst({
-      where: { 
+      where: {
         id: timeSlot.mentorId,
-        role: "MENTOR" 
+        role: "MENTOR",
       },
       select: {
         id: true,
         name: true,
         email: true,
         sessionPrice: true,
-        mentorType: true
-      }
+        mentorType: true,
+      },
     });
 
     if (!mentor) {
-      return NextResponse.json(
-        { success: false, error: "Mentor not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     // Get mentor application for reference
     const mentorApplication = await prisma.mentorApplication.findFirst({
-      where: { 
-        OR: [
-          { userId: timeSlot.mentorId },
-          { email: mentor.email }
-        ],
-        status: "approved"
-      }
+      where: {
+        OR: [{ userId: timeSlot.mentorId }, { email: mentor.email }],
+        status: "approved",
+      },
     });
 
     // Create session booking
@@ -132,7 +122,7 @@ export async function POST(request: Request) {
     );
 
     // Create the session booking using Prisma to ensure proper date handling
-    const sessionBooking = await prisma.sessionBooking.create({
+    const _sessionBooking = await prisma.sessionBooking.create({
       data: {
         id: sessionBookingData._id,
         userId: sessionBookingData.userId,
@@ -146,8 +136,8 @@ export async function POST(request: Request) {
         notes: sessionBookingData.notes,
         paymentStatus: sessionBookingData.paymentStatus,
         amount: sessionBookingData.amount,
-        paymentDetails: sessionBookingData.paymentDetails
-      }
+        paymentDetails: sessionBookingData.paymentDetails,
+      },
     });
 
     // Update the time slot to mark as booked
@@ -155,15 +145,15 @@ export async function POST(request: Request) {
     const isNowBooked = updatedCurrentStudents >= timeSlot.maxStudents;
 
     await prisma.$runCommandRaw({
-      update: 'mentorTimeSlot',
+      update: "mentorTimeSlot",
       filter: { _id: timeSlotId },
       updates: {
         $set: createDateUpdate({
           currentStudents: updatedCurrentStudents,
           isBooked: isNowBooked,
-          bookedBy: timeSlot.maxStudents === 1 ? session.user.id : timeSlot.bookedBy
-        })
-      }
+          bookedBy: timeSlot.maxStudents === 1 ? session.user.id : timeSlot.bookedBy,
+        }),
+      },
     });
 
     console.log("✅ Time slot booking completed successfully");
@@ -176,20 +166,19 @@ export async function POST(request: Request) {
           id: timeSlot._id,
           startTime: timeSlot.startTime,
           endTime: timeSlot.endTime,
-          sessionType: timeSlot.sessionType
+          sessionType: timeSlot.sessionType,
         },
         mentor: {
           name: mentor.name,
-          mentorType: mentor.mentorType
+          mentorType: mentor.mentorType,
         },
         amount: sessionBookingData.amount,
-        scheduledAt: sessionBookingData.scheduledAt
+        scheduledAt: sessionBookingData.scheduledAt,
       },
     });
-
   } catch (error) {
     console.error("Error verifying time slot payment:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },

@@ -1,5 +1,5 @@
-import { UserDetails } from "@/lib/userDetails";
-import { LucideIcon } from "lucide-react";
+import { type UserDetails } from "@/lib/userDetails";
+import { type LucideIcon } from "lucide-react";
 
 export interface AdminSidebarMenuItem {
   id: string;
@@ -20,4 +20,3 @@ export interface AdminDashboardState {
   setActiveSection: (section: string) => void;
   handleSignOut: () => void;
 }
-

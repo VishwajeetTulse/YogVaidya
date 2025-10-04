@@ -14,9 +14,9 @@ interface ProfileCompletionState {
   redirectToCompletion: () => void;
 }
 
-export function useProfileCompletion({ 
-  redirectTo = "/dashboard", 
-  autoRedirect = false 
+export function useProfileCompletion({
+  redirectTo = "/dashboard",
+  autoRedirect = false,
 }: UseProfileCompletionProps = {}): ProfileCompletionState {
   const { data: session, isPending } = useSession();
   const router = useRouter();

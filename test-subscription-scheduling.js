@@ -13,7 +13,7 @@ const testScheduleData = {
   link: "https://zoom.us/j/test-session",
   duration: 60,
   sessionType: "YOGA",
-  notes: "Energizing morning yoga session for all subscribers"
+  notes: "Energizing morning yoga session for all subscribers",
 };
 
 console.log("✅ Test schedule data:", testScheduleData);
@@ -22,12 +22,12 @@ console.log("✅ Test schedule data:", testScheduleData);
 const subscriptionMapping = {
   YOGA: {
     eligiblePlans: ["BLOOM", "FLOURISH"],
-    description: "BLOOM users get yoga, FLOURISH users get both yoga and meditation"
+    description: "BLOOM users get yoga, FLOURISH users get both yoga and meditation",
   },
   MEDITATION: {
-    eligiblePlans: ["SEED", "FLOURISH"], 
-    description: "SEED users get meditation, FLOURISH users get both yoga and meditation"
-  }
+    eligiblePlans: ["SEED", "FLOURISH"],
+    description: "SEED users get meditation, FLOURISH users get both yoga and meditation",
+  },
 };
 
 console.log("✅ Subscription mapping:", subscriptionMapping);
@@ -51,12 +51,12 @@ testDates.forEach((dateStr, index) => {
 const mentorTypeValidation = {
   YOGAMENTOR: {
     canCreate: ["YOGA"],
-    cannot: ["MEDITATION"]
+    cannot: ["MEDITATION"],
   },
   MEDITATIONMENTOR: {
-    canCreate: ["MEDITATION"], 
-    cannot: ["YOGA"]
-  }
+    canCreate: ["MEDITATION"],
+    cannot: ["YOGA"],
+  },
 };
 
 console.log("✅ Mentor type validation:", mentorTypeValidation);

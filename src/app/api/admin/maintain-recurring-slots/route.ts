@@ -1,7 +1,7 @@
 /**
  * API endpoint for manually triggering recurring slots maintenance
  * POST /api/admin/maintain-recurring-slots
- * 
+ *
  * This endpoint allows administrators to manually run the maintenance
  * without waiting for the daily cron job
  */
@@ -11,10 +11,10 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { maintainRecurringSlots } from "@/lib/recurring-slots-generator";
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     console.log("🔧 Manual recurring slots maintenance triggered via API");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -26,10 +26,10 @@ export async function POST(request: Request) {
     // Optional: Check if user is admin/moderator for extra security
     const { prisma } = await import("@/lib/config/prisma");
     const user = await prisma.user.findFirst({
-      where: { 
+      where: {
         id: session.user.id,
-        role: { in: ["ADMIN", "MODERATOR", "MENTOR"] } // Allow mentors to trigger for testing
-      }
+        role: { in: ["ADMIN", "MODERATOR", "MENTOR"] }, // Allow mentors to trigger for testing
+      },
     });
 
     if (!user) {
@@ -46,7 +46,7 @@ export async function POST(request: Request) {
 
     if (result.success) {
       console.log(`✅ Manual maintenance completed successfully`);
-      
+
       return NextResponse.json({
         success: true,
         message: `Maintenance completed successfully`,
@@ -55,30 +55,29 @@ export async function POST(request: Request) {
           slotsDeleted: result.slotsDeleted,
           netChange: result.slotsGenerated - result.slotsDeleted,
           timestamp: new Date().toISOString(),
-          triggeredBy: user.role
-        }
+          triggeredBy: user.role,
+        },
       });
     } else {
       console.error(`❌ Manual maintenance failed:`, result.error);
-      
+
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: result.error || "Maintenance failed",
-          timestamp: new Date().toISOString()
+          timestamp: new Date().toISOString(),
         },
         { status: 500 }
       );
     }
-
   } catch (error) {
     console.error("❌ Error in manual maintenance API:", error);
-    
+
     return NextResponse.json(
-      { 
-        success: false, 
+      {
+        success: false,
         error: "Internal server error during maintenance",
-        timestamp: new Date().toISOString()
+        timestamp: new Date().toISOString(),
       },
       { status: 500 }
     );
@@ -86,27 +85,24 @@ export async function POST(request: Request) {
 }
 
 // Optional: GET endpoint to check maintenance status
-export async function GET(request: Request) {
+export async function GET(_request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { prisma } = await import("@/lib/config/prisma");
-    
+
     // Get statistics about current recurring slots
     const stats = await prisma.$runCommandRaw({
-      aggregate: 'mentorTimeSlot',
+      aggregate: "mentorTimeSlot",
       pipeline: [
         {
           $match: {
             isRecurring: true,
-            isActive: true
-          }
+            isActive: true,
+          },
         },
         {
           $group: {
@@ -114,42 +110,36 @@ export async function GET(request: Request) {
             totalRecurringSlots: { $sum: 1 },
             futureSlots: {
               $sum: {
-                $cond: [
-                  { $gte: ['$startTime', new Date()] },
-                  1,
-                  0
-                ]
-              }
+                $cond: [{ $gte: ["$startTime", new Date()] }, 1, 0],
+              },
             },
             pastSlots: {
               $sum: {
-                $cond: [
-                  { $lt: ['$startTime', new Date()] },
-                  1,
-                  0
-                ]
-              }
-            }
-          }
-        }
+                $cond: [{ $lt: ["$startTime", new Date()] }, 1, 0],
+              },
+            },
+          },
+        },
       ],
-      cursor: {}
+      cursor: {},
     });
 
     let statistics = {
       totalRecurringSlots: 0,
       futureSlots: 0,
-      pastSlots: 0
+      pastSlots: 0,
     };
 
-    if (stats && 
-        typeof stats === 'object' && 
-        'cursor' in stats &&
-        stats.cursor &&
-        typeof stats.cursor === 'object' &&
-        'firstBatch' in stats.cursor &&
-        Array.isArray((stats.cursor as any).firstBatch) &&
-        (stats.cursor as any).firstBatch.length > 0) {
+    if (
+      stats &&
+      typeof stats === "object" &&
+      "cursor" in stats &&
+      stats.cursor &&
+      typeof stats.cursor === "object" &&
+      "firstBatch" in stats.cursor &&
+      Array.isArray((stats.cursor as any).firstBatch) &&
+      (stats.cursor as any).firstBatch.length > 0
+    ) {
       statistics = (stats.cursor as any).firstBatch[0];
     }
 
@@ -161,11 +151,10 @@ export async function GET(request: Request) {
         maintenanceInfo: {
           description: "Recurring slots maintenance manages the 7-day rolling window",
           schedule: "Should run daily via cron job",
-          manualTrigger: "POST to this endpoint to run manually"
-        }
-      }
+          manualTrigger: "POST to this endpoint to run manually",
+        },
+      },
     });
-
   } catch (error) {
     console.error("Error getting maintenance status:", error);
     return NextResponse.json(

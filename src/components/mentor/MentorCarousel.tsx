@@ -24,11 +24,7 @@ interface MentorCarouselProps {
   colorClass: string;
 }
 
-export default function MentorCarousel({
-  mentors,
-  title,
-  colorClass,
-}: MentorCarouselProps) {
+export default function MentorCarousel({ mentors, title, colorClass }: MentorCarouselProps) {
   const [emblaRef, emblaApi] = useEmblaCarousel({
     loop: false,
     align: "start",
@@ -39,14 +35,8 @@ export default function MentorCarousel({
   const [selectedIndex, setSelectedIndex] = useState(0);
   const [scrollSnaps, setScrollSnaps] = useState<number[]>([]);
 
-  const scrollPrev = useCallback(
-    () => emblaApi && emblaApi.scrollPrev(),
-    [emblaApi]
-  );
-  const scrollNext = useCallback(
-    () => emblaApi && emblaApi.scrollNext(),
-    [emblaApi]
-  );
+  const scrollPrev = useCallback(() => emblaApi && emblaApi.scrollPrev(), [emblaApi]);
+  const scrollNext = useCallback(() => emblaApi && emblaApi.scrollNext(), [emblaApi]);
 
   const onSelect = useCallback(() => {
     if (!emblaApi) return;
@@ -79,10 +69,10 @@ export default function MentorCarousel({
               colorClass === "bg-[#76d2fa]"
                 ? "bg-blue-500"
                 : colorClass === "bg-[#ff7dac]"
-                ? "bg-pink-500"
-                : "bg-purple-500"
+                  ? "bg-pink-500"
+                  : "bg-purple-500"
             } mr-4`}
-          ></div>
+           />
           <h3 className="text-2xl font-semibold text-gray-900">{title}</h3>
         </div>
       </div>
@@ -91,37 +81,50 @@ export default function MentorCarousel({
         {/* Empty State */}
         {mentors.length === 0 && (
           <div className="text-center py-12">
-            <div className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${
-              colorClass === "bg-[#76d2fa]"
-                ? "bg-blue-100"
-                : colorClass === "bg-[#ff7dac]"
-                ? "bg-pink-100"
-                : "bg-purple-100"
-            }`}>
-              <svg className={`w-8 h-8 ${
+            <div
+              className={`w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center ${
                 colorClass === "bg-[#76d2fa]"
-                  ? "text-blue-400"
+                  ? "bg-blue-100"
                   : colorClass === "bg-[#ff7dac]"
-                  ? "text-pink-400"
-                  : "text-purple-400"
-              }`} fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z" />
+                    ? "bg-pink-100"
+                    : "bg-purple-100"
+              }`}
+            >
+              <svg
+                className={`w-8 h-8 ${
+                  colorClass === "bg-[#76d2fa]"
+                    ? "text-blue-400"
+                    : colorClass === "bg-[#ff7dac]"
+                      ? "text-pink-400"
+                      : "text-purple-400"
+                }`}
+                fill="none"
+                stroke="currentColor"
+                viewBox="0 0 24 24"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  strokeWidth={2}
+                  d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.25 2.25 0 11-4.5 0 2.25 2.25 0 014.5 0z"
+                />
               </svg>
             </div>
-            <h4 className="text-lg font-medium text-gray-700 mb-2">
-              No mentors available yet
-            </h4>
+            <h4 className="text-lg font-medium text-gray-700 mb-2">No mentors available yet</h4>
             <p className="text-gray-500 text-sm mb-6 max-w-md mx-auto">
-              We&apos;re currently reviewing applications for this category. Check back soon or apply to become a mentor!
+              We&apos;re currently reviewing applications for this category. Check back soon or
+              apply to become a mentor!
             </p>
             <Link href="/mentors/apply">
-              <Button className={`${
-                colorClass === "bg-[#76d2fa]"
-                  ? "bg-blue-600 hover:bg-blue-700"
-                  : colorClass === "bg-[#ff7dac]"
-                  ? "bg-pink-600 hover:bg-pink-700"
-                  : "bg-purple-600 hover:bg-purple-700"
-              } text-white`}>
+              <Button
+                className={`${
+                  colorClass === "bg-[#76d2fa]"
+                    ? "bg-blue-600 hover:bg-blue-700"
+                    : colorClass === "bg-[#ff7dac]"
+                      ? "bg-pink-600 hover:bg-pink-700"
+                      : "bg-purple-600 hover:bg-purple-700"
+                } text-white`}
+              >
                 Apply as Mentor
               </Button>
             </Link>
@@ -170,131 +173,145 @@ export default function MentorCarousel({
 
             {/* Carousel */}
             <div className="overflow-hidden" ref={emblaRef}>
-          <div className="flex">
-            {mentors.map((mentor) => (
-              <div
-                key={mentor.id}
-                className="flex-grow-0 flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 pl-0 pr-4"
-              >
-                <div
-                  className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-gray-200"
-                >
-                  <div className={`relative p-5 ${
-                    colorClass === "bg-[#76d2fa]"
-                      ? "bg-gradient-to-br from-blue-50 to-blue-100"
-                      : colorClass === "bg-[#ff7dac]"
-                      ? "bg-gradient-to-br from-pink-50 to-pink-100"
-                      : "bg-gradient-to-br from-purple-50 to-purple-100"
-                  }`}>
-                    <div className="flex justify-center">
-                      <div className="relative">
-                        <Image
-                          src={mentor.imageUrl || "/assets/default-avatar.svg"}
-                          alt={mentor.name}
-                          width={90}
-                          height={90}
-                          className="rounded-full border-3 border-white shadow-md"
-                          onError={(e) => {
-                            e.currentTarget.src = "/assets/default-avatar.svg";
-                          }}
-                        />
-                        {mentor.available && (
-                          <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
-                            Available
-                          </div>
-                        )}
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5">
-                    <div className="text-center mb-3">
-                      <h4 className="text-lg font-semibold text-gray-900 mb-2">
-                        {mentor.name}
-                      </h4>
-                      <p className={`text-xs font-medium px-3 py-1 rounded-full inline-block ${
-                        colorClass === "bg-[#76d2fa]"
-                          ? "bg-blue-100 text-blue-700"
-                          : colorClass === "bg-[#ff7dac]"
-                          ? "bg-pink-100 text-pink-700"
-                          : "bg-purple-100 text-purple-700"
-                      }`}>
-                        {mentor.specialty}
-                      </p>
-                    </div>
-                    
-                    {mentor.description && (
-                      <p className="text-gray-600 text-xs leading-relaxed mb-3 text-center line-clamp-2">
-                        {mentor.description}
-                      </p>
-                    )}
-                    
-                    {/* Pricing Information */}
-                    {mentor.sessionPrice && mentor.sessionPrice > 0 && (
-                      <div className="flex items-center justify-center mb-3">
-                        <div className={`px-3 py-1.5 rounded-full ${
+              <div className="flex">
+                {mentors.map((mentor) => (
+                  <div
+                    key={mentor.id}
+                    className="flex-grow-0 flex-shrink-0 w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 pl-0 pr-4"
+                  >
+                    <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden transition-all duration-300 hover:shadow-lg hover:border-gray-200">
+                      <div
+                        className={`relative p-5 ${
                           colorClass === "bg-[#76d2fa]"
-                            ? "bg-blue-50 border border-blue-200"
+                            ? "bg-gradient-to-br from-blue-50 to-blue-100"
                             : colorClass === "bg-[#ff7dac]"
-                            ? "bg-pink-50 border border-pink-200"
-                            : "bg-purple-50 border border-purple-200"
-                        }`}>
-                          <div className="text-center">
-                            <div className="text-sm font-bold text-gray-900">
-                              ₹{mentor.sessionPrice}
-                            </div>
-                            <div className="text-xs text-gray-600">
-                              per session
-                            </div>
+                              ? "bg-gradient-to-br from-pink-50 to-pink-100"
+                              : "bg-gradient-to-br from-purple-50 to-purple-100"
+                        }`}
+                      >
+                        <div className="flex justify-center">
+                          <div className="relative">
+                            <Image
+                              src={mentor.imageUrl || "/assets/default-avatar.svg"}
+                              alt={mentor.name}
+                              width={90}
+                              height={90}
+                              className="rounded-full border-3 border-white shadow-md"
+                              onError={(e) => {
+                                e.currentTarget.src = "/assets/default-avatar.svg";
+                              }}
+                            />
+                            {mentor.available && (
+                              <div className="absolute -bottom-1 -right-1 bg-green-500 text-white text-xs font-semibold px-2 py-1 rounded-full shadow-sm">
+                                Available
+                              </div>
+                            )}
                           </div>
                         </div>
                       </div>
-                    )}
-                    
-                    <div className="flex items-center justify-center text-gray-500 mb-4">
-                      <div className={`flex items-center px-2 py-1 rounded-full ${
-                        colorClass === "bg-[#76d2fa]"
-                          ? "bg-blue-50"
-                          : colorClass === "bg-[#ff7dac]"
-                          ? "bg-pink-50"
-                          : "bg-purple-50"
-                      }`}>
-                        <svg className="w-3 h-3 mr-1.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
-                        </svg>
-                        <span className="text-xs font-medium text-gray-600">
-                          {mentor.experience} years
-                        </span>
+                      <div className="p-5">
+                        <div className="text-center mb-3">
+                          <h4 className="text-lg font-semibold text-gray-900 mb-2">
+                            {mentor.name}
+                          </h4>
+                          <p
+                            className={`text-xs font-medium px-3 py-1 rounded-full inline-block ${
+                              colorClass === "bg-[#76d2fa]"
+                                ? "bg-blue-100 text-blue-700"
+                                : colorClass === "bg-[#ff7dac]"
+                                  ? "bg-pink-100 text-pink-700"
+                                  : "bg-purple-100 text-purple-700"
+                            }`}
+                          >
+                            {mentor.specialty}
+                          </p>
+                        </div>
+
+                        {mentor.description && (
+                          <p className="text-gray-600 text-xs leading-relaxed mb-3 text-center line-clamp-2">
+                            {mentor.description}
+                          </p>
+                        )}
+
+                        {/* Pricing Information */}
+                        {mentor.sessionPrice && mentor.sessionPrice > 0 && (
+                          <div className="flex items-center justify-center mb-3">
+                            <div
+                              className={`px-3 py-1.5 rounded-full ${
+                                colorClass === "bg-[#76d2fa]"
+                                  ? "bg-blue-50 border border-blue-200"
+                                  : colorClass === "bg-[#ff7dac]"
+                                    ? "bg-pink-50 border border-pink-200"
+                                    : "bg-purple-50 border border-purple-200"
+                              }`}
+                            >
+                              <div className="text-center">
+                                <div className="text-sm font-bold text-gray-900">
+                                  ₹{mentor.sessionPrice}
+                                </div>
+                                <div className="text-xs text-gray-600">per session</div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+
+                        <div className="flex items-center justify-center text-gray-500 mb-4">
+                          <div
+                            className={`flex items-center px-2 py-1 rounded-full ${
+                              colorClass === "bg-[#76d2fa]"
+                                ? "bg-blue-50"
+                                : colorClass === "bg-[#ff7dac]"
+                                  ? "bg-pink-50"
+                                  : "bg-purple-50"
+                            }`}
+                          >
+                            <svg
+                              className="w-3 h-3 mr-1.5"
+                              fill="none"
+                              stroke="currentColor"
+                              viewBox="0 0 24 24"
+                            >
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"
+                              />
+                            </svg>
+                            <span className="text-xs font-medium text-gray-600">
+                              {mentor.experience} years
+                            </span>
+                          </div>
+                        </div>
+
+                        <Link
+                          href={
+                            mentor.sessionPrice && mentor.sessionPrice > 0
+                              ? `/mentors/${mentor.id}/timeslots`
+                              : "/pricing"
+                          }
+                          className="block"
+                        >
+                          <Button
+                            className={`w-full font-medium py-2 text-sm transition-all duration-200 ${
+                              colorClass === "bg-[#76d2fa]"
+                                ? "bg-blue-400 hover:bg-blue-500 text-white shadow-sm hover:shadow-md"
+                                : colorClass === "bg-[#ff7dac]"
+                                  ? "bg-pink-400 hover:bg-pink-500 text-white shadow-sm hover:shadow-md"
+                                  : "bg-purple-400 hover:bg-purple-500 text-white shadow-sm hover:shadow-md"
+                            }`}
+                          >
+                            {mentor.sessionPrice && mentor.sessionPrice > 0
+                              ? "Book Session"
+                              : "Get Subscription"}
+                          </Button>
+                        </Link>
                       </div>
                     </div>
-                    
-                    <Link 
-                      href={mentor.sessionPrice && mentor.sessionPrice > 0 
-                        ? `/mentors/${mentor.id}/timeslots` 
-                        : "/pricing"
-                      } 
-                      className="block"
-                    >
-                      <Button
-                        className={`w-full font-medium py-2 text-sm transition-all duration-200 ${
-                          colorClass === "bg-[#76d2fa]"
-                            ? "bg-blue-400 hover:bg-blue-500 text-white shadow-sm hover:shadow-md"
-                            : colorClass === "bg-[#ff7dac]"
-                            ? "bg-pink-400 hover:bg-pink-500 text-white shadow-sm hover:shadow-md"
-                            : "bg-purple-400 hover:bg-purple-500 text-white shadow-sm hover:shadow-md"
-                        }`}
-                      >
-                        {mentor.sessionPrice && mentor.sessionPrice > 0 
-                          ? "Book Session" 
-                          : "Get Subscription"
-                        }
-                      </Button>
-                    </Link>
                   </div>
-                </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
 
             {/* Dots */}
             {scrollSnaps.length > 1 && (
@@ -303,9 +320,7 @@ export default function MentorCarousel({
                   <button
                     key={index}
                     className={`w-2 h-2 rounded-full transition-all duration-200 ${
-                      index === selectedIndex 
-                        ? "bg-gray-800 w-6" 
-                        : "bg-gray-300 hover:bg-gray-400"
+                      index === selectedIndex ? "bg-gray-800 w-6" : "bg-gray-300 hover:bg-gray-400"
                     }`}
                     onClick={() => emblaApi?.scrollTo(index)}
                     aria-label={`Go to slide ${index + 1}`}
@@ -319,4 +334,3 @@ export default function MentorCarousel({
     </div>
   );
 }
-

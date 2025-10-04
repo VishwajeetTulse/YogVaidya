@@ -9,4 +9,3 @@ const Mentorsection = () => {
 };
 
 export default Mentorsection;
-

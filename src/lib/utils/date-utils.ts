@@ -14,7 +14,7 @@ export function ensureDateObject(dateValue: any): Date {
     return dateValue;
   }
 
-  if (typeof dateValue === 'string') {
+  if (typeof dateValue === "string") {
     const parsed = new Date(dateValue);
     if (!isNaN(parsed.getTime())) {
       return parsed;
@@ -22,7 +22,7 @@ export function ensureDateObject(dateValue: any): Date {
   }
 
   // Fallback to current date if invalid
-  console.warn('Invalid date value provided, using current date:', dateValue);
+  console.warn("Invalid date value provided, using current date:", dateValue);
   return new Date();
 }
 
@@ -32,11 +32,19 @@ export function ensureDateObject(dateValue: any): Date {
 export function createDateUpdate(updates: Record<string, any> = {}): Record<string, any> {
   const result: Record<string, any> = {
     updatedAt: new Date(),
-    ...updates
+    ...updates,
   };
 
   // Ensure all date fields are proper Date objects
-  const dateFields = ['createdAt', 'scheduledAt', 'scheduledTime', 'startTime', 'endTime', 'manualStartTime', 'actualEndTime'];
+  const dateFields = [
+    "createdAt",
+    "scheduledAt",
+    "scheduledTime",
+    "startTime",
+    "endTime",
+    "manualStartTime",
+    "actualEndTime",
+  ];
 
   for (const field of dateFields) {
     if (result[field] !== undefined) {

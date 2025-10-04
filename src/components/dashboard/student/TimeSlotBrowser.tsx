@@ -1,31 +1,27 @@
-'use client';
+"use client";
 
-import { useState, useEffect } from 'react';
-import { Button } from '@/components/ui/button';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
-import { Label } from '@/components/ui/label';
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
-import { Badge } from '@/components/ui/badge';
-import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
-import { toast } from 'sonner';
-import { 
-  Calendar, 
-  Clock, 
-  Users, 
-  IndianRupee, 
-  Search,
-  Filter,
-  BookOpen,
-  User,
-  Star
-} from 'lucide-react';
+import { useState, useEffect } from "react";
+import { Button } from "@/components/ui/button";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
+import { toast } from "sonner";
+import { Calendar, Clock, Users, IndianRupee, Search, Filter, BookOpen, Star } from "lucide-react";
 
 interface TimeSlot {
   _id: string;
   startTime: string;
   endTime: string;
-  sessionType: 'YOGA' | 'MEDITATION' | 'DIET';
+  sessionType: "YOGA" | "MEDITATION" | "DIET";
   maxStudents: number;
   currentStudents: number;
   isBooked: boolean;
@@ -45,12 +41,12 @@ export default function StudentTimeSlotBrowser() {
   const [filteredSlots, setFilteredSlots] = useState<TimeSlot[]>([]);
   const [loading, setLoading] = useState(false);
   const [bookingLoading, setBookingLoading] = useState<string | null>(null);
-  
+
   // Filter state
   const [filters, setFilters] = useState({
-    date: '',
-    sessionType: '',
-    mentorId: '',
+    date: "",
+    sessionType: "",
+    mentorId: "",
     available: true,
   });
 
@@ -58,26 +54,26 @@ export default function StudentTimeSlotBrowser() {
   const fetchTimeSlots = async () => {
     try {
       setLoading(true);
-      
+
       // Build query parameters
       const params = new URLSearchParams();
-      if (filters.date) params.append('date', filters.date);
-      if (filters.sessionType) params.append('sessionType', filters.sessionType);
-      if (filters.mentorId) params.append('mentorId', filters.mentorId);
-      if (filters.available) params.append('available', 'true');
-      
+      if (filters.date) params.append("date", filters.date);
+      if (filters.sessionType) params.append("sessionType", filters.sessionType);
+      if (filters.mentorId) params.append("mentorId", filters.mentorId);
+      if (filters.available) params.append("available", "true");
+
       const response = await fetch(`/api/mentor/timeslots?${params.toString()}`);
       const result = await response.json();
-      
+
       if (result.success) {
         setTimeSlots(result.data);
         setFilteredSlots(result.data);
       } else {
-        toast.error('Failed to fetch time slots');
+        toast.error("Failed to fetch time slots");
       }
     } catch (error) {
-      console.error('Error fetching time slots:', error);
-      toast.error('Failed to fetch time slots');
+      console.error("Error fetching time slots:", error);
+      toast.error("Failed to fetch time slots");
     } finally {
       setLoading(false);
     }
@@ -87,32 +83,32 @@ export default function StudentTimeSlotBrowser() {
   const bookTimeSlot = async (timeSlotId: string) => {
     try {
       setBookingLoading(timeSlotId);
-      
+
       const response = await fetch(`/api/mentor/timeslots/${timeSlotId}/book`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
-          notes: '', // Could add a notes input if needed
+          notes: "", // Could add a notes input if needed
         }),
       });
 
       const result = await response.json();
 
       if (result.success) {
-        toast.success('Time slot booked successfully!');
+        toast.success("Time slot booked successfully!");
         fetchTimeSlots(); // Refresh the list
       } else {
         if (response.status === 409) {
-          toast.error('You already have an active session with this mentor.');
+          toast.error("You already have an active session with this mentor.");
         } else {
-          toast.error(result.error || 'Failed to book time slot');
+          toast.error(result.error || "Failed to book time slot");
         }
       }
     } catch (error) {
-      console.error('Error booking time slot:', error);
-      toast.error('Failed to book time slot');
+      console.error("Error booking time slot:", error);
+      toast.error("Failed to book time slot");
     } finally {
       setBookingLoading(null);
     }
@@ -124,23 +120,23 @@ export default function StudentTimeSlotBrowser() {
 
     // Filter by availability
     if (filters.available) {
-      filtered = filtered.filter(slot => !slot.isBooked);
+      filtered = filtered.filter((slot) => !slot.isBooked);
     }
 
     // Filter by session type
     if (filters.sessionType) {
-      filtered = filtered.filter(slot => slot.sessionType === filters.sessionType);
+      filtered = filtered.filter((slot) => slot.sessionType === filters.sessionType);
     }
 
     // Filter by mentor
     if (filters.mentorId) {
-      filtered = filtered.filter(slot => slot.mentor.id === filters.mentorId);
+      filtered = filtered.filter((slot) => slot.mentor.id === filters.mentorId);
     }
 
     // Filter by date
     if (filters.date) {
       const filterDate = new Date(filters.date);
-      filtered = filtered.filter(slot => {
+      filtered = filtered.filter((slot) => {
         const slotDate = new Date(slot.startTime);
         return slotDate.toDateString() === filterDate.toDateString();
       });
@@ -153,32 +149,39 @@ export default function StudentTimeSlotBrowser() {
   const formatDateTime = (dateTime: string) => {
     const date = new Date(dateTime);
     return {
-      date: date.toLocaleDateString('en-US', { 
-        weekday: 'short', 
-        month: 'short', 
-        day: 'numeric' 
+      date: date.toLocaleDateString("en-US", {
+        weekday: "short",
+        month: "short",
+        day: "numeric",
       }),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
   // Get session type color
   const getSessionTypeColor = (type: string) => {
     switch (type) {
-      case 'YOGA': return 'bg-blue-100 text-blue-800';
-      case 'MEDITATION': return 'bg-purple-100 text-purple-800';
-      case 'DIET': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case "YOGA":
+        return "bg-blue-100 text-blue-800";
+      case "MEDITATION":
+        return "bg-purple-100 text-purple-800";
+      case "DIET":
+        return "bg-green-100 text-green-800";
+      default:
+        return "bg-gray-100 text-gray-800";
     }
   };
 
   // Get unique mentors for filter
-  const uniqueMentors = timeSlots.reduce((acc, slot) => {
-    if (!acc.find(m => m.id === slot.mentor.id)) {
-      acc.push(slot.mentor);
-    }
-    return acc;
-  }, [] as typeof timeSlots[0]['mentor'][]);
+  const uniqueMentors = timeSlots.reduce(
+    (acc, slot) => {
+      if (!acc.find((m) => m.id === slot.mentor.id)) {
+        acc.push(slot.mentor);
+      }
+      return acc;
+    },
+    [] as (typeof timeSlots)[0]["mentor"][]
+  );
 
   useEffect(() => {
     fetchTimeSlots();
@@ -212,15 +215,15 @@ export default function StudentTimeSlotBrowser() {
                 id="date"
                 type="date"
                 value={filters.date}
-                onChange={(e) => setFilters(prev => ({ ...prev, date: e.target.value }))}
-                min={new Date().toISOString().split('T')[0]}
+                onChange={(e) => setFilters((prev) => ({ ...prev, date: e.target.value }))}
+                min={new Date().toISOString().split("T")[0]}
               />
             </div>
             <div>
               <Label htmlFor="sessionType">Session Type</Label>
-              <Select 
-                value={filters.sessionType} 
-                onValueChange={(value) => setFilters(prev => ({ ...prev, sessionType: value }))}
+              <Select
+                value={filters.sessionType}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, sessionType: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All types" />
@@ -235,9 +238,9 @@ export default function StudentTimeSlotBrowser() {
             </div>
             <div>
               <Label htmlFor="mentor">Mentor</Label>
-              <Select 
-                value={filters.mentorId} 
-                onValueChange={(value) => setFilters(prev => ({ ...prev, mentorId: value }))}
+              <Select
+                value={filters.mentorId}
+                onValueChange={(value) => setFilters((prev) => ({ ...prev, mentorId: value }))}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="All mentors" />
@@ -253,11 +256,7 @@ export default function StudentTimeSlotBrowser() {
               </Select>
             </div>
             <div className="flex items-end">
-              <Button 
-                onClick={fetchTimeSlots}
-                disabled={loading}
-                className="w-full"
-              >
+              <Button onClick={fetchTimeSlots} disabled={loading} className="w-full">
                 <Search className="h-4 w-4 mr-2" />
                 Search
               </Button>
@@ -272,18 +271,14 @@ export default function StudentTimeSlotBrowser() {
           <h2 className="text-xl font-semibold text-gray-900">
             Available Sessions ({filteredSlots.length})
           </h2>
-          <Button 
-            variant="outline" 
-            onClick={fetchTimeSlots}
-            disabled={loading}
-          >
+          <Button variant="outline" onClick={fetchTimeSlots} disabled={loading}>
             Refresh
           </Button>
         </div>
-        
+
         {loading ? (
           <div className="text-center py-8">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600 mx-auto" />
             <p className="text-gray-600 mt-4">Loading available time slots...</p>
           </div>
         ) : filteredSlots.length === 0 ? (
@@ -292,9 +287,14 @@ export default function StudentTimeSlotBrowser() {
               <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
               <h3 className="text-lg font-medium text-gray-900 mb-2">No Time Slots Available</h3>
               <p className="text-gray-600 mb-4">
-                No mentors have created time slots matching your criteria. Try adjusting your filters or check back later.
+                No mentors have created time slots matching your criteria. Try adjusting your
+                filters or check back later.
               </p>
-              <Button onClick={() => setFilters({ date: '', sessionType: '', mentorId: '', available: true })}>
+              <Button
+                onClick={() =>
+                  setFilters({ date: "", sessionType: "", mentorId: "", available: true })
+                }
+              >
                 Clear Filters
               </Button>
             </CardContent>
@@ -304,7 +304,7 @@ export default function StudentTimeSlotBrowser() {
             {filteredSlots.map((slot) => {
               const startDateTime = formatDateTime(slot.startTime);
               const endDateTime = formatDateTime(slot.endTime);
-              
+
               return (
                 <Card key={slot._id} className="hover:shadow-lg transition-shadow">
                   <CardHeader className="pb-3">
@@ -345,7 +345,9 @@ export default function StudentTimeSlotBrowser() {
                       </div>
                       <div className="flex items-center gap-2 text-sm">
                         <Clock className="h-4 w-4 text-gray-500" />
-                        <span>{startDateTime.time} - {endDateTime.time}</span>
+                        <span>
+                          {startDateTime.time} - {endDateTime.time}
+                        </span>
                       </div>
                     </div>
 
@@ -353,30 +355,29 @@ export default function StudentTimeSlotBrowser() {
                     <div className="flex items-center gap-2 text-sm">
                       <Users className="h-4 w-4 text-gray-500" />
                       <span>
-                        {slot.maxStudents - slot.currentStudents} spot{slot.maxStudents - slot.currentStudents !== 1 ? 's' : ''} available
+                        {slot.maxStudents - slot.currentStudents} spot
+                        {slot.maxStudents - slot.currentStudents !== 1 ? "s" : ""} available
                       </span>
                     </div>
 
                     {/* Notes */}
                     {slot.notes && (
-                      <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">
-                        {slot.notes}
-                      </p>
+                      <p className="text-sm text-gray-600 bg-gray-50 p-2 rounded">{slot.notes}</p>
                     )}
 
                     {/* Book Button */}
-                    <Button 
+                    <Button
                       onClick={() => bookTimeSlot(slot._id)}
                       disabled={bookingLoading === slot._id || slot.isBooked}
                       className="w-full"
                     >
                       {bookingLoading === slot._id ? (
                         <div className="flex items-center gap-2">
-                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white" />
                           <span>Booking...</span>
                         </div>
                       ) : slot.isBooked ? (
-                        'Already Booked'
+                        "Already Booked"
                       ) : (
                         <div className="flex items-center gap-2">
                           <BookOpen className="h-4 w-4" />

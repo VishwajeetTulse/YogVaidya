@@ -5,19 +5,15 @@ import { getUserSessions } from "@/lib/server/user-sessions-server";
 export async function GET() {
   try {
     const result = await getUserSessions();
-    
+
     if (!result.success) {
-      return NextResponse.json(
-        { success: false, error: result.error },
-        { status: 400 }
-      );
+      return NextResponse.json({ success: false, error: result.error }, { status: 400 });
     }
 
     return NextResponse.json({
       success: true,
       data: result.data,
     });
-
   } catch (error) {
     console.error("Error in user sessions API:", error);
     return NextResponse.json(
@@ -26,4 +22,3 @@ export async function GET() {
     );
   }
 }
-

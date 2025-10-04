@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { toast } from "sonner";
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 export function useLogger() {
   const [isLogging, setIsLogging] = useState(false);
 
@@ -18,15 +18,15 @@ export function useLogger() {
   }) => {
     console.log("=== CLIENT-SIDE LOGGING ===");
     console.log("Logging params:", params);
-    
+
     setIsLogging(true);
     try {
       console.log("Sending request to /api/admin/logs");
-      
-      const response = await fetch('/api/admin/logs', {
-        method: 'POST',
+
+      const response = await fetch("/api/admin/logs", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify(params),
       });
@@ -55,7 +55,12 @@ export function useLogger() {
   /**
    * Log info level event
    */
-  const logInfo = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
+  const logInfo = (
+    action: string,
+    category: string,
+    details?: string,
+    metadata?: Prisma.JsonValue
+  ) => {
     return logEvent({
       action,
       category,
@@ -68,7 +73,12 @@ export function useLogger() {
   /**
    * Log warning level event
    */
-  const logWarning = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
+  const logWarning = (
+    action: string,
+    category: string,
+    details?: string,
+    metadata?: Prisma.JsonValue
+  ) => {
     return logEvent({
       action,
       category,
@@ -81,7 +91,12 @@ export function useLogger() {
   /**
    * Log error level event
    */
-  const logError = (action: string, category: string, details?: string, metadata?: Prisma.JsonValue) => {
+  const logError = (
+    action: string,
+    category: string,
+    details?: string,
+    metadata?: Prisma.JsonValue
+  ) => {
     return logEvent({
       action,
       category,
@@ -99,4 +114,3 @@ export function useLogger() {
     isLogging,
   };
 }
-

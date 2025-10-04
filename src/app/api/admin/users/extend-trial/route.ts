@@ -1,34 +1,37 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { auth } from '@/lib/config/auth';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/config/auth";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true }
+      select: { role: true },
     });
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
     }
 
     const { userId, extendDays } = await req.json();
 
     if (!userId || !extendDays) {
-      return NextResponse.json({ 
-        success: false, 
-        error: 'User ID and extend days are required' 
-      }, { status: 400 });
+      return NextResponse.json(
+        {
+          success: false,
+          error: "User ID and extend days are required",
+        },
+        { status: 400 }
+      );
     }
 
     // Get current user data
@@ -39,17 +42,17 @@ export async function POST(req: NextRequest) {
         email: true,
         isTrialActive: true,
         trialEndDate: true,
-        trialUsed: true
-      }
+        trialUsed: true,
+      },
     });
 
     if (!targetUser) {
-      return NextResponse.json({ success: false, error: 'User not found' }, { status: 404 });
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     // Calculate new trial end date
     let newTrialEndDate: Date;
-    
+
     if (targetUser.isTrialActive && targetUser.trialEndDate) {
       // Extend existing trial
       newTrialEndDate = new Date(targetUser.trialEndDate);
@@ -67,27 +70,29 @@ export async function POST(req: NextRequest) {
         isTrialActive: true,
         trialEndDate: newTrialEndDate,
         trialUsed: true, // Mark that trial has been used
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       select: {
         id: true,
         email: true,
         isTrialActive: true,
-        trialEndDate: true
-      }
+        trialEndDate: true,
+      },
     });
 
-    return NextResponse.json({ 
-      success: true, 
+    return NextResponse.json({
+      success: true,
       user: updatedUser,
-      message: `Trial extended by ${extendDays} days until ${newTrialEndDate.toLocaleDateString('en-IN')}`
+      message: `Trial extended by ${extendDays} days until ${newTrialEndDate.toLocaleDateString("en-IN")}`,
     });
-
   } catch (error) {
-    console.error('Error extending trial:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Failed to extend trial' 
-    }, { status: 500 });
+    console.error("Error extending trial:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to extend trial",
+      },
+      { status: 500 }
+    );
   }
 }

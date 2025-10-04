@@ -11,19 +11,19 @@ export async function syncMentorTypes() {
     // Get all approved mentor applications
     const approvedApplications = await prisma.mentorApplication.findMany({
       where: {
-        status: "approved"
+        status: "approved",
       },
       select: {
         email: true,
         mentorType: true,
-        name: true
-      }
+        name: true,
+      },
     });
 
     console.log(`Found ${approvedApplications.length} approved mentor applications`);
 
     let updatedCount = 0;
-    
+
     // Update each user's mentorType based on their approved application
     for (const app of approvedApplications) {
       if (app.mentorType) {
@@ -32,16 +32,13 @@ export async function syncMentorTypes() {
             email: app.email,
             role: "MENTOR",
             // Only update if mentorType is null or doesn't match
-            OR: [
-              { mentorType: null },
-              { mentorType: { not: app.mentorType } }
-            ]
+            OR: [{ mentorType: null }, { mentorType: { not: app.mentorType } }],
           },
           data: {
-            mentorType: app.mentorType
-          }
+            mentorType: app.mentorType,
+          },
         });
-        
+
         if (result.count > 0) {
           console.log(`Updated mentorType for ${app.name} (${app.email}) to ${app.mentorType}`);
           updatedCount += result.count;
@@ -50,19 +47,18 @@ export async function syncMentorTypes() {
     }
 
     console.log(`Successfully updated ${updatedCount} mentor records`);
-    
+
     return {
       success: true,
       message: `Updated ${updatedCount} mentor records with correct mentorType`,
       totalApproved: approvedApplications.length,
-      updated: updatedCount
+      updated: updatedCount,
     };
-
   } catch (error) {
     console.error("Error syncing mentor types:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to sync mentor types"
+      error: error instanceof Error ? error.message : "Failed to sync mentor types",
     };
   }
 }
@@ -79,7 +75,7 @@ export async function getMentorStats() {
       approvedApplications,
       yogaMentors,
       meditationMentors,
-      dietPlanners
+      dietPlanners,
     ] = await Promise.all([
       prisma.user.count({ where: { role: "MENTOR" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: { not: null } } }),
@@ -87,7 +83,7 @@ export async function getMentorStats() {
       prisma.mentorApplication.count({ where: { status: "approved" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: "YOGAMENTOR" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: "MEDITATIONMENTOR" } }),
-      prisma.user.count({ where: { role: "MENTOR", mentorType: "DIETPLANNER" as any } })
+      prisma.user.count({ where: { role: "MENTOR", mentorType: "DIETPLANNER" as any } }),
     ]);
 
     return {
@@ -100,16 +96,14 @@ export async function getMentorStats() {
         yogaMentors,
         meditationMentors,
         dietPlanners,
-        typeConsistency: mentorsWithType === approvedApplications
-      }
+        typeConsistency: mentorsWithType === approvedApplications,
+      },
     };
-
   } catch (error) {
     console.error("Error getting mentor stats:", error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to get mentor stats"
+      error: error instanceof Error ? error.message : "Failed to get mentor stats",
     };
   }
 }
-

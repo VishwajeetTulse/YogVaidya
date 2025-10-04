@@ -1,14 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { 
-  HelpCircle, 
-  MessageSquare, 
-  Mail, 
-  Phone, 
-  BookOpen, 
+import {
+  HelpCircle,
+  MessageSquare,
+  Mail,
+  Phone,
+  BookOpen,
   Video,
   ChevronRight,
-  Search
+  Search,
 } from "lucide-react";
 
 export const SupportSection = () => {
@@ -33,7 +33,7 @@ export const SupportSection = () => {
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
           </div>
         </Card>
-        
+
         <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30">
           <div className="flex items-center gap-3">
             <Mail className="w-8 h-8 text-[#ff7dac]" />
@@ -44,7 +44,7 @@ export const SupportSection = () => {
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
           </div>
         </Card>
-        
+
         <Card className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/5 border border-[#876aff]/30">
           <div className="flex items-center gap-3">
             <Phone className="w-8 h-8 text-[#876aff]" />
@@ -80,7 +80,7 @@ export const SupportSection = () => {
             { title: "Managing Your Subscription", icon: HelpCircle, category: "Billing" },
             { title: "Technical Issues", icon: MessageSquare, category: "Support" },
             { title: "Canceling Classes", icon: BookOpen, category: "Classes" },
-            { title: "Payment Problems", icon: HelpCircle, category: "Billing" }
+            { title: "Payment Problems", icon: HelpCircle, category: "Billing" },
           ].map((topic, index) => (
             <div
               key={index}
@@ -106,20 +106,24 @@ export const SupportSection = () => {
           {[
             {
               question: "How do I book a yoga session?",
-              answer: "You can book a session by going to the 'My Classes' section and clicking 'Book New Session'. Choose your preferred mentor, time, and type of session."
+              answer:
+                "You can book a session by going to the 'My Classes' section and clicking 'Book New Session'. Choose your preferred mentor, time, and type of session.",
             },
             {
               question: "Can I cancel or reschedule a session?",
-              answer: "Yes, you can cancel or reschedule sessions up to 2 hours before the scheduled time. Go to 'My Classes' and click on the session you want to modify."
+              answer:
+                "Yes, you can cancel or reschedule sessions up to 2 hours before the scheduled time. Go to 'My Classes' and click on the session you want to modify.",
             },
             {
               question: "What equipment do I need for online sessions?",
-              answer: "You'll need a yoga mat, comfortable clothing, and a stable internet connection. Some sessions may require props like blocks or straps, which will be mentioned in the session description."
+              answer:
+                "You'll need a yoga mat, comfortable clothing, and a stable internet connection. Some sessions may require props like blocks or straps, which will be mentioned in the session description.",
             },
             {
               question: "How do I upgrade my subscription plan?",
-              answer: "Visit our pricing page to view available plans and upgrade your subscription. Your new benefits will be available immediately after upgrading."
-            }
+              answer:
+                "Visit our pricing page to view available plans and upgrade your subscription. Your new benefits will be available immediately after upgrading.",
+            },
           ].map((faq, index) => (
             <div key={index} className="border border-gray-200 rounded-lg">
               <button className="w-full text-left p-4 hover:bg-gray-50 focus:outline-none">
@@ -166,12 +170,9 @@ export const SupportSection = () => {
           <p className="text-gray-600 mb-4">
             Can&apos;t find what you&apos;re looking for? Our support team is here to help.
           </p>
-          <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">
-            Contact Support
-          </Button>
+          <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">Contact Support</Button>
         </div>
       </Card>
     </div>
   );
 };
-

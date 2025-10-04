@@ -7,10 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import Link from "next/link";
 import { InputField } from "@/components/Auth/FormFields";
-import {
-  ForgotPasswordFormValues,
-  forgotPasswordSchema,
-} from "@/lib/schema/forgotPasswordSchema";
+import { type ForgotPasswordFormValues, forgotPasswordSchema } from "@/lib/schema/forgotPasswordSchema";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -35,8 +32,7 @@ const ForgotPassword = () => {
       });
     } else {
       toast.message("Email Sent", {
-        description:
-          "If an account exists with this email, you will receive a password reset link",
+        description: "If an account exists with this email, you will receive a password reset link",
       });
     }
     setPending(false);
@@ -62,12 +58,13 @@ const ForgotPassword = () => {
                 <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
               </svg>
             </div>
-            <span className="text-2xl font-semibold text-gray-800">
-              YogVaidya
-            </span>
+            <span className="text-2xl font-semibold text-gray-800">YogVaidya</span>
           </Link>
         </div>
-        <Link href="/signin" className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center">
+        <Link
+          href="/signin"
+          className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center"
+        >
           <ArrowLeft className="mr-2 h-4 w-4" />
           Back to Sign In
         </Link>
@@ -77,16 +74,11 @@ const ForgotPassword = () => {
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
             <h1 className="text-3xl font-bold text-gray-800 mb-2">Forgot Password</h1>
-            <p className="text-gray-600">
-              Enter your email to receive a password reset link
-            </p>
+            <p className="text-gray-600">Enter your email to receive a password reset link</p>
           </div>
           <div className="bg-white rounded-2xl p-8 shadow-lg">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <InputField
                   control={form.control}
                   name="email"
@@ -129,12 +121,11 @@ const ForgotPassword = () => {
       </section>
       {/* Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-20 right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#FFCCEA]/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#FFCCEA]/10 rounded-full blur-3xl" />
       </div>
     </div>
   );
 };
 
 export default ForgotPassword;
-

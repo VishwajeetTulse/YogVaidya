@@ -73,13 +73,13 @@ export default function SignupPage() {
         onSuccess: () => {
           // Reset form and show success message
           form.reset();
-          
+
           // Show success toast
           toast.success("Account created successfully!", {
             description: "You can now sign in with your credentials.",
             duration: 4000,
           });
-          
+
           // Redirect to sign-in page with the original destination
           setTimeout(() => {
             router.push(`/signin?from=${finalRedirect}&signup=success`);
@@ -146,9 +146,7 @@ export default function SignupPage() {
                 <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
               </svg>
             </div>
-            <span className="text-2xl font-semibold text-gray-800">
-              YogVaidya
-            </span>
+            <span className="text-2xl font-semibold text-gray-800">YogVaidya</span>
           </Link>
         </div>
 
@@ -165,28 +163,19 @@ export default function SignupPage() {
       <section className="max-w-7xl mx-auto px-4 pt-3 pb-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Create Your Account
-            </h1>
-            <p className="text-gray-600">
-              Join YogVaidya to start your wellness journey
-            </p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Create Your Account</h1>
+            <p className="text-gray-600">Join YogVaidya to start your wellness journey</p>
           </div>
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                   <FormField
                     control={form.control}
                     name="fullName"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Full Name
-                        </FormLabel>
+                        <FormLabel className="text-gray-700 font-medium">Full Name</FormLabel>
                         <FormControl>
                           <Input
                             placeholder="Your full name"
@@ -205,9 +194,7 @@ export default function SignupPage() {
                     name="email"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Email Address
-                        </FormLabel>
+                        <FormLabel className="text-gray-700 font-medium">Email Address</FormLabel>
                         <FormControl>
                           <Input
                             type="email"
@@ -227,9 +214,7 @@ export default function SignupPage() {
                     name="phoneNumber"
                     render={({ field }) => (
                       <FormItem>
-                        <FormLabel className="text-gray-700 font-medium">
-                          Phone Number
-                        </FormLabel>
+                        <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
                         <FormControl>
                           <Input
                             type="tel"
@@ -250,9 +235,7 @@ export default function SignupPage() {
                       name="password"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">
-                            Password
-                          </FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Password</FormLabel>
                           <FormControl>
                             <div className="relative">
                               <Input
@@ -269,10 +252,7 @@ export default function SignupPage() {
                                 tabIndex={-1}
                               >
                                 {showPassword ? (
-                                  <EyeOff
-                                    className="h-5 w-5"
-                                    aria-hidden="true"
-                                  />
+                                  <EyeOff className="h-5 w-5" aria-hidden="true" />
                                 ) : (
                                   <Eye className="h-5 w-5" aria-hidden="true" />
                                 )}
@@ -311,9 +291,9 @@ export default function SignupPage() {
                 </div>
                 {/* Add a seperator between the two div*/}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="h-px bg-gray-300 flex-grow mr-2"></div>
+                  <div className="h-px bg-gray-300 flex-grow mr-2" />
                   <span className="text-gray-900 text-sm">OR</span>
-                  <div className="h-px bg-gray-300 flex-grow ml-2"></div>
+                  <div className="h-px bg-gray-300 flex-grow ml-2" />
                 </div>
                 <div className="mt-4">
                   <Button
@@ -323,10 +303,7 @@ export default function SignupPage() {
                     className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
                   >
                     {isGoogleLoading ? (
-                      <svg
-                        className="animate-spin h-5 w-5 mr-2 text-gray-400"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg className="animate-spin h-5 w-5 mr-2 text-gray-400" viewBox="0 0 24 24">
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -336,11 +313,7 @@ export default function SignupPage() {
                           strokeWidth="4"
                           fill="none"
                         />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
                     ) : (
                       <svg className="h-5 w-5" viewBox="0 0 48 48">

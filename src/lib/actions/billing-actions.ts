@@ -5,12 +5,12 @@ import { getUserBillingHistory } from "../server/billing-server";
 export async function getBillingHistoryAction(userEmail: string) {
   try {
     // 🚨 SECURITY: Strict validation to prevent payment history leakage
-    if (!userEmail || typeof userEmail !== 'string' || userEmail.trim() === '') {
-      console.warn('🚨 SECURITY: Invalid email provided to getBillingHistoryAction');
-      return { 
-        success: false, 
+    if (!userEmail || typeof userEmail !== "string" || userEmail.trim() === "") {
+      console.warn("🚨 SECURITY: Invalid email provided to getBillingHistoryAction");
+      return {
+        success: false,
         error: "Valid user email is required",
-        history: []
+        history: [],
       };
     }
 
@@ -18,36 +18,38 @@ export async function getBillingHistoryAction(userEmail: string) {
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(userEmail.trim())) {
       console.warn(`🚨 SECURITY: Invalid email format in getBillingHistoryAction: ${userEmail}`);
-      return { 
-        success: false, 
+      return {
+        success: false,
         error: "Invalid email format",
-        history: []
+        history: [],
       };
     }
 
     const cleanEmail = userEmail.trim();
     console.log(`getBillingHistoryAction called for verified email: ${cleanEmail}`);
-    
+
     const history = await getUserBillingHistory(cleanEmail);
-    
-    console.log(`getBillingHistoryAction returning ${history.length} records for verified email: ${cleanEmail}`);
-    
+
+    console.log(
+      `getBillingHistoryAction returning ${history.length} records for verified email: ${cleanEmail}`
+    );
+
     // Note: Email validation happens at the Razorpay service level where raw payment data is available
     // The billing history returned here has already been filtered for the specific user
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       history,
-      count: history.length
+      count: history.length,
     };
   } catch (error) {
-    console.error('Error in getBillingHistoryAction:', error);
-    
+    console.error("Error in getBillingHistoryAction:", error);
+
     // Return empty array instead of undefined to prevent UI issues
-    return { 
-      success: false, 
+    return {
+      success: false,
       error: error instanceof Error ? error.message : "Failed to fetch billing history",
-      history: []
+      history: [],
     };
   }
 }

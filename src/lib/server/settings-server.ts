@@ -1,7 +1,7 @@
 "use server";
 
 import { prisma } from "@/lib/config/prisma";
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 import { revalidatePath } from "next/cache";
 
 export type UpdateProfileData = {
@@ -29,7 +29,7 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Settin
     if (!id || !email) {
       return {
         success: false,
-        error: "User ID and email are required"
+        error: "User ID and email are required",
       };
     }
 
@@ -58,13 +58,13 @@ export async function updateUserProfile(data: UpdateProfileData): Promise<Settin
 
     return {
       success: true,
-      data: updatedUser
+      data: updatedUser,
     };
   } catch (error) {
     console.error("Error updating user profile:", error);
     return {
       success: false,
-      error: "Failed to update profile. Please try again."
+      error: "Failed to update profile. Please try again.",
     };
   }
 }
@@ -77,7 +77,7 @@ export async function sendPasswordResetEmail(email: string): Promise<SettingsAct
     if (!email) {
       return {
         success: false,
-        error: "Email is required"
+        error: "Email is required",
       };
     }
 
@@ -85,14 +85,13 @@ export async function sendPasswordResetEmail(email: string): Promise<SettingsAct
     // For now, we'll return a success response and handle the actual reset in the client component
     return {
       success: true,
-      data: { message: "Password reset process initiated" }
+      data: { message: "Password reset process initiated" },
     };
   } catch (error) {
     console.error("Error sending password reset email:", error);
     return {
       success: false,
-      error: "Failed to send password reset email. Please try again."
+      error: "Failed to send password reset email. Please try again.",
     };
   }
 }
-

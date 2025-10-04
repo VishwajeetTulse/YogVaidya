@@ -7,7 +7,11 @@ import { Calendar, Clock, PlayCircle, ExternalLink, RefreshCw } from "lucide-rea
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
-import { getUserSessions, UserSessionData, UserSessionsResponse } from "@/lib/server/user-sessions-server";
+import {
+  getUserSessions,
+  type UserSessionData,
+  type UserSessionsResponse,
+} from "@/lib/server/user-sessions-server";
 import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
 // import { Prisma } from "@prisma/client";
 
@@ -51,7 +55,7 @@ export const ClassesSection = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       // Force re-render to update elapsed time for ongoing sessions
-      setUpdateTrigger(prev => prev + 1);
+      setUpdateTrigger((prev) => prev + 1);
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
@@ -60,16 +64,19 @@ export const ClassesSection = () => {
   // Helper function to load sessions (extracted for reuse)
   const loadUserSessions = async () => {
     if (!session?.user) return;
-    
+
     try {
-      console.log('📚 Loading user sessions for:', session.user.id);
+      console.log("📚 Loading user sessions for:", session.user.id);
       const result = await getUserSessions();
-      
-      console.log('📊 User sessions result:', result);
-      
+
+      console.log("📊 User sessions result:", result);
+
       if (result.success && result.data) {
-        console.log('✅ Formatting sessions data:', result.data.sessions?.length || 0, 'sessions');
-        console.log('📋 Raw sessions from server:', result.data.sessions?.map(s => ({ id: s.id, status: s.status, title: s.title })));
+        console.log("✅ Formatting sessions data:", result.data.sessions?.length || 0, "sessions");
+        console.log(
+          "📋 Raw sessions from server:",
+          result.data.sessions?.map((s) => ({ id: s.id, status: s.status, title: s.title }))
+        );
         setSessionsData(formatSessionsData(result.data));
       } else {
         console.error("Failed to load sessions:", result.error);
@@ -92,27 +99,27 @@ export const ClassesSection = () => {
     // Helper function to safely convert to valid ISO string
     const safeToISOString = (dateValue: any): string | null => {
       // Handle MongoDB extended JSON date format: {$date: 'ISO_STRING'}
-      if (typeof dateValue === 'object' && dateValue !== null && '$date' in dateValue) {
+      if (typeof dateValue === "object" && dateValue !== null && "$date" in dateValue) {
         const isoString = dateValue.$date;
-        if (typeof isoString === 'string') {
+        if (typeof isoString === "string") {
           const date = new Date(isoString);
           if (!isNaN(date.getTime())) {
-            console.log('✅ Converted MongoDB date format:', isoString);
+            console.log("✅ Converted MongoDB date format:", isoString);
             return date.toISOString();
           }
         }
-        console.warn('Invalid MongoDB date format found, skipping session:', dateValue);
+        console.warn("Invalid MongoDB date format found, skipping session:", dateValue);
         return null;
       }
 
       // If it's already a string, check if it's a valid ISO date
-      if (typeof dateValue === 'string') {
+      if (typeof dateValue === "string") {
         const date = new Date(dateValue);
         if (!isNaN(date.getTime())) {
           return date.toISOString();
         }
         // If invalid string, return null to filter out this session
-        console.warn('Invalid date string found, skipping session:', dateValue);
+        console.warn("Invalid date string found, skipping session:", dateValue);
         return null;
       }
 
@@ -123,7 +130,7 @@ export const ClassesSection = () => {
       }
 
       // If completely invalid, return null to filter out this session
-      console.warn('Invalid date value found, skipping session:', dateValue);
+      console.warn("Invalid date value found, skipping session:", dateValue);
       return null;
     };
 
@@ -135,57 +142,60 @@ export const ClassesSection = () => {
           if (scheduledTime === null) {
             return null; // Mark for filtering
           }
-          
+
           // Debug: Log session data including duration
           console.log(`📊 Processing session ${session.id}:`, {
             status: session.status,
             duration: session.duration,
             title: session.title,
-            manualStartTime: session.manualStartTime
+            manualStartTime: session.manualStartTime,
           });
-          
+
           // Convert manualStartTime if it exists
-          const manualStartTime = session.manualStartTime 
-            ? safeToISOString(session.manualStartTime) 
+          const manualStartTime = session.manualStartTime
+            ? safeToISOString(session.manualStartTime)
             : null;
-          
+
           return {
             ...session,
             scheduledTime,
-            manualStartTime
+            manualStartTime,
           };
         })
-        .filter((session): session is SessionData => session !== null) // Remove invalid sessions
+        .filter((session): session is SessionData => session !== null), // Remove invalid sessions
     };
   };
 
-// Load user sessions using server action
-useEffect(() => {
-  loadUserSessions();
-}, [session]);
+  // Load user sessions using server action
+  useEffect(() => {
+    loadUserSessions();
+  }, [session]);
 
   // Listen for session status updates and refresh automatically
   useEffect(() => {
     const handleSessionStatusUpdate = (event: CustomEvent) => {
       const { started, completed } = event.detail;
       console.log(`🔄 Session status updated: ${started} started, ${completed} completed`);
-      
+
       if (started > 0 || completed > 0) {
-        console.log('♻️ Auto-refreshing sessions due to status update...');
+        console.log("♻️ Auto-refreshing sessions due to status update...");
         // Refresh sessions data without showing toast to avoid spam
         loadUserSessions();
       }
     };
 
     // Add event listener for session status updates
-    window.addEventListener('session-status-updated', handleSessionStatusUpdate as EventListener);
+    window.addEventListener("session-status-updated", handleSessionStatusUpdate as EventListener);
 
     // Cleanup event listener
     return () => {
-      window.removeEventListener('session-status-updated', handleSessionStatusUpdate as EventListener);
+      window.removeEventListener(
+        "session-status-updated",
+        handleSessionStatusUpdate as EventListener
+      );
     };
   }, [session]);
-  
+
   // Refresh function for manual updates
   const refreshSessions = async () => {
     startTransition(async () => {
@@ -199,16 +209,13 @@ useEffect(() => {
     });
   };
 
-
   // Show loading state
   if (loading) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your scheduled and completed yoga sessions.
-          </p>
+          <p className="text-gray-600 mt-2">Manage your scheduled and completed yoga sessions.</p>
         </div>
         <div className="text-center py-8">
           <p className="text-gray-500">Loading your sessions...</p>
@@ -219,7 +226,7 @@ useEffect(() => {
 
   // Filter sessions based on the subscription plan
   const availableSessions = sessionsData?.sessions || [];
-  
+
   // If there are sessions available (including paid one-on-one sessions), show them
   // This handles the case where users without subscription have booked paid sessions
   if (availableSessions.length > 0) {
@@ -229,7 +236,7 @@ useEffect(() => {
     // No sessions available - check if user needs subscription
     if (sessionsData?.needsSubscription) {
       return (
-        <SubscriptionPrompt 
+        <SubscriptionPrompt
           subscriptionStatus={sessionsData.subscriptionStatus}
           subscriptionPlan={sessionsData.subscriptionPlan}
           nextBillingDate={sessionsData.nextBillingDate}
@@ -238,10 +245,12 @@ useEffect(() => {
       );
     }
   }
-  
+
   // Upcoming sessions: SCHEDULED or ONGOING sessions
-  const upcomingSessions = availableSessions.filter(session => {
-    console.log(`🔍 Filtering session ${session.id}: status=${session.status}, title=${session.title}`);
+  const upcomingSessions = availableSessions.filter((session) => {
+    console.log(
+      `🔍 Filtering session ${session.id}: status=${session.status}, title=${session.title}`
+    );
 
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
       console.log(`❌ Session ${session.id} filtered out: ${session.status}`);
@@ -260,20 +269,23 @@ useEffect(() => {
     const currentTime = new Date();
 
     const shouldInclude = currentTime <= sessionEndTime;
-    console.log(`⏰ Session ${session.id} time check: current=${currentTime.toISOString()}, end=${sessionEndTime.toISOString()}, include=${shouldInclude}`);
+    console.log(
+      `⏰ Session ${session.id} time check: current=${currentTime.toISOString()}, end=${sessionEndTime.toISOString()}, include=${shouldInclude}`
+    );
 
     return shouldInclude;
   });
 
-  const completedSessions = availableSessions.filter(session =>
-    session.status === "COMPLETED"
-  );
-  const cancelledSessions = availableSessions.filter(session =>
-    session.status === "CANCELLED"
-  );
+  const completedSessions = availableSessions.filter((session) => session.status === "COMPLETED");
+  const cancelledSessions = availableSessions.filter((session) => session.status === "CANCELLED");
 
-  console.log(`📊 Session counts: Total=${availableSessions.length}, Upcoming=${upcomingSessions.length}, Completed=${completedSessions.length}, Cancelled=${cancelledSessions.length}`);
-  console.log(`🎯 Upcoming sessions:`, upcomingSessions.map(s => ({ id: s.id, status: s.status, title: s.title })));
+  console.log(
+    `📊 Session counts: Total=${availableSessions.length}, Upcoming=${upcomingSessions.length}, Completed=${completedSessions.length}, Cancelled=${cancelledSessions.length}`
+  );
+  console.log(
+    `🎯 Upcoming sessions:`,
+    upcomingSessions.map((s) => ({ id: s.id, status: s.status, title: s.title }))
+  );
 
   const getSessionTypeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
     if (type === "YOGA") return "from-[#76d2fa] to-[#5a9be9]";
@@ -281,7 +293,9 @@ useEffect(() => {
     return "from-[#4ade80] to-[#22c55e]"; // Green gradient for DIET
   };
 
-  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
+  const _getMentorTypeDisplay = (
+    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null
+  ) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";
     if (mentorType === "DIETPLANNER") return "Diet Planner";
@@ -296,14 +310,14 @@ useEffect(() => {
       const startTimeStr = sessionItem.manualStartTime || sessionItem.scheduledTime;
       const startTime = new Date(startTimeStr);
       const currentTime = new Date();
-      
+
       if (!isNaN(startTime.getTime())) {
         const elapsedMs = currentTime.getTime() - startTime.getTime();
         const elapsedMinutes = Math.round(elapsedMs / (1000 * 60));
         return Math.max(elapsedMinutes, 1); // Minimum 1 minute
       }
     }
-    
+
     // For COMPLETED: uses actualDuration stored in DB when session ended
     // For SCHEDULED: uses planned duration from time slot
     // For all cases: duration is provided by server
@@ -315,25 +329,27 @@ useEffect(() => {
     console.log(`🎯 Rendering session ${sessionItem.id}:`, {
       status: sessionItem.status,
       duration: sessionItem.duration,
-      title: sessionItem.title
+      title: sessionItem.title,
     });
-    
+
     // Defensive programming: Ensure valid date
     const sessionTime = new Date(sessionItem.scheduledTime);
     if (isNaN(sessionTime.getTime())) {
-      console.error('Invalid session time for session:', sessionItem.id, sessionItem.scheduledTime);
+      console.error("Invalid session time for session:", sessionItem.id, sessionItem.scheduledTime);
       return null; // Skip rendering this session
     }
-    
+
     const currentTime = new Date();
     const sessionEndTime = new Date(sessionTime.getTime() + sessionItem.duration * 60000); // Add duration in milliseconds
-    
+
     // Session is "upcoming" if it's not explicitly completed
     // For ONGOING sessions, always consider them within time window (they're active)
     const isWithinTimeWindow = sessionItem.status === "ONGOING" || currentTime <= sessionEndTime;
-    const isUpcoming = (sessionItem.status === "SCHEDULED" || sessionItem.status === "ONGOING") && isWithinTimeWindow;
+    const isUpcoming =
+      (sessionItem.status === "SCHEDULED" || sessionItem.status === "ONGOING") &&
+      isWithinTimeWindow;
     const isOngoing = sessionItem.status === "ONGOING" && isWithinTimeWindow;
-    
+
     // Only show join button if session is ONGOING (started by mentor)
     const canJoin = sessionItem.status === "ONGOING" && isWithinTimeWindow;
 
@@ -341,23 +357,24 @@ useEffect(() => {
       <Card key={sessionItem.id} className="p-6">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
-            <div className={`w-16 h-16 bg-gradient-to-br ${getSessionTypeColor(sessionItem.sessionType)} rounded-lg flex items-center justify-center`}>
+            <div
+              className={`w-16 h-16 bg-gradient-to-br ${getSessionTypeColor(sessionItem.sessionType)} rounded-lg flex items-center justify-center`}
+            >
               <PlayCircle className="w-8 h-8 text-white" />
             </div>
             <div>
               <h3 className="font-semibold text-lg">{sessionItem.title}</h3>
-              <p className="text-gray-500">
-              </p>
+              <p className="text-gray-500" />
               <div className="flex items-center gap-4 mt-2 text-sm text-gray-500">
                 <span className="flex items-center gap-1">
                   <Calendar className="w-4 h-4" />
                   {sessionTime.toLocaleDateString("en-US", {
                     weekday: "short",
-                    month: "short", 
+                    month: "short",
                     day: "numeric",
                     hour: "numeric",
                     minute: "2-digit",
-                    hour12: true
+                    hour12: true,
                   })}
                 </span>
                 <span className="flex items-center gap-1">
@@ -365,11 +382,13 @@ useEffect(() => {
                   {Math.round(calculateDisplayDuration(sessionItem))} minutes
                   {sessionItem.status === "ONGOING" && " (ongoing)"}
                 </span>
-                <span className={`px-2 py-1 rounded-full text-xs font-medium ${
-                  sessionItem.sessionType === "YOGA" 
-                    ? "bg-blue-100 text-blue-800" 
-                    : "bg-purple-100 text-purple-800"
-                }`}>
+                <span
+                  className={`px-2 py-1 rounded-full text-xs font-medium ${
+                    sessionItem.sessionType === "YOGA"
+                      ? "bg-blue-100 text-blue-800"
+                      : "bg-purple-100 text-purple-800"
+                  }`}
+                >
                   {sessionItem.sessionType}
                 </span>
               </div>
@@ -378,8 +397,8 @@ useEffect(() => {
           <div className="flex gap-2">
             {isUpcoming && (
               <>
-                <Button 
-                  variant="outline" 
+                <Button
+                  variant="outline"
                   className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
                   onClick={() => {
                     // TODO: Implement reschedule functionality
@@ -389,12 +408,14 @@ useEffect(() => {
                   Reschedule
                 </Button>
                 {canJoin ? (
-                  <Button 
+                  <Button
                     className={`${isOngoing ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : "bg-[#876aff] hover:bg-[#7c5cff]"}`}
                     onClick={() => {
                       if (sessionItem.link) {
                         window.open(sessionItem.link, "_blank");
-                        toast.success(`${isOngoing ? "Joining ongoing session..." : "Opening session link..."}`);
+                        toast.success(
+                          `${isOngoing ? "Joining ongoing session..." : "Opening session link..."}`
+                        );
                       } else {
                         toast.error("Session link not available. Please contact support.");
                       }
@@ -404,16 +425,13 @@ useEffect(() => {
                     {isOngoing ? "Join Now" : "Join Class"}
                   </Button>
                 ) : (
-                  <Button
-                    variant="outline"
-                    disabled
-                    className="text-gray-400"
-                  >
+                  <Button variant="outline" disabled className="text-gray-400">
                     <Clock className="w-4 h-4 mr-1" />
                     {sessionItem.status === "SCHEDULED"
-                      ? (currentTime < sessionTime ? "Waiting for Mentor to Start" : "Session Not Started Yet")
-                      : "Session Ended"
-                    }
+                      ? currentTime < sessionTime
+                        ? "Waiting for Mentor to Start"
+                        : "Session Not Started Yet"
+                      : "Session Ended"}
                   </Button>
                 )}
               </>
@@ -431,10 +449,7 @@ useEffect(() => {
           <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 text-lg mb-2">{emptyMessage}</p>
           <p className="text-gray-400">
-            {activeTab === "upcoming" 
-              ? "New sessions will appear here when available."
-              : ""
-            }
+            {activeTab === "upcoming" ? "New sessions will appear here when available." : ""}
           </p>
         </div>
       );
@@ -455,7 +470,8 @@ useEffect(() => {
             <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
           </div>
           <p className="text-gray-600 mt-2">
-            Manage your scheduled and completed {sessionsData?.subscriptionPlan?.toLowerCase()} sessions. Sessions automatically complete when their duration ends.
+            Manage your scheduled and completed {sessionsData?.subscriptionPlan?.toLowerCase()}{" "}
+            sessions. Sessions automatically complete when their duration ends.
           </p>
         </div>
         <Button
@@ -470,30 +486,30 @@ useEffect(() => {
       </div>
 
       <div className="flex gap-4 border-b">
-        <button 
+        <button
           className={`pb-2 px-1 border-b-2 font-medium ${
-            activeTab === "upcoming" 
-              ? "border-[#76d2fa] text-[#76d2fa]" 
+            activeTab === "upcoming"
+              ? "border-[#76d2fa] text-[#76d2fa]"
               : "border-transparent text-gray-500 hover:text-[#876aff]"
           }`}
           onClick={() => setActiveTab("upcoming")}
         >
           Upcoming ({upcomingSessions.length})
         </button>
-        <button 
+        <button
           className={`pb-2 px-1 border-b-2 font-medium ${
-            activeTab === "completed" 
-              ? "border-[#76d2fa] text-[#76d2fa]" 
+            activeTab === "completed"
+              ? "border-[#76d2fa] text-[#76d2fa]"
               : "border-transparent text-gray-500 hover:text-[#876aff]"
           }`}
           onClick={() => setActiveTab("completed")}
         >
           Completed ({completedSessions.length})
         </button>
-        <button 
+        <button
           className={`pb-2 px-1 border-b-2 font-medium ${
-            activeTab === "cancelled" 
-              ? "border-[#76d2fa] text-[#76d2fa]" 
+            activeTab === "cancelled"
+              ? "border-[#76d2fa] text-[#76d2fa]"
               : "border-transparent text-gray-500 hover:text-[#876aff]"
           }`}
           onClick={() => setActiveTab("cancelled")}
@@ -503,20 +519,12 @@ useEffect(() => {
       </div>
 
       <div>
-        {activeTab === "upcoming" && renderTabContent(
-          upcomingSessions, 
-          "No upcoming sessions scheduled"
-        )}
-        {activeTab === "completed" && renderTabContent(
-          completedSessions, 
-          "No completed sessions yet"
-        )}
-        {activeTab === "cancelled" && renderTabContent(
-          cancelledSessions, 
-          "No cancelled sessions"
-        )}
+        {activeTab === "upcoming" &&
+          renderTabContent(upcomingSessions, "No upcoming sessions scheduled")}
+        {activeTab === "completed" &&
+          renderTabContent(completedSessions, "No completed sessions yet")}
+        {activeTab === "cancelled" && renderTabContent(cancelledSessions, "No cancelled sessions")}
       </div>
     </div>
   );
 };
-

@@ -15,37 +15,37 @@ export function convertMongoDate(mongoDate: any): Date | null {
   }
 
   // If it's a MongoDB extended JSON date format
-  if (typeof mongoDate === 'object' && mongoDate.$date) {
+  if (typeof mongoDate === "object" && mongoDate.$date) {
     try {
       return new Date(mongoDate.$date);
     } catch (error) {
-      console.error('Failed to convert MongoDB date:', mongoDate, error);
+      console.error("Failed to convert MongoDB date:", mongoDate, error);
       return null;
     }
   }
 
   // If it's a string, try to parse it
-  if (typeof mongoDate === 'string') {
+  if (typeof mongoDate === "string") {
     try {
       const date = new Date(mongoDate);
       return isNaN(date.getTime()) ? null : date;
     } catch (error) {
-      console.error('Failed to parse date string:', mongoDate, error);
+      console.error("Failed to parse date string:", mongoDate, error);
       return null;
     }
   }
 
   // If it's a number (timestamp), convert it
-  if (typeof mongoDate === 'number') {
+  if (typeof mongoDate === "number") {
     try {
       return new Date(mongoDate);
     } catch (error) {
-      console.error('Failed to convert timestamp:', mongoDate, error);
+      console.error("Failed to convert timestamp:", mongoDate, error);
       return null;
     }
   }
 
-  console.error('Unknown date format:', mongoDate);
+  console.error("Unknown date format:", mongoDate);
   return null;
 }
 

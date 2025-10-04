@@ -6,17 +6,14 @@ export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { prisma } = await import("@/lib/config/prisma");
-    
+
     // For now, since we can't generate the new schema, let's return a placeholder
     // Once Prisma is regenerated, this will fetch actual session bookings
-    
+
     try {
       // Try to access sessionBooking model
       const bookings = await (prisma as any).sessionBooking.findMany({
@@ -34,7 +31,7 @@ export async function GET() {
           },
         },
         orderBy: {
-          scheduledAt: 'desc',
+          scheduledAt: "desc",
         },
       });
 
@@ -50,7 +47,6 @@ export async function GET() {
         data: [],
       });
     }
-
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     return NextResponse.json(

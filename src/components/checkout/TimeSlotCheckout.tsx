@@ -1,10 +1,9 @@
-'use client'
+"use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Check, Calendar, Clock, User, IndianRupeeIcon, Phone, Mail, Award, Star, ChevronDown, ArrowLeft } from "lucide-react";
+import { Check, Calendar, Clock, User, IndianRupeeIcon, Mail, ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
@@ -23,7 +22,7 @@ interface TimeSlot {
   _id: string;
   startTime: string;
   endTime: string;
-  sessionType: 'YOGA' | 'MEDITATION' | 'DIET';
+  sessionType: "YOGA" | "MEDITATION" | "DIET";
   maxStudents: number;
   currentStudents: number;
   isBooked: boolean;
@@ -44,14 +43,13 @@ export default function TimeSlotCheckout() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const { data: session } = useSession();
-  
-  const timeSlotId = searchParams.get('timeSlotId');
-  const mentorId = searchParams.get('mentorId');
-  
+
+  const timeSlotId = searchParams.get("timeSlotId");
+
   const [loading, setLoading] = useState(false);
   const [timeSlot, setTimeSlot] = useState<TimeSlot | null>(null);
   const [loadingSlot, setLoadingSlot] = useState(true);
-  const [notes, setNotes] = useState('');
+  const [notes, setNotes] = useState("");
 
   // Load time slot data
   useEffect(() => {
@@ -65,10 +63,10 @@ export default function TimeSlotCheckout() {
       try {
         const response = await fetch(`/api/mentor/timeslots/${timeSlotId}`);
         const result = await response.json();
-        
+
         if (result.success) {
           setTimeSlot(result.data);
-          
+
           // Check if slot is still available
           if (result.data.isBooked) {
             toast.error("This time slot has already been booked");
@@ -107,12 +105,12 @@ export default function TimeSlotCheckout() {
 
     try {
       console.log("🚀 Starting time slot booking process...");
-      
+
       // First, create the booking (this reserves the slot)
       const bookingResponse = await fetch(`/api/mentor/timeslots/${timeSlotId}/book`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           notes,
@@ -120,27 +118,29 @@ export default function TimeSlotCheckout() {
       });
 
       console.log("📡 Booking response status:", bookingResponse.status);
-      
+
       const bookingData = await bookingResponse.json();
       console.log("📋 Booking response data:", bookingData);
 
       if (!bookingData.success) {
         // Handle specific error cases
         if (bookingResponse.status === 409) {
-          toast.error("You already have an active session with this mentor. Please complete your current session first.");
+          toast.error(
+            "You already have an active session with this mentor. Please complete your current session first."
+          );
         } else if (bookingResponse.status === 404) {
           toast.error("Time slot not available anymore.");
         } else {
-          toast.error(bookingData.error || 'Failed to reserve time slot');
+          toast.error(bookingData.error || "Failed to reserve time slot");
         }
-        throw new Error(bookingData.error || 'Failed to reserve time slot');
+        throw new Error(bookingData.error || "Failed to reserve time slot");
       }
 
       // Now create payment order
-      const paymentResponse = await fetch('/api/mentor/create-session-payment', {
-        method: 'POST',
+      const paymentResponse = await fetch("/api/mentor/create-session-payment", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           bookingId: bookingData.data.bookingId,
@@ -155,11 +155,11 @@ export default function TimeSlotCheckout() {
       if (!paymentData.success) {
         // If payment creation fails, we should cancel the booking
         await fetch(`/api/mentor/timeslots/${timeSlotId}/book`, {
-          method: 'DELETE',
+          method: "DELETE",
         });
-        
-        toast.error(paymentData.error || 'Failed to create payment order');
-        throw new Error(paymentData.error || 'Failed to create payment order');
+
+        toast.error(paymentData.error || "Failed to create payment order");
+        throw new Error(paymentData.error || "Failed to create payment order");
       }
 
       // Initialize Razorpay payment
@@ -172,11 +172,11 @@ export default function TimeSlotCheckout() {
         description: `${timeSlot.sessionType} Session with ${timeSlot.mentor.name}`,
         handler: async function (response: RazorpayResponse) {
           try {
-            // Verify payment
-            const verifyResponse = await fetch('/api/mentor/verify-timeslot-payment', {
-              method: 'POST',
+            // Verify payment and create the booking
+            const verifyResponse = await fetch("/api/mentor/verify-timeslot-payment", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
@@ -184,6 +184,13 @@ export default function TimeSlotCheckout() {
                 razorpay_signature: response.razorpay_signature,
                 bookingId: bookingData.data.bookingId,
                 timeSlotId: timeSlotId,
+                // Pass booking data for creation after payment verification
+                userId: bookingData.data.userId,
+                mentorId: bookingData.data.mentorId,
+                sessionType: bookingData.data.sessionType,
+                scheduledAt: bookingData.data.scheduledAt,
+                duration: bookingData.data.duration,
+                notes: bookingData.data.notes,
               }),
             });
 
@@ -197,7 +204,10 @@ export default function TimeSlotCheckout() {
             }
           } catch (error) {
             console.error("Payment verification error:", error);
-            toast.error("Payment verification failed. Please contact support.");
+            toast.error(
+              "Payment verification failed. Please contact support if amount was deducted."
+            );
+            setLoading(false);
           }
         },
         prefill: {
@@ -208,16 +218,22 @@ export default function TimeSlotCheckout() {
           color: "#5a9be9",
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
+            console.log("⚠️ Payment dismissed/cancelled by user");
+            toast.info("Payment cancelled. The session slot is still available for booking.");
             setLoading(false);
-          }
-        }
+          },
+          onerror: function (error: any) {
+            console.error("💥 Razorpay error:", error);
+            toast.error("Payment failed. Please try again.");
+            setLoading(false);
+          },
+        },
       };
 
       // @ts-expect-error importing Razorpay from CDN
-      const razorpay = new (window).Razorpay(options);
+      const razorpay = new window.Razorpay(options);
       razorpay.open();
-
     } catch (error) {
       console.error("Error booking time slot:", error);
       toast.error("Failed to process booking. Please try again.");
@@ -228,9 +244,9 @@ export default function TimeSlotCheckout() {
   // Helper functions
   const formatDateTime = (dateTime: string) => {
     let date: Date;
-    
+
     // Handle MongoDB extended JSON format
-    if (typeof dateTime === 'string' && dateTime.includes('$date')) {
+    if (typeof dateTime === "string" && dateTime.includes("$date")) {
       try {
         const parsed = JSON.parse(dateTime);
         date = new Date(parsed.$date);
@@ -240,43 +256,47 @@ export default function TimeSlotCheckout() {
     } else {
       date = new Date(dateTime);
     }
-    
+
     // Check if date is valid
     if (isNaN(date.getTime())) {
-      console.error('Invalid date received:', dateTime);
+      console.error("Invalid date received:", dateTime);
       return {
-        date: 'Invalid Date',
-        time: 'Invalid Time',
+        date: "Invalid Date",
+        time: "Invalid Time",
       };
     }
-    
+
     return {
-      date: date.toLocaleDateString('en-US', { 
-        weekday: 'long',
-        year: 'numeric',
-        month: 'long', 
-        day: 'numeric' 
+      date: date.toLocaleDateString("en-US", {
+        weekday: "long",
+        year: "numeric",
+        month: "long",
+        day: "numeric",
       }),
-      time: date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
+      time: date.toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" }),
     };
   };
 
   const getSessionTypeColor = (type: string) => {
     switch (type) {
-      case 'YOGA': return 'bg-blue-100 text-blue-800 border-blue-200';
-      case 'MEDITATION': return 'bg-purple-100 text-purple-800 border-purple-200';
-      case 'DIET': return 'bg-green-100 text-green-800 border-green-200';
-      default: return 'bg-gray-100 text-gray-800 border-gray-200';
+      case "YOGA":
+        return "bg-blue-100 text-blue-800 border-blue-200";
+      case "MEDITATION":
+        return "bg-purple-100 text-purple-800 border-purple-200";
+      case "DIET":
+        return "bg-green-100 text-green-800 border-green-200";
+      default:
+        return "bg-gray-100 text-gray-800 border-gray-200";
     }
   };
 
   const getDuration = () => {
-    if (!timeSlot) return '';
-    
+    if (!timeSlot) return "";
+
     let start: Date, end: Date;
-    
+
     // Handle MongoDB extended JSON format for startTime
-    if (typeof timeSlot.startTime === 'string' && timeSlot.startTime.includes('$date')) {
+    if (typeof timeSlot.startTime === "string" && timeSlot.startTime.includes("$date")) {
       try {
         const parsed = JSON.parse(timeSlot.startTime);
         start = new Date(parsed.$date);
@@ -286,9 +306,9 @@ export default function TimeSlotCheckout() {
     } else {
       start = new Date(timeSlot.startTime);
     }
-    
+
     // Handle MongoDB extended JSON format for endTime
-    if (typeof timeSlot.endTime === 'string' && timeSlot.endTime.includes('$date')) {
+    if (typeof timeSlot.endTime === "string" && timeSlot.endTime.includes("$date")) {
       try {
         const parsed = JSON.parse(timeSlot.endTime);
         end = new Date(parsed.$date);
@@ -298,24 +318,24 @@ export default function TimeSlotCheckout() {
     } else {
       end = new Date(timeSlot.endTime);
     }
-    
+
     // Check if dates are valid
     if (isNaN(start.getTime()) || isNaN(end.getTime())) {
-      console.error('Invalid dates for duration calculation:', {
+      console.error("Invalid dates for duration calculation:", {
         startTime: timeSlot.startTime,
-        endTime: timeSlot.endTime
+        endTime: timeSlot.endTime,
       });
-      return 'Invalid Duration';
+      return "Invalid Duration";
     }
-    
+
     const diff = end.getTime() - start.getTime();
     const minutes = Math.round(diff / (1000 * 60));
-    
+
     if (minutes <= 0) {
-      console.error('Invalid duration calculated:', minutes, 'minutes');
-      return 'Invalid Duration';
+      console.error("Invalid duration calculated:", minutes, "minutes");
+      return "Invalid Duration";
     }
-    
+
     return `${minutes} minutes`;
   };
 
@@ -352,11 +372,7 @@ export default function TimeSlotCheckout() {
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Header */}
           <div className="mb-8">
-            <Button 
-              variant="outline" 
-              onClick={() => router.back()}
-              className="mb-4"
-            >
+            <Button variant="outline" onClick={() => router.back()} className="mb-4">
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
@@ -381,13 +397,13 @@ export default function TimeSlotCheckout() {
                   <div className="flex items-start gap-4">
                     <Avatar className="w-16 h-16">
                       <AvatarImage src={timeSlot.mentor.image} />
-                      <AvatarFallback>
-                        {timeSlot.mentor.name?.charAt(0) || 'M'}
-                      </AvatarFallback>
+                      <AvatarFallback>{timeSlot.mentor.name?.charAt(0) || "M"}</AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{timeSlot.mentor.name}</h3>
-                      <p className="text-gray-600 capitalize">{timeSlot.mentor.mentorType?.toLowerCase().replace('mentor', ' Mentor')}</p>
+                      <p className="text-gray-600 capitalize">
+                        {timeSlot.mentor.mentorType?.toLowerCase().replace("mentor", " Mentor")}
+                      </p>
                       <div className="flex items-center gap-2 mt-2">
                         <Mail className="w-4 h-4 text-gray-400" />
                         <span className="text-sm text-gray-600">{timeSlot.mentor.email}</span>
@@ -421,12 +437,14 @@ export default function TimeSlotCheckout() {
                       </p>
                     </div>
                   </div>
-                  
+
                   <div>
                     <Label className="text-sm font-medium text-gray-700">Date & Time</Label>
                     <div className="mt-1 p-3 bg-gray-50 rounded-lg">
                       <p className="font-medium">{startDateTime.date}</p>
-                      <p className="text-sm text-gray-600">{startDateTime.time} - {endDateTime.time}</p>
+                      <p className="text-sm text-gray-600">
+                        {startDateTime.time} - {endDateTime.time}
+                      </p>
                     </div>
                   </div>
 
@@ -473,7 +491,9 @@ export default function TimeSlotCheckout() {
                   <div className="space-y-3">
                     <div className="flex justify-between">
                       <span className="text-gray-600">Session Fee</span>
-                      <span className="font-medium">₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}</span>
+                      <span className="font-medium">
+                        ₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}
+                      </span>
                     </div>
                     <div className="flex justify-between">
                       <span className="text-gray-600">Platform Fee</span>
@@ -482,7 +502,9 @@ export default function TimeSlotCheckout() {
                     <hr />
                     <div className="flex justify-between text-lg font-semibold">
                       <span>Total Amount</span>
-                      <span className="text-green-600">₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}</span>
+                      <span className="text-green-600">
+                        ₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}
+                      </span>
                     </div>
                   </div>
 
@@ -509,7 +531,7 @@ export default function TimeSlotCheckout() {
                   >
                     {loading ? (
                       <>
-                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                        <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2" />
                         Processing...
                       </>
                     ) : (

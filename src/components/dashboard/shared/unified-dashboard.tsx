@@ -1,25 +1,27 @@
 "use client";
 
-import React from 'react';
-import { BaseDashboard } from './base-dashboard';
-import { GenericSidebar } from './sidebar-base';
-import { GenericSectionRenderer } from './generic-section-renderer';
-import { useDashboard } from './use-dashboard';
-import { SectionConfig } from './types';
-import { BaseHookResult } from './types';
-import { SectionProps } from '../user/types';
-import { type SidebarMenuItem } from '../user/types';
-import { CircleAlert } from 'lucide-react';
-import { MentorSectionProps } from '../mentor/types';
-import { ModeratorSectionProps } from '../moderator/types';
-import { AdminSectionProps } from '../admin/types';
+import React from "react";
+import { BaseDashboard } from "./base-dashboard";
+import { GenericSidebar } from "./sidebar-base";
+import { GenericSectionRenderer } from "./generic-section-renderer";
+import { useDashboard } from "./use-dashboard";
+import { type SectionConfig } from "./types";
+import { type BaseHookResult } from "./types";
+import { type SectionProps } from "../user/types";
+import { type SidebarMenuItem } from "../user/types";
+import { CircleAlert } from "lucide-react";
+import { type MentorSectionProps } from "../mentor/types";
+import { type ModeratorSectionProps } from "../moderator/types";
+import { type AdminSectionProps } from "../admin/types";
 
 // Create a generic type for section components based on role
-type RoleSectionProps<T extends string> = 
-  T extends 'mentor' ? MentorSectionProps :
-  T extends 'admin' ? AdminSectionProps :
-  T extends 'moderator' ? ModeratorSectionProps :
-  SectionProps;
+type RoleSectionProps<T extends string> = T extends "mentor"
+  ? MentorSectionProps
+  : T extends "admin"
+    ? AdminSectionProps
+    : T extends "moderator"
+      ? ModeratorSectionProps
+      : SectionProps;
 
 export interface UnifiedDashboardProps<T extends string = string> {
   role: T;
@@ -43,18 +45,12 @@ export const UnifiedDashboard = <T extends string>({
 }: UnifiedDashboardProps<T>) => {
   // Use the base dashboard hook
   const baseHookResult = useDashboard(initialActiveSection);
-  
+
   // Use extended hook if provided
   const hookResult = extendedHook ? extendedHook(baseHookResult) : baseHookResult;
-  
-  const { 
-    userDetails,
-    loading, 
-    activeSection,
-    setActiveSection,
-    handleSignOut,
-    ...otherProps
-  } = hookResult;
+
+  const { userDetails, loading, activeSection, setActiveSection, handleSignOut, ...otherProps } =
+    hookResult;
 
   // Helper function to get an icon for a section ID if not provided
   const getIconForSection = (id: string): React.ElementType => {
@@ -62,13 +58,13 @@ export const UnifiedDashboard = <T extends string>({
       const icon = getIcon(id);
       if (icon) return icon;
     }
-    
+
     // Find the menu item with this ID
-    const menuItem = menuItems.find(item => item.id === id);
+    const menuItem = menuItems.find((item) => item.id === id);
     if (menuItem?.icon) return menuItem.icon;
-    
+
     // Fallback to a default  icon
-    return CircleAlert; 
+    return CircleAlert;
   };
 
   const sidebar = (
@@ -84,11 +80,11 @@ export const UnifiedDashboard = <T extends string>({
     />
   );
   // Convert menuItems to SectionConfig format for the renderer
-  const sections: SectionConfig[] = menuItems.map(item => ({
+  const sections: SectionConfig[] = menuItems.map((item) => ({
     id: item.id,
     label: item.title,
   }));
-  
+
   const sectionRenderer = (
     <GenericSectionRenderer<RoleSectionProps<T>>
       activeSection={activeSection}
@@ -109,4 +105,3 @@ export const UnifiedDashboard = <T extends string>({
     />
   );
 };
-

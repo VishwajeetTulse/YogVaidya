@@ -7,9 +7,9 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Separator } from "@/components/ui/separator";
 import { Check, X, Eye, FileText } from "lucide-react";
-import { 
-  getMentorApplicationsAction, 
-  updateMentorApplicationStatusAction 
+import {
+  getMentorApplicationsAction,
+  updateMentorApplicationStatusAction,
 } from "@/lib/actions/mentor-application-actions";
 
 interface MentorApplication {
@@ -58,7 +58,7 @@ export const ApplicationsSection = () => {
     setLoading(true);
     try {
       const result = await getMentorApplicationsAction();
-      
+
       if (result.success && result.applications) {
         setApplications(result.applications);
       } else {
@@ -77,13 +77,11 @@ export const ApplicationsSection = () => {
     try {
       console.log("🔍 Updating application status with role:", currentUserRole);
       const result = await updateMentorApplicationStatusAction(id, status, currentUserRole);
-      
+
       if (result.success) {
         toast.success(`Application ${status}`);
         // Update the local state
-        setApplications(applications.map(app => 
-          app.id === id ? { ...app, status } : app
-        ));
+        setApplications(applications.map((app) => (app.id === id ? { ...app, status } : app)));
         setSelectedApplication(null);
       } else {
         toast.error("Failed to update application status");
@@ -109,7 +107,7 @@ export const ApplicationsSection = () => {
   };
 
   const formatDate = (date: Date | string) => {
-    const dateObj = typeof date === 'string' ? new Date(date) : date;
+    const dateObj = typeof date === "string" ? new Date(date) : date;
     return new Intl.DateTimeFormat("en-US", {
       year: "numeric",
       month: "short",
@@ -121,9 +119,7 @@ export const ApplicationsSection = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Mentor Applications</h1>
-        <p className="text-gray-600 mt-2">
-          Review and approve mentor applications.
-        </p>
+        <p className="text-gray-600 mt-2">Review and approve mentor applications.</p>
       </div>
 
       {loading ? (
@@ -143,7 +139,7 @@ export const ApplicationsSection = () => {
             <h2 className="font-semibold text-lg">All Applications</h2>
             <div className="space-y-2 max-h-[600px] overflow-y-auto pr-2">
               {applications.map((app) => (
-                <Card 
+                <Card
                   key={app.id}
                   className={`p-4 cursor-pointer transition-all ${
                     selectedApplication?.id === app.id ? "border-2 border-blue-500" : ""
@@ -172,7 +168,9 @@ export const ApplicationsSection = () => {
                 <div className="flex justify-between items-start mb-4">
                   <div>
                     <h2 className="text-xl font-bold">{selectedApplication.name}</h2>
-                    <p className="text-gray-600">{selectedApplication.email} | {selectedApplication.phone}</p>
+                    <p className="text-gray-600">
+                      {selectedApplication.email} | {selectedApplication.phone}
+                    </p>
                   </div>
                   <div>{getStatusBadge(selectedApplication.status)}</div>
                 </div>
@@ -182,31 +180,35 @@ export const ApplicationsSection = () => {
                 <div className="space-y-4">
                   <div>
                     <h3 className="font-semibold">Application Type</h3>
-                    <p>{selectedApplication.mentorType === "YOGAMENTOR" ? "Yoga Mentor" : "Meditation Mentor"}</p>
+                    <p>
+                      {selectedApplication.mentorType === "YOGAMENTOR"
+                        ? "Yoga Mentor"
+                        : "Meditation Mentor"}
+                    </p>
                   </div>
-                  
+
                   <div>
                     <h3 className="font-semibold">Experience</h3>
                     <p className="whitespace-pre-line">{selectedApplication.experience} years</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="font-semibold">Expertise</h3>
                     <p>{selectedApplication.expertise}</p>
                   </div>
-                  
+
                   <div>
                     <h3 className="font-semibold">Certifications</h3>
                     <p>{selectedApplication.certifications}</p>
                   </div>
-                  
+
                   {selectedApplication.powUrl && (
                     <div>
                       <h3 className="font-semibold">Proof of Work</h3>
                       <div className="mt-2">
-                        <a 
-                          href={selectedApplication.powUrl} 
-                          target="_blank" 
+                        <a
+                          href={selectedApplication.powUrl}
+                          target="_blank"
                           rel="noopener noreferrer"
                           className="inline-flex items-center text-blue-600 hover:text-blue-800"
                         >
@@ -245,8 +247,12 @@ export const ApplicationsSection = () => {
               <div className="h-full flex items-center justify-center text-center p-10 border-2 border-dashed rounded-lg">
                 <div>
                   <Eye className="mx-auto h-12 w-12 text-gray-400" />
-                  <p className="mt-2 text-lg font-semibold text-gray-700">No Application Selected</p>
-                  <p className="text-gray-500">Select an application from the list to view details</p>
+                  <p className="mt-2 text-lg font-semibold text-gray-700">
+                    No Application Selected
+                  </p>
+                  <p className="text-gray-500">
+                    Select an application from the list to view details
+                  </p>
                 </div>
               </div>
             )}
@@ -256,4 +262,3 @@ export const ApplicationsSection = () => {
     </div>
   );
 };
-

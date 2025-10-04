@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { useSession } from '@/lib/auth-client';
+import { useEffect, useRef } from "react";
+import { useSession } from "@/lib/auth-client";
 
 interface UseTrialExpirationOptions {
   isTrialActive: boolean | null;
@@ -10,7 +10,7 @@ interface UseTrialExpirationOptions {
 export function useTrialExpiration({
   isTrialActive,
   trialEndDate,
-  onTrialExpired
+  onTrialExpired,
 }: UseTrialExpirationOptions) {
   const { data: session } = useSession();
   const hasUpdatedRef = useRef(false);
@@ -33,16 +33,16 @@ export function useTrialExpiration({
       updateTrialStatus(session.user.email)
         .then((success) => {
           if (success) {
-            console.log('Trial status updated in database');
+            console.log("Trial status updated in database");
             onTrialExpired?.();
           } else {
-            console.error('Failed to update trial status in database');
+            console.error("Failed to update trial status in database");
             // Reset the flag so we can try again
             hasUpdatedRef.current = false;
           }
         })
         .catch((error) => {
-          console.error('Error updating trial status:', error);
+          console.error("Error updating trial status:", error);
           // Reset the flag so we can try again
           hasUpdatedRef.current = false;
         });
@@ -50,30 +50,30 @@ export function useTrialExpiration({
   }, [session?.user?.email, isTrialActive, trialEndDate, onTrialExpired]);
 
   return {
-    hasTrialExpired: isTrialActive && trialEndDate && new Date() >= new Date(trialEndDate)
+    hasTrialExpired: isTrialActive && trialEndDate && new Date() >= new Date(trialEndDate),
   };
 }
 
 async function updateTrialStatus(email: string): Promise<boolean> {
   try {
-    const response = await fetch('/api/users/update-trial-status', {
-      method: 'POST',
+    const response = await fetch("/api/users/update-trial-status", {
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
+        "Content-Type": "application/json",
       },
       body: JSON.stringify({ email }),
     });
 
     const data = await response.json();
-    
+
     if (!response.ok) {
-      console.error('Failed to update trial status:', data.error);
+      console.error("Failed to update trial status:", data.error);
       return false;
     }
 
     return data.success;
   } catch (error) {
-    console.error('Error calling update trial status API:', error);
+    console.error("Error calling update trial status API:", error);
     return false;
   }
 }

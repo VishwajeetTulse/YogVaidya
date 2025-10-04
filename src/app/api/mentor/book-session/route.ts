@@ -24,19 +24,16 @@ export async function POST(request: Request) {
     console.log("📡 Checking authentication...");
     const session = await auth.api.getSession({ headers: await headers() });
     console.log("👤 Session found:", !!session?.user?.id);
-    
+
     if (!session?.user?.id) {
       console.log("❌ Unauthorized access attempt");
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     console.log("📝 Parsing request body...");
     const body = await request.json();
     console.log("📋 Request data:", body);
-    
+
     const { timeSlotId, notes, mentorId, sessionDate, sessionTime } = bookSessionSchema.parse(body);
 
     const { prisma } = await import("@/lib/config/prisma");
@@ -44,26 +41,28 @@ export async function POST(request: Request) {
     // NEW APPROACH: Time Slot Based Booking
     if (timeSlotId) {
       console.log("🎯 Time slot based booking for slot:", timeSlotId);
-      
+
       // Get the time slot details and check availability
       const timeSlotResult = await prisma.$runCommandRaw({
-        find: 'mentorTimeSlot',
+        find: "mentorTimeSlot",
         filter: {
           _id: timeSlotId,
           isActive: true,
-          $expr: { $lt: ['$currentStudents', '$maxStudents'] } // Check if there's space available
-        }
+          $expr: { $lt: ["$currentStudents", "$maxStudents"] }, // Check if there's space available
+        },
       });
 
       let timeSlot: any = null;
-      if (timeSlotResult && 
-          typeof timeSlotResult === 'object' && 
-          'cursor' in timeSlotResult &&
-          timeSlotResult.cursor &&
-          typeof timeSlotResult.cursor === 'object' &&
-          'firstBatch' in timeSlotResult.cursor &&
-          Array.isArray(timeSlotResult.cursor.firstBatch) &&
-          timeSlotResult.cursor.firstBatch.length > 0) {
+      if (
+        timeSlotResult &&
+        typeof timeSlotResult === "object" &&
+        "cursor" in timeSlotResult &&
+        timeSlotResult.cursor &&
+        typeof timeSlotResult.cursor === "object" &&
+        "firstBatch" in timeSlotResult.cursor &&
+        Array.isArray(timeSlotResult.cursor.firstBatch) &&
+        timeSlotResult.cursor.firstBatch.length > 0
+      ) {
         timeSlot = timeSlotResult.cursor.firstBatch[0];
       }
 
@@ -79,7 +78,7 @@ export async function POST(request: Request) {
       if (timeSlot.currentStudents >= timeSlot.maxStudents) {
         console.log("❌ Time slot is fully booked", {
           currentStudents: timeSlot.currentStudents,
-          maxStudents: timeSlot.maxStudents
+          maxStudents: timeSlot.maxStudents,
         });
         return NextResponse.json(
           { success: false, error: "Time slot is fully booked" },
@@ -92,7 +91,7 @@ export async function POST(request: Request) {
         startTime: timeSlot.startTime,
         endTime: timeSlot.endTime,
         price: timeSlot.price,
-        mentorId: timeSlot.mentorId
+        mentorId: timeSlot.mentorId,
       });
 
       // Get mentor details
@@ -122,29 +121,31 @@ export async function POST(request: Request) {
       // Check if user already has an active session with this mentor
       console.log("🔍 Checking for existing sessions with this mentor...");
       const existingSession = await prisma.$runCommandRaw({
-        find: 'sessionBooking',
+        find: "sessionBooking",
         filter: {
           userId: session.user.id,
           mentorId: timeSlot.mentorId,
-          status: { $in: ["SCHEDULED", "ONGOING"] }
-        }
+          status: { $in: ["SCHEDULED", "ONGOING"] },
+        },
       });
-      
-      const hasExistingSessions = existingSession && 
-        typeof existingSession === 'object' && 
-        'cursor' in existingSession &&
+
+      const hasExistingSessions =
+        existingSession &&
+        typeof existingSession === "object" &&
+        "cursor" in existingSession &&
         existingSession.cursor &&
-        typeof existingSession.cursor === 'object' &&
-        'firstBatch' in existingSession.cursor &&
+        typeof existingSession.cursor === "object" &&
+        "firstBatch" in existingSession.cursor &&
         Array.isArray(existingSession.cursor.firstBatch) &&
         existingSession.cursor.firstBatch.length > 0;
-      
+
       if (hasExistingSessions) {
         console.log("❌ User already has an active session with this mentor");
         return NextResponse.json(
-          { 
-            success: false, 
-            error: "You already have an active session with this mentor. Please complete your current session before booking a new one." 
+          {
+            success: false,
+            error:
+              "You already have an active session with this mentor. Please complete your current session before booking a new one.",
           },
           { status: 409 }
         );
@@ -163,7 +164,7 @@ export async function POST(request: Request) {
 
       console.log("💳 Creating Razorpay order for time slot booking...");
       console.log("💰 Amount:", sessionPrice, "INR");
-      
+
       // Create Razorpay order
       const order = await razorpay.orders.create({
         amount: sessionPrice * 100, // Convert to paise
@@ -210,32 +211,29 @@ export async function POST(request: Request) {
     // LEGACY APPROACH: Keep backward compatibility for old API calls
     else if (mentorId && sessionDate && sessionTime) {
       console.log("🔄 Legacy booking approach for mentor:", mentorId);
-      
+
       // Keep the existing logic for backward compatibility
       let mentor;
       try {
         const userExists = await prisma.user.findFirst({
           where: { id: mentorId },
-          select: { id: true, role: true, isAvailable: true, name: true }
+          select: { id: true, role: true, isAvailable: true, name: true },
         });
-        
+
         if (!userExists) {
           const application = await prisma.mentorApplication.findFirst({
             where: { id: mentorId, status: "approved" },
-            select: { email: true, userId: true, name: true }
+            select: { email: true, userId: true, name: true },
           });
-          
+
           if (application) {
             const actualUser = await prisma.user.findFirst({
-              where: { 
-                OR: [
-                  { email: application.email },
-                  { id: application.userId || "" }
-                ]
+              where: {
+                OR: [{ email: application.email }, { id: application.userId || "" }],
               },
-              select: { id: true, role: true, isAvailable: true, name: true }
+              select: { id: true, role: true, isAvailable: true, name: true },
             });
-            
+
             if (actualUser) {
               mentor = await prisma.user.findFirst({
                 where: {
@@ -268,17 +266,14 @@ export async function POST(request: Request) {
               isAvailable: true,
             },
           });
-          
+
           if (fullUser && fullUser.isAvailable === true) {
             mentor = fullUser;
           }
         }
       } catch (dbError) {
         console.error("💥 Database query failed:", dbError);
-        return NextResponse.json(
-          { success: false, error: "Database error" },
-          { status: 500 }
-        );
+        return NextResponse.json({ success: false, error: "Database error" }, { status: 500 });
       }
 
       if (!mentor) {
@@ -290,28 +285,30 @@ export async function POST(request: Request) {
 
       // Check existing sessions
       const existingSession = await prisma.$runCommandRaw({
-        find: 'sessionBooking',
+        find: "sessionBooking",
         filter: {
           userId: session.user.id,
           mentorId: mentorId,
-          status: { $in: ["SCHEDULED", "ONGOING"] }
-        }
+          status: { $in: ["SCHEDULED", "ONGOING"] },
+        },
       });
-      
-      const hasExistingSessions = existingSession && 
-        typeof existingSession === 'object' && 
-        'cursor' in existingSession &&
+
+      const hasExistingSessions =
+        existingSession &&
+        typeof existingSession === "object" &&
+        "cursor" in existingSession &&
         existingSession.cursor &&
-        typeof existingSession.cursor === 'object' &&
-        'firstBatch' in existingSession.cursor &&
+        typeof existingSession.cursor === "object" &&
+        "firstBatch" in existingSession.cursor &&
         Array.isArray(existingSession.cursor.firstBatch) &&
         existingSession.cursor.firstBatch.length > 0;
-      
+
       if (hasExistingSessions) {
         return NextResponse.json(
-          { 
-            success: false, 
-            error: "You already have an active session with this mentor. Please complete your current session before booking a new one." 
+          {
+            success: false,
+            error:
+              "You already have an active session with this mentor. Please complete your current session before booking a new one.",
           },
           { status: 409 }
         );
@@ -357,14 +354,16 @@ export async function POST(request: Request) {
       });
     } else {
       return NextResponse.json(
-        { success: false, error: "Either timeSlotId or mentorId with sessionDate and sessionTime is required" },
+        {
+          success: false,
+          error: "Either timeSlotId or mentorId with sessionDate and sessionTime is required",
+        },
         { status: 400 }
       );
     }
-
   } catch (error) {
     console.error("💥 Error creating session booking:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },

@@ -1,8 +1,8 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import crypto from "crypto";
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 
 // Log type definitions
 export type LogEntry = {

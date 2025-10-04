@@ -8,7 +8,7 @@ import {
   Ticket,
   FileText,
 } from "lucide-react";
-import { SidebarMenuItem } from "./types";
+import { type SidebarMenuItem } from "./types";
 
 export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
   {
@@ -66,4 +66,3 @@ export const SIDEBAR_MENU_ITEMS: SidebarMenuItem[] = [
     description: "Get help and manage support tickets",
   },
 ];
-

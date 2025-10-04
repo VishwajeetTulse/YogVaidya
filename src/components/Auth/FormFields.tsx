@@ -1,20 +1,14 @@
 "use client";
 import { Mail, Eye, EyeOff } from "lucide-react";
-import { Control, FieldValues, FieldPath } from "react-hook-form"
-import {
-  FormField,
-  FormItem,
-  FormLabel,
-  FormControl,
-  FormMessage,
-} from "@/components/ui/form";
+import { type Control, type FieldValues, type FieldPath } from "react-hook-form";
+import { FormField, FormItem, FormLabel, FormControl, FormMessage } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 // import { Checkbox } from "@/components/ui/checkbox";
 import { useState } from "react";
 
 type InputFieldProps<
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 > = {
   control: Control<TFieldValues>;
   name: TName;
@@ -27,7 +21,7 @@ type InputFieldProps<
 
 export const InputField = <
   TFieldValues extends FieldValues = FieldValues,
-  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>
+  TName extends FieldPath<TFieldValues> = FieldPath<TFieldValues>,
 >({
   control,
   name,
@@ -48,9 +42,7 @@ export const InputField = <
           <FormLabel>{label}</FormLabel>
           <FormControl>
             <div className="relative">
-              {icon && (
-                <div className="absolute left-3 top-2.5 h-5 w-5">{icon}</div>
-              )}
+              {icon && <div className="absolute left-3 top-2.5 h-5 w-5">{icon}</div>}
               <Input
                 type={showPasswordToggle && showPassword ? "text" : type}
                 placeholder={placeholder}
@@ -63,11 +55,7 @@ export const InputField = <
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-2.5 text-muted-foreground hover:text-foreground"
                 >
-                  {showPassword ? (
-                    <EyeOff className="h-5 w-5" />
-                  ) : (
-                    <Eye className="h-5 w-5" />
-                  )}
+                  {showPassword ? <EyeOff className="h-5 w-5" /> : <Eye className="h-5 w-5" />}
                 </button>
               )}
             </div>

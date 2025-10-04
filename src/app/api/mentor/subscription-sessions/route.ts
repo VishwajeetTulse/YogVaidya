@@ -10,7 +10,10 @@ const createSubscriptionSessionSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   scheduledTime: z.string().min(1, "Please select a date and time"),
   link: z.string().url("Please enter a valid session link"),
-  duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
+  duration: z
+    .number()
+    .min(15, "Duration must be at least 15 minutes")
+    .max(180, "Duration cannot exceed 3 hours"),
   sessionType: z.enum(["YOGA", "MEDITATION"], {
     required_error: "Session type is required for subscription sessions",
     invalid_type_error: "Subscription sessions can only be YOGA or MEDITATION",
@@ -21,25 +24,28 @@ const createSubscriptionSessionSchema = z.object({
 export async function POST(request: Request) {
   try {
     console.log("🚀 Creating subscription-based session...");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { title, scheduledTime, link, duration, sessionType, notes } = 
-      createSubscriptionSessionSchema.parse(body);
+    const {
+      title,
+      scheduledTime,
+      link,
+      duration,
+      sessionType,
+      notes: _notes,
+    } = createSubscriptionSessionSchema.parse(body);
 
     // Check if user is a mentor
     const user = await prisma.user.findFirst({
-      where: { 
+      where: {
         id: session.user.id,
-        role: "MENTOR"
-      }
+        role: "MENTOR",
+      },
     });
 
     if (!user) {
@@ -63,11 +69,15 @@ export async function POST(request: Request) {
         { status: 403 }
       );
     }
-    
+
     // DIET mentors cannot create subscription sessions (they don't have subscription plans)
     if (mentorType === "DIETPLANNER") {
       return NextResponse.json(
-        { success: false, error: "Subscription sessions are not available for Diet mentors. Diet mentors use individual time slots only." },
+        {
+          success: false,
+          error:
+            "Subscription sessions are not available for Diet mentors. Diet mentors use individual time slots only.",
+        },
         { status: 403 }
       );
     }
@@ -102,15 +112,15 @@ export async function POST(request: Request) {
         role: "USER",
         subscriptionStatus: "ACTIVE",
         subscriptionPlan: {
-          in: eligiblePlans
-        }
+          in: eligiblePlans,
+        },
       },
       select: {
         id: true,
         name: true,
         email: true,
-        subscriptionPlan: true
-      }
+        subscriptionPlan: true,
+      },
     });
 
     console.log(`📊 Found ${eligibleUsers.length} eligible users for ${sessionType} session`);
@@ -130,7 +140,7 @@ export async function POST(request: Request) {
         sessionType,
         status: "SCHEDULED",
         mentorId: session.user.id,
-      }
+      },
     });
 
     console.log("✅ Group subscription session created:", newSchedule.id);
@@ -138,9 +148,9 @@ export async function POST(request: Request) {
 
     // Count by subscription plan for response
     const planCounts = {
-      SEED: eligibleUsers.filter(u => u.subscriptionPlan === "SEED").length,
-      BLOOM: eligibleUsers.filter(u => u.subscriptionPlan === "BLOOM").length,
-      FLOURISH: eligibleUsers.filter(u => u.subscriptionPlan === "FLOURISH").length,
+      SEED: eligibleUsers.filter((u) => u.subscriptionPlan === "SEED").length,
+      BLOOM: eligibleUsers.filter((u) => u.subscriptionPlan === "BLOOM").length,
+      FLOURISH: eligibleUsers.filter((u) => u.subscriptionPlan === "FLOURISH").length,
     };
 
     // Prepare response data for group session
@@ -160,15 +170,14 @@ export async function POST(request: Request) {
           byPlan: planCounts,
         },
         sessionFormat: "GROUP", // Mark as group session
-        notes: "This is a group session available for all eligible subscription users"
-      }
+        notes: "This is a group session available for all eligible subscription users",
+      },
     };
 
     return NextResponse.json(response);
-
   } catch (error) {
     console.error("Error creating subscription session:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },
@@ -184,90 +193,87 @@ export async function POST(request: Request) {
 }
 
 // GET - Fetch subscription sessions for the mentor
-export async function GET(request: Request) {
+export async function GET() {
   try {
     console.log("🔍 Fetching subscription sessions...");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Get all schedules created by this mentor
     // Use $runCommandRaw to handle corrupted date strings in the database
     const scheduleResult = await prisma.$runCommandRaw({
-      aggregate: 'schedule',
+      aggregate: "schedule",
       pipeline: [
         {
           $match: {
-            mentorId: session.user.id
-          }
+            mentorId: session.user.id,
+          },
         },
         {
           $addFields: {
             scheduledTime: {
               $cond: {
-                if: { $and: [{ $ne: ['$scheduledTime', null] }, { $ne: ['$scheduledTime', ''] }] },
+                if: { $and: [{ $ne: ["$scheduledTime", null] }, { $ne: ["$scheduledTime", ""] }] },
                 then: {
                   $cond: {
-                    if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
+                    if: { $eq: [{ $type: "$scheduledTime" }, "date"] },
                     then: {
                       $dateToString: {
-                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
-                        date: '$scheduledTime'
-                      }
+                        format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                        date: "$scheduledTime",
+                      },
                     },
-                    else: '$scheduledTime'
-                  }
+                    else: "$scheduledTime",
+                  },
                 },
-                else: null
-              }
+                else: null,
+              },
             },
             createdAt: {
               $cond: {
-                if: { $and: [{ $ne: ['$createdAt', null] }, { $ne: ['$createdAt', ''] }] },
+                if: { $and: [{ $ne: ["$createdAt", null] }, { $ne: ["$createdAt", ""] }] },
                 then: {
                   $cond: {
-                    if: { $eq: [{ $type: '$createdAt' }, 'date'] },
+                    if: { $eq: [{ $type: "$createdAt" }, "date"] },
                     then: {
                       $dateToString: {
-                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
-                        date: '$createdAt'
-                      }
+                        format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                        date: "$createdAt",
+                      },
                     },
-                    else: '$createdAt'
-                  }
+                    else: "$createdAt",
+                  },
                 },
-                else: null
-              }
+                else: null,
+              },
             },
             updatedAt: {
               $cond: {
-                if: { $and: [{ $ne: ['$updatedAt', null] }, { $ne: ['$updatedAt', ''] }] },
+                if: { $and: [{ $ne: ["$updatedAt", null] }, { $ne: ["$updatedAt", ""] }] },
                 then: {
                   $cond: {
-                    if: { $eq: [{ $type: '$updatedAt' }, 'date'] },
+                    if: { $eq: [{ $type: "$updatedAt" }, "date"] },
                     then: {
                       $dateToString: {
-                        format: '%Y-%m-%dT%H:%M:%S.%LZ',
-                        date: '$updatedAt'
-                      }
+                        format: "%Y-%m-%dT%H:%M:%S.%LZ",
+                        date: "$updatedAt",
+                      },
                     },
-                    else: '$updatedAt'
-                  }
+                    else: "$updatedAt",
+                  },
                 },
-                else: null
-              }
-            }
-          }
+                else: null,
+              },
+            },
+          },
         },
         {
           $project: {
             _id: 1,
-            id: '$_id',
+            id: "$_id",
             title: 1,
             scheduledTime: 1,
             duration: 1,
@@ -277,34 +283,36 @@ export async function GET(request: Request) {
             notes: 1,
             mentorId: 1,
             createdAt: 1,
-            updatedAt: 1
-          }
+            updatedAt: 1,
+          },
         },
         {
-          $sort: { scheduledTime: -1 }
-        }
+          $sort: { scheduledTime: -1 },
+        },
       ],
-      cursor: {}
+      cursor: {},
     });
 
     let schedules: any[] = [];
-    if (scheduleResult &&
-        typeof scheduleResult === 'object' &&
-        'cursor' in scheduleResult &&
-        scheduleResult.cursor &&
-        typeof scheduleResult.cursor === 'object' &&
-        'firstBatch' in scheduleResult.cursor &&
-        Array.isArray(scheduleResult.cursor.firstBatch)) {
+    if (
+      scheduleResult &&
+      typeof scheduleResult === "object" &&
+      "cursor" in scheduleResult &&
+      scheduleResult.cursor &&
+      typeof scheduleResult.cursor === "object" &&
+      "firstBatch" in scheduleResult.cursor &&
+      Array.isArray(scheduleResult.cursor.firstBatch)
+    ) {
       schedules = scheduleResult.cursor.firstBatch;
     }
-    
+
     // Convert date strings to Date objects
-    schedules = schedules.map(schedule => ({
+    schedules = schedules.map((schedule) => ({
       ...schedule,
       id: schedule.id || schedule._id,
       scheduledTime: convertMongoDate(schedule.scheduledTime) || new Date(),
       createdAt: convertMongoDate(schedule.createdAt) || new Date(),
-      updatedAt: convertMongoDate(schedule.updatedAt) || new Date()
+      updatedAt: convertMongoDate(schedule.updatedAt) || new Date(),
     }));
 
     // For subscription sessions, we don't create individual bookings
@@ -324,22 +332,22 @@ export async function GET(request: Request) {
             role: "USER",
             subscriptionStatus: "ACTIVE",
             subscriptionPlan: {
-              in: eligiblePlans
-            }
+              in: eligiblePlans,
+            },
           },
           select: {
             id: true,
             name: true,
             email: true,
-            subscriptionPlan: true
-          }
+            subscriptionPlan: true,
+          },
         });
 
         // Count by subscription plan
         const planCounts = {
-          SEED: eligibleUsers.filter(u => u.subscriptionPlan === "SEED").length,
-          BLOOM: eligibleUsers.filter(u => u.subscriptionPlan === "BLOOM").length,
-          FLOURISH: eligibleUsers.filter(u => u.subscriptionPlan === "FLOURISH").length,
+          SEED: eligibleUsers.filter((u) => u.subscriptionPlan === "SEED").length,
+          BLOOM: eligibleUsers.filter((u) => u.subscriptionPlan === "BLOOM").length,
+          FLOURISH: eligibleUsers.filter((u) => u.subscriptionPlan === "FLOURISH").length,
         };
 
         // Keep datetime fields as Date objects (don't convert to ISO strings)
@@ -354,24 +362,21 @@ export async function GET(request: Request) {
           planCounts,
           bookings: [], // No individual bookings for subscription sessions
           sessionFormat: "GROUP",
-          notes: "This is a group session available for all eligible subscription users"
+          notes: "This is a group session available for all eligible subscription users",
         };
       })
     );
 
     return NextResponse.json({
       success: true,
-      data: enrichedSchedules
+      data: enrichedSchedules,
     });
-
   } catch (error) {
     console.error("Error fetching subscription sessions:", error);
-    
+
     return NextResponse.json(
       { success: false, error: "Failed to fetch subscription sessions" },
       { status: 500 }
     );
   }
 }
-
-

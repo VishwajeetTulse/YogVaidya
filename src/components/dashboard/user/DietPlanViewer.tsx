@@ -1,15 +1,15 @@
 "use client";
 
-import { useEditor, EditorContent } from '@tiptap/react';
-import StarterKit from '@tiptap/starter-kit';
-import { Table } from '@tiptap/extension-table';
-import { TableRow } from '@tiptap/extension-table-row';
-import { TableCell } from '@tiptap/extension-table-cell';
-import { TableHeader } from '@tiptap/extension-table-header';
-import { Image } from '@tiptap/extension-image';
-import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Calendar, User } from 'lucide-react';
+import { useEditor, EditorContent } from "@tiptap/react";
+import StarterKit from "@tiptap/starter-kit";
+import { Table } from "@tiptap/extension-table";
+import { TableRow } from "@tiptap/extension-table-row";
+import { TableCell } from "@tiptap/extension-table-cell";
+import { TableHeader } from "@tiptap/extension-table-header";
+import { Image } from "@tiptap/extension-image";
+import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Calendar, User } from "lucide-react";
 
 interface DietPlanViewerProps {
   title: string;
@@ -28,23 +28,15 @@ export function DietPlanViewer({
   mentorName,
   tags = [],
 }: DietPlanViewerProps) {
-  
   // Read-only editor
   const editor = useEditor({
     immediatelyRender: false, // Fix SSR hydration mismatch
-    extensions: [
-      StarterKit,
-      Table,
-      TableRow,
-      TableHeader,
-      TableCell,
-      Image,
-    ],
+    extensions: [StarterKit, Table, TableRow, TableHeader, TableCell, Image],
     content,
     editable: false, // Students can't edit
     editorProps: {
       attributes: {
-        class: 'prose prose-sm max-w-none p-4 bg-gray-50',
+        class: "prose prose-sm max-w-none p-4 bg-gray-50",
       },
     },
   });
@@ -55,9 +47,7 @@ export function DietPlanViewer({
     <Card>
       <CardHeader>
         <CardTitle>{title}</CardTitle>
-        {description && (
-          <p className="text-sm text-muted-foreground mt-2">{description}</p>
-        )}
+        {description && <p className="text-sm text-muted-foreground mt-2">{description}</p>}
         <div className="flex flex-wrap gap-2 mt-3">
           {tags.map((tag) => (
             <Badge key={tag} variant="secondary">
@@ -77,7 +67,7 @@ export function DietPlanViewer({
         </div>
       </CardHeader>
       <CardContent className="bg-gray-50">
-        <EditorContent 
+        <EditorContent
           editor={editor}
           className="[&_.ProseMirror]:bg-gray-50 [&_.ProseMirror_ul]:list-disc [&_.ProseMirror_ul]:pl-6 [&_.ProseMirror_ol]:list-decimal [&_.ProseMirror_ol]:pl-6 [&_.ProseMirror_li]:text-gray-900 [&_.ProseMirror]:text-gray-900 [&_.ProseMirror_table]:border-collapse [&_.ProseMirror_table]:w-full [&_.ProseMirror_td]:border [&_.ProseMirror_td]:border-gray-300 [&_.ProseMirror_td]:p-2 [&_.ProseMirror_th]:border [&_.ProseMirror_th]:border-gray-300 [&_.ProseMirror_th]:p-2 [&_.ProseMirror_th]:bg-gray-200 [&_.ProseMirror_th]:font-semibold"
         />

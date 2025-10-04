@@ -9,7 +9,7 @@ import {
   IndianRupee,
   FileText,
 } from "lucide-react";
-import { MentorSidebarMenuItem } from "./types";
+import { type MentorSidebarMenuItem } from "./types";
 
 export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
   {
@@ -67,4 +67,3 @@ export const MENTOR_SIDEBAR_MENU_ITEMS: MentorSidebarMenuItem[] = [
     description: "Get help and manage support tickets",
   },
 ];
-

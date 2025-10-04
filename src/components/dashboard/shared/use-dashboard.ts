@@ -2,8 +2,8 @@ import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
-import { getUserDetails, UserDetails } from "@/lib/userDetails";
-import { BaseHookResult } from "./types";
+import { getUserDetails, type UserDetails } from "@/lib/userDetails";
+import { type BaseHookResult } from "./types";
 
 export const useDashboard = (initialActiveSection = "overview"): BaseHookResult => {
   const router = useRouter();
@@ -12,10 +12,9 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
   const [loading, setLoading] = useState(true);
   const [activeSection, setActiveSection] = useState(initialActiveSection);
 
-  
-  const fetchUserDetails = useCallback( async () => {
+  const fetchUserDetails = useCallback(async () => {
     if (!session?.user?.id) return;
-    
+
     setLoading(true);
     try {
       const result = await getUserDetails(session.user.id);
@@ -34,8 +33,8 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
     } finally {
       setLoading(false);
     }
-  },[session]);
-  
+  }, [session]);
+
   useEffect(() => {
     if (session?.user?.id) {
       fetchUserDetails();
@@ -65,4 +64,3 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
     fetchUserDetails,
   };
 };
-

@@ -7,16 +7,16 @@ const { prisma } = require("./src/lib/config/prisma");
 async function checkOngoingSessions() {
   try {
     console.log("🔍 Checking ongoing sessions...");
-    
+
     const result = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
-      filter: { status: 'ONGOING' }
+      find: "sessionBooking",
+      filter: { status: "ONGOING" },
     });
-    
+
     if (result && result.cursor && result.cursor.firstBatch) {
       const sessions = result.cursor.firstBatch;
       console.log(`📊 Found ${sessions.length} ongoing sessions:`);
-      
+
       for (const session of sessions) {
         console.log("\n---");
         console.log(`Session ID: ${session._id}`);
@@ -27,19 +27,23 @@ async function checkOngoingSessions() {
         console.log(`Updated At: ${session.updatedAt}`);
         console.log(`Time Slot ID: ${session.timeSlotId}`);
         console.log(`Is Delayed: ${session.isDelayed}`);
-        
+
         // Check if time slot exists
         if (session.timeSlotId) {
           const timeSlotResult = await prisma.$runCommandRaw({
-            find: 'mentorTimeSlot',
-            filter: { _id: session.timeSlotId }
+            find: "mentorTimeSlot",
+            filter: { _id: session.timeSlotId },
           });
-          
-          if (timeSlotResult && timeSlotResult.cursor && timeSlotResult.cursor.firstBatch.length > 0) {
+
+          if (
+            timeSlotResult &&
+            timeSlotResult.cursor &&
+            timeSlotResult.cursor.firstBatch.length > 0
+          ) {
             const timeSlot = timeSlotResult.cursor.firstBatch[0];
             console.log(`Time Slot Start: ${timeSlot.startTime}`);
             console.log(`Time Slot End: ${timeSlot.endTime}`);
-            
+
             const start = new Date(timeSlot.startTime);
             const end = new Date(timeSlot.endTime);
             const durationMinutes = (end.getTime() - start.getTime()) / (1000 * 60);
@@ -52,7 +56,6 @@ async function checkOngoingSessions() {
     } else {
       console.log("✅ No ongoing sessions found");
     }
-    
   } catch (error) {
     console.error("❌ Error:", error);
   } finally {

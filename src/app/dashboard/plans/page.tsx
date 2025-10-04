@@ -7,7 +7,7 @@ import PlansDashboard from "@/components/dashboard/plans-dashboard";
 export default async function PlansPage() {
   // Check if user is authenticated
   const session = await auth.api.getSession({ headers: await headers() });
-  
+
   if (!session) {
     redirect("/signin");
   }
@@ -18,4 +18,3 @@ export default async function PlansPage() {
     </div>
   );
 }
-

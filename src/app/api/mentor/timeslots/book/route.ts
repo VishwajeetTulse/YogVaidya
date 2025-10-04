@@ -17,42 +17,38 @@ const bookTimeSlotSchema = z.object({
 export async function POST(request: Request) {
   try {
     console.log("🚀 Booking time slot...");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { timeSlotId, notes } = bookTimeSlotSchema.parse(body);
+    const { timeSlotId, notes: _notes } = bookTimeSlotSchema.parse(body);
 
     const { prisma } = await import("@/lib/config/prisma");
 
     // Get the time slot details
     const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
-      filter: { _id: timeSlotId, isActive: true }
+      find: "mentorTimeSlot",
+      filter: { _id: timeSlotId, isActive: true },
     });
 
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch)) {
+    if (
+      timeSlotResult &&
+      typeof timeSlotResult === "object" &&
+      "cursor" in timeSlotResult &&
+      timeSlotResult.cursor &&
+      typeof timeSlotResult.cursor === "object" &&
+      "firstBatch" in timeSlotResult.cursor &&
+      Array.isArray(timeSlotResult.cursor.firstBatch)
+    ) {
       timeSlot = timeSlotResult.cursor.firstBatch[0];
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
     // Check if slot is already booked or at capacity
@@ -65,23 +61,25 @@ export async function POST(request: Request) {
 
     // Check if user already has an active session with this mentor
     const existingSessionsResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
+      find: "sessionBooking",
       filter: {
         userId: session.user.id,
         mentorId: timeSlot.mentorId,
         status: { $in: ["PENDING", "CONFIRMED"] },
-        paymentStatus: "COMPLETED"
-      }
+        paymentStatus: "COMPLETED",
+      },
     });
 
     let existingSessions: any[] = [];
-    if (existingSessionsResult && 
-        typeof existingSessionsResult === 'object' && 
-        'cursor' in existingSessionsResult &&
-        existingSessionsResult.cursor &&
-        typeof existingSessionsResult.cursor === 'object' &&
-        'firstBatch' in existingSessionsResult.cursor &&
-        Array.isArray(existingSessionsResult.cursor.firstBatch)) {
+    if (
+      existingSessionsResult &&
+      typeof existingSessionsResult === "object" &&
+      "cursor" in existingSessionsResult &&
+      existingSessionsResult.cursor &&
+      typeof existingSessionsResult.cursor === "object" &&
+      "firstBatch" in existingSessionsResult.cursor &&
+      Array.isArray(existingSessionsResult.cursor.firstBatch)
+    ) {
       existingSessions = existingSessionsResult.cursor.firstBatch;
     }
 
@@ -94,29 +92,26 @@ export async function POST(request: Request) {
 
     // Get mentor details
     const mentor = await prisma.user.findFirst({
-      where: { 
+      where: {
         id: timeSlot.mentorId,
-        role: "MENTOR" 
+        role: "MENTOR",
       },
       select: {
         id: true,
         name: true,
         email: true,
         sessionPrice: true,
-        mentorType: true
-      }
+        mentorType: true,
+      },
     });
 
     if (!mentor) {
-      return NextResponse.json(
-        { success: false, error: "Mentor not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     // Create Razorpay order
     const amount = timeSlot.price || mentor.sessionPrice || 500; // Use slot price or mentor default
-    const orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+    const _orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const receipt = `ts_${Date.now()}`.substring(0, 13); // Limit to 13 characters
 
     const razorpayOrder = await razorpay.orders.create({
@@ -144,18 +139,17 @@ export async function POST(request: Request) {
           startTime: timeSlot.startTime,
           endTime: timeSlot.endTime,
           sessionType: timeSlot.sessionType,
-          price: amount
+          price: amount,
         },
         mentor: {
           name: mentor.name,
-          mentorType: mentor.mentorType
-        }
+          mentorType: mentor.mentorType,
+        },
       },
     });
-
   } catch (error) {
     console.error("Error booking time slot:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },

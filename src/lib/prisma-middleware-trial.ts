@@ -1,8 +1,6 @@
-
 // import { Prisma } from "@prisma/client";
 // import { startAutoTrialForNewUser } from "@/lib/subscriptions";
 // import { prisma } from "@/lib/config/prisma";
-
 
 // prisma.$use(async (params: Prisma.MiddlewareParams, next: (params: Prisma.MiddlewareParams) => Promise<unknown>) => {
 //   if (params.model === "User" && params.action === "create") {

@@ -1,7 +1,7 @@
-import React, { Suspense } from 'react';
-import { BaseSectionRendererProps, SectionConfig } from './types';
-import { LoadingSpinner } from './loading-spinner';
-import { SectionProps } from '../user/types';
+import React, { Suspense } from "react";
+import { type BaseSectionRendererProps, type SectionConfig } from "./types";
+import { LoadingSpinner } from "./loading-spinner";
+import { type SectionProps } from "../user/types";
 
 interface GenericSectionRendererProps<TProps = SectionProps> extends BaseSectionRendererProps {
   sections?: SectionConfig[];
@@ -9,7 +9,7 @@ interface GenericSectionRendererProps<TProps = SectionProps> extends BaseSection
   defaultSection?: string;
 }
 
-export const GenericSectionRenderer = <TProps = SectionProps>({
+export const GenericSectionRenderer = <TProps = SectionProps,>({
   activeSection,
   userDetails,
   setActiveSection,
@@ -17,11 +17,12 @@ export const GenericSectionRenderer = <TProps = SectionProps>({
   sectionComponentMap = {},
   defaultSection = "overview",
   ...otherProps
-}: GenericSectionRendererProps<TProps> ) => {
+}: GenericSectionRendererProps<TProps>) => {
   // Find the active section either in sections array or use the component map
-  const sectionConfig = sections.find(section => section.id === activeSection) || 
-                        sections.find(section => section.id === defaultSection);
-  if(userDetails === null) {
+  const sectionConfig =
+    sections.find((section) => section.id === activeSection) ||
+    sections.find((section) => section.id === defaultSection);
+  if (userDetails === null) {
     return (
       <div className="p-6 text-center">
         <h3 className="text-lg font-medium text-gray-700">Please log in</h3>
@@ -31,7 +32,7 @@ export const GenericSectionRenderer = <TProps = SectionProps>({
   }
   // Determine the component to render
   let ComponentToRender;
-  
+
   if (sectionConfig?.component) {
     // Use the component from the section config if available
     ComponentToRender = sectionConfig.component;
@@ -50,16 +51,21 @@ export const GenericSectionRenderer = <TProps = SectionProps>({
       </div>
     );
   }
-  
+
   // Pass all props to the section component
   return (
-    <Suspense fallback={<div className="py-6"><LoadingSpinner /></div>}>
-      <ComponentToRender 
-        userDetails={userDetails} 
-        setActiveSection={setActiveSection} 
-        {...otherProps as TProps} 
+    <Suspense
+      fallback={
+        <div className="py-6">
+          <LoadingSpinner />
+        </div>
+      }
+    >
+      <ComponentToRender
+        userDetails={userDetails}
+        setActiveSection={setActiveSection}
+        {...(otherProps as TProps)}
       />
     </Suspense>
   );
 };
-

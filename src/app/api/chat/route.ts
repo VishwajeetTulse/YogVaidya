@@ -1,14 +1,14 @@
-import { google } from '@ai-sdk/google';
-import { streamText } from 'ai';
+import { google } from "@ai-sdk/google";
+import { streamText } from "ai";
 
 // Allow streaming responses up to 30 seconds
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-console.log('Received messages:', messages);
+  console.log("Received messages:", messages);
   const result = streamText({
-    model: google('gemini-2.0-flash'),
+    model: google("gemini-2.0-flash"),
     messages,
     system: `You are YogVaidya AI Assistant, an intelligent wellness companion for the YogVaidya platform - India's premier yoga and meditation wellness application.
 
@@ -176,9 +176,8 @@ After your trial, select the plan that fits your lifestyle:
 - "Flexibility in both body and schedule - we adapt to your life"
 - "Safe, secure, and designed for Indian users"
 
-Always encourage first-time users to start their free trial, remind returning users about the available subscription plans, emphasize that there's no wrong way to begin, and remind them that our certified mentors are there to guide them every step of the way.`
-,
+Always encourage first-time users to start their free trial, remind returning users about the available subscription plans, emphasize that there's no wrong way to begin, and remind them that our certified mentors are there to guide them every step of the way.`,
   });
-  console.log('AI response:', result.text);
-  return result.toDataStreamResponse()
+  console.log("AI response:", result.text);
+  return result.toDataStreamResponse();
 }

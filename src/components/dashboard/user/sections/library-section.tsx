@@ -19,12 +19,13 @@ export const LibrarySection = () => {
         <h2 className="text-2xl font-bold text-gray-900 mb-4">Coming Soon...</h2>
 
         <p className="text-gray-500 text-center max-w-md mb-6">
-          We&apos;re working hard to bring you an amazing collection of yoga videos, meditation guides, and wellness articles. Stay tuned!
+          We&apos;re working hard to bring you an amazing collection of yoga videos, meditation
+          guides, and wellness articles. Stay tuned!
         </p>
 
         <div className="mt-8 w-full max-w-md">
           <div className="bg-gray-200 rounded-full h-2">
-            <div className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] h-2 rounded-full w-1/2 transition-all duration-300"></div>
+            <div className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] h-2 rounded-full w-1/2 transition-all duration-300" />
           </div>
           <p className="text-xs text-gray-500 mt-2 text-center">50% Complete</p>
         </div>
@@ -32,4 +33,3 @@ export const LibrarySection = () => {
     </div>
   );
 };
-

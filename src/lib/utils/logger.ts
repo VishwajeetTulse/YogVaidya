@@ -1,21 +1,29 @@
-import { Prisma } from "@prisma/client";
+import { type Prisma } from "@prisma/client";
 import { prisma } from "../config/prisma";
 import crypto from "crypto";
 
 type LogParams = {
   userId?: string;
   action: string;
-  category: "AUTHENTICATION" | "SYSTEM" | "USER" | "SUBSCRIPTION" | "PAYMENT" | "MENTOR" | "MODERATOR" | "ADMIN";
+  category:
+    | "AUTHENTICATION"
+    | "SYSTEM"
+    | "USER"
+    | "SUBSCRIPTION"
+    | "PAYMENT"
+    | "MENTOR"
+    | "MODERATOR"
+    | "ADMIN";
   details?: string;
   level: "INFO" | "WARNING" | "ERROR";
-  metadata?: Prisma.JsonValue; 
+  metadata?: Prisma.JsonValue;
   ipAddress?: string;
   userAgent?: string;
 };
 
 /**
  * Creates a new system log entry
- * 
+ *
  * @param logParams Log parameters
  * @returns The created log entry
  */
@@ -35,7 +43,7 @@ export async function createLogEntry(logParams: LogParams) {
         timestamp: new Date(),
       },
     });
-    
+
     return log;
   } catch (error) {
     console.error("Error creating log entry:", error);
@@ -46,7 +54,13 @@ export async function createLogEntry(logParams: LogParams) {
 /**
  * Creates a system INFO log entry
  */
-export function logInfo(action: string, category: LogParams["category"], details?: string, userId?: string, metadata?: Prisma.JsonValue) {
+export function logInfo(
+  action: string,
+  category: LogParams["category"],
+  details?: string,
+  userId?: string,
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category,
@@ -60,7 +74,13 @@ export function logInfo(action: string, category: LogParams["category"], details
 /**
  * Creates a system WARNING log entry
  */
-export function logWarning(action: string, category: LogParams["category"], details?: string, userId?: string, metadata?: Prisma.JsonValue) {
+export function logWarning(
+  action: string,
+  category: LogParams["category"],
+  details?: string,
+  userId?: string,
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category,
@@ -74,10 +94,17 @@ export function logWarning(action: string, category: LogParams["category"], deta
 /**
  * Creates a system ERROR log entry
  */
-export function logError(action: string, category: LogParams["category"], details?: string, userId?: string, metadata?: Prisma.JsonValue, error?:  Error) {
+export function logError(
+  action: string,
+  category: LogParams["category"],
+  details?: string,
+  userId?: string,
+  metadata?: Prisma.JsonValue,
+  error?: Error
+) {
   // If an error object is provided, add it to metadata
   const logMetadata = error ? { metadata, error: error.message, stack: error.stack } : metadata;
-  
+
   return createLogEntry({
     action,
     category,
@@ -91,7 +118,13 @@ export function logError(action: string, category: LogParams["category"], detail
 /**
  * Creates an authentication event log
  */
-export function logAuthEvent(action: string, userId?: string, details?: string, level: LogParams["level"] = "INFO", metadata?: Prisma.JsonValue) {
+export function logAuthEvent(
+  action: string,
+  userId?: string,
+  details?: string,
+  level: LogParams["level"] = "INFO",
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category: "AUTHENTICATION",
@@ -105,7 +138,13 @@ export function logAuthEvent(action: string, userId?: string, details?: string, 
 /**
  * Creates a subscription event log
  */
-export function logSubscriptionEvent(action: string, userId: string, details?: string, level: LogParams["level"] = "INFO", metadata?: Prisma.JsonValue) {
+export function logSubscriptionEvent(
+  action: string,
+  userId: string,
+  details?: string,
+  level: LogParams["level"] = "INFO",
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category: "SUBSCRIPTION",
@@ -119,7 +158,12 @@ export function logSubscriptionEvent(action: string, userId: string, details?: s
 /**
  * Creates a user action log
  */
-export function logUserAction(action: string, userId: string, details?: string, metadata?: Prisma.JsonValue) {
+export function logUserAction(
+  action: string,
+  userId: string,
+  details?: string,
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category: "USER",
@@ -133,7 +177,13 @@ export function logUserAction(action: string, userId: string, details?: string, 
 /**
  * Creates a payment event log
  */
-export function logPaymentEvent(action: string, userId: string, details?: string, level: LogParams["level"] = "INFO", metadata?: Prisma.JsonValue) {
+export function logPaymentEvent(
+  action: string,
+  userId: string,
+  details?: string,
+  level: LogParams["level"] = "INFO",
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category: "PAYMENT",
@@ -147,7 +197,12 @@ export function logPaymentEvent(action: string, userId: string, details?: string
 /**
  * Creates a system event log
  */
-export function logSystemEvent(action: string, details?: string, level: LogParams["level"] = "INFO", metadata?: Prisma.JsonValue) {
+export function logSystemEvent(
+  action: string,
+  details?: string,
+  level: LogParams["level"] = "INFO",
+  metadata?: Prisma.JsonValue
+) {
   return createLogEntry({
     action,
     category: "SYSTEM",
@@ -156,4 +211,3 @@ export function logSystemEvent(action: string, details?: string, level: LogParam
     metadata,
   });
 }
-

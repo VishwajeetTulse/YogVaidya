@@ -1,10 +1,7 @@
 "use client";
 
 import { Card } from "@/components/ui/card";
-import {
-  PhoneCall,
-  Mail,
-} from "lucide-react";
+import { PhoneCall, Mail } from "lucide-react";
 
 export const SupportSection = () => {
   return (
@@ -23,9 +20,7 @@ export const SupportSection = () => {
               <PhoneCall size={18} className="mr-2 text-primary" />
               Phone Support
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              Available Mon-Fri, 9am-5pm
-            </p>
+            <p className="text-sm text-gray-600 mt-1">Available Mon-Fri, 9am-5pm</p>
             <p className="font-medium mt-2">+1 (555) 123-4567</p>
           </div>
         </Card>
@@ -35,9 +30,7 @@ export const SupportSection = () => {
               <Mail size={18} className="mr-2 text-primary" />
               Email Support
             </h3>
-            <p className="text-sm text-gray-600 mt-1">
-              24/7 response within 24 hours
-            </p>
+            <p className="text-sm text-gray-600 mt-1">24/7 response within 24 hours</p>
             <p className="font-medium mt-2">support@yogavaidya.com</p>
           </div>
         </Card>
@@ -45,4 +38,3 @@ export const SupportSection = () => {
     </div>
   );
 };
-

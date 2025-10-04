@@ -7,14 +7,7 @@ import { Card } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Search,
-  Shield,
-  UserPlus,
-  Edit,
-  Trash2,
-  AlertCircle,
-} from "lucide-react";
+import { Search, Shield, UserPlus, Edit, Trash2, AlertCircle } from "lucide-react";
 import {
   Dialog,
   DialogContent,
@@ -41,7 +34,7 @@ interface UserPatch {
   email?: string;
   phone?: string;
   role?: string;
-  password?: string; 
+  password?: string;
 }
 
 export const ModeratorManagementSection = () => {
@@ -49,12 +42,8 @@ export const ModeratorManagementSection = () => {
   const [filteredModerators, setFilteredModerators] = useState<Moderator[]>([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState("");
-  const [editingModerator, setEditingModerator] = useState<Moderator | null>(
-    null
-  );
-  const [moderatorToDelete, setModeratorToDelete] = useState<Moderator | null>(
-    null
-  );
+  const [editingModerator, setEditingModerator] = useState<Moderator | null>(null);
+  const [moderatorToDelete, setModeratorToDelete] = useState<Moderator | null>(null);
   const [isCreateDialogOpen, setIsCreateDialogOpen] = useState(false);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isDeleteDialogOpen, setIsDeleteDialogOpen] = useState(false);
@@ -97,9 +86,7 @@ export const ModeratorManagementSection = () => {
 
       if (data.success && data.users) {
         // Filter out admin users, only show USER, MENTOR roles
-        const filteredUsers = data.users.filter(
-          (user: Moderator) => user.role === "MODERATOR"
-        );
+        const filteredUsers = data.users.filter((user: Moderator) => user.role === "MODERATOR");
         setModerators(filteredUsers);
         setFilteredModerators(filteredUsers);
       } else {
@@ -139,9 +126,7 @@ export const ModeratorManagementSection = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -193,9 +178,7 @@ export const ModeratorManagementSection = () => {
         fetchModerators(); // Refresh the list
         setIsCreateDialogOpen(false);
       } else {
-        toast.error(
-          `Failed to create moderator: ${data.error || "Unknown error"}`
-        );
+        toast.error(`Failed to create moderator: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error creating moderator:", error);
@@ -265,9 +248,7 @@ export const ModeratorManagementSection = () => {
         );
         setIsEditDialogOpen(false);
       } else {
-        toast.error(
-          `Failed to update moderator: ${data.error || "Unknown error"}`
-        );
+        toast.error(`Failed to update moderator: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error updating moderator:", error);
@@ -293,14 +274,10 @@ export const ModeratorManagementSection = () => {
 
       if (data.success) {
         toast.success("Moderator deleted successfully");
-        setModerators((mods) =>
-          mods.filter((m) => m.id !== moderatorToDelete.id)
-        );
+        setModerators((mods) => mods.filter((m) => m.id !== moderatorToDelete.id));
         setIsDeleteDialogOpen(false);
       } else {
-        toast.error(
-          `Failed to delete moderator: ${data.error || "Unknown error"}`
-        );
+        toast.error(`Failed to delete moderator: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error deleting moderator:", error);
@@ -321,17 +298,10 @@ export const ModeratorManagementSection = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Moderator Management
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Manage platform moderators and their permissions.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Moderator Management</h1>
+          <p className="text-gray-600 mt-2">Manage platform moderators and their permissions.</p>
         </div>
-        <Button
-          onClick={handleCreateModerator}
-          className="flex items-center gap-2"
-        >
+        <Button onClick={handleCreateModerator} className="flex items-center gap-2">
           <UserPlus className="h-4 w-4" />
           Add Moderator
         </Button>
@@ -358,9 +328,7 @@ export const ModeratorManagementSection = () => {
         ) : filteredModerators.length === 0 ? (
           <div className="text-center py-10">
             <Shield className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-lg font-semibold text-gray-700">
-              No Moderators Found
-            </p>
+            <p className="mt-2 text-lg font-semibold text-gray-700">No Moderators Found</p>
             <p className="text-gray-500">
               {searchTerm
                 ? "Try a different search term."
@@ -428,8 +396,7 @@ export const ModeratorManagementSection = () => {
           <DialogHeader>
             <DialogTitle>Add New Moderator</DialogTitle>
             <DialogDescription>
-              Create a new moderator account. Credentials will be emailed to the
-              moderator.
+              Create a new moderator account. Credentials will be emailed to the moderator.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
@@ -477,10 +444,7 @@ export const ModeratorManagementSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsCreateDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={submitCreateModerator}>Create Moderator</Button>
@@ -494,19 +458,13 @@ export const ModeratorManagementSection = () => {
           <DialogHeader>
             <DialogTitle>Edit Moderator</DialogTitle>
             <DialogDescription>
-              Update moderator information. Leave password empty to keep the
-              current password.
+              Update moderator information. Leave password empty to keep the current password.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="edit-name">Name *</Label>
-              <Input
-                id="edit-name"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-              />
+              <Input id="edit-name" name="name" value={formData.name} onChange={handleFormChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="edit-email">Email *</Label>
@@ -540,10 +498,7 @@ export const ModeratorManagementSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button onClick={submitModeratorEdit}>Save Changes</Button>
@@ -557,8 +512,7 @@ export const ModeratorManagementSection = () => {
           <DialogHeader>
             <DialogTitle>Confirm Delete</DialogTitle>
             <DialogDescription>
-              Are you sure you want to remove this moderator? This action cannot
-              be undone.
+              Are you sure you want to remove this moderator? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
           <div className="py-4">
@@ -577,10 +531,7 @@ export const ModeratorManagementSection = () => {
             )}
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
+            <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
             <Button variant="destructive" onClick={confirmDeleteModerator}>
@@ -592,4 +543,3 @@ export const ModeratorManagementSection = () => {
     </div>
   );
 };
-

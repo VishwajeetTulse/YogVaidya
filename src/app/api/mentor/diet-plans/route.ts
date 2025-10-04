@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
@@ -7,12 +7,9 @@ import { sendEmail } from "@/lib/services/email";
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user || session.user.role !== "MENTOR") {
-      return NextResponse.json(
-        { error: "Unauthorized - Mentors only" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized - Mentors only" }, { status: 401 });
     }
 
     const body = await req.json();
@@ -20,10 +17,7 @@ export async function POST(req: NextRequest) {
 
     // Validate mentor owns this action
     if (mentorId !== session.user.id) {
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 403 });
     }
 
     // Verify mentor is DIETPLANNER
@@ -42,25 +36,19 @@ export async function POST(req: NextRequest) {
     // Verify student has FLOURISH subscription (premium feature)
     const student = await prisma.user.findUnique({
       where: { id: studentId },
-      select: { 
-        name: true, 
+      select: {
+        name: true,
         email: true,
         subscriptionPlan: true,
-        subscriptionStatus: true 
+        subscriptionStatus: true,
       },
     });
 
     if (!student) {
-      return NextResponse.json(
-        { error: "Student not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ error: "Student not found" }, { status: 404 });
     }
 
-    if (
-      student.subscriptionPlan !== "FLOURISH" ||
-      student.subscriptionStatus !== "ACTIVE"
-    ) {
+    if (student.subscriptionPlan !== "FLOURISH" || student.subscriptionStatus !== "ACTIVE") {
       return NextResponse.json(
         { error: "Student must have active FLOURISH subscription" },
         { status: 403 }
@@ -84,7 +72,7 @@ export async function POST(req: NextRequest) {
     // Send email notification if not draft
     if (!isDraft) {
       const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
-      
+
       await sendEmail({
         to: student.email,
         subject: `New Diet Plan: ${title}`,
@@ -113,7 +101,7 @@ export async function POST(req: NextRequest) {
                 
                 <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #10b981;">${title}</h3>
-                  ${description ? `<p>${description}</p>` : ''}
+                  ${description ? `<p>${description}</p>` : ""}
                 </div>
 
                 <p>This plan has been carefully crafted to help you achieve your health and wellness goals.</p>
@@ -141,13 +129,9 @@ export async function POST(req: NextRequest) {
       success: true,
       dietPlan,
     });
-
   } catch (error) {
     console.error("Error creating diet plan:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -155,15 +139,12 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     console.log("🔍 GET Diet Plans - User:", session?.user?.id, "Role:", session?.user?.role);
-    
+
     if (!session?.user) {
       console.error("❌ Unauthorized - No session");
-      return NextResponse.json(
-        { error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
     const { searchParams } = new URL(req.url);
@@ -190,7 +171,7 @@ export async function GET(req: NextRequest) {
         // Student viewing their received plans
         console.log("🎓 Fetching plans for STUDENT:", session.user.id);
         dietPlans = await (prisma as any).dietPlan.findMany({
-          where: { 
+          where: {
             studentId: session.user.id,
             isDraft: false, // Students don't see drafts
           },
@@ -205,7 +186,10 @@ export async function GET(req: NextRequest) {
     } catch (dbError) {
       console.error("❌ Database error:", dbError);
       return NextResponse.json(
-        { error: "Database error", details: dbError instanceof Error ? dbError.message : String(dbError) },
+        {
+          error: "Database error",
+          details: dbError instanceof Error ? dbError.message : String(dbError),
+        },
         { status: 500 }
       );
     }
@@ -213,17 +197,17 @@ export async function GET(req: NextRequest) {
     // Transform tags - handle both string and array formats
     const transformedDietPlans = dietPlans.map((plan: any) => {
       let tags = [];
-      
+
       if (plan.tags) {
-        if (typeof plan.tags === 'string') {
+        if (typeof plan.tags === "string") {
           // Tags stored as comma-separated string
-          tags = plan.tags.split(',').map((t: string) => t.trim());
+          tags = plan.tags.split(",").map((t: string) => t.trim());
         } else if (Array.isArray(plan.tags)) {
           // Tags already an array
           tags = plan.tags;
         }
       }
-      
+
       return {
         ...plan,
         tags,
@@ -232,12 +216,8 @@ export async function GET(req: NextRequest) {
 
     console.log("✅ Returning", transformedDietPlans.length, "diet plans");
     return NextResponse.json({ dietPlans: transformedDietPlans });
-
   } catch (error) {
     console.error("❌ Error fetching diet plans:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

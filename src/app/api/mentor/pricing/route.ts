@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
@@ -43,10 +43,7 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error("Error fetching mentor pricing:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch pricing" },
-      { status: 500 }
-    );
+    return NextResponse.json({ success: false, error: "Failed to fetch pricing" }, { status: 500 });
   }
 }
 

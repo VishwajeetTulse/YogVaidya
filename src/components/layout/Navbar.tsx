@@ -21,7 +21,6 @@ export default function Navbar({
   navItems = [],
   currentPath = "",
 }: NavbarProps) {
-  
   const { data: session } = useSession();
 
   return (
@@ -42,9 +41,7 @@ export default function Navbar({
               <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
             </svg>
           </div>
-          <span className="text-2xl font-semibold text-gray-800">
-            YogVaidya
-          </span>
+          <span className="text-2xl font-semibold text-gray-800">YogVaidya</span>
         </Link>
       </div>
 
@@ -68,7 +65,10 @@ export default function Navbar({
 
       <div className="flex items-center space-x-4">
         {showBackButton && (
-          <Link href="/" className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center mr-4">
+          <Link
+            href="/"
+            className="text-gray-800 hover:text-indigo-600 transition-colors flex items-center mr-4"
+          >
             <ArrowLeft className="mr-2 h-4 w-4" />
             Back to Home
           </Link>
@@ -77,7 +77,10 @@ export default function Navbar({
         {!session && (
           <>
             <Link href="/signin?from=navbar">
-              <Button variant="outline" className="rounded-full border-2 border-gray-900 hover:bg-gray-100 text-gray-900">
+              <Button
+                variant="outline"
+                className="rounded-full border-2 border-gray-900 hover:bg-gray-100 text-gray-900"
+              >
                 Sign In
               </Button>
             </Link>

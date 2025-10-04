@@ -13,9 +13,8 @@ import {
   Shield,
   Check,
   IndianRupee as IndianRupeeIcon,
-  Loader2,
 } from "lucide-react";
-import { SectionProps } from "../types";
+import { type SectionProps } from "../types";
 import { toast } from "sonner";
 import { useState } from "react";
 import { getUserSubscription } from "@/lib/subscriptions";
@@ -30,7 +29,7 @@ export const PlansSection = ({
 }: SectionProps) => {
   const [isUpgrading, setIsUpgrading] = useState(false);
 
-  const handleUpgrade = async (planId: string) => {
+  const _handleUpgrade = async (planId: string) => {
     if (isUpgrading) return;
 
     try {
@@ -44,13 +43,16 @@ export const PlansSection = ({
 
       // Check the subscription status
       const subscription = await getUserSubscription(userDetails.id);
-      const isNewOrInactive = !subscription.success || 
-        !subscription.subscription?.subscriptionPlan || 
-        subscription.subscription.subscriptionStatus === 'INACTIVE';
+      const isNewOrInactive =
+        !subscription.success ||
+        !subscription.subscription?.subscriptionPlan ||
+        subscription.subscription.subscriptionStatus === "INACTIVE";
 
       // Block upgrades if subscription is cancelled but still active
-      if (subscription.subscription?.subscriptionStatus === 'ACTIVE_UNTIL_END') {
-        toast.error("You cannot upgrade or change plans while your subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period.");
+      if (subscription.subscription?.subscriptionStatus === "ACTIVE_UNTIL_END") {
+        toast.error(
+          "You cannot upgrade or change plans while your subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period."
+        );
         return;
       }
 
@@ -65,7 +67,9 @@ export const PlansSection = ({
       // For existing active subscriptions, proceed with upgrade/switch
       // If current plan is annual
       if (userDetails.billingPeriod === "annual") {
-        toast.error("Cannot upgrade or switch while on an annual plan. Please wait until your current subscription ends.");
+        toast.error(
+          "Cannot upgrade or switch while on an annual plan. Please wait until your current subscription ends."
+        );
         return;
       }
 
@@ -80,12 +84,12 @@ export const PlansSection = ({
 
       // Handle success
       const { isPlanSwitch, equivalentDays } = result.details || {};
-      
+
       if (isPlanSwitch) {
         toast.success("Successfully switched plans!");
       } else {
         toast.success(
-          equivalentDays 
+          equivalentDays
             ? `Successfully upgraded! Your new plan includes ${equivalentDays} days based on your remaining time.`
             : "Successfully upgraded to the new plan!"
         );
@@ -95,7 +99,6 @@ export const PlansSection = ({
       setTimeout(() => {
         window.location.reload();
       }, 1500);
-
     } catch (error) {
       console.error("Error during upgrade:", error);
       toast.error("An unexpected error occurred. Please try again.");
@@ -107,13 +110,13 @@ export const PlansSection = ({
   // Helper function to get appropriate error message
   const getUpgradeErrorMessage = (code?: string, defaultError?: string) => {
     switch (code) {
-      case 'UPGRADE_TIME_EXCEEDED':
+      case "UPGRADE_TIME_EXCEEDED":
         return "Cannot upgrade when more than 2/3 through your billing cycle. Please try again closer to your renewal date.";
-      case 'ANNUAL_CHANGES_NOT_ALLOWED':
+      case "ANNUAL_CHANGES_NOT_ALLOWED":
         return "Cannot upgrade while on an annual plan. Please wait until your current subscription ends.";
-      case 'INVALID_UPGRADE_PATH':
+      case "INVALID_UPGRADE_PATH":
         return "Cannot downgrade to a lower tier plan.";
-      case 'UPGRADE_BLOCKED_CANCELLATION':
+      case "UPGRADE_BLOCKED_CANCELLATION":
         return "Cannot upgrade or change plans while your subscription is scheduled for cancellation. Your current plan will remain active until the end of your billing period.";
       default:
         return defaultError || "Failed to process upgrade";
@@ -208,9 +211,7 @@ export const PlansSection = ({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Upgrade Plans</h1>
-        <p className="text-gray-600 mt-2">
-          Choose the perfect plan for your wellness journey.
-        </p>
+        <p className="text-gray-600 mt-2">Choose the perfect plan for your wellness journey.</p>
       </div>
 
       {/* View Mode Toggle */}
@@ -283,9 +284,7 @@ export const PlansSection = ({
               className={`bg-gradient-to-b ${
                 plan.gradient
               } rounded-3xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl hover:translate-y-[-8px] h-full relative ${
-                plan.isPopular
-                  ? "transform md:scale-105 z-10 ring-4 ring-white/50"
-                  : ""
+                plan.isPopular ? "transform md:scale-105 z-10 ring-4 ring-white/50" : ""
               }`}
             >
               <div className="p-8 flex flex-col h-full">
@@ -297,18 +296,14 @@ export const PlansSection = ({
                         {plan.icon}
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">
-                          {plan.name}
-                        </h3>
+                        <h3 className="text-xl font-bold text-white">{plan.name}</h3>
                         <span className="text-xs font-medium bg-white/20 text-white px-3 py-1 rounded-full uppercase">
                           {plan.badge}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-white/90 text-sm">
-                    {plan.description}
-                  </p>
+                  <p className="text-white/90 text-sm">{plan.description}</p>
                 </div>
                 {/* Price */}
                 <div className="mb-8">
@@ -317,9 +312,7 @@ export const PlansSection = ({
                       <IndianRupeeIcon className="w-6 h-6" />
                       {applyDiscount(plan.price)}
                     </span>
-                    <span className="text-white/70 ml-2 mb-1 text-sm">
-                      / month
-                    </span>
+                    <span className="text-white/70 ml-2 mb-1 text-sm">/ month</span>
                   </div>
                   {billingPeriod === "annual" && plan.price > 0 && (
                     <div className="text-white/80 text-sm">
@@ -337,9 +330,7 @@ export const PlansSection = ({
                       <div className="w-5 h-5 text-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">
                         {feature.icon}
                       </div>
-                      <span className="text-white text-sm">
-                        {feature.text}
-                      </span>
+                      <span className="text-white text-sm">{feature.text}</span>
                     </div>
                   ))}
                 </div>
@@ -369,7 +360,7 @@ export const PlansSection = ({
                   //   )}
                   // </Button>
                   <Button
-                    className={`mt-auto w-full py-3 sm:py-4 rounded-xl bg-gray-400 text-white cursor-not-allowed transition-all duration-300 font-semibold text-xs sm:text-sm md:text-base`}
+                    className="mt-auto w-full py-3 sm:py-4 rounded-xl bg-gray-400 text-white cursor-not-allowed transition-all duration-300 font-semibold text-xs sm:text-sm md:text-base"
                     disabled={true}
                   >
                     <span className="hidden sm:inline">UPGRADE TEMPORARILY UNAVAILABLE</span>
@@ -387,29 +378,20 @@ export const PlansSection = ({
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
                 <tr>
-                  <th className="text-left p-6 font-semibold text-gray-900">
-                    Features
-                  </th>
+                  <th className="text-left p-6 font-semibold text-gray-900">Features</th>
                   {plans.map((plan) => (
-                    <th
-                      key={plan.id}
-                      className="text-center p-6 min-w-[200px]"
-                    >
+                    <th key={plan.id} className="text-center p-6 min-w-[200px]">
                       <div className="space-y-2">
                         <div
                           className={`w-12 h-12 rounded-full bg-gradient-to-br ${plan.gradient} flex items-center justify-center mx-auto`}
                         >
                           {plan.icon}
                         </div>
-                        <h3 className="font-bold text-gray-900">
-                          {plan.name}
-                        </h3>
+                        <h3 className="font-bold text-gray-900">{plan.name}</h3>
                         <div className="text-2xl font-bold text-gray-900 flex items-center justify-center">
                           <IndianRupeeIcon className="w-5 h-5" />
                           {applyDiscount(plan.price)}
-                          <span className="text-sm text-gray-500 ml-1">
-                            / month
-                          </span>
+                          <span className="text-sm text-gray-500 ml-1">/ month</span>
                         </div>
                       </div>
                     </th>
@@ -418,39 +400,24 @@ export const PlansSection = ({
               </thead>
               <tbody>
                 {/* Extract all unique features */}
-                {Array.from(
-                  new Set(
-                    plans.flatMap((plan) =>
-                      plan.features.map((f) => f.text)
-                    )
+                {Array.from(new Set(plans.flatMap((plan) => plan.features.map((f) => f.text)))).map(
+                  (featureText, index) => (
+                    <tr key={index} className={index % 2 === 0 ? "bg-gray-50/50" : "bg-white"}>
+                      <td className="p-4 font-medium text-gray-900">{featureText}</td>
+                      {plans.map((plan) => (
+                        <td key={plan.id} className="p-4 text-center">
+                          {plan.features.some((f) => f.text === featureText) ? (
+                            <Check className="w-5 h-5 text-green-500 mx-auto" />
+                          ) : (
+                            <span className="text-gray-300">—</span>
+                          )}
+                        </td>
+                      ))}
+                    </tr>
                   )
-                ).map((featureText, index) => (
-                  <tr
-                    key={index}
-                    className={
-                      index % 2 === 0 ? "bg-gray-50/50" : "bg-white"
-                    }
-                  >
-                    <td className="p-4 font-medium text-gray-900">
-                      {featureText}
-                    </td>
-                    {plans.map((plan) => (
-                      <td key={plan.id} className="p-4 text-center">
-                        {plan.features.some(
-                          (f) => f.text === featureText
-                        ) ? (
-                          <Check className="w-5 h-5 text-green-500 mx-auto" />
-                        ) : (
-                          <span className="text-gray-300">—</span>
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
+                )}
                 <tr className="bg-gray-50">
-                  <td className="p-6 font-semibold text-gray-900">
-                    Choose Plan
-                  </td>
+                  <td className="p-6 font-semibold text-gray-900">Choose Plan</td>
                   {plans.map((plan) => (
                     <td key={plan.id} className="p-6 text-center">
                       {" "}
@@ -496,4 +463,3 @@ export const PlansSection = ({
     </div>
   );
 };
-

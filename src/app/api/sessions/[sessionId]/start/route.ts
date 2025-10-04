@@ -1,7 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
-import { prisma } from "@/lib/config/prisma";
-import { convertMongoDate } from "@/lib/utils/datetime-utils";
 
 /**
  * POST /api/sessions/[sessionId]/start
@@ -15,10 +13,7 @@ export async function POST(
     const { sessionId } = await params;
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
     }
 
     // Find the session using the robust service
@@ -34,7 +29,7 @@ export async function POST(
     const session = lookupResult.session;
 
     // Check if session is in SCHEDULED status
-    if (session.status !== 'SCHEDULED') {
+    if (session.status !== "SCHEDULED") {
       return NextResponse.json(
         { error: `Session is already ${session.status.toLowerCase()}` },
         { status: 400 }
@@ -55,14 +50,10 @@ export async function POST(
       success: true,
       message: "Session started successfully",
       sessionId,
-      newStatus: "ONGOING"
+      newStatus: "ONGOING",
     });
-
   } catch (error) {
     console.error("Error starting session:", error);
-    return NextResponse.json(
-      { error: "Failed to start session" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to start session" }, { status: 500 });
   }
 }

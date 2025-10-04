@@ -1,14 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketStatus } from "@/lib/types/tickets";
-import { TicketLogger, TicketAction, TicketLogLevel } from "@/lib/utils/ticket-logger";
+import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
 
 // PATCH /api/tickets/[id]/status - Update ticket status
-export async function PATCH(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -17,7 +14,7 @@ export async function PATCH(
     }
 
     // Only moderators and admins can update ticket status
-    if (!['MODERATOR', 'ADMIN'].includes(session.user.role)) {
+    if (!["MODERATOR", "ADMIN"].includes(session.user.role)) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
@@ -26,24 +23,18 @@ export async function PATCH(
 
     // Validate status
     if (!Object.values(TicketStatus).includes(status)) {
-      return NextResponse.json(
-        { error: "Invalid status" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Invalid status" }, { status: 400 });
     }
 
     try {
       // First, get the current ticket to log the status change
       const currentTicket = await (prisma as any).ticket?.findUnique({
         where: { id: ticketId },
-        select: { status: true, ticketNumber: true }
+        select: { status: true, ticketNumber: true },
       });
 
       if (!currentTicket) {
-        return NextResponse.json(
-          { error: "Ticket not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       }
 
       const oldStatus = currentTicket.status;
@@ -51,7 +42,7 @@ export async function PATCH(
       // Prepare update data
       const updateData: any = {
         status,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       };
 
       // Add timestamp fields based on status
@@ -74,25 +65,22 @@ export async function PATCH(
               id: true,
               name: true,
               email: true,
-              role: true
-            }
+              role: true,
+            },
           },
           assignedTo: {
             select: {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       if (!updatedTicket) {
-        return NextResponse.json(
-          { error: "Ticket not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       }
 
       // Log the status change
@@ -109,21 +97,20 @@ export async function PATCH(
       await (prisma as any).ticketMessage?.create({
         data: {
           id: crypto.randomUUID(),
-          content: `Ticket status changed to ${status.replace('_', ' ').toLowerCase()}`,
+          content: `Ticket status changed to ${status.replace("_", " ").toLowerCase()}`,
           ticketId: ticketId,
           authorId: session.user.id,
-          isInternal: true
-        }
+          isInternal: true,
+        },
       });
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
-        ticket: updatedTicket 
+        ticket: updatedTicket,
       });
-
     } catch (dbError) {
       console.error("Database error updating ticket status:", dbError);
-      
+
       // Log the error
       await TicketLogger.logError(
         session.user.id,
@@ -133,18 +120,11 @@ export async function PATCH(
         undefined,
         request
       );
-      
-      return NextResponse.json(
-        { error: "Failed to update ticket status" },
-        { status: 500 }
-      );
-    }
 
+      return NextResponse.json({ error: "Failed to update ticket status" }, { status: 500 });
+    }
   } catch (error) {
     console.error("Error in ticket status update:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

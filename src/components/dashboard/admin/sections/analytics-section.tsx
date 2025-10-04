@@ -3,12 +3,7 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  TrendingUp,
-  DollarSign,
-} from "lucide-react";
-import { Badge } from "@/components/ui/badge";
+import { Users, TrendingUp, DollarSign } from "lucide-react";
 
 interface AnalyticsData {
   users: {
@@ -43,9 +38,7 @@ interface AnalyticsData {
 }
 
 export const AnalyticsSection = () => {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
-    null
-  );
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -60,11 +53,10 @@ export const AnalyticsSection = () => {
         const data = await response.json();
 
         if (!response.ok) {
-          const errorMessage =
-            data?.details || data?.error || "Failed to fetch analytics data";
+          const errorMessage = data?.details || data?.error || "Failed to fetch analytics data";
           throw new Error(errorMessage);
         }
-        
+
         // Ensure all expected properties exist, providing fallbacks as needed
         const sanitizedData = {
           users: {
@@ -106,11 +98,10 @@ export const AnalyticsSection = () => {
             responseTime: data.systemHealth?.responseTime || 250,
           },
         };
-        
+
         setAnalyticsData(sanitizedData);
         console.log("Analytics data fetched successfully:", sanitizedData);
         setLoading(false); // Success! Stop loading
-        
       } catch (err) {
         console.error("Analytics error:", err);
 
@@ -122,9 +113,7 @@ export const AnalyticsSection = () => {
         }
 
         // If we've reached max retries, show error
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
         setLoading(false); // Stop loading even on error if max retries reached
       }
     };
@@ -138,9 +127,7 @@ export const AnalyticsSection = () => {
       // Exponential backoff: 2^retryCount * 1000ms (1s, 2s, 4s)
       const delay = Math.pow(2, retryCount) * 1000;
       console.log(
-        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${
-          MAX_RETRIES + 1
-        })`
+        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`
       );
 
       retryTimer = setTimeout(() => {
@@ -192,9 +179,7 @@ export const AnalyticsSection = () => {
           <h4 className="font-medium">Troubleshooting Tips:</h4>
           <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
             <li>Verify you have admin permissions</li>
-            <li>
-              Check if your user session is valid (try logging out and back in)
-            </li>
+            <li>Check if your user session is valid (try logging out and back in)</li>
             <li>Check the server logs for any API errors</li>
             <li>Contact the system administrator if the problem persists</li>
           </ul>
@@ -253,11 +238,13 @@ export const AnalyticsSection = () => {
 
       {/* Growth Chart - Full Width */}
       <Card className="p-6 shadow-sm">
-        <h2 className="font-semibold text-xl mb-6">User Growth {analyticsData.revenueGrowth ? '& Revenue' : ''}</h2>
+        <h2 className="font-semibold text-xl mb-6">
+          User Growth {analyticsData.revenueGrowth ? "& Revenue" : ""}
+        </h2>
         <div className="h-80">
-          <CombinedGrowthChart 
-            userData={analyticsData.userGrowth} 
-            revenueData={analyticsData.revenueGrowth} 
+          <CombinedGrowthChart
+            userData={analyticsData.userGrowth}
+            revenueData={analyticsData.revenueGrowth}
           />
         </div>
       </Card>
@@ -307,17 +294,23 @@ export const AnalyticsSection = () => {
             </div>
             <div className="w-full bg-gray-200 rounded-full h-3 mt-4">
               <div className="flex h-3 rounded-full overflow-hidden">
-                <div 
-                  className="bg-green-500" 
-                  style={{ width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%` }}
+                <div
+                  className="bg-green-500"
+                  style={{
+                    width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%`,
+                  }}
                 />
-                <div 
-                  className="bg-amber-500" 
-                  style={{ width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%` }}
+                <div
+                  className="bg-amber-500"
+                  style={{
+                    width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%`,
+                  }}
                 />
-                <div 
-                  className="bg-red-500" 
-                  style={{ width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%` }}
+                <div
+                  className="bg-red-500"
+                  style={{
+                    width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%`,
+                  }}
                 />
               </div>
             </div>
@@ -351,9 +344,9 @@ const StatCard = ({
       <div>
         <p className="text-sm font-medium text-gray-500">{title}</p>
         <p className="text-3xl font-bold mt-1">
-          {isCurrency ? '₹' : ''}
+          {isCurrency ? "₹" : ""}
           {value.toLocaleString()}
-          {isPercentage ? '%' : ''}
+          {isPercentage ? "%" : ""}
         </p>
       </div>
       <div className="p-2 rounded-full bg-white bg-opacity-70">{icon}</div>
@@ -387,7 +380,11 @@ const CombinedGrowthChart = ({
           const heightPercentage = (item.count / maxCount) * 100;
 
           return (
-            <div key={index} className="h-full flex flex-col items-center justify-end" style={{ width: '100px' }}>
+            <div
+              key={index}
+              className="h-full flex flex-col items-center justify-end"
+              style={{ width: "100px" }}
+            >
               <div className="h-full flex items-end justify-center w-full">
                 <div className="h-full flex flex-col items-center justify-end">
                   <div
@@ -395,7 +392,7 @@ const CombinedGrowthChart = ({
                     style={{
                       height: `${heightPercentage}%`,
                     }}
-                  ></div>
+                  />
                   <span className="text-sm font-medium mt-2">{item.count}</span>
                 </div>
               </div>
@@ -421,7 +418,11 @@ const CombinedGrowthChart = ({
         const revenueHeightPercentage = (revenueItem.amount / maxRevenue) * 100;
 
         return (
-          <div key={index} className="h-full flex flex-col items-center justify-end space-x-2" style={{ width: '100px' }}>
+          <div
+            key={index}
+            className="h-full flex flex-col items-center justify-end space-x-2"
+            style={{ width: "100px" }}
+          >
             <div className="h-full flex items-end justify-center w-full space-x-2">
               <div className="h-full flex flex-col items-center justify-end">
                 <div
@@ -481,9 +482,7 @@ const RoleDistribution = ({
             </div>
             <div className="h-2 rounded-full bg-gray-200">
               <div
-                className={`h-2 rounded-full ${
-                  roleColors[role] || "bg-gray-500"
-                }`}
+                className={`h-2 rounded-full ${roleColors[role] || "bg-gray-500"}`}
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -522,9 +521,7 @@ const SubscriptionDistribution = ({
             </div>
             <div className="h-2 rounded-full bg-gray-200">
               <div
-                className={`h-2 rounded-full ${
-                  planColors[plan] || "bg-gray-500"
-                }`}
+                className={`h-2 rounded-full ${planColors[plan] || "bg-gray-500"}`}
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -539,9 +536,7 @@ const AnalyticsLoading = () => (
   <div className="space-y-6">
     <div>
       <h1 className="text-3xl font-bold text-gray-900">Admin Analytics</h1>
-      <p className="text-gray-600 mt-2">
-        Comprehensive platform insights and performance metrics.
-      </p>
+      <p className="text-gray-600 mt-2">Comprehensive platform insights and performance metrics.</p>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">

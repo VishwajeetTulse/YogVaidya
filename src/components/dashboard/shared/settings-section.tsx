@@ -10,7 +10,7 @@ import { toast } from "sonner";
 import { Bell, User, Lock, Settings } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { updateUserProfile } from "@/lib/server/settings-server";
-import { UserDetails } from "@/lib/userDetails";
+import { type UserDetails } from "@/lib/userDetails";
 
 export interface SharedSettingsSectionProps {
   userDetails: UserDetails;
@@ -18,10 +18,10 @@ export interface SharedSettingsSectionProps {
   roleLabel?: string;
 }
 
-export const SharedSettingsSection = ({ 
-  userDetails, 
-  role, 
-  roleLabel 
+export const SharedSettingsSection = ({
+  userDetails,
+  role,
+  roleLabel,
 }: SharedSettingsSectionProps) => {
   const [isPending, startTransition] = useTransition();
   const [displayName, setDisplayName] = useState(userDetails?.name || "");
@@ -70,11 +70,16 @@ export const SharedSettingsSection = ({
   const getRoleDisplayName = () => {
     if (roleLabel) return roleLabel;
     switch (role) {
-      case "admin": return "Administrator";
-      case "mentor": return "Yoga Instructor";
-      case "moderator": return "Moderator";
-      case "user": return "Student";
-      default: return "User";
+      case "admin":
+        return "Administrator";
+      case "mentor":
+        return "Yoga Instructor";
+      case "moderator":
+        return "Moderator";
+      case "user":
+        return "Student";
+      default:
+        return "User";
     }
   };
 
@@ -97,9 +102,7 @@ export const SharedSettingsSection = ({
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
-        <p className="text-gray-600 mt-2">
-          {getPageDescription()}
-        </p>
+        <p className="text-gray-600 mt-2">{getPageDescription()}</p>
       </div>
 
       {/* Profile Information */}
@@ -146,12 +149,7 @@ export const SharedSettingsSection = ({
 
           <div className="space-y-2">
             <Label htmlFor="role">Role</Label>
-            <Input
-              id="role"
-              value={getRoleDisplayName()}
-              disabled={true}
-              className="bg-gray-100"
-            />
+            <Input id="role" value={getRoleDisplayName()} disabled={true} className="bg-gray-100" />
           </div>
         </div>
 
@@ -190,10 +188,11 @@ export const SharedSettingsSection = ({
         <div className="space-y-4">
           {/* Notification settings under development */}
           <div className="text-gray-500 text-sm">
-            <p className="mb-2">
-              Notification settings are currently under development.
+            <p className="mb-2">Notification settings are currently under development.</p>
+            <p className="italic">
+              Features like email notifications, push notifications, and role-specific alerts will
+              be available in a future update.
             </p>
-            <p className="italic">Features like email notifications, push notifications, and role-specific alerts will be available in a future update.</p>
           </div>
         </div>
       </Card>
@@ -210,7 +209,8 @@ export const SharedSettingsSection = ({
           <div className="space-y-4">
             <div className="text-gray-500 text-sm">
               <p className="mb-2">
-                App preferences such as theme, language, and display options are currently under development.
+                App preferences such as theme, language, and display options are currently under
+                development.
               </p>
               <p className="italic">These features will be available in a future update.</p>
             </div>
@@ -220,4 +220,3 @@ export const SharedSettingsSection = ({
     </div>
   );
 };
-

@@ -7,7 +7,7 @@ export async function GET() {
   try {
     // Get the session
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
@@ -28,25 +28,21 @@ export async function GET() {
         subscriptionPlan: true,
         subscriptionStatus: true,
         createdAt: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "User not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     return NextResponse.json({
       success: true,
       user: {
         ...user,
-        hasPhone: !!user.phone
-      }
+        hasPhone: !!user.phone,
+      },
     });
-
   } catch (error) {
     console.error("Error fetching user profile:", error);
     return NextResponse.json(

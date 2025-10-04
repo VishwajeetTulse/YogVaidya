@@ -4,16 +4,7 @@ import React, { useEffect, useState } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { 
-  Users, 
-  Crown, 
-  Zap, 
-  Shield, 
-  Heart,
-  Clock,
-  CheckCircle,
-  MessageSquare
-} from "lucide-react";
+import { Users, Crown, Zap, Shield, Heart, Clock, CheckCircle, MessageSquare } from "lucide-react";
 import Link from "next/link";
 
 interface SubscriptionBenefitsShowcaseProps {
@@ -36,11 +27,11 @@ const planFeatures = {
       "Guided meditation sessions",
       "Mindfulness practices",
       "Progress tracking",
-      "Basic support"
+      "Basic support",
     ],
     mentorAccess: "Meditation Specialists",
     sessionLimit: "10 sessions/month",
-    popular: false
+    popular: false,
   },
   BLOOM: {
     name: "BLOOM",
@@ -56,11 +47,11 @@ const planFeatures = {
       "Personalized routines",
       "Video library access",
       "Priority support",
-      "Progress analytics"
+      "Progress analytics",
     ],
     mentorAccess: "Certified Yoga Instructors",
     sessionLimit: "25 sessions/month",
-    popular: true
+    popular: true,
   },
   FLOURISH: {
     name: "FLOURISH",
@@ -78,12 +69,12 @@ const planFeatures = {
       "Custom meal plans",
       "Premium content library",
       "24/7 support",
-      "Advanced analytics"
+      "Advanced analytics",
     ],
     mentorAccess: "All Yoga, Meditation & Diet Experts",
     sessionLimit: "Unlimited sessions",
-    popular: false
-  }
+    popular: false,
+  },
 };
 
 interface RealStats {
@@ -92,9 +83,9 @@ interface RealStats {
   availableMentors: number;
 }
 
-export default function SubscriptionBenefitsShowcase({ 
-  currentPlan = null, 
-  isTrialActive = false 
+export default function SubscriptionBenefitsShowcase({
+  currentPlan = null,
+  isTrialActive = false,
 }: SubscriptionBenefitsShowcaseProps) {
   const plans = Object.values(planFeatures);
   const [realStats, setRealStats] = useState<RealStats | null>(null);
@@ -105,27 +96,27 @@ export default function SubscriptionBenefitsShowcase({
     const fetchRealStats = async () => {
       try {
         // Fetch subscription analytics
-        const subscriptionResponse = await fetch('/api/admin/subscription-stats');
+        const subscriptionResponse = await fetch("/api/admin/subscription-stats");
         const subscriptionData = await subscriptionResponse.json();
 
         // Fetch mentor data
-        const mentorResponse = await fetch('/api/mentor/get-approved-mentors');
+        const mentorResponse = await fetch("/api/mentor/get-approved-mentors");
         const mentorData = await mentorResponse.json();
 
         if (subscriptionData.success && mentorData.success) {
           setRealStats({
             totalActiveSubscriptions: subscriptionData.analytics?.totalActiveSubscriptions || 0,
             totalMentors: mentorData.mentors?.length || 0,
-            availableMentors: mentorData.mentors?.filter((m: any) => m.available)?.length || 0
+            availableMentors: mentorData.mentors?.filter((m: any) => m.available)?.length || 0,
           });
         }
       } catch (error) {
-        console.error('Error fetching real stats:', error);
+        console.error("Error fetching real stats:", error);
         // Set default values if API fails
         setRealStats({
           totalActiveSubscriptions: 0,
           totalMentors: 0,
-          availableMentors: 0
+          availableMentors: 0,
         });
       } finally {
         setLoading(false);
@@ -134,7 +125,7 @@ export default function SubscriptionBenefitsShowcase({
 
     fetchRealStats();
   }, []);
-  
+
   return (
     <div className="py-12 space-y-12">
       {/* Real Stats Section */}
@@ -151,7 +142,7 @@ export default function SubscriptionBenefitsShowcase({
             Connect with expert mentors and start your personalized wellness journey
           </p>
         </div>
-        
+
         {/* Real Statistics */}
         {loading ? (
           <div className="text-center">
@@ -163,7 +154,9 @@ export default function SubscriptionBenefitsShowcase({
               <div className="w-12 h-12 mx-auto mb-3 rounded-full bg-white shadow-lg flex items-center justify-center text-blue-600">
                 <Users className="w-6 h-6" />
               </div>
-              <div className="text-2xl font-bold text-gray-900">{realStats.totalActiveSubscriptions}</div>
+              <div className="text-2xl font-bold text-gray-900">
+                {realStats.totalActiveSubscriptions}
+              </div>
               <div className="text-sm text-gray-600">Active Members</div>
             </div>
             <div className="text-center">
@@ -191,9 +184,7 @@ export default function SubscriptionBenefitsShowcase({
       {/* Plan Comparison */}
       <div className="space-y-6">
         <div className="text-center">
-          <h3 className="text-2xl font-bold text-gray-900 mb-3">
-            Choose Your Wellness Plan
-          </h3>
+          <h3 className="text-2xl font-bold text-gray-900 mb-3">Choose Your Wellness Plan</h3>
           <p className="text-gray-600">
             Each plan provides access to different types of expert mentors
           </p>
@@ -202,20 +193,21 @@ export default function SubscriptionBenefitsShowcase({
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
           {plans.map((plan) => {
             const isCurrentPlan = currentPlan === plan.name;
-            const isUpgrade = currentPlan && ['SEED', 'BLOOM', 'FLOURISH'].indexOf(plan.name) > ['SEED', 'BLOOM', 'FLOURISH'].indexOf(currentPlan);
-            
+            const isUpgrade =
+              currentPlan &&
+              ["SEED", "BLOOM", "FLOURISH"].indexOf(plan.name) >
+                ["SEED", "BLOOM", "FLOURISH"].indexOf(currentPlan);
+
             return (
-              <Card 
-                key={plan.name} 
+              <Card
+                key={plan.name}
                 className={`relative overflow-hidden transition-all duration-300 hover:shadow-2xl hover:-translate-y-2 ${
-                  plan.popular ? 'ring-2 ring-blue-500 shadow-lg scale-105' : 'hover:shadow-xl'
-                } ${isCurrentPlan ? 'ring-2 ring-green-500' : ''}`}
+                  plan.popular ? "ring-2 ring-blue-500 shadow-lg scale-105" : "hover:shadow-xl"
+                } ${isCurrentPlan ? "ring-2 ring-green-500" : ""}`}
               >
                 {plan.popular && (
                   <div className="absolute -top-1 left-1/2 transform -translate-x-1/2">
-                    <Badge className="bg-blue-500 text-white px-4 py-1">
-                      Most Popular
-                    </Badge>
+                    <Badge className="bg-blue-500 text-white px-4 py-1">Most Popular</Badge>
                   </div>
                 )}
 
@@ -230,11 +222,16 @@ export default function SubscriptionBenefitsShowcase({
 
                 <CardContent className="p-0">
                   {/* Header */}
-                  <div className={`bg-gradient-to-br ${plan.gradient} p-6 text-white relative overflow-hidden`}>
-                    <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 -translate-y-16 translate-x-16"></div>
+                  <div
+                    className={`bg-gradient-to-br ${plan.gradient} p-6 text-white relative overflow-hidden`}
+                  >
+                    <div className="absolute top-0 right-0 w-32 h-32 rounded-full bg-white/10 -translate-y-16 translate-x-16" />
                     <div className="relative">
                       <h4 className="text-xl font-bold mb-1">{plan.name}</h4>
-                      <div className="text-3xl font-bold mb-2">{plan.price}<span className="text-lg font-normal">/month</span></div>
+                      <div className="text-3xl font-bold mb-2">
+                        {plan.price}
+                        <span className="text-lg font-normal">/month</span>
+                      </div>
                       <p className="text-white/90 text-sm">{plan.mentorAccess}</p>
                     </div>
                   </div>
@@ -246,7 +243,7 @@ export default function SubscriptionBenefitsShowcase({
                         <Clock className="w-4 h-4 text-gray-500" />
                         <span className="font-medium">{plan.sessionLimit}</span>
                       </div>
-                      
+
                       <div className="space-y-2">
                         {plan.features.map((feature, index) => (
                           <div key={index} className="flex items-center gap-2 text-sm">
@@ -296,11 +293,10 @@ export default function SubscriptionBenefitsShowcase({
       {/* Final CTA */}
       <div className="text-center bg-gradient-to-br from-blue-600 to-purple-700 rounded-3xl p-8 text-white">
         <Shield className="w-12 h-12 mx-auto mb-4 text-white/80" />
-        <h3 className="text-2xl font-bold mb-3">
-          30-Day Money-Back Guarantee
-        </h3>
+        <h3 className="text-2xl font-bold mb-3">30-Day Money-Back Guarantee</h3>
         <p className="text-white/90 mb-6 max-w-md mx-auto">
-          Try any plan risk-free. If you're not completely satisfied, get a full refund within 30 days.
+          Try any plan risk-free. If you&apos;re not completely satisfied, get a full refund within
+          30 days.
         </p>
         <div className="flex flex-col sm:flex-row gap-3 justify-center">
           <Link href="/pricing">

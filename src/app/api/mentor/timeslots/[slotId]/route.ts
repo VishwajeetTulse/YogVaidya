@@ -3,42 +3,38 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 
 // GET /api/mentor/timeslots/[slotId] - Get a specific time slot (public access for booking)
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ slotId: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;
     console.log("🔍 Fetching time slot for booking:", resolvedParams.slotId);
-    
+
     const { prisma } = await import("@/lib/config/prisma");
 
     // Get the time slot with mentor details (public access for booking)
     const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
+      find: "mentorTimeSlot",
       filter: {
         _id: resolvedParams.slotId,
-        isActive: true
-      }
+        isActive: true,
+      },
     });
 
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch) &&
-        timeSlotResult.cursor.firstBatch.length > 0) {
+    if (
+      timeSlotResult &&
+      typeof timeSlotResult === "object" &&
+      "cursor" in timeSlotResult &&
+      timeSlotResult.cursor &&
+      typeof timeSlotResult.cursor === "object" &&
+      "firstBatch" in timeSlotResult.cursor &&
+      Array.isArray(timeSlotResult.cursor.firstBatch) &&
+      timeSlotResult.cursor.firstBatch.length > 0
+    ) {
       timeSlot = timeSlotResult.cursor.firstBatch[0];
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
     // Get mentor details
@@ -58,17 +54,14 @@ export async function GET(
     });
 
     if (!mentor) {
-      return NextResponse.json(
-        { success: false, error: "Mentor not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     console.log("✅ Time slot found with mentor details");
 
     // Helper function to convert MongoDB date to proper format (consistent with timeslots route)
     const convertDateToString = (dateValue: any): string => {
-      if (dateValue && typeof dateValue === 'object' && dateValue.$date) {
+      if (dateValue && typeof dateValue === "object" && dateValue.$date) {
         return dateValue.$date;
       }
       return dateValue;
@@ -97,10 +90,9 @@ export async function GET(
         },
       },
     });
-
   } catch (error) {
     console.error("Error fetching time slot:", error);
-    
+
     return NextResponse.json(
       { success: false, error: "Failed to fetch time slot" },
       { status: 500 }
@@ -116,35 +108,34 @@ export async function DELETE(
   try {
     const resolvedParams = await params;
     console.log("🗑️ Deleting time slot:", resolvedParams.slotId);
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { prisma } = await import("@/lib/config/prisma");
 
     // First, check if the time slot exists and belongs to this mentor
     const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
+      find: "mentorTimeSlot",
       filter: {
         _id: resolvedParams.slotId,
-        mentorId: session.user.id
-      }
+        mentorId: session.user.id,
+      },
     });
 
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch) &&
-        timeSlotResult.cursor.firstBatch.length > 0) {
+    if (
+      timeSlotResult &&
+      typeof timeSlotResult === "object" &&
+      "cursor" in timeSlotResult &&
+      timeSlotResult.cursor &&
+      typeof timeSlotResult.cursor === "object" &&
+      "firstBatch" in timeSlotResult.cursor &&
+      Array.isArray(timeSlotResult.cursor.firstBatch) &&
+      timeSlotResult.cursor.firstBatch.length > 0
+    ) {
       timeSlot = timeSlotResult.cursor.firstBatch[0];
     }
 
@@ -158,18 +149,23 @@ export async function DELETE(
     // Check if the time slot is booked
     if (timeSlot.isBooked) {
       return NextResponse.json(
-        { success: false, error: "Cannot delete a booked time slot. Please cancel bookings first." },
+        {
+          success: false,
+          error: "Cannot delete a booked time slot. Please cancel bookings first.",
+        },
         { status: 400 }
       );
     }
 
     // Delete the time slot
     await prisma.$runCommandRaw({
-      delete: 'mentorTimeSlot',
-      deletes: [{
-        q: { _id: resolvedParams.slotId },
-        limit: 1
-      }]
+      delete: "mentorTimeSlot",
+      deletes: [
+        {
+          q: { _id: resolvedParams.slotId },
+          limit: 1,
+        },
+      ],
     });
 
     console.log("✅ Time slot deleted successfully");
@@ -181,10 +177,9 @@ export async function DELETE(
         slotId: resolvedParams.slotId,
       },
     });
-
   } catch (error) {
     console.error("Error deleting time slot:", error);
-    
+
     return NextResponse.json(
       { success: false, error: "Failed to delete time slot" },
       { status: 500 }
@@ -193,54 +188,50 @@ export async function DELETE(
 }
 
 // PUT /api/mentor/timeslots/[slotId] - Update a time slot
-export async function PUT(
-  request: Request,
-  { params }: { params: Promise<{ slotId: string }> }
-) {
+export async function PUT(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;
     console.log("✏️ Updating time slot:", resolvedParams.slotId);
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { 
-      startTime, 
-      endTime, 
-      sessionType, 
-      maxStudents, 
-      isRecurring, 
-      recurringDays, 
+    const {
+      startTime,
+      endTime,
+      sessionType,
+      maxStudents,
+      isRecurring,
+      recurringDays,
       sessionLink,
-      notes 
+      notes,
     } = body;
 
     const { prisma } = await import("@/lib/config/prisma");
 
     // First, check if the time slot exists and belongs to this mentor
     const timeSlotResult = await prisma.$runCommandRaw({
-      find: 'mentorTimeSlot',
+      find: "mentorTimeSlot",
       filter: {
         _id: resolvedParams.slotId,
-        mentorId: session.user.id
-      }
+        mentorId: session.user.id,
+      },
     });
 
     let timeSlot: any = null;
-    if (timeSlotResult && 
-        typeof timeSlotResult === 'object' && 
-        'cursor' in timeSlotResult &&
-        timeSlotResult.cursor &&
-        typeof timeSlotResult.cursor === 'object' &&
-        'firstBatch' in timeSlotResult.cursor &&
-        Array.isArray(timeSlotResult.cursor.firstBatch) &&
-        timeSlotResult.cursor.firstBatch.length > 0) {
+    if (
+      timeSlotResult &&
+      typeof timeSlotResult === "object" &&
+      "cursor" in timeSlotResult &&
+      timeSlotResult.cursor &&
+      typeof timeSlotResult.cursor === "object" &&
+      "firstBatch" in timeSlotResult.cursor &&
+      Array.isArray(timeSlotResult.cursor.firstBatch) &&
+      timeSlotResult.cursor.firstBatch.length > 0
+    ) {
       timeSlot = timeSlotResult.cursor.firstBatch[0];
     }
 
@@ -254,7 +245,10 @@ export async function PUT(
     // Check if the time slot is booked and prevent certain changes
     if (timeSlot.isBooked) {
       return NextResponse.json(
-        { success: false, error: "Cannot modify a booked time slot. Please cancel bookings first." },
+        {
+          success: false,
+          error: "Cannot modify a booked time slot. Please cancel bookings first.",
+        },
         { status: 400 }
       );
     }
@@ -264,20 +258,24 @@ export async function PUT(
 
     // Update the time slot with proper date handling
     await prisma.$runCommandRaw({
-      update: 'mentorTimeSlot',
-      updates: [{
-        q: { _id: resolvedParams.slotId },
-        u: { $set: createDateUpdate({
-          startTime: new Date(startTime),
-          endTime: new Date(endTime),
-          sessionType,
-          maxStudents: parseInt(maxStudents),
-          isRecurring: Boolean(isRecurring),
-          recurringDays: recurringDays || [],
-          sessionLink: sessionLink,
-          notes: notes || ""
-        })}
-      }]
+      update: "mentorTimeSlot",
+      updates: [
+        {
+          q: { _id: resolvedParams.slotId },
+          u: {
+            $set: createDateUpdate({
+              startTime: new Date(startTime),
+              endTime: new Date(endTime),
+              sessionType,
+              maxStudents: parseInt(maxStudents),
+              isRecurring: Boolean(isRecurring),
+              recurringDays: recurringDays || [],
+              sessionLink: sessionLink,
+              notes: notes || "",
+            }),
+          },
+        },
+      ],
     });
 
     console.log("✅ Time slot updated successfully");
@@ -289,10 +287,9 @@ export async function PUT(
         slotId: resolvedParams.slotId,
       },
     });
-
   } catch (error) {
     console.error("Error updating time slot:", error);
-    
+
     return NextResponse.json(
       { success: false, error: "Failed to update time slot" },
       { status: 500 }

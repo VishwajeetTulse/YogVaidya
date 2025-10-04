@@ -4,11 +4,11 @@
  */
 
 // Test configuration
-const BASE_URL = 'http://localhost:3000';
+const BASE_URL = "http://localhost:3000";
 
 // Simple test data
 const RECURRING_SLOT_TEST = {
-  startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow 
+  startTime: new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString(), // Tomorrow
   endTime: new Date(Date.now() + 25 * 60 * 60 * 1000).toISOString(), // Tomorrow + 1 hour
   sessionType: "YOGA",
   maxStudents: 1,
@@ -21,7 +21,7 @@ const RECURRING_SLOT_TEST = {
 const SINGLE_SLOT_TEST = {
   startTime: new Date(Date.now() + 48 * 60 * 60 * 1000).toISOString(), // Day after tomorrow
   endTime: new Date(Date.now() + 49 * 60 * 60 * 1000).toISOString(), // Day after tomorrow + 1 hour
-  sessionType: "MEDITATION", 
+  sessionType: "MEDITATION",
   maxStudents: 1,
   isRecurring: false,
   recurringDays: [],
@@ -34,16 +34,16 @@ async function makeRequest(url, options = {}) {
     console.log(`🌐 Making request to: ${url}`);
     const response = await fetch(url, {
       headers: {
-        'Content-Type': 'application/json',
-        ...options.headers
+        "Content-Type": "application/json",
+        ...options.headers,
       },
-      ...options
+      ...options,
     });
-    
+
     const data = await response.json();
     console.log(`📊 Response status: ${response.status}`);
     console.log(`📋 Response data:`, JSON.stringify(data, null, 2));
-    
+
     return { status: response.status, data, success: response.ok };
   } catch (error) {
     console.error(`❌ Request failed:`, error.message);
@@ -52,71 +52,73 @@ async function makeRequest(url, options = {}) {
 }
 
 async function testWithoutAuth() {
-  console.log('🧪 API Endpoint Tests (Without Authentication)');
-  console.log('==============================================');
+  console.log("🧪 API Endpoint Tests (Without Authentication)");
+  console.log("==============================================");
   console.log(`🕐 Started at: ${new Date().toISOString()}`);
-  
+
   // Note: These tests will fail due to authentication, but we can see if the endpoints exist
   // and get structured error responses
-  
-  console.log('\n1️⃣ Testing Single Slot Creation (Expected: Auth Error)...');
+
+  console.log("\n1️⃣ Testing Single Slot Creation (Expected: Auth Error)...");
   const singleResult = await makeRequest(`${BASE_URL}/api/mentor/timeslots`, {
-    method: 'POST',
-    body: JSON.stringify(SINGLE_SLOT_TEST)
+    method: "POST",
+    body: JSON.stringify(SINGLE_SLOT_TEST),
   });
-  
-  console.log('\n2️⃣ Testing Recurring Slot Creation (Expected: Auth Error)...');
+
+  console.log("\n2️⃣ Testing Recurring Slot Creation (Expected: Auth Error)...");
   const recurringResult = await makeRequest(`${BASE_URL}/api/mentor/timeslots`, {
-    method: 'POST', 
-    body: JSON.stringify(RECURRING_SLOT_TEST)
+    method: "POST",
+    body: JSON.stringify(RECURRING_SLOT_TEST),
   });
-  
-  console.log('\n3️⃣ Testing Maintenance Status Check (Expected: Auth Error)...');
+
+  console.log("\n3️⃣ Testing Maintenance Status Check (Expected: Auth Error)...");
   const statusResult = await makeRequest(`${BASE_URL}/api/admin/maintain-recurring-slots`);
-  
-  console.log('\n4️⃣ Testing Manual Maintenance Trigger (Expected: Auth Error)...');
+
+  console.log("\n4️⃣ Testing Manual Maintenance Trigger (Expected: Auth Error)...");
   const maintenanceResult = await makeRequest(`${BASE_URL}/api/admin/maintain-recurring-slots`, {
-    method: 'POST'
+    method: "POST",
   });
-  
-  console.log('\n📊 TEST RESULTS SUMMARY');
-  console.log('=======================');
-  
+
+  console.log("\n📊 TEST RESULTS SUMMARY");
+  console.log("=======================");
+
   // Check if endpoints exist (status should be 401/403 for auth errors, not 404)
   const endpointsWorking = [
-    { name: 'Single Slot API', working: singleResult.status !== 404 },
-    { name: 'Recurring Slot API', working: recurringResult.status !== 404 },
-    { name: 'Maintenance Status API', working: statusResult.status !== 404 },
-    { name: 'Maintenance Trigger API', working: maintenanceResult.status !== 404 }
+    { name: "Single Slot API", working: singleResult.status !== 404 },
+    { name: "Recurring Slot API", working: recurringResult.status !== 404 },
+    { name: "Maintenance Status API", working: statusResult.status !== 404 },
+    { name: "Maintenance Trigger API", working: maintenanceResult.status !== 404 },
   ];
-  
-  endpointsWorking.forEach(endpoint => {
-    console.log(`${endpoint.working ? '✅' : '❌'} ${endpoint.name}: ${endpoint.working ? 'FOUND' : 'NOT FOUND'}`);
+
+  endpointsWorking.forEach((endpoint) => {
+    console.log(
+      `${endpoint.working ? "✅" : "❌"} ${endpoint.name}: ${endpoint.working ? "FOUND" : "NOT FOUND"}`
+    );
   });
-  
-  const workingEndpoints = endpointsWorking.filter(e => e.working).length;
+
+  const workingEndpoints = endpointsWorking.filter((e) => e.working).length;
   console.log(`\n🎯 Endpoints Found: ${workingEndpoints}/4`);
-  
+
   if (workingEndpoints === 4) {
-    console.log('✅ All API endpoints are accessible (authentication required for testing)');
-    console.log('\n💡 Next Steps:');
-    console.log('   1. Login as a mentor in browser');
-    console.log('   2. Copy session cookie from browser dev tools');
-    console.log('   3. Run authenticated tests using test-7day-recurring.js');
+    console.log("✅ All API endpoints are accessible (authentication required for testing)");
+    console.log("\n💡 Next Steps:");
+    console.log("   1. Login as a mentor in browser");
+    console.log("   2. Copy session cookie from browser dev tools");
+    console.log("   3. Run authenticated tests using test-7day-recurring.js");
   } else {
-    console.log('❌ Some endpoints are missing or not working');
+    console.log("❌ Some endpoints are missing or not working");
   }
-  
+
   console.log(`\n🕐 Completed at: ${new Date().toISOString()}`);
 }
 
 // Run the test
 testWithoutAuth()
   .then(() => {
-    console.log('\n🎉 API accessibility test completed!');
+    console.log("\n🎉 API accessibility test completed!");
     process.exit(0);
   })
   .catch((error) => {
-    console.error('\n💀 Test crashed:', error);
+    console.error("\n💀 Test crashed:", error);
     process.exit(1);
   });

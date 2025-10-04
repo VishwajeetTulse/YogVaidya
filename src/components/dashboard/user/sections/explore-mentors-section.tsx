@@ -1,12 +1,11 @@
 "use client";
 
-import { Users, Calendar, Award, Loader2 } from "lucide-react";
+import { Users, Award, Loader2 } from "lucide-react";
 import { useState, useEffect } from "react";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import Link from "next/link";
 import MentorCardCompact from "../mentor-card-compact";
-import { Mentor } from "@/lib/types/mentor";
+import { type Mentor } from "@/lib/types/mentor";
 
 interface TransformedMentor {
   id: string | number;
@@ -33,9 +32,11 @@ export const ExploreMentorsSection = () => {
   const fetchMentorTimeSlots = async (mentorIds: string[]) => {
     try {
       const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
+      const todayString = today.toISOString().split("T")[0];
 
-      console.log(`🔍 [EXPLORE] Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`);
+      console.log(
+        `🔍 [EXPLORE] Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`
+      );
 
       const timeSlotsAvailability: Record<string, boolean> = {};
 
@@ -45,35 +46,40 @@ export const ExploreMentorsSection = () => {
           // Get all available slots for this mentor (not limited to today)
           const url = `/api/mentor/timeslots?mentorId=${mentorId}&available=true`;
           console.log(`📞 [EXPLORE] Fetching: ${url}`);
-          
+
           const response = await fetch(url);
           const data = await response.json();
-          
+
           console.log(`📊 [EXPLORE] Response for mentor ${mentorId}:`, data);
-          
+
           if (data.success && data.data) {
             console.log(`⏰ [EXPLORE] Time slots found for mentor ${mentorId}:`, data.data.length);
-            
+
             // Check if mentor has any available time slots in the future
             const availableSlots = data.data.filter((slot: any) => {
               const slotDate = new Date(slot.startTime);
               const isActive = slot.isActive;
               const isNotBooked = !slot.isBooked;
               const isFuture = slotDate > new Date(); // Any future slots
-              
+
               console.log(`  📅 [EXPLORE] Slot ${slot._id}: ${slotDate.toISOString()}`);
               console.log(`    - Is active: ${isActive}`);
               console.log(`    - Not booked: ${isNotBooked}`);
               console.log(`    - Is future: ${isFuture}`);
-              
+
               return isActive && isNotBooked && isFuture;
             });
-            
+
             const hasAvailableSlots = availableSlots.length > 0;
-            console.log(`✅ [EXPLORE] Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`);
+            console.log(
+              `✅ [EXPLORE] Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`
+            );
             timeSlotsAvailability[mentorId] = hasAvailableSlots;
           } else {
-            console.log(`❌ [EXPLORE] No time slots or error for mentor ${mentorId}:`, data.error || 'No slots');
+            console.log(
+              `❌ [EXPLORE] No time slots or error for mentor ${mentorId}:`,
+              data.error || "No slots"
+            );
             timeSlotsAvailability[mentorId] = false;
           }
         } catch (err) {
@@ -82,10 +88,10 @@ export const ExploreMentorsSection = () => {
         }
       }
 
-      console.log('📊 [EXPLORE] Final time slots availability map:', timeSlotsAvailability);
+      console.log("📊 [EXPLORE] Final time slots availability map:", timeSlotsAvailability);
       setTimeSlotsMap(timeSlotsAvailability);
     } catch (err) {
-      console.error('❌ [EXPLORE] Error fetching mentor time slots:', err);
+      console.error("❌ [EXPLORE] Error fetching mentor time slots:", err);
     }
   };
 
@@ -93,28 +99,29 @@ export const ExploreMentorsSection = () => {
   const fetchMentors = async () => {
     try {
       setLoading(true);
-      const response = await fetch('/api/mentor/get-approved-mentors');
+      const response = await fetch("/api/mentor/get-approved-mentors");
       const data = await response.json();
-      
+
       if (data.success) {
         const transformedMentors = data.mentors.map((mentor: Mentor) => ({
           id: mentor.id,
           name: mentor.name,
           specialty: mentor.specialty,
-          experience: typeof mentor.experience === 'string' ? 
-            parseInt(mentor.experience, 10) || 0 : 
-            mentor.experience || 0,
+          experience:
+            typeof mentor.experience === "string"
+              ? parseInt(mentor.experience, 10) || 0
+              : mentor.experience || 0,
           imageUrl: mentor.image,
           available: mentor.available,
           hasTimeSlotsToday: false, // Will be updated after fetching time slots
-          description: mentor.bio || mentor.description || 'Experienced wellness mentor',
+          description: mentor.bio || mentor.description || "Experienced wellness mentor",
           mentorType: mentor.mentorType,
           certifications: mentor.certifications,
           expertise: mentor.specialty,
         }));
-        
+
         setMentors(transformedMentors);
-        
+
         // Temporarily hardcode the time slots data based on server logs
         // TODO: Fix the fetchMentorTimeSlots function
         const tempTimeSlotsMap: Record<string, boolean> = {};
@@ -123,32 +130,31 @@ export const ExploreMentorsSection = () => {
           // Based on server logs:
           // p27belqfkUe1sppnuFpG4nSupFZj8Fme (Vishwajeet) has 1 slot
           // WcK4xas9IP8q0y2kJyHCFruYxtmpGAv5 (Rohan) has 0 slots
-          if (mentorId === 'p27belqfkUe1sppnuFpG4nSupFZj8Fme') {
+          if (mentorId === "p27belqfkUe1sppnuFpG4nSupFZj8Fme") {
             tempTimeSlotsMap[mentorId] = true; // Has slots
           } else {
             tempTimeSlotsMap[mentorId] = false; // No slots
           }
         });
-        console.log('🔧 [EXPLORE] Setting timeSlotsMap:', tempTimeSlotsMap);
+        console.log("🔧 [EXPLORE] Setting timeSlotsMap:", tempTimeSlotsMap);
         setTimeSlotsMap(tempTimeSlotsMap);
-        
+
         // Fetch time slots for all mentors
         const mentorIds = transformedMentors.map((m: TransformedMentor) => m.id.toString());
         await fetchMentorTimeSlots(mentorIds);
-        
       } else {
-        setError(data.error || 'Failed to fetch mentors');
+        setError(data.error || "Failed to fetch mentors");
       }
     } catch (err) {
-      setError('Failed to fetch mentors');
-      console.error('Error fetching mentors:', err);
+      setError("Failed to fetch mentors");
+      console.error("Error fetching mentors:", err);
     } finally {
       setLoading(false);
     }
   };
 
   // Removed real-time availability fetching - we only use time slot availability now
-  
+
   useEffect(() => {
     fetchMentors();
 
@@ -166,14 +172,16 @@ export const ExploreMentorsSection = () => {
   // Update mentors when timeSlotsMap changes
   useEffect(() => {
     if (mentors.length > 0 && Object.keys(timeSlotsMap).length > 0) {
-      console.log('🔄 [EXPLORE] Updating mentors with new timeSlotsMap:', timeSlotsMap);
-      setMentors(prevMentors => 
-        prevMentors.map(mentor => {
+      console.log("🔄 [EXPLORE] Updating mentors with new timeSlotsMap:", timeSlotsMap);
+      setMentors((prevMentors) =>
+        prevMentors.map((mentor) => {
           const hasTimeSlotsToday = timeSlotsMap[mentor.id.toString()] ?? false;
-          console.log(`🔄 [EXPLORE] Mentor ${mentor.name} (${mentor.id}): hasTimeSlotsToday = ${hasTimeSlotsToday}`);
-          return { 
-            ...mentor, 
-            hasTimeSlotsToday: hasTimeSlotsToday
+          console.log(
+            `🔄 [EXPLORE] Mentor ${mentor.name} (${mentor.id}): hasTimeSlotsToday = ${hasTimeSlotsToday}`
+          );
+          return {
+            ...mentor,
+            hasTimeSlotsToday: hasTimeSlotsToday,
           };
         })
       );
@@ -182,13 +190,13 @@ export const ExploreMentorsSection = () => {
 
   // Categorize mentors by type
   const categorizedMentors = {
-    liveSession: mentors.filter(mentor => mentor.mentorType === 'YOGAMENTOR'),
-    dietPlanning: mentors.filter(mentor => mentor.mentorType === 'DIETPLANNER'),
-    meditation: mentors.filter(mentor => mentor.mentorType === 'MEDITATIONMENTOR'),
+    liveSession: mentors.filter((mentor) => mentor.mentorType === "YOGAMENTOR"),
+    dietPlanning: mentors.filter((mentor) => mentor.mentorType === "DIETPLANNER"),
+    meditation: mentors.filter((mentor) => mentor.mentorType === "MEDITATIONMENTOR"),
   };
 
   const totalMentors = mentors.length;
-  const availableMentors = mentors.filter(mentor => mentor.hasTimeSlotsToday).length;
+  const _availableMentors = mentors.filter((mentor) => mentor.hasTimeSlotsToday).length;
 
   if (loading) {
     return (
@@ -252,7 +260,7 @@ export const ExploreMentorsSection = () => {
             </div>
           </div>
         </div>
-        
+
         <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg">
           <div className="flex items-center">
             <Award className="w-5 h-5 text-purple-600 mr-2" />
@@ -271,7 +279,8 @@ export const ExploreMentorsSection = () => {
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Mentors Available</h2>
           <p className="text-gray-500 text-center max-w-md mb-6">
-            We're currently onboarding amazing mentors. Check back soon for certified yoga and meditation guides!
+            We&apos;re currently onboarding amazing mentors. Check back soon for certified yoga and
+            meditation guides!
           </p>
           <Link href="/mentors/apply">
             <Button className="bg-gradient-to-r from-[#ff7dac] to-[#876aff] text-white">
@@ -286,11 +295,14 @@ export const ExploreMentorsSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <div className="w-4 h-4 bg-[#76d2fa] rounded mr-2"></div>
+                  <div className="w-4 h-4 bg-[#76d2fa] rounded mr-2" />
                   Yoga Mentors ({categorizedMentors.liveSession.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button size="sm" className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
+                  >
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>
@@ -309,11 +321,14 @@ export const ExploreMentorsSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <div className="w-4 h-4 bg-[#ff7dac] rounded mr-2"></div>
+                  <div className="w-4 h-4 bg-[#ff7dac] rounded mr-2" />
                   Diet Planning Experts ({categorizedMentors.dietPlanning.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button size="sm" className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
+                  >
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>
@@ -332,11 +347,14 @@ export const ExploreMentorsSection = () => {
             <div className="space-y-4">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-semibold text-gray-900 flex items-center">
-                  <div className="w-4 h-4 bg-[#876aff] rounded mr-2"></div>
+                  <div className="w-4 h-4 bg-[#876aff] rounded mr-2" />
                   Meditation Guides ({categorizedMentors.meditation.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button size="sm" className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs">
+                  <Button
+                    size="sm"
+                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
+                  >
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>
@@ -354,4 +372,3 @@ export const ExploreMentorsSection = () => {
     </div>
   );
 };
-

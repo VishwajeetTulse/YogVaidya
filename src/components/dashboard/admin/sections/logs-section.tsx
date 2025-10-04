@@ -1,23 +1,15 @@
 "use client";
 
 import React, { useState, useEffect, useCallback } from "react";
-import { AdminSectionProps } from "../types";
+import { type AdminSectionProps } from "../types";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Separator } from "@/components/ui/separator";
-import { LogEntry } from "@/app/api/admin/logs/route";
+import { type LogEntry } from "@/app/api/admin/logs/route";
 
-import {
-  Database,
-  Filter,
-  RefreshCw,
-  User,
-  AlertCircle,
-  Info,
-  AlertTriangle,
-} from "lucide-react";
+import { Database, Filter, RefreshCw, User, AlertCircle, Info, AlertTriangle } from "lucide-react";
 import {
   Select,
   SelectContent,
@@ -72,7 +64,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
     { value: "ERROR", label: "Error" },
   ];
 
-  const fetchLogs =  useCallback( async () => {
+  const fetchLogs = useCallback(async () => {
     setIsLoading(true);
     setError(null);
 
@@ -101,7 +93,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
     } finally {
       setIsLoading(false);
     }
-  },[pagination.page, pagination.pageSize, category, level, userId]);
+  }, [pagination.page, pagination.pageSize, category, level, userId]);
 
   useEffect(() => {
     fetchLogs();
@@ -284,10 +276,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                   <TableRow>
                     <TableCell colSpan={7} className="text-center py-10">
                       <div className="flex flex-col items-center justify-center">
-                        <Database
-                          size={24}
-                          className="mb-2 text-muted-foreground"
-                        />
+                        <Database size={24} className="mb-2 text-muted-foreground" />
                         <span>No logs found</span>
                       </div>
                     </TableCell>
@@ -300,7 +289,7 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                       </TableCell>
                       <TableCell>
                         <div className="flex items-center gap-2">
-                          {log.category === 'TICKET' && (
+                          {log.category === "TICKET" && (
                             <Badge variant="secondary" className="text-xs">
                               🎫
                             </Badge>
@@ -309,9 +298,13 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                         </div>
                       </TableCell>
                       <TableCell>
-                        <Badge 
-                          variant="outline" 
-                          className={log.category === 'TICKET' ? 'border-blue-200 bg-blue-50 text-blue-700' : ''}
+                        <Badge
+                          variant="outline"
+                          className={
+                            log.category === "TICKET"
+                              ? "border-blue-200 bg-blue-50 text-blue-700"
+                              : ""
+                          }
                         >
                           {log.category}
                         </Badge>
@@ -321,19 +314,15 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                         {log.userId ? (
                           <div className="flex items-center gap-1">
                             <User size={14} />
-                            <span className="font-mono text-xs truncate">
-                              {log.userId}
-                            </span>
+                            <span className="font-mono text-xs truncate">{log.userId}</span>
                           </div>
                         ) : (
                           "—"
                         )}
                       </TableCell>
-                      <TableCell className="max-w-md truncate">
-                        {log.details}
-                      </TableCell>
+                      <TableCell className="max-w-md truncate">{log.details}</TableCell>
                       <TableCell className="max-w-xs">
-                        {log.category === 'TICKET' && log.metadata ? (
+                        {log.category === "TICKET" && log.metadata ? (
                           <div className="space-y-1 text-xs text-gray-600">
                             {(log.metadata as any).ticketNumber && (
                               <div className="flex items-center gap-1">
@@ -345,19 +334,20 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                             )}
                             {(log.metadata as any).oldStatus && (log.metadata as any).newStatus && (
                               <div className="text-xs">
-                                <span className="font-semibold">Status:</span> {(log.metadata as any).oldStatus} → {(log.metadata as any).newStatus}
+                                <span className="font-semibold">Status:</span>{" "}
+                                {(log.metadata as any).oldStatus} →{" "}
+                                {(log.metadata as any).newStatus}
                               </div>
                             )}
                             {(log.metadata as any).assignedToName && (
                               <div className="text-xs">
-                                <span className="font-semibold">Assigned to:</span> {(log.metadata as any).assignedToName}
+                                <span className="font-semibold">Assigned to:</span>{" "}
+                                {(log.metadata as any).assignedToName}
                               </div>
                             )}
                           </div>
                         ) : log.ipAddress ? (
-                          <div className="text-xs text-gray-500">
-                            IP: {log.ipAddress}
-                          </div>
+                          <div className="text-xs text-gray-500">IP: {log.ipAddress}</div>
                         ) : (
                           "—"
                         )}
@@ -401,4 +391,3 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
     </div>
   );
 };
-

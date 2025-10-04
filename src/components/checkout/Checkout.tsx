@@ -1,4 +1,4 @@
-'use client'
+"use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import verify from "@/lib/rzp/verify";
@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import Script from "next/script";
 import { createUserSubscription } from "@/lib/subscriptions";
 import { useSession } from "@/lib/auth-client";
+import { toast } from "sonner";
 
 interface RazorpayResponse {
   razorpay_subscription_id: string;
@@ -44,13 +45,13 @@ export default function Checkout({ plan }: { plan: string }) {
         "Online support",
         "Guided relaxation techniques",
         "Progress tracking",
-        "Community access"
+        "Community access",
       ],
       benefits: [
         { icon: <Users className="w-5 h-5" />, text: "Group meditation sessions" },
         { icon: <Clock className="w-5 h-5" />, text: "Flexible scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" }
-      ]
+        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" },
+      ],
     },
     bloom: {
       name: "Bloom",
@@ -67,13 +68,13 @@ export default function Checkout({ plan }: { plan: string }) {
         "Chat with AI assistant",
         "Meditation sessions (Coming soon)",
         "Progress tracking",
-        "Community access"
+        "Community access",
       ],
       benefits: [
         { icon: <Users className="w-5 h-5" />, text: "Join group sessions" },
         { icon: <Clock className="w-5 h-5" />, text: "Flexible scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" }
-      ]
+        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" },
+      ],
     },
     flourish: {
       name: "Flourish",
@@ -90,16 +91,16 @@ export default function Checkout({ plan }: { plan: string }) {
         "Chat with AI assistant",
         "Meditation sessions (Coming soon)",
         "1-on-1 mentor consultations",
-        "Premium support"
+        "Premium support",
       ],
       benefits: [
         { icon: <Users className="w-5 h-5" />, text: "Personal trainer" },
         { icon: <Clock className="w-5 h-5" />, text: "Priority scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Full support" }
-      ]
-    }
+        { icon: <Shield className="w-5 h-5" />, text: "Full support" },
+      ],
+    },
   };
-  const selectedPlan = planDetails[plan as keyof typeof planDetails];  // Redirect if plan not found
+  const selectedPlan = planDetails[plan as keyof typeof planDetails]; // Redirect if plan not found
   useEffect(() => {
     if (!selectedPlan) {
       router.push("/dashboard/plans");
@@ -112,7 +113,7 @@ export default function Checkout({ plan }: { plan: string }) {
     // Check if user is authenticated before proceeding
     if (!session?.user?.id) {
       console.log("Session state:", session);
-      alert("Please sign in to complete your purchase.");
+      toast.error("Please sign in to complete your purchase.");
       router.push("/signin");
       return;
     }
@@ -120,13 +121,13 @@ export default function Checkout({ plan }: { plan: string }) {
     setLoading(true);
     try {
       // Check if user has phone number before proceeding with checkout
-      const profileResponse = await fetch('/api/users/profile');
+      const profileResponse = await fetch("/api/users/profile");
       const profileResult = await profileResponse.json();
 
       if (profileResult.success && !profileResult.user?.phone) {
         // User doesn't have phone number, redirect to profile completion
         setLoading(false);
-        router.push(`/complete-profile?redirectTo=${encodeURIComponent('/checkout?plan=' + plan)}`);
+        router.push(`/complete-profile?redirectTo=${encodeURIComponent("/checkout?plan=" + plan)}`);
         return;
       }
 
@@ -138,7 +139,7 @@ export default function Checkout({ plan }: { plan: string }) {
         body: JSON.stringify({
           plan: plan,
           billingPeriod: billingPeriod,
-          amount: applyDiscount(selectedPlan.price)
+          amount: applyDiscount(selectedPlan.price),
         }),
       });
 
@@ -149,9 +150,16 @@ export default function Checkout({ plan }: { plan: string }) {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
         subscription_id: data.subscription.id,
         name: "Yoga Vaidya",
-        description: `${selectedPlan.name} Plan Subscription`, handler: async function (response:  RazorpayResponse) {
+        description: `${selectedPlan.name} Plan Subscription`,
+        handler: async function (response: RazorpayResponse) {
           try {
-            if (!(await verify(response.razorpay_subscription_id, response.razorpay_payment_id, response.razorpay_signature))) {
+            if (
+              !(await verify(
+                response.razorpay_subscription_id,
+                response.razorpay_payment_id,
+                response.razorpay_signature
+              ))
+            ) {
               throw new Error("Payment verification failed");
             }
 
@@ -170,14 +178,16 @@ export default function Checkout({ plan }: { plan: string }) {
               razorpaySubscriptionId: response.razorpay_subscription_id,
               razorpayCustomerId: data.customer?.id,
               paymentAmount: applyDiscount(selectedPlan.price),
-              autoRenewal: true
+              autoRenewal: true,
             });
 
             if (!subscriptionResult.success) {
               console.error("Subscription update failed:", subscriptionResult.error);
               // Still redirect to dashboard even if subscription update fails
               // User can contact support for subscription issues
-              alert("Payment successful but subscription update failed. Please contact support.");
+              toast.error(
+                "Payment successful but subscription update failed. Please contact support."
+              );
             } else {
               console.log("Subscription updated successfully:", subscriptionResult.user);
             }
@@ -186,25 +196,26 @@ export default function Checkout({ plan }: { plan: string }) {
             router.push("/dashboard?payment=success");
           } catch (error) {
             console.error("Payment processing error:", error);
-            alert("Payment verification failed. Please contact support.");
+            toast.error("Payment verification failed. Please contact support.");
           }
-        }, prefill: {
+        },
+        prefill: {
           name: session?.user?.name || "User",
           email: session?.user?.email || "user@example.com",
         },
         theme: {
-          color: selectedPlan.bgColor.replace('bg-[', '').replace(']', ''),
+          color: selectedPlan.bgColor.replace("bg-[", "").replace("]", ""),
         },
       };
       // @ts-expect-error importing  Razorpay from cdn
-      const razorpay = new (window).Razorpay(options);
+      const razorpay = new window.Razorpay(options);
       razorpay.on("payment.failed", function (response: RazorpayResponse) {
-        alert("Payment failed. Please try again.");
+        toast.error("Payment failed. Please try again.");
         console.error("Payment failed:", response);
       });
       razorpay.open();
     } catch (error) {
-      alert("Payment failed. Please try again.");
+      toast.error("Payment failed. Please try again.");
       console.error(error);
     } finally {
       setLoading(false);
@@ -220,21 +231,20 @@ export default function Checkout({ plan }: { plan: string }) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4" />
           <p className="text-gray-600">Loading...</p>
         </div>
       </div>
     );
   }
 
-
   return (
     <>
       <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-4">
         {/* Background elements */}
         <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl"></div>
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-pink-400/10 rounded-full blur-3xl"></div>
+          <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl" />
+          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-pink-400/10 rounded-full blur-3xl" />
         </div>
 
         <div className="max-w-4xl mx-auto relative">
@@ -254,7 +264,9 @@ export default function Checkout({ plan }: { plan: string }) {
 
           <div className="grid md:grid-cols-2 gap-8 items-start">
             {/* Plan Details Card */}
-            <div className={`bg-gradient-to-b ${selectedPlan.gradient} rounded-3xl overflow-hidden shadow-2xl`}>
+            <div
+              className={`bg-gradient-to-b ${selectedPlan.gradient} rounded-3xl overflow-hidden shadow-2xl`}
+            >
               <div className="p-8 text-white">
                 {/* Plan Header */}
                 <div className="flex items-center space-x-4 mb-6">
@@ -274,19 +286,21 @@ export default function Checkout({ plan }: { plan: string }) {
                   <div className="inline-flex items-center bg-white/20 p-1 rounded-full">
                     <button
                       onClick={() => setBillingPeriod("monthly")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingPeriod === "monthly"
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                        billingPeriod === "monthly"
                           ? "bg-white text-gray-800 shadow-md"
                           : "text-white/80 hover:bg-white/10"
-                        }`}
+                      }`}
                     >
                       Monthly
                     </button>
                     <button
                       onClick={() => setBillingPeriod("annual")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${billingPeriod === "annual"
+                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                        billingPeriod === "annual"
                           ? "bg-white text-gray-800 shadow-md"
                           : "text-white/80 hover:bg-white/10"
-                        }`}
+                      }`}
                     >
                       Annual
                     </button>
@@ -311,7 +325,8 @@ export default function Checkout({ plan }: { plan: string }) {
                   </div>
                   {billingPeriod === "annual" && selectedPlan.price > 0 && (
                     <p className="text-white/80 text-sm">
-                      <span className="line-through">₹{selectedPlan.price}</span> - You save ₹{selectedPlan.price - applyDiscount(selectedPlan.price)} per billing period
+                      <span className="line-through">₹{selectedPlan.price}</span> - You save ₹
+                      {selectedPlan.price - applyDiscount(selectedPlan.price)} per billing period
                     </p>
                   )}
                 </div>
@@ -332,9 +347,7 @@ export default function Checkout({ plan }: { plan: string }) {
                   <h3 className="text-lg font-semibold mb-4">Key benefits:</h3>
                   {selectedPlan.benefits.map((benefit, index) => (
                     <div key={index} className="flex items-center">
-                      <div className="text-white/80 mr-3">
-                        {benefit.icon}
-                      </div>
+                      <div className="text-white/80 mr-3">{benefit.icon}</div>
                       <span className="text-white/90">{benefit.text}</span>
                     </div>
                   ))}
@@ -393,9 +406,25 @@ export default function Checkout({ plan }: { plan: string }) {
               >
                 {loading ? (
                   <span className="flex items-center justify-center">
-                    <svg className="animate-spin h-5 w-5 mr-3" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z"></path>
+                    <svg
+                      className="animate-spin h-5 w-5 mr-3"
+                      xmlns="http://www.w3.org/2000/svg"
+                      fill="none"
+                      viewBox="0 0 24 24"
+                    >
+                      <circle
+                        className="opacity-25"
+                        cx="12"
+                        cy="12"
+                        r="10"
+                        stroke="currentColor"
+                        strokeWidth="4"
+                       />
+                      <path
+                        className="opacity-75"
+                        fill="currentColor"
+                        d="M4 12a8 8 0 018-8v8z"
+                       />
                     </svg>
                     Processing Payment...
                   </span>
@@ -435,10 +464,7 @@ export default function Checkout({ plan }: { plan: string }) {
         </div>
       </div>
 
-      <Script
-        id="razorpay-checkout-js"
-        src="https://checkout.razorpay.com/v1/checkout.js"
-      />
+      <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
     </>
   );
 }

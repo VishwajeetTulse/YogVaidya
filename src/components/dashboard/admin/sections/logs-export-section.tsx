@@ -3,14 +3,13 @@ import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Separator } from "@/components/ui/separator";
 import { Download, Calendar, Trash2, AlertTriangle } from "lucide-react";
+import { toast } from "sonner";
 
 interface LogsExportSectionProps {
   className?: string;
 }
 
-export default function LogsExportSection({
-  className,
-}: LogsExportSectionProps) {
+export default function LogsExportSection({ className }: LogsExportSectionProps) {
   const [isExporting, setIsExporting] = useState(false);
   const [isPurging, setIsPurging] = useState(false);
   const handleExportLogs = async () => {
@@ -40,46 +39,56 @@ export default function LogsExportSection({
       a.click();
       URL.revokeObjectURL(url);
       document.body.removeChild(a);
+      toast.success("Logs exported successfully");
     } catch (error) {
       console.error("Error exporting logs:", error);
-      alert("Failed to export logs. Please try again.");
+      toast.error("Failed to export logs. Please try again.");
     } finally {
       setIsExporting(false);
     }
   };
 
   const handlePurgeLogs = async () => {
-    if (
-      !confirm(
-        "Are you sure you want to purge all logs older than 90 days? This action cannot be undone."
-      )
-    ) {
-      return;
-    }
+    toast.warning(
+      "Are you sure you want to purge all logs older than 90 days? This action cannot be undone.",
+      {
+        action: {
+          label: "Purge",
+          onClick: async () => {
+            setIsPurging(true);
+            try {
+              // Call the API to purge old logs
+              const response = await fetch("/api/admin/logs/manage", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify({ action: "purgeOldLogs" }),
+              });
 
-    setIsPurging(true);
-    try {
-      // Call the API to purge old logs
-      const response = await fetch("/api/admin/logs/manage", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
+              if (!response.ok) {
+                throw new Error(`Failed to purge logs: ${response.statusText}`);
+              }
+
+              const result = await response.json();
+              toast.success(result.message || "Logs purged successfully");
+            } catch (error) {
+              console.error("Error purging logs:", error);
+              toast.error("Failed to purge logs. Please try again.");
+            } finally {
+              setIsPurging(false);
+            }
+          },
         },
-        body: JSON.stringify({ action: "purgeOldLogs" }),
-      });
-
-      if (!response.ok) {
-        throw new Error(`Failed to purge logs: ${response.statusText}`);
+        cancel: {
+          label: "Cancel",
+          onClick: () => {
+            setIsPurging(false);
+          },
+        },
+        duration: 10000, // Give user 10 seconds to decide
       }
-
-      const result = await response.json();
-      alert(result.message || "Logs purged successfully");
-    } catch (error) {
-      console.error("Error purging logs:", error);
-      alert("Failed to purge logs. Please try again.");
-    } finally {
-      setIsPurging(false);
-    }
+    );
   };
 
   return (
@@ -88,9 +97,7 @@ export default function LogsExportSection({
         <h3 className="text-lg font-medium">Log Management</h3>
       </div>
 
-      <p className="text-sm">
-        Export logs for archival or analysis, and manage log retention.
-      </p>
+      <p className="text-sm">Export logs for archival or analysis, and manage log retention.</p>
 
       <Separator />
 
@@ -117,9 +124,7 @@ export default function LogsExportSection({
               )}
             </Button>
           </div>
-          <p className="text-xs text-muted-foreground mt-2">
-            Exports all logs in CSV format.
-          </p>
+          <p className="text-xs text-muted-foreground mt-2">Exports all logs in CSV format.</p>
         </div>
 
         <Separator />
@@ -134,8 +139,7 @@ export default function LogsExportSection({
                   Warning: This action cannot be undone
                 </p>
                 <p className="text-xs text-amber-700 dark:text-amber-400 mt-1">
-                  Purging logs will permanently delete all log entries older
-                  than 90 days.
+                  Purging logs will permanently delete all log entries older than 90 days.
                 </p>
               </div>
             </div>
@@ -171,4 +175,3 @@ export default function LogsExportSection({
     </Card>
   );
 }
-

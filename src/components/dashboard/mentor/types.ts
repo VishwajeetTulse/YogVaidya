@@ -1,5 +1,5 @@
-import { UserDetails } from "@/lib/userDetails";
-import { LucideIcon } from "lucide-react";
+import { type UserDetails } from "@/lib/userDetails";
+import { type LucideIcon } from "lucide-react";
 
 export interface MentorSidebarMenuItem {
   id: string;
@@ -22,4 +22,3 @@ export interface MentorDashboardState {
   handleSignOut: () => void;
   formatDate: (date: Date | null | undefined) => string;
 }
-

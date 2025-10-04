@@ -1,15 +1,10 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { 
-  Users, 
-  Video, 
-  Calendar, 
-  ChevronRight, 
-} from "lucide-react";
-import { MentorSectionProps } from "../types";
+import { Users, Video, Calendar, ChevronRight } from "lucide-react";
+import { type MentorSectionProps } from "../types";
 import { useState, useEffect } from "react";
-import { getMentorOverviewData, MentorOverviewData } from "@/lib/server/mentor-overview-server";
+import { getMentorOverviewData, type MentorOverviewData } from "@/lib/server/mentor-overview-server";
 
 export const OverviewSection = ({ userDetails, setActiveSection }: MentorSectionProps) => {
   const [overviewData, setOverviewData] = useState<MentorOverviewData | null>(null);
@@ -33,18 +28,18 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
     };
 
     loadData();
-    
+
     // Refresh data every 5 minutes
     const interval = setInterval(fetchOverviewData, 5 * 60 * 1000);
     return () => clearInterval(interval);
   }, []);
 
   const formatTime = (date: Date) => {
-    return new Date(date).toLocaleTimeString('en-US', {
-      timeZone: 'Asia/Kolkata',
-      hour: 'numeric',
-      minute: '2-digit',
-      hour12: true
+    return new Date(date).toLocaleTimeString("en-US", {
+      timeZone: "Asia/Kolkata",
+      hour: "numeric",
+      minute: "2-digit",
+      hour12: true,
     });
   };
 
@@ -56,9 +51,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             <h1 className="text-3xl font-bold text-gray-900">
               Welcome back, {userDetails?.name || "Mentor"}!
             </h1>
-            <p className="text-gray-600 mt-2">
-              Loading your teaching dashboard...
-            </p>
+            <p className="text-gray-600 mt-2">Loading your teaching dashboard...</p>
           </div>
         </div>
 
@@ -85,7 +78,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
           </div>
           <div className="space-y-3">
             {[...Array(2)].map((_, index) => (
-              <div key={`loading-schedule-${index}`} className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
+              <div
+                key={`loading-schedule-${index}`}
+                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
+              >
                 <div className="flex items-center gap-3">
                   <Skeleton className="w-2 h-2 rounded-full" />
                   <div>
@@ -133,7 +129,9 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className={`p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20 transition-opacity`}>
+        <Card
+          className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20 transition-opacity"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
               <Users className="w-5 h-5 text-white" />
@@ -144,7 +142,9 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           </div>
         </Card>
-        <Card className={`p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30 transition-opacity`}>
+        <Card
+          className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30 transition-opacity"
+        >
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
               <Video className="w-5 h-5 text-white" />
@@ -155,7 +155,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           </div>
         </Card>
-        { /* 
+        {/* 
         <Card className={`p-4 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20 transition-opacity`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
@@ -191,8 +191,8 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             <div className="text-center py-8 text-gray-500">
               <Calendar className="w-12 h-12 mx-auto mb-2 opacity-50" />
               <p>No sessions scheduled for today</p>
-              <Button 
-                variant="outline" 
+              <Button
+                variant="outline"
                 className="mt-2"
                 onClick={() => setActiveSection("schedule")}
               >
@@ -201,34 +201,42 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           ) : (
             overviewData?.todaysSessions.slice(0, 3).map((session) => (
-              <div 
+              <div
                 key={session.id}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
-        session.sessionType === 'YOGA' 
-          ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
-          : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
-          }`}
-        >
-          <div className="flex items-center gap-3">
-        <div className={`w-2 h-2 rounded-full ${
-          session.sessionType === 'YOGA' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
-        }`}></div>
-        <div>
-          <p className="font-medium">{session.title}</p>
-          <p className="text-sm text-gray-500">
-            {formatTime(session.scheduledTime)} • {session.duration} min • {session.sessionType}
-          </p>
-        </div>
-          </div>
-          <div className="flex items-center gap-2">
-        <span className={`px-2 py-1 text-xs rounded-full ${
-          session.status === 'SCHEDULED' ? 'bg-blue-100 text-blue-800' :
-          session.status === 'ONGOING' ? 'bg-green-100 text-green-800' :
-          session.status === 'COMPLETED' ? 'bg-gray-100 text-gray-800' :
-          'bg-red-100 text-red-800'
-        }`}>
-          {session.status}
-        </span>
+                  session.sessionType === "YOGA"
+                    ? "bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30"
+                    : "bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30"
+                }`}
+              >
+                <div className="flex items-center gap-3">
+                  <div
+                    className={`w-2 h-2 rounded-full ${
+                      session.sessionType === "YOGA" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                    }`}
+                   />
+                  <div>
+                    <p className="font-medium">{session.title}</p>
+                    <p className="text-sm text-gray-500">
+                      {formatTime(session.scheduledTime)} • {session.duration} min •{" "}
+                      {session.sessionType}
+                    </p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span
+                    className={`px-2 py-1 text-xs rounded-full ${
+                      session.status === "SCHEDULED"
+                        ? "bg-blue-100 text-blue-800"
+                        : session.status === "ONGOING"
+                          ? "bg-green-100 text-green-800"
+                          : session.status === "COMPLETED"
+                            ? "bg-gray-100 text-gray-800"
+                            : "bg-red-100 text-red-800"
+                    }`}
+                  >
+                    {session.status}
+                  </span>
                 </div>
               </div>
             ))
@@ -236,8 +244,8 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
         </div>
         {overviewData?.todaysSessions && overviewData.todaysSessions.length > 3 && (
           <div className="text-center">
-            <Button 
-              variant="outline" 
+            <Button
+              variant="outline"
               onClick={() => setActiveSection("sessions")}
               className="text-sm"
             >
@@ -279,4 +287,3 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
     </div>
   );
 };
-

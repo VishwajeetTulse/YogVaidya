@@ -5,7 +5,7 @@ import TimeSlotManager from "@/components/dashboard/mentor/TimeSlotManager";
 
 export default async function MentorTimeSlotsPage() {
   const session = await auth.api.getSession({ headers: await headers() });
-  
+
   if (!session?.user) {
     redirect("/signin");
   }
@@ -13,10 +13,10 @@ export default async function MentorTimeSlotsPage() {
   // Check if user is a mentor
   const { prisma } = await import("@/lib/config/prisma");
   const user = await prisma.user.findFirst({
-    where: { 
+    where: {
       id: session.user.id,
-      role: "MENTOR"
-    }
+      role: "MENTOR",
+    },
   });
 
   if (!user) {

@@ -1,6 +1,6 @@
-"use server"
+"use server";
 import nodemailer from "nodemailer";
-import { Schedule } from "@prisma/client";
+import { type Schedule } from "@prisma/client";
 import { prisma } from "../config/prisma";
 
 export async function sendEmail(sessionDetails: Schedule) {
@@ -8,10 +8,7 @@ export async function sendEmail(sessionDetails: Schedule) {
     where: {
       subscriptionStatus: "ACTIVE",
       subscriptionPlan: {
-        in: [
-          sessionDetails.sessionType === "YOGA" ? "BLOOM" : "SEED",
-          "FLOURISH",
-        ],
+        in: [sessionDetails.sessionType === "YOGA" ? "BLOOM" : "SEED", "FLOURISH"],
       },
     },
     select: {
@@ -91,4 +88,3 @@ export async function sendEmail(sessionDetails: Schedule) {
     };
   }
 }
-

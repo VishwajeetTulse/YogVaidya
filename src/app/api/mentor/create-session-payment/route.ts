@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -19,13 +19,10 @@ const razorpay = new Razorpay({
 export async function POST(request: NextRequest) {
   try {
     console.log("🚀 Creating payment order for time slot booking...");
-    
+
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
@@ -41,8 +38,8 @@ export async function POST(request: NextRequest) {
         mentorId,
         timeSlotId,
         bookingId,
-        type: "timeslot_booking"
-      }
+        type: "timeslot_booking",
+      },
     });
 
     console.log("✅ Payment order created:", order.id);
@@ -56,10 +53,9 @@ export async function POST(request: NextRequest) {
         receipt: order.receipt,
       },
     });
-
   } catch (error) {
     console.error("Error creating payment order:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketLogger } from "@/lib/utils/ticket-logger";
@@ -12,30 +12,30 @@ export async function GET(request: NextRequest) {
     }
 
     // Only admins can view ticket logs
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
     const { searchParams } = new URL(request.url);
-    const timeframe = searchParams.get('timeframe') as 'day' | 'week' | 'month' || 'day';
-    const limit = parseInt(searchParams.get('limit') || '50');
-    const action = searchParams.get('action');
-    const level = searchParams.get('level');
-    const ticketId = searchParams.get('ticketId');
+    const timeframe = (searchParams.get("timeframe") as "day" | "week" | "month") || "day";
+    const limit = parseInt(searchParams.get("limit") || "50");
+    const action = searchParams.get("action");
+    const level = searchParams.get("level");
+    const ticketId = searchParams.get("ticketId");
 
     // Build filter conditions
     const where: any = {
-      category: "TICKET"
+      category: "TICKET",
     };
 
     // Apply timeframe filter
     const now = new Date();
     const timeframeMap = {
-      day: 24 * 60 * 60 * 1000,      // 1 day
-      week: 7 * 24 * 60 * 60 * 1000,  // 7 days
-      month: 30 * 24 * 60 * 60 * 1000 // 30 days
+      day: 24 * 60 * 60 * 1000, // 1 day
+      week: 7 * 24 * 60 * 60 * 1000, // 7 days
+      month: 30 * 24 * 60 * 60 * 1000, // 30 days
     };
-    
+
     const startTime = new Date(now.getTime() - timeframeMap[timeframe]);
     where.timestamp = { gte: startTime };
 
@@ -44,8 +44,8 @@ export async function GET(request: NextRequest) {
     if (level) where.level = level;
     if (ticketId) {
       where.metadata = {
-        path: ['ticketId'],
-        equals: ticketId
+        path: ["ticketId"],
+        equals: ticketId,
       };
     }
 
@@ -59,14 +59,14 @@ export async function GET(request: NextRequest) {
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
+              role: true,
+            },
+          },
         },
         orderBy: {
-          timestamp: 'desc'
+          timestamp: "desc",
         },
-        take: limit
+        take: limit,
       });
 
       // Get activity summary
@@ -81,8 +81,8 @@ export async function GET(request: NextRequest) {
           byAction: {},
           byLevel: {},
           byUser: {},
-          recentActivity: []
-        }
+          recentActivity: [],
+        },
       };
 
       return NextResponse.json({
@@ -91,10 +91,9 @@ export async function GET(request: NextRequest) {
         pagination: {
           limit,
           total: logs.length,
-          hasMore: logs.length === limit
-        }
+          hasMore: logs.length === limit,
+        },
       });
-
     } catch (dbError) {
       console.error("Database error fetching ticket logs:", dbError);
       return NextResponse.json({
@@ -107,23 +106,19 @@ export async function GET(request: NextRequest) {
             byAction: {},
             byLevel: {},
             byUser: {},
-            recentActivity: []
-          }
+            recentActivity: [],
+          },
         },
         pagination: {
           limit,
           total: 0,
-          hasMore: false
-        }
+          hasMore: false,
+        },
       });
     }
-
   } catch (error) {
     console.error("Error in ticket logs API:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
@@ -137,7 +132,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Only admins can create manual logs
-    if (session.user.role !== 'ADMIN') {
+    if (session.user.role !== "ADMIN") {
       return NextResponse.json({ error: "Admin access required" }, { status: 403 });
     }
 
@@ -160,21 +155,16 @@ export async function POST(request: NextRequest) {
       metadata: {
         ...metadata,
         manualEntry: true,
-        createdBy: session.user.id
+        createdBy: session.user.id,
       },
-      ipAddress: request.headers.get('x-forwarded-for') || 
-                 request.headers.get('x-real-ip') || 
-                 undefined,
-      userAgent: request.headers.get('user-agent') || undefined
+      ipAddress:
+        request.headers.get("x-forwarded-for") || request.headers.get("x-real-ip") || undefined,
+      userAgent: request.headers.get("user-agent") || undefined,
     });
 
     return NextResponse.json({ success: true });
-
   } catch (error) {
     console.error("Error creating manual ticket log:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

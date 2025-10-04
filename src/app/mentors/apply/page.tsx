@@ -14,7 +14,7 @@ export default async function MentorApplyPage() {
   // Check if user has phone number
   const user = await prisma.user.findUnique({
     where: { id: session.user.id },
-    select: { phone: true }
+    select: { phone: true },
   });
 
   if (!user?.phone) {

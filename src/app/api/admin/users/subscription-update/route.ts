@@ -1,36 +1,37 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { auth } from '@/lib/config/auth';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/config/auth";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true }
+      select: { role: true },
     });
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
     }
 
-    const { userId, subscriptionPlan, subscriptionStatus, billingPeriod, autoRenewal } = await req.json();
+    const { userId, subscriptionPlan, subscriptionStatus, billingPeriod, autoRenewal } =
+      await req.json();
 
     if (!userId) {
-      return NextResponse.json({ success: false, error: 'User ID is required' }, { status: 400 });
+      return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
     }
 
     // Build update data
     const updateData: any = {
-      updatedAt: new Date()
+      updatedAt: new Date(),
     };
 
     if (subscriptionPlan !== undefined) {
@@ -50,12 +51,12 @@ export async function PATCH(req: NextRequest) {
     }
 
     // If setting a new subscription plan, set start date
-    if (subscriptionPlan && subscriptionStatus === 'ACTIVE') {
+    if (subscriptionPlan && subscriptionStatus === "ACTIVE") {
       updateData.subscriptionStartDate = new Date();
-      
+
       // Set end date based on billing period
       const endDate = new Date();
-      if (billingPeriod === 'annual') {
+      if (billingPeriod === "annual") {
         endDate.setFullYear(endDate.getFullYear() + 1);
       } else {
         endDate.setMonth(endDate.getMonth() + 1);
@@ -74,20 +75,22 @@ export async function PATCH(req: NextRequest) {
         subscriptionPlan: true,
         subscriptionStatus: true,
         billingPeriod: true,
-        autoRenewal: true
-      }
+        autoRenewal: true,
+      },
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      user: updatedUser 
+    return NextResponse.json({
+      success: true,
+      user: updatedUser,
     });
-
   } catch (error) {
-    console.error('Error updating subscription:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Failed to update subscription' 
-    }, { status: 500 });
+    console.error("Error updating subscription:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to update subscription",
+      },
+      { status: 500 }
+    );
   }
 }

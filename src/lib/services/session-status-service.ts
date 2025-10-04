@@ -3,7 +3,6 @@
  */
 
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
-import { createDateUpdate } from "@/lib/utils/date-utils";
 
 export interface SessionStatusUpdate {
   sessionId: string;
@@ -15,8 +14,8 @@ export interface SessionStatusUpdate {
 }
 
 interface SessionData {
-  _id: string;  // MongoDB uses _id
-  id?: string;  // Prisma uses id (optional for compatibility)
+  _id: string; // MongoDB uses _id
+  id?: string; // Prisma uses id (optional for compatibility)
   timeSlotId: string;
   status: string;
   isDelayed?: boolean;
@@ -30,13 +29,6 @@ function getSessionId(session: SessionData): string {
   return session.id || session._id;
 }
 
-interface TimeSlotData {
-  _id: string;
-  startTime: string;
-  endTime: string;
-  [key: string]: any;
-}
-
 /**
  * Automatically update session statuses based on time
  */
@@ -47,25 +39,27 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
   try {
     const { prisma } = await import("@/lib/config/prisma");
 
-    console.log('🔍 Checking for sessions to auto-complete at:', currentTime.toISOString());
+    console.log("🔍 Checking for sessions to auto-complete at:", currentTime.toISOString());
 
     // 1. Complete ongoing sessions from SCHEDULE collection (subscription sessions)
     // Auto-complete when: scheduledTime + duration <= currentTime OR manualStartTime + duration <= currentTime
     const scheduleSessionsResult = await prisma.$runCommandRaw({
-      find: 'schedule',
+      find: "schedule",
       filter: {
-        status: 'ONGOING'
-      }
+        status: "ONGOING",
+      },
     });
 
     let scheduleSessions: SessionData[] = [];
-    if (scheduleSessionsResult &&
-        typeof scheduleSessionsResult === 'object' &&
-        'cursor' in scheduleSessionsResult &&
-        scheduleSessionsResult.cursor &&
-        typeof scheduleSessionsResult.cursor === 'object' &&
-        'firstBatch' in scheduleSessionsResult.cursor &&
-        Array.isArray(scheduleSessionsResult.cursor.firstBatch)) {
+    if (
+      scheduleSessionsResult &&
+      typeof scheduleSessionsResult === "object" &&
+      "cursor" in scheduleSessionsResult &&
+      scheduleSessionsResult.cursor &&
+      typeof scheduleSessionsResult.cursor === "object" &&
+      "firstBatch" in scheduleSessionsResult.cursor &&
+      Array.isArray(scheduleSessionsResult.cursor.firstBatch)
+    ) {
       scheduleSessions = scheduleSessionsResult.cursor.firstBatch as SessionData[];
     }
 
@@ -74,7 +68,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     for (const session of scheduleSessions) {
       const durationMinutes = session.duration || 60;
       let expectedEndTime: Date | null = null;
-      let completionReason = '';
+      let completionReason = "";
 
       // Check if session was manually started
       const manualStartTime = convertMongoDate(session.manualStartTime);
@@ -94,21 +88,21 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       // Auto-complete if we've passed the expected end time
       if (expectedEndTime && expectedEndTime <= currentTime) {
         console.log(`⏰ Completing schedule session ${getSessionId(session)}: ${completionReason}`);
-        
+
         await prisma.schedule.update({
           where: { id: getSessionId(session) },
           data: {
-            status: 'COMPLETED',
-            updatedAt: new Date()
-          }
+            status: "COMPLETED",
+            updatedAt: new Date(),
+          },
         });
 
         updates.push({
           sessionId: getSessionId(session),
-          oldStatus: 'ONGOING',
-          newStatus: 'COMPLETED',
+          oldStatus: "ONGOING",
+          newStatus: "COMPLETED",
           timestamp: currentTime,
-          reason: completionReason
+          reason: completionReason,
         });
       }
     }
@@ -116,20 +110,22 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
     // 2. Complete ongoing sessions from SESSIONBOOKING collection (individual sessions)
     // Auto-complete when: scheduledAt + duration <= currentTime OR manualStartTime + duration <= currentTime
     const sessionBookingResult = await prisma.$runCommandRaw({
-      find: 'sessionBooking',
+      find: "sessionBooking",
       filter: {
-        status: 'ONGOING'
-      }
+        status: "ONGOING",
+      },
     });
 
     let sessionBookings: SessionData[] = [];
-    if (sessionBookingResult &&
-        typeof sessionBookingResult === 'object' &&
-        'cursor' in sessionBookingResult &&
-        sessionBookingResult.cursor &&
-        typeof sessionBookingResult.cursor === 'object' &&
-        'firstBatch' in sessionBookingResult.cursor &&
-        Array.isArray(sessionBookingResult.cursor.firstBatch)) {
+    if (
+      sessionBookingResult &&
+      typeof sessionBookingResult === "object" &&
+      "cursor" in sessionBookingResult &&
+      sessionBookingResult.cursor &&
+      typeof sessionBookingResult.cursor === "object" &&
+      "firstBatch" in sessionBookingResult.cursor &&
+      Array.isArray(sessionBookingResult.cursor.firstBatch)
+    ) {
       sessionBookings = sessionBookingResult.cursor.firstBatch as SessionData[];
     }
 
@@ -139,7 +135,7 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       const sessionId = getSessionId(session);
       const durationMinutes = session.duration || 60;
       let expectedEndTime: Date | null = null;
-      let completionReason = '';
+      let completionReason = "";
 
       // Check if session was manually started
       const manualStartTime = convertMongoDate(session.manualStartTime);
@@ -159,32 +155,33 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
       // Auto-complete if we've passed the expected end time
       if (expectedEndTime && expectedEndTime <= currentTime) {
         console.log(`⏰ Completing sessionBooking ${sessionId}: ${completionReason}`);
-        
+
         await prisma.sessionBooking.update({
           where: { id: sessionId },
           data: {
-            status: 'COMPLETED',
-            updatedAt: new Date()
-          }
+            status: "COMPLETED",
+            updatedAt: new Date(),
+          },
         });
 
         updates.push({
           sessionId: sessionId,
-          oldStatus: 'ONGOING',
-          newStatus: 'COMPLETED',
+          oldStatus: "ONGOING",
+          newStatus: "COMPLETED",
           timestamp: currentTime,
-          reason: completionReason
+          reason: completionReason,
         });
       }
     }
 
     console.log(`✅ Session status update completed: ${updates.length} sessions processed`);
-    updates.forEach(update => {
-      console.log(`   - ${update.sessionId}: ${update.oldStatus} → ${update.newStatus} (${update.reason})`);
+    updates.forEach((update) => {
+      console.log(
+        `   - ${update.sessionId}: ${update.oldStatus} → ${update.newStatus} (${update.reason})`
+      );
     });
-
   } catch (error) {
-    console.error('Error updating session statuses:', error);
+    console.error("Error updating session statuses:", error);
     throw error;
   }
 

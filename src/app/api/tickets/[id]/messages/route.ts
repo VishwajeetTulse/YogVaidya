@@ -1,13 +1,10 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import crypto from "crypto";
 
 // POST /api/tickets/[id]/messages - Add comment/message to ticket
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -20,14 +17,11 @@ export async function POST(
 
     // Validate content
     if (!content?.trim()) {
-      return NextResponse.json(
-        { error: "Message content is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Message content is required" }, { status: 400 });
     }
 
     // Only moderators/admins can create internal messages
-    const canCreateInternal = ['MODERATOR', 'ADMIN'].includes(session.user.role);
+    const canCreateInternal = ["MODERATOR", "ADMIN"].includes(session.user.role);
     const messageIsInternal = isInternal && canCreateInternal;
 
     try {
@@ -36,28 +30,22 @@ export async function POST(
         where: { id: ticketId },
         include: {
           user: true,
-          assignedTo: true
-        }
+          assignedTo: true,
+        },
       });
 
       if (!ticket) {
-        return NextResponse.json(
-          { error: "Ticket not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       }
 
       // Check access permissions
-      const hasAccess = 
+      const hasAccess =
         ticket.userId === session.user.id || // Ticket creator
         ticket.assignedToId === session.user.id || // Assigned moderator
-        ['ADMIN', 'MODERATOR'].includes(session.user.role); // Admin or moderator
+        ["ADMIN", "MODERATOR"].includes(session.user.role); // Admin or moderator
 
       if (!hasAccess) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
       // Create the message
@@ -68,7 +56,7 @@ export async function POST(
           ticketId: ticketId,
           authorId: session.user.id,
           isInternal: messageIsInternal,
-          attachments: [] // TODO: Add file upload support later
+          attachments: [], // TODO: Add file upload support later
         },
         include: {
           author: {
@@ -76,45 +64,34 @@ export async function POST(
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
-        }
+              role: true,
+            },
+          },
+        },
       });
 
       // Update ticket's updatedAt timestamp
       await (prisma as any).ticket?.update({
         where: { id: ticketId },
-        data: { updatedAt: new Date() }
+        data: { updatedAt: new Date() },
       });
 
-      return NextResponse.json({ 
+      return NextResponse.json({
         success: true,
-        message: newMessage 
+        message: newMessage,
       });
-
     } catch (dbError) {
       console.error("Database error creating message:", dbError);
-      return NextResponse.json(
-        { error: "Failed to create message" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to create message" }, { status: 500 });
     }
-
   } catch (error) {
     console.error("Error in ticket message creation:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 // GET /api/tickets/[id]/messages - Get all messages for a ticket
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
 
@@ -130,32 +107,26 @@ export async function GET(
         where: { id: ticketId },
         include: {
           user: true,
-          assignedTo: true
-        }
+          assignedTo: true,
+        },
       });
 
       if (!ticket) {
-        return NextResponse.json(
-          { error: "Ticket not found" },
-          { status: 404 }
-        );
+        return NextResponse.json({ error: "Ticket not found" }, { status: 404 });
       }
 
       // Check access permissions
-      const hasAccess = 
+      const hasAccess =
         ticket.userId === session.user.id || // Ticket creator
         ticket.assignedToId === session.user.id || // Assigned moderator
-        ['ADMIN', 'MODERATOR'].includes(session.user.role); // Admin or moderator
+        ["ADMIN", "MODERATOR"].includes(session.user.role); // Admin or moderator
 
       if (!hasAccess) {
-        return NextResponse.json(
-          { error: "Access denied" },
-          { status: 403 }
-        );
+        return NextResponse.json({ error: "Access denied" }, { status: 403 });
       }
 
       // Determine if user can see internal messages
-      const canSeeInternal = ['MODERATOR', 'ADMIN'].includes(session.user.role);
+      const canSeeInternal = ["MODERATOR", "ADMIN"].includes(session.user.role);
 
       // Build filter for messages
       const messageFilter: any = { ticketId };
@@ -172,30 +143,22 @@ export async function GET(
               id: true,
               name: true,
               email: true,
-              role: true
-            }
-          }
+              role: true,
+            },
+          },
         },
-        orderBy: { createdAt: 'asc' }
+        orderBy: { createdAt: "asc" },
       });
 
-      return NextResponse.json({ 
-        messages: messages || []
+      return NextResponse.json({
+        messages: messages || [],
       });
-
     } catch (dbError) {
       console.error("Database error fetching messages:", dbError);
-      return NextResponse.json(
-        { error: "Failed to fetch messages" },
-        { status: 500 }
-      );
+      return NextResponse.json({ error: "Failed to fetch messages" }, { status: 500 });
     }
-
   } catch (error) {
     console.error("Error in ticket messages fetch:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

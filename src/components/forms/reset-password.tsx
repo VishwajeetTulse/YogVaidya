@@ -4,23 +4,12 @@ import { Lock, ArrowRight, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import {
-  Form,
-} from "@/components/ui/form";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Form } from "@/components/ui/form";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InputField } from "@/components/Auth/FormFields";
-import {
-  ResetPasswordFormValues,
-  resetPasswordSchema,
-} from "@/lib/schema/resetPasswordSchema";
+import { type ResetPasswordFormValues, resetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 
@@ -69,8 +58,7 @@ const ResetPassword = () => {
       });
     } else {
       toast.message("Password Reset Successfully", {
-        description:
-          "Your password has been reset successfully. login to continue",
+        description: "Your password has been reset successfully. login to continue",
       });
       router.push("/signin");
     }
@@ -93,19 +81,12 @@ const ResetPassword = () => {
 
         <Card className="border-none shadow-lg">
           <CardHeader className="space-y-1">
-            <CardTitle className="text-2xl font-bold text-center">
-              Reset Password
-            </CardTitle>
-            <CardDescription className="text-center">
-              Enter your new password
-            </CardDescription>
+            <CardTitle className="text-2xl font-bold text-center">Reset Password</CardTitle>
+            <CardDescription className="text-center">Enter your new password</CardDescription>
           </CardHeader>
           <CardContent>
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-4"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                 <InputField
                   control={form.control}
                   name="password"
@@ -158,4 +139,3 @@ const ResetPassword = () => {
 };
 
 export default ResetPassword;
-

@@ -23,7 +23,9 @@ const ADMIN_SECTION_COMPONENTS = {
   "mentor-management": MentorManagementSection,
   moderators: ModeratorManagementSection,
   subscriptions: SubscriptionManagementSection,
-  tickets: (props: any) => <TicketsSection userRole="ADMIN" currentUserId={props.userDetails?.id} />,
+  tickets: (props: any) => (
+    <TicketsSection userRole="ADMIN" currentUserId={props.userDetails?.id} />
+  ),
   logs: LogsSection,
   analytics: AnalyticsSection,
   settings: SettingsSection,
@@ -31,7 +33,7 @@ const ADMIN_SECTION_COMPONENTS = {
 
 export default function AdminDashboard() {
   return (
-    <UnifiedDashboard<'admin'>
+    <UnifiedDashboard<"admin">
       role="admin"
       dashboardTitle="Admin Dashboard"
       menuItems={ADMIN_SIDEBAR_MENU_ITEMS}
@@ -40,4 +42,3 @@ export default function AdminDashboard() {
     />
   );
 }
-

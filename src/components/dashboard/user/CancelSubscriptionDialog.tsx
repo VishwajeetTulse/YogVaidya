@@ -1,6 +1,6 @@
-import React from 'react';
+import React from "react";
 import { Button } from "@/components/ui/button";
-import { 
+import {
   Dialog,
   DialogContent,
   DialogDescription,
@@ -9,7 +9,7 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { AlertTriangle, Calendar, CreditCard } from "lucide-react";
-import { UserDetails } from "@/lib/userDetails";
+import { type UserDetails } from "@/lib/userDetails";
 
 interface CancelSubscriptionDialogProps {
   isOpen: boolean;
@@ -24,15 +24,15 @@ export const CancelSubscriptionDialog: React.FC<CancelSubscriptionDialogProps> =
   onClose,
   onConfirm,
   isLoading,
-  userDetails
+  userDetails,
 }) => {
   const formatDate = (date: Date | null | undefined) => {
-    if (!date) return 'N/A';
+    if (!date) return "N/A";
     return new Date(date).toLocaleDateString("en-US", {
       weekday: "long",
       year: "numeric",
       month: "long",
-      day: "numeric"
+      day: "numeric",
     });
   };
 
@@ -61,7 +61,10 @@ export const CancelSubscriptionDialog: React.FC<CancelSubscriptionDialogProps> =
             <ul className="space-y-2 text-sm text-amber-700">
               <li className="flex items-start gap-2">
                 <Calendar className="w-4 h-4 mt-0.5 flex-shrink-0" />
-                <span>Your subscription will remain active until <strong>{formatDate(userDetails.nextBillingDate)}</strong></span>
+                <span>
+                  Your subscription will remain active until{" "}
+                  <strong>{formatDate(userDetails.nextBillingDate)}</strong>
+                </span>
               </li>
               <li className="flex items-start gap-2">
                 <CreditCard className="w-4 h-4 mt-0.5 flex-shrink-0" />
@@ -81,31 +84,29 @@ export const CancelSubscriptionDialog: React.FC<CancelSubscriptionDialogProps> =
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
             <h4 className="font-medium text-blue-800 mb-2">Current Plan Details:</h4>
             <div className="space-y-1 text-sm text-blue-700">
-              <p><strong>Plan:</strong> {userDetails.subscriptionPlan || 'N/A'}</p>
-              <p><strong>Status:</strong> {userDetails.subscriptionStatus || 'N/A'}</p>
-              <p><strong>Next Billing Date:</strong> {formatDate(userDetails.nextBillingDate)}</p>
+              <p>
+                <strong>Plan:</strong> {userDetails.subscriptionPlan || "N/A"}
+              </p>
+              <p>
+                <strong>Status:</strong> {userDetails.subscriptionStatus || "N/A"}
+              </p>
+              <p>
+                <strong>Next Billing Date:</strong> {formatDate(userDetails.nextBillingDate)}
+              </p>
               {userDetails.paymentAmount && (
-                <p><strong>Amount:</strong> ₹{userDetails.paymentAmount}/{userDetails.billingPeriod}</p>
+                <p>
+                  <strong>Amount:</strong> ₹{userDetails.paymentAmount}/{userDetails.billingPeriod}
+                </p>
               )}
             </div>
           </div>
         </div>
 
         <DialogFooter className="gap-3">
-          <Button
-            variant="outline"
-            onClick={onClose}
-            disabled={isLoading}
-            className="flex-1"
-          >
+          <Button variant="outline" onClick={onClose} disabled={isLoading} className="flex-1">
             Keep Subscription
           </Button>
-          <Button
-            variant="destructive"
-            onClick={onConfirm}
-            disabled={isLoading}
-            className="flex-1"
-          >
+          <Button variant="destructive" onClick={onConfirm} disabled={isLoading} className="flex-1">
             {isLoading ? "Cancelling..." : "Yes, Cancel Subscription"}
           </Button>
         </DialogFooter>

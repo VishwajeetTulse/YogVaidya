@@ -7,33 +7,40 @@ import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { 
-  Ticket, 
-  TicketFilters, 
-  TicketStatus, 
-  TicketPriority, 
+import {
+  type Ticket,
+  type TicketFilters,
+  TicketStatus,
+  TicketPriority,
   TicketCategory,
-  TicketListResponse 
+  type TicketListResponse,
 } from "@/lib/types/tickets";
 import {
   Ticket as TicketIcon,
   Plus,
   Search,
-  Filter,
-  Clock,
-  AlertTriangle,
-  CheckCircle,
   User,
-  MessageSquare,
   Calendar,
   Tag,
   Mail,
   Phone,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
 import { format } from "date-fns";
 
@@ -58,13 +65,13 @@ export const TicketsSection = () => {
     try {
       const queryParams = new URLSearchParams({
         page: currentPage.toString(),
-        limit: itemsPerPage.toString()
+        limit: itemsPerPage.toString(),
       });
 
-      if (searchTerm) queryParams.append('search', searchTerm);
-      if (filters.status) queryParams.append('status', filters.status);
-      if (filters.category) queryParams.append('category', filters.category);
-      if (filters.priority) queryParams.append('priority', filters.priority);
+      if (searchTerm) queryParams.append("search", searchTerm);
+      if (filters.status) queryParams.append("status", filters.status);
+      if (filters.category) queryParams.append("category", filters.category);
+      if (filters.priority) queryParams.append("priority", filters.priority);
 
       const response = await fetch(`/api/tickets?${queryParams}`);
       if (response.ok) {
@@ -85,20 +92,20 @@ export const TicketsSection = () => {
   }, [currentPage, searchTerm, filters]);
 
   const handleFilterChange = (key: keyof TicketFilters, value: string | undefined) => {
-    setFilters(prev => ({ ...prev, [key]: value }));
+    setFilters((prev) => ({ ...prev, [key]: value }));
     setCurrentPage(1);
   };
 
   const handleCreateTicket = async (e: React.FormEvent) => {
     e.preventDefault();
-    
+
     if (!title.trim() || !description.trim()) {
       toast.error("Please fill in all required fields");
       return;
     }
 
     setIsSubmitting(true);
-    
+
     try {
       const response = await fetch("/api/tickets", {
         method: "POST",
@@ -106,8 +113,8 @@ export const TicketsSection = () => {
         body: JSON.stringify({
           title: title.trim(),
           description: description.trim(),
-          category
-        })
+          category,
+        }),
       });
 
       if (response.ok) {
@@ -135,14 +142,10 @@ export const TicketsSection = () => {
       [TicketStatus.IN_PROGRESS]: "bg-yellow-100 text-yellow-800",
       [TicketStatus.WAITING_FOR_USER]: "bg-orange-100 text-orange-800",
       [TicketStatus.RESOLVED]: "bg-green-100 text-green-800",
-      [TicketStatus.CLOSED]: "bg-gray-100 text-gray-800"
+      [TicketStatus.CLOSED]: "bg-gray-100 text-gray-800",
     };
 
-    return (
-      <Badge className={statusStyles[status]}>
-        {status.replace(/_/g, ' ')}
-      </Badge>
-    );
+    return <Badge className={statusStyles[status]}>{status.replace(/_/g, " ")}</Badge>;
   };
 
   const getPriorityBadge = (priority: TicketPriority) => {
@@ -150,14 +153,10 @@ export const TicketsSection = () => {
       [TicketPriority.LOW]: "bg-gray-100 text-gray-800",
       [TicketPriority.MEDIUM]: "bg-blue-100 text-blue-800",
       [TicketPriority.HIGH]: "bg-orange-100 text-orange-800",
-      [TicketPriority.URGENT]: "bg-red-100 text-red-800"
+      [TicketPriority.URGENT]: "bg-red-100 text-red-800",
     };
 
-    return (
-      <Badge className={priorityStyles[priority]}>
-        {priority}
-      </Badge>
-    );
+    return <Badge className={priorityStyles[priority]}>{priority}</Badge>;
   };
 
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
@@ -206,19 +205,19 @@ export const TicketsSection = () => {
           <h2 className="text-2xl font-bold text-gray-900">Support Tickets</h2>
           <p className="text-gray-600">Manage your support requests and get help</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Refresh Button */}
-          <Button 
+          <Button
             variant="outline"
             onClick={fetchTickets}
             disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          
+
           {/* Create Ticket Button */}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -227,62 +226,77 @@ export const TicketsSection = () => {
                 Create Ticket
               </Button>
             </DialogTrigger>
-          <DialogContent className="max-w-2xl">
-            <DialogHeader>
-              <DialogTitle>Create Support Ticket</DialogTitle>
-            </DialogHeader>
-            <form onSubmit={handleCreateTicket} className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Brief description of your issue"
-                  required
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  value={description}
-                  onChange={(e) => setDescription(e.target.value)}
-                  placeholder="Provide detailed information about your issue"
-                  rows={4}
-                  required
-                />
-              </div>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Create Support Ticket</DialogTitle>
+              </DialogHeader>
+              <form onSubmit={handleCreateTicket} className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    placeholder="Brief description of your issue"
+                    required
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Select value={category} onValueChange={(value) => setCategory(value as TicketCategory)}>
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TicketCategory.GENERAL_INQUIRY}>General Inquiry</SelectItem>
-                    <SelectItem value={TicketCategory.TECHNICAL_SUPPORT}>Technical Support</SelectItem>
-                    <SelectItem value={TicketCategory.PAYMENT_PROBLEM}>Payment Problem</SelectItem>
-                    <SelectItem value={TicketCategory.ACCOUNT_ISSUE}>Account Issue</SelectItem>
-                    <SelectItem value={TicketCategory.BUG_REPORT}>Bug Report</SelectItem>
-                    <SelectItem value={TicketCategory.FEATURE_REQUEST}>Feature Request</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    placeholder="Provide detailed information about your issue"
+                    rows={4}
+                    required
+                  />
+                </div>
 
-              <div className="flex justify-end gap-2 pt-4">
-                <Button type="button" variant="outline" onClick={() => setIsCreateDialogOpen(false)}>
-                  Cancel
-                </Button>
-                <Button type="submit" disabled={isSubmitting}>
-                  {isSubmitting ? "Creating..." : "Create Ticket"}
-                </Button>
-              </div>
-            </form>
-          </DialogContent>
-        </Dialog>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={category}
+                    onValueChange={(value) => setCategory(value as TicketCategory)}
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TicketCategory.GENERAL_INQUIRY}>
+                        General Inquiry
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.TECHNICAL_SUPPORT}>
+                        Technical Support
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.PAYMENT_PROBLEM}>
+                        Payment Problem
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.ACCOUNT_ISSUE}>Account Issue</SelectItem>
+                      <SelectItem value={TicketCategory.BUG_REPORT}>Bug Report</SelectItem>
+                      <SelectItem value={TicketCategory.FEATURE_REQUEST}>
+                        Feature Request
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="flex justify-end gap-2 pt-4">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                  >
+                    Cancel
+                  </Button>
+                  <Button type="submit" disabled={isSubmitting}>
+                    {isSubmitting ? "Creating..." : "Create Ticket"}
+                  </Button>
+                </div>
+              </form>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -305,7 +319,12 @@ export const TicketsSection = () => {
 
           <div className="min-w-[150px]">
             <Label>Status</Label>
-            <Select value={filters.status || "all"} onValueChange={(value) => handleFilterChange('status', value === 'all' ? undefined : value)}>
+            <Select
+              value={filters.status || "all"}
+              onValueChange={(value) =>
+                handleFilterChange("status", value === "all" ? undefined : value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="All Statuses" />
               </SelectTrigger>
@@ -322,7 +341,12 @@ export const TicketsSection = () => {
 
           <div className="min-w-[150px]">
             <Label>Priority</Label>
-            <Select value={filters.priority || "all"} onValueChange={(value) => handleFilterChange('priority', value === 'all' ? undefined : value)}>
+            <Select
+              value={filters.priority || "all"}
+              onValueChange={(value) =>
+                handleFilterChange("priority", value === "all" ? undefined : value)
+              }
+            >
               <SelectTrigger>
                 <SelectValue placeholder="All Priorities" />
               </SelectTrigger>
@@ -363,14 +387,12 @@ export const TicketsSection = () => {
             <TicketIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
             <p className="text-gray-600 mb-4">
-              {searchTerm || Object.keys(filters).length > 0 
+              {searchTerm || Object.keys(filters).length > 0
                 ? "Try adjusting your search or filters"
                 : "You haven't created any support tickets yet"}
             </p>
             {!searchTerm && Object.keys(filters).length === 0 && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                Create Your First Ticket
-              </Button>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>Create Your First Ticket</Button>
             )}
           </Card>
         ) : (
@@ -379,12 +401,8 @@ export const TicketsSection = () => {
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
-                    <h3 className="text-lg font-semibold text-gray-900 mb-1">
-                      {ticket.title}
-                    </h3>
-                    <p className="text-gray-600 line-clamp-2">
-                      {ticket.description}
-                    </p>
+                    <h3 className="text-lg font-semibold text-gray-900 mb-1">{ticket.title}</h3>
+                    <p className="text-gray-600 line-clamp-2">{ticket.description}</p>
                   </div>
                   <div className="flex gap-2 ml-4">
                     {getStatusBadge(ticket.status)}
@@ -400,17 +418,15 @@ export const TicketsSection = () => {
                     </div>
                     <div className="flex items-center gap-1">
                       <User className="h-4 w-4" />
-                      {ticket.category.replace(/_/g, ' ')}
+                      {ticket.category.replace(/_/g, " ")}
                     </div>
                     <div className="flex items-center gap-1">
                       <Calendar className="h-4 w-4" />
-                      {format(new Date(ticket.createdAt), 'MMM dd, yyyy')}
+                      {format(new Date(ticket.createdAt), "MMM dd, yyyy")}
                     </div>
                   </div>
                   {ticket.assignedTo && (
-                    <div className="text-blue-600">
-                      Assigned to: {ticket.assignedTo.name}
-                    </div>
+                    <div className="text-blue-600">Assigned to: {ticket.assignedTo.name}</div>
                   )}
                 </div>
               </div>
@@ -424,19 +440,19 @@ export const TicketsSection = () => {
         <div className="flex justify-center items-center gap-2">
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+            onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
             disabled={currentPage === 1}
           >
             Previous
           </Button>
-          
+
           <span className="px-4 py-2 text-sm text-gray-600">
             Page {currentPage} of {totalPages}
           </span>
-          
+
           <Button
             variant="outline"
-            onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+            onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
             disabled={currentPage === totalPages}
           >
             Next

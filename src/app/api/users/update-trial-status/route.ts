@@ -1,26 +1,20 @@
-import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@/lib/config/auth';
-import { prisma } from '@/lib/config/prisma';
+import { type NextRequest, NextResponse } from "next/server";
+import { auth } from "@/lib/config/auth";
+import { prisma } from "@/lib/config/prisma";
 
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session?.user?.email) {
-      return NextResponse.json(
-        { success: false, error: 'Unauthorized' },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { email } = await request.json();
 
     // Verify that the user can only update their own trial status
     if (email !== session.user.email) {
-      return NextResponse.json(
-        { success: false, error: 'Forbidden' },
-        { status: 403 }
-      );
+      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
     // Find the user and check if trial has actually expired
@@ -35,28 +29,24 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: 'User not found' },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
     // Check if trial is actually expired
     const now = new Date();
-    const isTrialExpired = user.isTrialActive && 
-      user.trialEndDate && 
-      now >= new Date(user.trialEndDate);
+    const isTrialExpired =
+      user.isTrialActive && user.trialEndDate && now >= new Date(user.trialEndDate);
 
     if (!isTrialExpired) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: 'Trial is not expired or user is not in trial period',
+        {
+          success: false,
+          error: "Trial is not expired or user is not in trial period",
           currentStatus: {
             isTrialActive: user.isTrialActive,
             trialEndDate: user.trialEndDate,
-            subscriptionStatus: user.subscriptionStatus
-          }
+            subscriptionStatus: user.subscriptionStatus,
+          },
         },
         { status: 400 }
       );
@@ -67,7 +57,7 @@ export async function POST(request: NextRequest) {
       where: { email },
       data: {
         isTrialActive: false,
-        subscriptionStatus: 'INACTIVE',
+        subscriptionStatus: "INACTIVE",
         subscriptionPlan: null,
         subscriptionStartDate: null,
         subscriptionEndDate: null,
@@ -91,19 +81,15 @@ export async function POST(request: NextRequest) {
     });
 
     return NextResponse.json(
-      { 
-        success: true, 
-        message: 'Trial status updated successfully',
-        updatedUser
+      {
+        success: true,
+        message: "Trial status updated successfully",
+        updatedUser,
       },
       { status: 200 }
     );
-
   } catch (error) {
-    console.error('Error updating trial status:', error);
-    return NextResponse.json(
-      { success: false, error: 'Internal server error' },
-      { status: 500 }
-    );
+    console.error("Error updating trial status:", error);
+    return NextResponse.json({ success: false, error: "Internal server error" }, { status: 500 });
   }
 }

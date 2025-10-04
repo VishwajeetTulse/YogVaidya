@@ -3,23 +3,18 @@
 import { useEffect, useState } from "react";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Badge } from "@/components/ui/badge";
-import { 
-  BarChart3, 
-  Users, 
-  Award, 
-  TrendingUp, 
-  FileText, 
+import {
+  Users,
+  TrendingUp,
+  FileText,
   CheckCircle,
   Clock,
   AlertTriangle,
-  Calendar,
   UserCheck,
   Shield,
-  Activity
+  Activity,
 } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
-import { format, subMonths } from "date-fns";
 
 interface ModeratorAnalyticsData {
   // User & Platform Metrics
@@ -30,7 +25,7 @@ interface ModeratorAnalyticsData {
     trialUsers: number;
     activeSubscribers: number;
   };
-  
+
   // Mentor Application Workflow
   mentorApplications: {
     total: number;
@@ -40,7 +35,7 @@ interface ModeratorAnalyticsData {
     recentApplications: number;
     averageProcessingTime?: number;
   };
-  
+
   // Session Management
   sessionAnalytics: {
     totalSessions: number;
@@ -49,7 +44,7 @@ interface ModeratorAnalyticsData {
     completionRate: number;
     sessionsByType: Record<string, number>;
   };
-  
+
   // Moderator Activity Tracking
   moderatorActivity: {
     totalActions: number;
@@ -57,7 +52,7 @@ interface ModeratorAnalyticsData {
     actionsByCategory: Record<string, number>;
     errorCount: number;
   };
-  
+
   // Subscription Support Metrics
   subscriptionMetrics: {
     activeSubscriptions: number;
@@ -74,9 +69,7 @@ interface ModeratorAnalyticsData {
 }
 
 export const AnalyticsSection = () => {
-  const [analyticsData, setAnalyticsData] = useState<ModeratorAnalyticsData | null>(
-    null
-  );
+  const [analyticsData, setAnalyticsData] = useState<ModeratorAnalyticsData | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [retryCount, setRetryCount] = useState(0);
@@ -91,8 +84,7 @@ export const AnalyticsSection = () => {
         const data = await response.json();
 
         if (!response.ok) {
-          const errorMessage =
-            data?.details || data?.error || "Failed to fetch analytics data";
+          const errorMessage = data?.details || data?.error || "Failed to fetch analytics data";
           throw new Error(errorMessage);
         }
         // Transform admin analytics data for moderator-specific view
@@ -114,7 +106,7 @@ export const AnalyticsSection = () => {
           sessionAnalytics: {
             totalSessions: data.sessionAnalytics?.totalSessions || 0,
             completedSessions: data.sessionAnalytics?.completedSessions || 0,
-            cancelledSessions: (data.sessionAnalytics?.sessionsByStatus?.CANCELLED || 0),
+            cancelledSessions: data.sessionAnalytics?.sessionsByStatus?.CANCELLED || 0,
             completionRate: data.sessionAnalytics?.completionRate || 0,
             sessionsByType: data.sessionAnalytics?.sessionsByType || {},
           },
@@ -133,7 +125,7 @@ export const AnalyticsSection = () => {
           trends: {
             userGrowth: data.userGrowth || [],
             applicationTrends: [],
-          }
+          },
         };
 
         setAnalyticsData(moderatorData);
@@ -149,9 +141,7 @@ export const AnalyticsSection = () => {
         }
 
         // If we've reached max retries, show error
-        setError(
-          err instanceof Error ? err.message : "An unknown error occurred"
-        );
+        setError(err instanceof Error ? err.message : "An unknown error occurred");
         setLoading(false); // Stop loading even on error if max retries reached
       }
     };
@@ -165,9 +155,7 @@ export const AnalyticsSection = () => {
       // Exponential backoff: 2^retryCount * 1000ms (1s, 2s, 4s)
       const delay = Math.pow(2, retryCount) * 1000;
       console.log(
-        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${
-          MAX_RETRIES + 1
-        })`
+        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`
       );
 
       retryTimer = setTimeout(() => {
@@ -189,9 +177,7 @@ export const AnalyticsSection = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-          <p className="text-gray-600 mt-2">
-            Platform insights and performance metrics.
-          </p>
+          <p className="text-gray-600 mt-2">Platform insights and performance metrics.</p>
         </div>
         <div className="bg-red-50 border border-red-200 rounded-lg p-4 text-red-800">
           <h3 className="text-lg font-medium">Failed to load analytics data</h3>
@@ -219,9 +205,7 @@ export const AnalyticsSection = () => {
           <h4 className="font-medium">Troubleshooting Tips:</h4>
           <ul className="mt-2 list-disc list-inside space-y-1 text-sm">
             <li>Verify you have moderator or admin permissions</li>
-            <li>
-              Check if your user session is valid (try logging out and back in)
-            </li>
+            <li>Check if your user session is valid (try logging out and back in)</li>
             <li>Contact the administrator if the problem persists</li>
           </ul>
         </div>
@@ -237,9 +221,7 @@ export const AnalyticsSection = () => {
     <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Moderator Analytics</h1>
-        <p className="text-gray-600 mt-2">
-          Platform insights and moderator performance metrics.
-        </p>
+        <p className="text-gray-600 mt-2">Platform insights and moderator performance metrics.</p>
       </div>
 
       {/* Key Performance Indicators */}
@@ -303,7 +285,10 @@ export const AnalyticsSection = () => {
             <UserCheck className="h-8 w-8 text-purple-500" />
             <div>
               <p className="text-sm font-medium text-gray-600">Applications Processed</p>
-              <p className="text-2xl font-bold">{analyticsData.mentorApplications.approved + analyticsData.mentorApplications.rejected}</p>
+              <p className="text-2xl font-bold">
+                {analyticsData.mentorApplications.approved +
+                  analyticsData.mentorApplications.rejected}
+              </p>
             </div>
           </div>
         </div>
@@ -317,25 +302,31 @@ export const AnalyticsSection = () => {
             <div className="mx-auto w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mb-3">
               <Clock className="h-8 w-8 text-amber-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">{analyticsData.mentorApplications.pending}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {analyticsData.mentorApplications.pending}
+            </h3>
             <p className="text-sm text-gray-600">Pending Review</p>
           </div>
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mb-3">
               <CheckCircle className="h-8 w-8 text-green-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">{analyticsData.mentorApplications.approved}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {analyticsData.mentorApplications.approved}
+            </h3>
             <p className="text-sm text-gray-600">Approved</p>
           </div>
           <div className="text-center">
             <div className="mx-auto w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mb-3">
               <AlertTriangle className="h-8 w-8 text-red-600" />
             </div>
-            <h3 className="text-lg font-semibold text-gray-900">{analyticsData.mentorApplications.rejected}</h3>
+            <h3 className="text-lg font-semibold text-gray-900">
+              {analyticsData.mentorApplications.rejected}
+            </h3>
             <p className="text-sm text-gray-600">Rejected</p>
           </div>
         </div>
-        
+
         {/* Progress Bar */}
         <div className="mt-6">
           <div className="flex justify-between text-sm text-gray-600 mb-2">
@@ -344,17 +335,23 @@ export const AnalyticsSection = () => {
           </div>
           <div className="w-full bg-gray-200 rounded-full h-3">
             <div className="flex h-3 rounded-full overflow-hidden">
-              <div 
-                className="bg-green-500" 
-                style={{ width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%` }}
+              <div
+                className="bg-green-500"
+                style={{
+                  width: `${(analyticsData.mentorApplications.approved / analyticsData.mentorApplications.total) * 100}%`,
+                }}
               />
-              <div 
-                className="bg-amber-500" 
-                style={{ width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%` }}
+              <div
+                className="bg-amber-500"
+                style={{
+                  width: `${(analyticsData.mentorApplications.pending / analyticsData.mentorApplications.total) * 100}%`,
+                }}
               />
-              <div 
-                className="bg-red-500" 
-                style={{ width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%` }}
+              <div
+                className="bg-red-500"
+                style={{
+                  width: `${(analyticsData.mentorApplications.rejected / analyticsData.mentorApplications.total) * 100}%`,
+                }}
               />
             </div>
           </div>
@@ -368,24 +365,32 @@ export const AnalyticsSection = () => {
           <div className="space-y-4">
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Total Sessions</span>
-              <span className="text-lg font-bold">{analyticsData.sessionAnalytics.totalSessions}</span>
+              <span className="text-lg font-bold">
+                {analyticsData.sessionAnalytics.totalSessions}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Completed</span>
-              <span className="text-lg font-bold text-green-600">{analyticsData.sessionAnalytics.completedSessions}</span>
+              <span className="text-lg font-bold text-green-600">
+                {analyticsData.sessionAnalytics.completedSessions}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Cancelled</span>
-              <span className="text-lg font-bold text-red-600">{analyticsData.sessionAnalytics.cancelledSessions}</span>
+              <span className="text-lg font-bold text-red-600">
+                {analyticsData.sessionAnalytics.cancelledSessions}
+              </span>
             </div>
             <div className="flex justify-between items-center">
               <span className="text-sm font-medium text-gray-600">Completion Rate</span>
-              <span className="text-lg font-bold text-purple-600">{analyticsData.sessionAnalytics.completionRate}%</span>
+              <span className="text-lg font-bold text-purple-600">
+                {analyticsData.sessionAnalytics.completionRate}%
+              </span>
             </div>
           </div>
-          
+
           <Separator className="my-4" />
-          
+
           <div className="space-y-3">
             <h3 className="font-medium text-gray-900">Sessions by Type</h3>
             {Object.entries(analyticsData.sessionAnalytics.sessionsByType).map(([type, count]) => (
@@ -455,14 +460,10 @@ const StatCard = ({
   </Card>
 );
 
-const UserGrowthChart = ({
-  data,
-}: {
-  data: Array<{ month: string; count: number }>;
-}) => {
+const UserGrowthChart = ({ data }: { data: Array<{ month: string; count: number }> }) => {
   // Find the maximum value to normalize bar heights
   const maxCount = Math.max(...data.map((item) => item.count));
-  
+
   return (
     <div className="flex h-full items-end space-x-8 justify-around">
       {data.map((item, index) => {
@@ -521,9 +522,7 @@ const RoleDistribution = ({
             </div>
             <div className="h-2 rounded-full bg-gray-200">
               <div
-                className={`h-2 rounded-full ${
-                  roleColors[role] || "bg-gray-500"
-                }`}
+                className={`h-2 rounded-full ${roleColors[role] || "bg-gray-500"}`}
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -562,9 +561,7 @@ const SubscriptionDistribution = ({
             </div>
             <div className="h-2 rounded-full bg-gray-200">
               <div
-                className={`h-2 rounded-full ${
-                  planColors[plan] || "bg-gray-500"
-                }`}
+                className={`h-2 rounded-full ${planColors[plan] || "bg-gray-500"}`}
                 style={{ width: `${percentage}%` }}
               />
             </div>
@@ -579,9 +576,7 @@ const AnalyticsLoading = () => (
   <div className="space-y-6">
     <div>
       <h1 className="text-3xl font-bold text-gray-900">Analytics</h1>
-      <p className="text-gray-600 mt-2">
-        Platform insights and performance metrics.
-      </p>
+      <p className="text-gray-600 mt-2">Platform insights and performance metrics.</p>
     </div>
 
     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -626,4 +621,3 @@ const AnalyticsLoading = () => (
     </div>
   </div>
 );
-

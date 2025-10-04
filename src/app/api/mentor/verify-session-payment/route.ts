@@ -18,21 +18,18 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const body = await request.json();
-    const { 
-      razorpay_order_id, 
-      razorpay_payment_id, 
+    const {
+      razorpay_order_id,
+      razorpay_payment_id,
       razorpay_signature,
       mentorId,
       sessionDate,
       sessionTime,
-      notes 
+      notes,
     } = verifySessionPaymentSchema.parse(body);
 
     // Verify payment signature
@@ -50,7 +47,7 @@ export async function POST(request: Request) {
 
     // Payment verified, create session booking in database
     const { prisma } = await import("@/lib/config/prisma");
-    
+
     // First, get mentor details
     const mentor = await prisma.user.findFirst({
       where: {
@@ -66,10 +63,7 @@ export async function POST(request: Request) {
     });
 
     if (!mentor) {
-      return NextResponse.json(
-        { success: false, error: "Mentor not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     // Map MentorType to SessionType
@@ -105,7 +99,7 @@ export async function POST(request: Request) {
     };
 
     // Create the session booking using Prisma to ensure proper date handling
-    const sessionBooking = await prisma.sessionBooking.create({
+    const _sessionBooking = await prisma.sessionBooking.create({
       data: {
         id: sessionBookingData._id,
         userId: sessionBookingData.userId,
@@ -117,8 +111,8 @@ export async function POST(request: Request) {
         notes: sessionBookingData.notes,
         paymentStatus: "COMPLETED",
         amount: mentor.sessionPrice,
-        paymentDetails: sessionBookingData.paymentDetails
-      }
+        paymentDetails: sessionBookingData.paymentDetails,
+      },
     });
 
     return NextResponse.json({
@@ -131,10 +125,9 @@ export async function POST(request: Request) {
         amount: mentor.sessionPrice,
       },
     });
-
   } catch (error) {
     console.error("Error verifying session payment:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
         { success: false, error: "Invalid request data", details: error.errors },

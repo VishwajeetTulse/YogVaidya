@@ -11,12 +11,12 @@ import { prisma } from "@/lib/config/prisma";
 // 1. Gets all active students with BLOOM/FLOURISH subscriptions (same as getStudents())
 // 2. Analyzes mentor's session history to estimate their active student count
 // 3. Returns both total active students and mentor-specific estimates
-export async function getMentorStudents(mentorId: string){
+export async function getMentorStudents(mentorId: string) {
   try {
     // Get all active students (using the same logic as getStudents)
     const mentoremail = await prisma.user.findUnique({
       where: { id: mentorId },
-      select: { email: true }
+      select: { email: true },
     });
     const mentortype = await getMentorType(mentoremail || { email: "" });
     console.log("Fetching students for mentor type:", mentortype);
@@ -26,7 +26,14 @@ export async function getMentorStudents(mentorId: string){
         role: "USER", // Only users with USER role (mentors have MENTOR role)
         subscriptionStatus: "ACTIVE",
         subscriptionPlan: {
-                in: [mentortype == "YOGAMENTOR" ? "BLOOM" : mentortype == "DIETPLANNER" ? "FLOURISH" : "SEED" , "FLOURISH" ]
+          in: [
+            mentortype == "YOGAMENTOR"
+              ? "BLOOM"
+              : mentortype == "DIETPLANNER"
+                ? "FLOURISH"
+                : "SEED",
+            "FLOURISH",
+          ],
         },
       },
       select: {
@@ -35,8 +42,8 @@ export async function getMentorStudents(mentorId: string){
         email: true,
         subscriptionPlan: true,
         subscriptionStartDate: true,
-        createdAt: true
-      }
+        createdAt: true,
+      },
     });
 
     // Get students who have had sessions with this mentor in the last 90 days
@@ -44,13 +51,13 @@ export async function getMentorStudents(mentorId: string){
       where: {
         mentorId: mentorId,
         scheduledTime: {
-          gte: new Date(Date.now() - (90 * 24 * 60 * 60 * 1000)) // Last 90 days
-        }
+          gte: new Date(Date.now() - 90 * 24 * 60 * 60 * 1000), // Last 90 days
+        },
       },
       select: {
         id: true,
-        scheduledTime: true
-      }
+        scheduledTime: true,
+      },
     });
 
     // For now, since we don't have a direct student-mentor relationship,
@@ -60,14 +67,14 @@ export async function getMentorStudents(mentorId: string){
       totalActiveStudents: allActiveStudents.length,
       mentorSessions: mentorSessions.length,
 
-      students: allActiveStudents // Return all active students for now
+      students: allActiveStudents, // Return all active students for now
     };
   } catch (error) {
     console.error("Error getting mentor students:", error);
     return {
       totalActiveStudents: 0,
       mentorSessions: 0,
-      students: []
+      students: [],
     };
   }
 }
@@ -112,11 +119,15 @@ export interface MentorOverviewData {
   };
 }
 
-export async function getMentorOverviewData(): Promise<{ success: boolean; data?: MentorOverviewData; error?: string }> {
+export async function getMentorOverviewData(): Promise<{
+  success: boolean;
+  data?: MentorOverviewData;
+  error?: string;
+}> {
   try {
     // Get the session using headers
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
     }
@@ -151,12 +162,12 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     // Get active students for this mentor using the improved logic
     // This uses the same subscription filtering as getStudents() from students.ts
     // but adds mentor-specific session analysis for more accurate counts
-    const mentorStudentsData = await getMentorStudents(user.id, );
+    const mentorStudentsData = await getMentorStudents(user.id);
     const totalMentorStudents = mentorStudentsData.totalActiveStudents;
 
     // Get sessions this week using raw query to handle datetime conversion
     const sessionsThisWeekResult = await prisma.$runCommandRaw({
-      aggregate: 'schedule',
+      aggregate: "schedule",
       pipeline: [
         {
           $match: {
@@ -164,29 +175,31 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
             status: "SCHEDULED",
             scheduledTime: {
               $gte: startOfWeek,
-              $lte: endOfWeek
-            }
-          }
+              $lte: endOfWeek,
+            },
+          },
         },
         {
-          $count: "totalSessions"
-        }
+          $count: "totalSessions",
+        },
       ],
-      cursor: {}
+      cursor: {},
     });
 
     let sessionsThisWeek = 0;
-    if (sessionsThisWeekResult &&
-        typeof sessionsThisWeekResult === 'object' &&
-        'cursor' in sessionsThisWeekResult &&
-        sessionsThisWeekResult.cursor &&
-        typeof sessionsThisWeekResult.cursor === 'object' &&
-        'firstBatch' in sessionsThisWeekResult.cursor &&
-        Array.isArray(sessionsThisWeekResult.cursor.firstBatch) &&
-        sessionsThisWeekResult.cursor.firstBatch.length > 0 &&
-        sessionsThisWeekResult.cursor.firstBatch[0] &&
-        typeof sessionsThisWeekResult.cursor.firstBatch[0] === 'object' &&
-        'totalSessions' in sessionsThisWeekResult.cursor.firstBatch[0]) {
+    if (
+      sessionsThisWeekResult &&
+      typeof sessionsThisWeekResult === "object" &&
+      "cursor" in sessionsThisWeekResult &&
+      sessionsThisWeekResult.cursor &&
+      typeof sessionsThisWeekResult.cursor === "object" &&
+      "firstBatch" in sessionsThisWeekResult.cursor &&
+      Array.isArray(sessionsThisWeekResult.cursor.firstBatch) &&
+      sessionsThisWeekResult.cursor.firstBatch.length > 0 &&
+      sessionsThisWeekResult.cursor.firstBatch[0] &&
+      typeof sessionsThisWeekResult.cursor.firstBatch[0] === "object" &&
+      "totalSessions" in sessionsThisWeekResult.cursor.firstBatch[0]
+    ) {
       sessionsThisWeek = (sessionsThisWeekResult.cursor.firstBatch[0] as any).totalSessions || 0;
     }
 
@@ -196,12 +209,12 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledTime: {
           $gte: { $date: startOfDay.toISOString() },
-          $lte: { $date: endOfDay.toISOString() }
-        }
+          $lte: { $date: endOfDay.toISOString() },
+        },
       },
       options: {
-        sort: { scheduledTime: 1 }
-      }
+        sort: { scheduledTime: 1 },
+      },
     });
 
     const todaysBookingSessionsResult = await prisma.sessionBooking.findRaw({
@@ -209,26 +222,26 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledAt: {
           $gte: { $date: startOfDay.toISOString() },
-          $lte: { $date: endOfDay.toISOString() }
-        }
+          $lte: { $date: endOfDay.toISOString() },
+        },
       },
       options: {
-        sort: { scheduledAt: 1 }
-      }
+        sort: { scheduledAt: 1 },
+      },
     });
 
     let todaysSessions: any[] = [];
-    
+
     // Process schedule sessions
     if (Array.isArray(todaysScheduleSessionsResult)) {
       const scheduleSessions = todaysScheduleSessionsResult.map((session: any) => ({
         ...session,
         scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-        sessionCategory: 'subscription'
+        sessionCategory: "subscription",
       }));
       todaysSessions.push(...scheduleSessions);
     }
-    
+
     // Process booking sessions (individual slots)
     if (Array.isArray(todaysBookingSessionsResult)) {
       const bookingSessions = todaysBookingSessionsResult.map((session: any) => ({
@@ -236,12 +249,14 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         id: session._id || session.id,
         title: `${session.sessionType} Session`, // Generate title since bookings might not have titles
         scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
-        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
-        sessionCategory: 'individual'
+        duration:
+          session.duration ||
+          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
+        sessionCategory: "individual",
       }));
       todaysSessions.push(...bookingSessions);
     }
-    
+
     // Sort all sessions by scheduled time and limit to 5
     todaysSessions.sort((a, b) => {
       const timeA = a.scheduledTime ? a.scheduledTime.getTime() : 0;
@@ -255,12 +270,12 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledTime: {
           $gt: { $date: now.toISOString() },
-          $lte: { $date: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)).toISOString() }
-        }
+          $lte: { $date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() },
+        },
       },
       options: {
-        sort: { scheduledTime: 1 }
-      }
+        sort: { scheduledTime: 1 },
+      },
     });
 
     const upcomingBookingSessionsResult = await prisma.sessionBooking.findRaw({
@@ -268,26 +283,26 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledAt: {
           $gt: { $date: now.toISOString() },
-          $lte: { $date: new Date(now.getTime() + (7 * 24 * 60 * 60 * 1000)).toISOString() }
-        }
+          $lte: { $date: new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000).toISOString() },
+        },
       },
       options: {
-        sort: { scheduledAt: 1 }
-      }
+        sort: { scheduledAt: 1 },
+      },
     });
 
     let upcomingSessions: any[] = [];
-    
+
     // Process schedule sessions
     if (Array.isArray(upcomingScheduleSessionsResult)) {
       const scheduleSessions = upcomingScheduleSessionsResult.map((session: any) => ({
         ...session,
         scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-        sessionCategory: 'subscription'
+        sessionCategory: "subscription",
       }));
       upcomingSessions.push(...scheduleSessions);
     }
-    
+
     // Process booking sessions (individual slots)
     if (Array.isArray(upcomingBookingSessionsResult)) {
       const bookingSessions = upcomingBookingSessionsResult.map((session: any) => ({
@@ -295,12 +310,14 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         id: session._id || session.id,
         title: `${session.sessionType} Session`,
         scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
-        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
-        sessionCategory: 'individual'
+        duration:
+          session.duration ||
+          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
+        sessionCategory: "individual",
       }));
       upcomingSessions.push(...bookingSessions);
     }
-    
+
     // Sort all sessions by scheduled time and limit to 5
     upcomingSessions.sort((a, b) => {
       const timeA = a.scheduledTime ? a.scheduledTime.getTime() : 0;
@@ -313,16 +330,16 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
     const recentActivity = await prisma.systemLog.findMany({
       where: {
         userId: user.id,
-        category: { in: ['MENTOR', 'SYSTEM'] }
+        category: { in: ["MENTOR", "SYSTEM"] },
       },
-      orderBy: { timestamp: 'desc' },
+      orderBy: { timestamp: "desc" },
       take: 5,
       select: {
         id: true,
         action: true,
         timestamp: true,
-        details: true
-      }
+        details: true,
+      },
     });
 
     // Get monthly stats using Prisma count with better error handling
@@ -331,9 +348,9 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledTime: {
           gte: startOfMonth,
-          lte: now
-        }
-      }
+          lte: now,
+        },
+      },
     });
 
     const previousMonthSessions = await prisma.schedule.count({
@@ -341,9 +358,9 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         mentorId: user.id,
         scheduledTime: {
           gte: startOfPreviousMonth,
-          lte: endOfPreviousMonth
-        }
-      }
+          lte: endOfPreviousMonth,
+        },
+      },
     });
 
     const currentMonthCompletedSessions = await prisma.schedule.count({
@@ -352,9 +369,9 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         status: "COMPLETED",
         scheduledTime: {
           gte: startOfMonth,
-          lte: now
-        }
-      }
+          lte: now,
+        },
+      },
     });
 
     const previousMonthCompletedSessions = await prisma.schedule.count({
@@ -363,56 +380,58 @@ export async function getMentorOverviewData(): Promise<{ success: boolean; data?
         status: "COMPLETED",
         scheduledTime: {
           gte: startOfPreviousMonth,
-          lte: endOfPreviousMonth
-        }
-      }
+          lte: endOfPreviousMonth,
+        },
+      },
     });
 
     const overviewData: MentorOverviewData = {
       activeStudents: totalMentorStudents,
       sessionsThisWeek,
       averageRating: 4.8, // Placeholder - you might want to add a reviews/ratings table
-      todaysSessions: todaysSessions.map(session => ({
+      todaysSessions: todaysSessions.map((session) => ({
         id: session.id || session._id,
         title: session.title || `${session.sessionType} Session`,
         scheduledTime: session.scheduledTime,
-        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
+        duration:
+          session.duration ||
+          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
         sessionType: session.sessionType,
-        status: session.status
+        status: session.status,
       })),
-      upcomingSessions: upcomingSessions.map(session => ({
+      upcomingSessions: upcomingSessions.map((session) => ({
         id: session.id || session._id,
         title: session.title || `${session.sessionType} Session`,
         scheduledTime: session.scheduledTime,
-        duration: session.duration || (session.sessionType === 'MEDITATION' ? 30 : session.sessionType === 'DIET' ? 45 : 60),
+        duration:
+          session.duration ||
+          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
         sessionType: session.sessionType,
-        status: session.status
+        status: session.status,
       })),
-      recentActivity: recentActivity.map(activity => ({
+      recentActivity: recentActivity.map((activity) => ({
         id: activity.id,
         action: activity.action,
         timestamp: activity.timestamp,
-        details: activity.details || undefined
+        details: activity.details || undefined,
       })),
       monthlyStats: {
         currentMonth: {
           sessions: currentMonthSessions,
           earnings: currentMonthCompletedSessions * 500,
-          students: totalMentorStudents
+          students: totalMentorStudents,
         },
         previousMonth: {
           sessions: previousMonthSessions,
           earnings: previousMonthCompletedSessions * 500,
-          students: Math.ceil(previousMonthSessions / 4) // Estimated based on sessions
-        }
-      }
+          students: Math.ceil(previousMonthSessions / 4), // Estimated based on sessions
+        },
+      },
     };
 
     return { success: true, data: overviewData };
-
   } catch (error) {
     console.error("Error fetching mentor overview data:", error);
     return { success: false, error: "Failed to fetch overview data" };
   }
 }
-

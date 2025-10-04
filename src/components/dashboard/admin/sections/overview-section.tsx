@@ -8,7 +8,7 @@ import {
   Info,
   CheckCircle,
 } from "lucide-react";
-import { AdminSectionProps } from "../types";
+import { type AdminSectionProps } from "../types";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils/utils";
 import { Skeleton } from "@/components/ui/skeleton";
@@ -85,16 +85,9 @@ const OverviewLoading = () => (
   </div>
 );
 
-export const OverviewSection = ({
-  userDetails,
-  setActiveSection,
-}: AdminSectionProps) => {
-  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(
-    null
-  );
-  const [systemLogsData, setSystemLogsData] = useState<SystemLogsData | null>(
-    null
-  );
+export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionProps) => {
+  const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
+  const [systemLogsData, setSystemLogsData] = useState<SystemLogsData | null>(null);
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
@@ -106,9 +99,7 @@ export const OverviewSection = ({
         // Fetch analytics data
         const analyticsResponse = await fetch("/api/analytics");
         if (!analyticsResponse.ok) {
-          throw new Error(
-            `Failed to fetch analytics: ${analyticsResponse.statusText}`
-          );
+          throw new Error(`Failed to fetch analytics: ${analyticsResponse.statusText}`);
         }
         const analyticsData = await analyticsResponse.json();
         setAnalyticsData(analyticsData);
@@ -139,9 +130,7 @@ export const OverviewSection = ({
     return <OverviewLoading />;
   }
   if (error) {
-    return (
-      <div className="p-6 text-red-500">Error loading analytics: {error}</div>
-    );
+    return <div className="p-6 text-red-500">Error loading analytics: {error}</div>;
   }
 
   return (
@@ -150,9 +139,7 @@ export const OverviewSection = ({
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {userDetails?.name || "Admin"}!
         </h1>
-        <p className="text-gray-600 mt-2">
-          Complete system administration and platform oversight.
-        </p>
+        <p className="text-gray-600 mt-2">Complete system administration and platform oversight.</p>
       </div>
 
       {/* System Stats */}
@@ -164,9 +151,7 @@ export const OverviewSection = ({
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Users</p>
-              <p className="text-xl font-semibold">
-                {analyticsData?.users.total || 0}
-              </p>
+              <p className="text-xl font-semibold">{analyticsData?.users.total || 0}</p>
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-500">
@@ -186,23 +171,18 @@ export const OverviewSection = ({
             </div>
             <div>
               <p className="text-sm text-gray-500">Active Mentors</p>
-              <p className="text-xl font-semibold">
-                {analyticsData?.users.byRole.MENTOR || 0}
-              </p>
+              <p className="text-xl font-semibold">{analyticsData?.users.byRole.MENTOR || 0}</p>
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-500">
             <span
               className={cn(
-                analyticsData?.mentorApplications.pending
-                  ? "text-red-500"
-                  : "text-gray-500",
+                analyticsData?.mentorApplications.pending ? "text-red-500" : "text-gray-500",
                 "cursor-pointer hover:text-[#76d2fa]"
               )}
               onClick={() => setActiveSection("applications")}
             >
-              {analyticsData?.mentorApplications.pending || 0} pending
-              applications
+              {analyticsData?.mentorApplications.pending || 0} pending applications
               <ArrowUpRight className="inline w-3 h-3 ml-1" />
             </span>
           </div>
@@ -214,22 +194,18 @@ export const OverviewSection = ({
             </div>
             <div>
               <p className="text-sm text-gray-500">Activity Logs</p>
-              <p className="text-xl font-semibold">
-                {systemLogsData?.total || 0}
-              </p>
+              <p className="text-xl font-semibold">{systemLogsData?.total || 0}</p>
             </div>
           </div>
           <div className="mt-2 text-xs text-gray-500">
             <span
               className={cn(
-                (systemLogsData?.byLevel?.ERROR ?? 0) > 0
-                  ? "text-red-500"
-                  : "text-gray-500",
+                (systemLogsData?.byLevel?.ERROR ?? 0) > 0 ? "text-red-500" : "text-gray-500",
                 "cursor-pointer hover:text-[#76d2fa] transition-colors"
               )}
               onClick={() => setActiveSection("logs")}
             >
-              {"View activity logs"}
+              View activity logs
               <ArrowUpRight className="inline w-3 h-3 ml-1" />
             </span>
           </div>
@@ -246,12 +222,9 @@ export const OverviewSection = ({
                 <Users className="w-4 h-4 text-yellow-700" />
               </div>
               <div>
-                <p className="font-medium text-yellow-800">
-                  Mentor Applications
-                </p>
+                <p className="font-medium text-yellow-800">Mentor Applications</p>
                 <p className="text-sm text-yellow-700">
-                  {analyticsData.mentorApplications.pending} new applications
-                  pending review
+                  {analyticsData.mentorApplications.pending} new applications pending review
                 </p>
               </div>
             </div>
@@ -293,9 +266,7 @@ export const OverviewSection = ({
                 </div>
                 <div className="w-full">
                   <div className="flex justify-between w-full">
-                    <p className={`font-medium ${headingColorClass}`}>
-                      {log.category}
-                    </p>
+                    <p className={`font-medium ${headingColorClass}`}>{log.category}</p>
                     <p className="text-xs text-gray-500">{log.timestamp}</p>
                   </div>
                   <p className={`text-sm ${textColorClass}`}>{log.details}</p>
@@ -312,9 +283,7 @@ export const OverviewSection = ({
               </div>
               <div>
                 <p className="font-medium text-green-800">All Systems Normal</p>
-                <p className="text-sm text-green-700">
-                  No recent system alerts or issues detected
-                </p>
+                <p className="text-sm text-green-700">No recent system alerts or issues detected</p>
               </div>
             </div>
           )}
@@ -333,4 +302,3 @@ export const OverviewSection = ({
     </div>
   );
 };
-

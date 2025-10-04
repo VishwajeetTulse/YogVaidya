@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
 
 /**
@@ -13,10 +13,7 @@ export async function POST(
     const { sessionId } = await params;
 
     if (!sessionId) {
-      return NextResponse.json(
-        { error: "Session ID is required" },
-        { status: 400 }
-      );
+      return NextResponse.json({ error: "Session ID is required" }, { status: 400 });
     }
 
     // Find the session using the robust service
@@ -32,7 +29,7 @@ export async function POST(
     const session = lookupResult.session;
 
     // Check if session is in ONGOING status
-    if (session.status !== 'ONGOING') {
+    if (session.status !== "ONGOING") {
       return NextResponse.json(
         { error: `Session must be ongoing to complete. Current status: ${session.status}` },
         { status: 400 }
@@ -53,14 +50,10 @@ export async function POST(
       success: true,
       message: "Session completed successfully",
       sessionId,
-      newStatus: "COMPLETED"
+      newStatus: "COMPLETED",
     });
-
   } catch (error) {
     console.error("Error completing session:", error);
-    return NextResponse.json(
-      { error: "Failed to complete session" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Failed to complete session" }, { status: 500 });
   }
 }

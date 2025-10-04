@@ -9,9 +9,8 @@ import {
   UserCheck,
   CreditCard,
   Ticket,
-  Activity,
 } from "lucide-react";
-import { AdminSidebarMenuItem } from "./types";
+import { type AdminSidebarMenuItem } from "./types";
 
 export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
   {
@@ -75,4 +74,3 @@ export const ADMIN_SIDEBAR_MENU_ITEMS: AdminSidebarMenuItem[] = [
     description: "System configuration",
   },
 ];
-

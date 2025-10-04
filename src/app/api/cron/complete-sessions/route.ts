@@ -2,29 +2,28 @@ import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
-export async function POST(request: Request) {
+export async function POST(_request: Request) {
   try {
     console.log("🕒 Running session completion cron job...");
-    
+
     // Verify this is an internal cron request or from a trusted source
-    const authHeader = (await headers()).get('authorization');
-    const cronSecret = process.env.CRON_SECRET || 'dev-secret';
-    
+    const authHeader = (await headers()).get("authorization");
+    const cronSecret = process.env.CRON_SECRET || "dev-secret";
+
     if (authHeader !== `Bearer ${cronSecret}`) {
       console.log("❌ Unauthorized cron request");
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Use the service to update session statuses
     const updates = await updateSessionStatuses();
-    
-    const startedCount = updates.filter(u => u.newStatus === 'ONGOING').length;
-    const completedCount = updates.filter(u => u.newStatus === 'COMPLETED').length;
 
-    console.log(`✅ Session completion cron completed: ${startedCount} started, ${completedCount} completed`);
+    const startedCount = updates.filter((u) => u.newStatus === "ONGOING").length;
+    const completedCount = updates.filter((u) => u.newStatus === "COMPLETED").length;
+
+    console.log(
+      `✅ Session completion cron completed: ${startedCount} started, ${completedCount} completed`
+    );
 
     return NextResponse.json({
       success: true,
@@ -32,12 +31,11 @@ export async function POST(request: Request) {
       startedSessions: startedCount,
       completedSessions: completedCount,
       updates: updates,
-      timestamp: new Date().toISOString()
+      timestamp: new Date().toISOString(),
     });
-
   } catch (error) {
     console.error("❌ Error in session completion cron:", error);
-    
+
     return NextResponse.json(
       { success: false, error: "Failed to complete sessions" },
       { status: 500 }

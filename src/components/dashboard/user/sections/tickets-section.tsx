@@ -1,20 +1,30 @@
 "use client";
 
-import React, { useState, useEffect } from 'react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
+import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { toast } from "sonner";
-import { 
-  Plus, 
-  Search, 
-  Filter, 
+import {
+  Plus,
+  Search,
   Clock,
   AlertCircle,
   CheckCircle,
@@ -24,25 +34,21 @@ import {
   User,
   Mail,
   Phone,
-  BookOpen,
-  Video,
-  ChevronRight,
-  HelpCircle,
-  RefreshCw
+  RefreshCw,
 } from "lucide-react";
-import { 
-  Ticket, 
-  TicketStatus, 
-  TicketPriority, 
+import {
+  type Ticket,
+  TicketStatus,
+  TicketPriority,
   TicketCategory,
-  CreateTicketRequest 
+  type CreateTicketRequest,
 } from "@/lib/types/tickets";
 
 interface UserTicketsSectionProps {
   userDetails?: any;
 }
 
-export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
+export function UserTicketsSection({}: UserTicketsSectionProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -59,7 +65,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
     title: "",
     description: "",
     category: TicketCategory.GENERAL_INQUIRY,
-    priority: TicketPriority.MEDIUM
+    priority: TicketPriority.MEDIUM,
   });
 
   // Fetch tickets
@@ -68,9 +74,9 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
       setLoading(true);
       const params = new URLSearchParams({
         page: currentPage.toString(),
-        limit: "10"
+        limit: "10",
       });
-      
+
       if (statusFilter !== "all") params.append("status", statusFilter);
       if (priorityFilter !== "all") params.append("priority", priorityFilter);
       if (categoryFilter !== "all") params.append("category", categoryFilter);
@@ -119,7 +125,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
           title: "",
           description: "",
           category: TicketCategory.GENERAL_INQUIRY,
-          priority: TicketPriority.MEDIUM
+          priority: TicketPriority.MEDIUM,
         });
         fetchTickets(); // Refresh the list
       } else {
@@ -165,10 +171,11 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
   };
 
   // Filter tickets based on search term
-  const filteredTickets = tickets.filter(ticket =>
-    ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    ticket.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredTickets = tickets.filter(
+    (ticket) =>
+      ticket.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.description.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      ticket.ticketNumber.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   useEffect(() => {
@@ -219,19 +226,19 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
           <h2 className="text-2xl font-bold text-gray-900">Support Tickets</h2>
           <p className="text-gray-600">Manage your support requests and track their progress</p>
         </div>
-        
+
         <div className="flex items-center gap-3">
           {/* Refresh Button */}
-          <Button 
+          <Button
             variant="outline"
             onClick={fetchTickets}
             disabled={loading}
             className="flex items-center gap-2"
           >
-            <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
+            <RefreshCw className={`h-4 w-4 ${loading ? "animate-spin" : ""}`} />
             Refresh
           </Button>
-          
+
           {/* Create Ticket Button */}
           <Dialog open={isCreateDialogOpen} onOpenChange={setIsCreateDialogOpen}>
             <DialogTrigger asChild>
@@ -240,69 +247,83 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
                 Create Ticket
               </Button>
             </DialogTrigger>
-          <DialogContent className="sm:max-w-[500px]">
-            <DialogHeader>
-              <DialogTitle>Create New Support Ticket</DialogTitle>
-            </DialogHeader>
-            <div className="space-y-4">
-              <div>
-                <Label htmlFor="title">Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="Brief description of your issue"
-                  value={newTicket.title || ""}
-                  onChange={(e) => setNewTicket(prev => ({ ...prev, title: e.target.value }))}
-                />
-              </div>
-              
-              <div>
-                <Label htmlFor="category">Category</Label>
-                <Select 
-                  value={newTicket.category || TicketCategory.GENERAL_INQUIRY}
-                  onValueChange={(value) => setNewTicket(prev => ({ ...prev, category: value as TicketCategory }))}
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value={TicketCategory.GENERAL_INQUIRY}>General Inquiry</SelectItem>
-                    <SelectItem value={TicketCategory.TECHNICAL_SUPPORT}>Technical Support</SelectItem>
-                    <SelectItem value={TicketCategory.SUBSCRIPTION_ISSUE}>Subscription Issue</SelectItem>
-                    <SelectItem value={TicketCategory.PAYMENT_PROBLEM}>Payment Problem</SelectItem>
-                    <SelectItem value={TicketCategory.ACCOUNT_ISSUE}>Account Issue</SelectItem>
-                    <SelectItem value={TicketCategory.REFUND_REQUEST}>Refund Request</SelectItem>
-                    <SelectItem value={TicketCategory.FEATURE_REQUEST}>Feature Request</SelectItem>
-                    <SelectItem value={TicketCategory.BUG_REPORT}>Bug Report</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+            <DialogContent className="sm:max-w-[500px]">
+              <DialogHeader>
+                <DialogTitle>Create New Support Ticket</DialogTitle>
+              </DialogHeader>
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="title">Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="Brief description of your issue"
+                    value={newTicket.title || ""}
+                    onChange={(e) => setNewTicket((prev) => ({ ...prev, title: e.target.value }))}
+                  />
+                </div>
 
-              <div>
-                <Label htmlFor="description">Description *</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Please describe your issue in detail..."
-                  rows={4}
-                  value={newTicket.description || ""}
-                  onChange={(e) => setNewTicket(prev => ({ ...prev, description: e.target.value }))}
-                />
-              </div>
+                <div>
+                  <Label htmlFor="category">Category</Label>
+                  <Select
+                    value={newTicket.category || TicketCategory.GENERAL_INQUIRY}
+                    onValueChange={(value) =>
+                      setNewTicket((prev) => ({ ...prev, category: value as TicketCategory }))
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value={TicketCategory.GENERAL_INQUIRY}>
+                        General Inquiry
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.TECHNICAL_SUPPORT}>
+                        Technical Support
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.SUBSCRIPTION_ISSUE}>
+                        Subscription Issue
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.PAYMENT_PROBLEM}>
+                        Payment Problem
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.ACCOUNT_ISSUE}>Account Issue</SelectItem>
+                      <SelectItem value={TicketCategory.REFUND_REQUEST}>Refund Request</SelectItem>
+                      <SelectItem value={TicketCategory.FEATURE_REQUEST}>
+                        Feature Request
+                      </SelectItem>
+                      <SelectItem value={TicketCategory.BUG_REPORT}>Bug Report</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
 
-              <div className="flex justify-end gap-2">
-                <Button 
-                  variant="outline" 
-                  onClick={() => setIsCreateDialogOpen(false)}
-                  disabled={creating}
-                >
-                  Cancel
-                </Button>
-                <Button onClick={handleCreateTicket} disabled={creating}>
-                  {creating ? "Creating..." : "Create Ticket"}
-                </Button>
+                <div>
+                  <Label htmlFor="description">Description *</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Please describe your issue in detail..."
+                    rows={4}
+                    value={newTicket.description || ""}
+                    onChange={(e) =>
+                      setNewTicket((prev) => ({ ...prev, description: e.target.value }))
+                    }
+                  />
+                </div>
+
+                <div className="flex justify-end gap-2">
+                  <Button
+                    variant="outline"
+                    onClick={() => setIsCreateDialogOpen(false)}
+                    disabled={creating}
+                  >
+                    Cancel
+                  </Button>
+                  <Button onClick={handleCreateTicket} disabled={creating}>
+                    {creating ? "Creating..." : "Create Ticket"}
+                  </Button>
+                </div>
               </div>
-            </div>
-          </DialogContent>
-        </Dialog>
+            </DialogContent>
+          </Dialog>
         </div>
       </div>
 
@@ -321,7 +342,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
                 />
               </div>
             </div>
-            
+
             <div className="flex gap-2">
               <Select value={statusFilter} onValueChange={setStatusFilter}>
                 <SelectTrigger className="w-32">
@@ -373,7 +394,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
       {/* Tickets List */}
       {loading ? (
         <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto"></div>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
           <p className="mt-2 text-gray-600">Loading tickets...</p>
         </div>
       ) : filteredTickets.length === 0 ? (
@@ -382,15 +403,12 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h3 className="text-lg font-semibold text-gray-900 mb-2">No tickets found</h3>
             <p className="text-gray-600 mb-4">
-              {tickets.length === 0 
+              {tickets.length === 0
                 ? "You haven't created any support tickets yet."
-                : "No tickets match your current search or filters."
-              }
+                : "No tickets match your current search or filters."}
             </p>
             {tickets.length === 0 && (
-              <Button onClick={() => setIsCreateDialogOpen(true)}>
-                Create Your First Ticket
-              </Button>
+              <Button onClick={() => setIsCreateDialogOpen(true)}>Create Your First Ticket</Button>
             )}
           </CardContent>
         </Card>
@@ -409,13 +427,13 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
                       <div className="flex items-center gap-1">
                         {getStatusIcon(ticket.status)}
                         <span className="text-sm text-gray-600 capitalize">
-                          {ticket.status.replace('_', ' ').toLowerCase()}
+                          {ticket.status.replace("_", " ").toLowerCase()}
                         </span>
                       </div>
                     </div>
-                    
+
                     <p className="text-gray-600 mb-3 line-clamp-2">{ticket.description}</p>
-                    
+
                     <div className="flex items-center gap-4 text-sm text-gray-500">
                       <div className="flex items-center gap-1">
                         <Calendar className="h-4 w-4" />
@@ -425,7 +443,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
                         {ticket.priority.toLowerCase()}
                       </Badge>
                       <Badge variant="outline">
-                        {ticket.category.replace('_', ' ').toLowerCase()}
+                        {ticket.category.replace("_", " ").toLowerCase()}
                       </Badge>
                       {ticket.assignedTo && (
                         <div className="flex items-center gap-1">
@@ -446,7 +464,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                onClick={() => setCurrentPage((prev) => Math.max(1, prev - 1))}
                 disabled={currentPage === 1}
               >
                 Previous
@@ -457,7 +475,7 @@ export function UserTicketsSection({ userDetails }: UserTicketsSectionProps) {
               <Button
                 variant="outline"
                 size="sm"
-                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                onClick={() => setCurrentPage((prev) => Math.min(totalPages, prev + 1))}
                 disabled={currentPage === totalPages}
               >
                 Next

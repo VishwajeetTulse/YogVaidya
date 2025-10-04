@@ -1,16 +1,14 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { User, Mail, Phone, Calendar, Edit } from "lucide-react";
-import { SectionProps } from "../types";
+import { type SectionProps } from "../types";
 
 export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
   return (
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Profile</h1>
-        <p className="text-gray-600 mt-2">
-          Manage your personal information and preferences.
-        </p>
+        <p className="text-gray-600 mt-2">Manage your personal information and preferences.</p>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -20,12 +18,8 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
             <div className="w-24 h-24 bg-gradient-to-br from-[#76d2fa] to-[#876aff] rounded-full mx-auto mb-4 flex items-center justify-center">
               <User className="w-12 h-12 text-white" />
             </div>
-            <h2 className="text-xl font-semibold mb-2">
-              {userDetails?.name || "User Name"}
-            </h2>
-            <p className="text-gray-500 mb-4">
-              {userDetails?.email || "user@example.com"}
-            </p>
+            <h2 className="text-xl font-semibold mb-2">{userDetails?.name || "User Name"}</h2>
+            <p className="text-gray-500 mb-4">{userDetails?.email || "user@example.com"}</p>
             <Button className="w-full bg-[#76d2fa] hover:bg-[#5a9be9]">
               <Edit className="w-4 h-4 mr-2" />
               Edit Profile
@@ -39,9 +33,7 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Full Name
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <User className="w-4 h-4 text-gray-400" />
                   <span>{userDetails?.name || "Not provided"}</span>
@@ -57,9 +49,7 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
                 </div>
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Phone Number
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Phone Number</label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <Phone className="w-4 h-4 text-gray-400" />
                   <span>{userDetails?.phone || "Not provided"}</span>
@@ -68,9 +58,7 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
             </div>
             <div className="space-y-4">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Member Since
-                </label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Member Since</label>
                 <div className="flex items-center gap-2 p-3 bg-gray-50 rounded-lg">
                   <Calendar className="w-4 h-4 text-gray-400" />
                   <span>{formatDate?.(userDetails?.createdAt)}</span>
@@ -86,9 +74,7 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
         <h3 className="text-lg font-semibold mb-4">Yoga Preferences</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Experience Level
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Experience Level</label>
             <div className="space-y-2">
               {["Beginner", "Intermediate", "Advanced"].map((level) => (
                 <label key={level} className="flex items-center">
@@ -109,16 +95,18 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
               Preferred Yoga Styles
             </label>
             <div className="space-y-2">
-              {["Hatha Yoga", "Vinyasa Flow", "Power Yoga", "Yin Yoga", "Meditation"].map((style) => (
-                <label key={style} className="flex items-center">
-                  <input
-                    type="checkbox"
-                    className="mr-2 text-[#76d2fa]"
-                    defaultChecked={["Hatha Yoga", "Meditation"].includes(style)}
-                  />
-                  {style}
-                </label>
-              ))}
+              {["Hatha Yoga", "Vinyasa Flow", "Power Yoga", "Yin Yoga", "Meditation"].map(
+                (style) => (
+                  <label key={style} className="flex items-center">
+                    <input
+                      type="checkbox"
+                      className="mr-2 text-[#76d2fa]"
+                      defaultChecked={["Hatha Yoga", "Meditation"].includes(style)}
+                    />
+                    {style}
+                  </label>
+                )
+              )}
             </div>
           </div>
         </div>
@@ -136,13 +124,18 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
             "Weight Management",
             "Spiritual Growth",
             "Pain Relief",
-            "Mental Clarity"
+            "Mental Clarity",
           ].map((goal) => (
-            <label key={goal} className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50">
+            <label
+              key={goal}
+              className="flex items-center p-3 border border-gray-200 rounded-lg hover:bg-gray-50"
+            >
               <input
                 type="checkbox"
                 className="mr-3 text-[#76d2fa]"
-                defaultChecked={["Improve Flexibility", "Reduce Stress", "Better Sleep"].includes(goal)}
+                defaultChecked={["Improve Flexibility", "Reduce Stress", "Better Sleep"].includes(
+                  goal
+                )}
               />
               {goal}
             </label>
@@ -152,11 +145,8 @@ export const ProfileSection = ({ userDetails, formatDate }: SectionProps) => {
 
       {/* Save Changes */}
       <div className="flex justify-end">
-        <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">
-          Save Changes
-        </Button>
+        <Button className="bg-[#76d2fa] hover:bg-[#5a9be9]">Save Changes</Button>
       </div>
     </div>
   );
 };
-

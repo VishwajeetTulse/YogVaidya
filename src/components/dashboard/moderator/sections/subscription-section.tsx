@@ -6,22 +6,34 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { 
-  Search, 
-  Clock, 
-  RefreshCw, 
-  Users, 
+import {
+  Search,
+  Clock,
+  RefreshCw,
+  Users,
   DollarSign,
   Star,
   Crown,
   Gem,
   Eye,
-  Calendar,
-  TrendingUp
+  TrendingUp,
 } from "lucide-react";
 
 interface UserSubscription {
@@ -55,12 +67,12 @@ export default function SubscriptionSection() {
   const [loading, setLoading] = useState(false);
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
   const [statsLoading, setStatsLoading] = useState(true);
-  
+
   // Dialog states
   const [selectedUser, setSelectedUser] = useState<UserSubscription | null>(null);
   const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
   const [isExtendTrialDialogOpen, setIsExtendTrialDialogOpen] = useState(false);
-  
+
   // Form data
   const [extendDays, setExtendDays] = useState(7);
 
@@ -70,14 +82,14 @@ export default function SubscriptionSection() {
 
   const fetchStats = async () => {
     try {
-      const response = await fetch('/api/moderator/subscription-stats');
+      const response = await fetch("/api/moderator/subscription-stats");
       const result = await response.json();
-      
+
       if (result.success) {
         setStats(result.stats);
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
     } finally {
       setStatsLoading(false);
     }
@@ -91,11 +103,13 @@ export default function SubscriptionSection() {
 
     setLoading(true);
     setSearchResult(null);
-    
+
     try {
-      const response = await fetch(`/api/moderator/user-lookup?email=${encodeURIComponent(searchTerm.trim())}`);
+      const response = await fetch(
+        `/api/moderator/user-lookup?email=${encodeURIComponent(searchTerm.trim())}`
+      );
       const result = await response.json();
-      
+
       if (result.success) {
         setSearchResult(result.user);
         if (!result.user) {
@@ -105,7 +119,7 @@ export default function SubscriptionSection() {
         toast.error(result.error || "Failed to search user");
       }
     } catch (error) {
-      console.error('Error searching user:', error);
+      console.error("Error searching user:", error);
       toast.error("Error searching user");
     } finally {
       setLoading(false);
@@ -125,19 +139,19 @@ export default function SubscriptionSection() {
 
   const submitExtendTrial = async () => {
     if (!selectedUser) return;
-    
+
     try {
-      const response = await fetch('/api/moderator/extend-trial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/moderator/extend-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: selectedUser.id,
-          extendDays: extendDays
-        })
+          extendDays: extendDays,
+        }),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success(`Trial extended by ${extendDays} days`);
         setIsExtendTrialDialogOpen(false);
@@ -150,7 +164,7 @@ export default function SubscriptionSection() {
         toast.error(result.error || "Failed to extend trial");
       }
     } catch (error) {
-      console.error('Error extending trial:', error);
+      console.error("Error extending trial:", error);
       toast.error("Error extending trial");
     }
   };
@@ -162,7 +176,7 @@ export default function SubscriptionSection() {
     if (user.trialUsed && !user.subscriptionPlan) {
       return <Badge variant="destructive">Trial Expired</Badge>;
     }
-    
+
     switch (user.subscriptionStatus) {
       case "ACTIVE":
         return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
@@ -194,16 +208,16 @@ export default function SubscriptionSection() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-IN');
+    return new Date(dateString).toLocaleDateString("en-IN");
   };
 
   const formatCurrency = (amount: number | null) => {
     if (!amount) return "₹0";
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
   const handleKeyPress = (e: React.KeyboardEvent) => {
-    if (e.key === 'Enter') {
+    if (e.key === "Enter") {
       searchUser();
     }
   };
@@ -231,64 +245,70 @@ export default function SubscriptionSection() {
             <Skeleton key={i} className="h-24 rounded-lg" />
           ))}
         </div>
-      ) : stats && (
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.totalActiveSubscriptions}</p>
+      ) : (
+        stats && (
+          <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
+                    <p className="text-2xl font-bold text-green-600">
+                      {stats.totalActiveSubscriptions}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <Users className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <Users className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Trial Users</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalTrialUsers}</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Trial Users</p>
+                    <p className="text-2xl font-bold text-blue-600">{stats.totalTrialUsers}</p>
+                  </div>
+                  <div className="p-3 bg-blue-100 rounded-full">
+                    <Clock className="w-6 h-6 text-blue-600" />
+                  </div>
                 </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.monthlyRevenue)}</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
+                    <p className="text-2xl font-bold text-purple-600">
+                      {formatCurrency(stats.monthlyRevenue)}
+                    </p>
+                  </div>
+                  <div className="p-3 bg-purple-100 rounded-full">
+                    <DollarSign className="w-6 h-6 text-purple-600" />
+                  </div>
                 </div>
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <DollarSign className="w-6 h-6 text-purple-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
+              </CardContent>
+            </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Platform Health</p>
-                  <p className="text-2xl font-bold text-green-600">Good</p>
+            <Card>
+              <CardContent className="p-6">
+                <div className="flex items-center justify-between">
+                  <div>
+                    <p className="text-sm font-medium text-gray-600">Platform Health</p>
+                    <p className="text-2xl font-bold text-green-600">Good</p>
+                  </div>
+                  <div className="p-3 bg-green-100 rounded-full">
+                    <TrendingUp className="w-6 h-6 text-green-600" />
+                  </div>
                 </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <TrendingUp className="w-6 h-6 text-green-600" />
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
+              </CardContent>
+            </Card>
+          </div>
+        )
       )}
 
       {/* User Lookup */}
@@ -328,7 +348,11 @@ export default function SubscriptionSection() {
                   )}
                 </div>
                 <div className="flex gap-2">
-                  <Button size="sm" variant="outline" onClick={() => handleViewDetails(searchResult)}>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => handleViewDetails(searchResult)}
+                  >
                     <Eye className="w-4 h-4 mr-2" />
                     View Details
                   </Button>
@@ -349,24 +373,21 @@ export default function SubscriptionSection() {
                     <span className="font-medium">{searchResult.subscriptionPlan || "None"}</span>
                   </div>
                 </div>
-                
+
                 <div>
                   <p className="text-sm font-medium text-gray-600">Status</p>
-                  <div className="mt-1">
-                    {getStatusBadge(searchResult)}
-                  </div>
+                  <div className="mt-1">{getStatusBadge(searchResult)}</div>
                 </div>
-                
+
                 <div>
                   <p className="text-sm font-medium text-gray-600">Expires</p>
                   <p className="mt-1 font-medium">
                     {searchResult.isTrialActive
                       ? formatDate(searchResult.trialEndDate)
-                      : formatDate(searchResult.subscriptionEndDate)
-                    }
+                      : formatDate(searchResult.subscriptionEndDate)}
                   </p>
                 </div>
-                
+
                 <div>
                   <p className="text-sm font-medium text-gray-600">Revenue</p>
                   <p className="mt-1 font-medium">{formatCurrency(searchResult.paymentAmount)}</p>
@@ -401,7 +422,7 @@ export default function SubscriptionSection() {
                 <li>• Provide billing support information</li>
               </ul>
             </div>
-            
+
             <div>
               <h4 className="font-semibold mb-3 text-red-700">❌ Admin Only</h4>
               <ul className="space-y-2 text-sm">
@@ -425,7 +446,7 @@ export default function SubscriptionSection() {
               Complete subscription information for {selectedUser?.email}
             </DialogDescription>
           </DialogHeader>
-          
+
           {selectedUser && (
             <div className="grid gap-6 py-4">
               {/* User Info */}
@@ -461,9 +482,7 @@ export default function SubscriptionSection() {
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-600">Status</Label>
-                    <div className="mt-1">
-                      {getStatusBadge(selectedUser)}
-                    </div>
+                    <div className="mt-1">{getStatusBadge(selectedUser)}</div>
                   </div>
                   <div>
                     <Label className="text-sm font-medium text-gray-600">Billing Period</Label>
@@ -504,13 +523,15 @@ export default function SubscriptionSection() {
                   )}
                   <div>
                     <Label className="text-sm font-medium text-gray-600">Revenue</Label>
-                    <p className="mt-1 font-semibold">{formatCurrency(selectedUser.paymentAmount)}</p>
+                    <p className="mt-1 font-semibold">
+                      {formatCurrency(selectedUser.paymentAmount)}
+                    </p>
                   </div>
                 </div>
               </div>
             </div>
           )}
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsViewDialogOpen(false)}>
               Close
@@ -524,11 +545,9 @@ export default function SubscriptionSection() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Extend Trial</DialogTitle>
-            <DialogDescription>
-              Extend trial period for {selectedUser?.email}
-            </DialogDescription>
+            <DialogDescription>Extend trial period for {selectedUser?.email}</DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="extendDays">Extend by (days)</Label>
@@ -548,22 +567,20 @@ export default function SubscriptionSection() {
                 </SelectContent>
               </Select>
             </div>
-            
+
             <div className="bg-blue-50 p-4 rounded-lg">
               <p className="text-sm text-blue-800">
-                <strong>Note:</strong> This will extend the trial period and help the user evaluate our services.
-                Use this feature responsibly for genuine support cases.
+                <strong>Note:</strong> This will extend the trial period and help the user evaluate
+                our services. Use this feature responsibly for genuine support cases.
               </p>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsExtendTrialDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submitExtendTrial}>
-              Extend Trial
-            </Button>
+            <Button onClick={submitExtendTrial}>Extend Trial</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { z } from "zod";
 import { scheduleEmailReminder } from "@/lib/services/scheduleEmails";
@@ -8,7 +8,10 @@ const createScheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
   scheduledTime: z.string().min(1, "Please select a date and time"),
   link: z.string().url("Please enter a valid URL"),
-  duration: z.number().min(15, "Duration must be at least 15 minutes").max(180, "Duration cannot exceed 3 hours"),
+  duration: z
+    .number()
+    .min(15, "Duration must be at least 15 minutes")
+    .max(180, "Duration cannot exceed 3 hours"),
   sessionType: z.enum(["YOGA", "MEDITATION", "DIET"]),
 });
 
@@ -38,50 +41,52 @@ export async function GET(request: NextRequest) {
 
     // Fetch scheduled sessions from database using raw query to handle datetime conversion
     const scheduledSessionsResult = await prisma.$runCommandRaw({
-      aggregate: 'Schedule',
+      aggregate: "Schedule",
       pipeline: [
         {
-          $match: { mentorId: user.id }
+          $match: { mentorId: user.id },
         },
         {
           $addFields: {
             scheduledTime: {
               $cond: {
-                if: { $eq: [{ $type: '$scheduledTime' }, 'date'] },
-                then: '$scheduledTime',
+                if: { $eq: [{ $type: "$scheduledTime" }, "date"] },
+                then: "$scheduledTime",
                 else: {
                   $dateFromString: {
-                    dateString: '$scheduledTime',
-                    onError: null
-                  }
-                }
-              }
-            }
-          }
+                    dateString: "$scheduledTime",
+                    onError: null,
+                  },
+                },
+              },
+            },
+          },
         },
         {
-          $sort: { scheduledTime: -1 }
-        }
+          $sort: { scheduledTime: -1 },
+        },
       ],
-      cursor: {}
+      cursor: {},
     });
 
     let scheduledSessions: any[] = [];
-    if (scheduledSessionsResult &&
-        typeof scheduledSessionsResult === 'object' &&
-        'cursor' in scheduledSessionsResult &&
-        scheduledSessionsResult.cursor &&
-        typeof scheduledSessionsResult.cursor === 'object' &&
-        'firstBatch' in scheduledSessionsResult.cursor &&
-        Array.isArray(scheduledSessionsResult.cursor.firstBatch)) {
+    if (
+      scheduledSessionsResult &&
+      typeof scheduledSessionsResult === "object" &&
+      "cursor" in scheduledSessionsResult &&
+      scheduledSessionsResult.cursor &&
+      typeof scheduledSessionsResult.cursor === "object" &&
+      "firstBatch" in scheduledSessionsResult.cursor &&
+      Array.isArray(scheduledSessionsResult.cursor.firstBatch)
+    ) {
       scheduledSessions = scheduledSessionsResult.cursor.firstBatch.map((session: any) => ({
         ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null
+        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
       }));
     }
 
     // Transform the data to match the expected format
-    const formattedSessions = scheduledSessions.map(session => ({
+    const formattedSessions = scheduledSessions.map((session) => ({
       id: session.id,
       title: session.title,
       scheduledTime: session.scheduledTime,
@@ -130,15 +135,15 @@ export async function POST(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate the request body
     const validationResult = createScheduleSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Invalid data", 
-          details: validationResult.error.errors 
+        {
+          success: false,
+          error: "Invalid data",
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -147,16 +152,17 @@ export async function POST(request: NextRequest) {
     const scheduleData = validationResult.data;
 
     // Validate that the session type matches the mentor type
-    const expectedSessionType = user.mentorType?.toString() === "MEDITATIONMENTOR" 
-      ? "MEDITATION" 
-      : user.mentorType?.toString() === "DIETPLANNER" 
-      ? "DIET" 
-      : "YOGA";
+    const expectedSessionType =
+      user.mentorType?.toString() === "MEDITATIONMENTOR"
+        ? "MEDITATION"
+        : user.mentorType?.toString() === "DIETPLANNER"
+          ? "DIET"
+          : "YOGA";
     if (scheduleData.sessionType !== expectedSessionType) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Session type must be ${expectedSessionType} for your mentor type` 
+        {
+          success: false,
+          error: `Session type must be ${expectedSessionType} for your mentor type`,
         },
         { status: 400 }
       );
@@ -226,7 +232,7 @@ export async function PUT(request: NextRequest) {
 
     // Get sessionId from URL parameters
     const url = new URL(request.url);
-    const sessionId = url.searchParams.get('sessionId');
+    const sessionId = url.searchParams.get("sessionId");
 
     if (!sessionId) {
       return NextResponse.json(
@@ -236,15 +242,15 @@ export async function PUT(request: NextRequest) {
     }
 
     const body = await request.json();
-    
+
     // Validate the request body
     const validationResult = createScheduleSchema.safeParse(body);
     if (!validationResult.success) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: "Invalid data", 
-          details: validationResult.error.errors 
+        {
+          success: false,
+          error: "Invalid data",
+          details: validationResult.error.errors,
         },
         { status: 400 }
       );
@@ -268,16 +274,17 @@ export async function PUT(request: NextRequest) {
     }
 
     // Validate that the session type matches the mentor type
-    const expectedSessionType = user.mentorType?.toString() === "MEDITATIONMENTOR" 
-      ? "MEDITATION" 
-      : user.mentorType?.toString() === "DIETPLANNER" 
-      ? "DIET" 
-      : "YOGA";
+    const expectedSessionType =
+      user.mentorType?.toString() === "MEDITATIONMENTOR"
+        ? "MEDITATION"
+        : user.mentorType?.toString() === "DIETPLANNER"
+          ? "DIET"
+          : "YOGA";
     if (scheduleData.sessionType !== expectedSessionType) {
       return NextResponse.json(
-        { 
-          success: false, 
-          error: `Session type must be ${expectedSessionType} for your mentor type` 
+        {
+          success: false,
+          error: `Session type must be ${expectedSessionType} for your mentor type`,
         },
         { status: 400 }
       );
@@ -380,4 +387,3 @@ export async function DELETE(request: NextRequest) {
     );
   }
 }
-

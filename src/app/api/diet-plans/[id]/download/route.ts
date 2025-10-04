@@ -5,77 +5,71 @@ import { headers } from "next/headers";
 
 // Helper function to convert TipTap JSON to HTML
 function tiptapJsonToHtml(content: any): string {
-  if (!content) return '';
-  
+  if (!content) return "";
+
   const processNode = (node: any): string => {
-    if (!node) return '';
-    
+    if (!node) return "";
+
     // Handle text nodes
-    if (node.type === 'text') {
-      let text = node.text || '';
-      
+    if (node.type === "text") {
+      let text = node.text || "";
+
       // Apply marks (bold, italic, etc.)
       if (node.marks) {
         node.marks.forEach((mark: any) => {
-          if (mark.type === 'bold') text = `<strong>${text}</strong>`;
-          if (mark.type === 'italic') text = `<em>${text}</em>`;
-          if (mark.type === 'code') text = `<code>${text}</code>`;
+          if (mark.type === "bold") text = `<strong>${text}</strong>`;
+          if (mark.type === "italic") text = `<em>${text}</em>`;
+          if (mark.type === "code") text = `<code>${text}</code>`;
         });
       }
-      
+
       return text;
     }
-    
+
     // Process child nodes
-    const content = node.content?.map((child: any) => processNode(child)).join('') || '';
-    
+    const content = node.content?.map((child: any) => processNode(child)).join("") || "";
+
     // Handle different node types
     switch (node.type) {
-      case 'doc':
+      case "doc":
         return content;
-      case 'paragraph':
+      case "paragraph":
         return `<p>${content}</p>`;
-      case 'heading':
+      case "heading":
         const level = node.attrs?.level || 1;
         return `<h${level}>${content}</h${level}>`;
-      case 'bulletList':
+      case "bulletList":
         return `<ul>${content}</ul>`;
-      case 'orderedList':
+      case "orderedList":
         return `<ol>${content}</ol>`;
-      case 'listItem':
+      case "listItem":
         return `<li>${content}</li>`;
-      case 'table':
+      case "table":
         return `<table border="1" style="border-collapse: collapse; width: 100%;">${content}</table>`;
-      case 'tableRow':
+      case "tableRow":
         return `<tr>${content}</tr>`;
-      case 'tableCell':
+      case "tableCell":
         return `<td style="border: 1px solid #ddd; padding: 8px;">${content}</td>`;
-      case 'tableHeader':
+      case "tableHeader":
         return `<th style="border: 1px solid #ddd; padding: 8px; background-color: #f2f2f2;">${content}</th>`;
-      case 'image':
-        return `<img src="${node.attrs?.src}" alt="${node.attrs?.alt || ''}" style="max-width: 100%;" />`;
-      case 'hardBreak':
-        return '<br />';
+      case "image":
+        return `<img src="${node.attrs?.src}" alt="${node.attrs?.alt || ""}" style="max-width: 100%;" />`;
+      case "hardBreak":
+        return "<br />";
       default:
         return content;
     }
   };
-  
+
   return processNode(content);
 }
 
 // GET - Download diet plan as PDF (HTML for now, can be converted to PDF on client)
-export async function GET(
-  request: Request,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 401 }
-      );
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const { id } = await params;
@@ -100,33 +94,24 @@ export async function GET(
     });
 
     if (!dietPlan) {
-      return NextResponse.json(
-        { success: false, error: "Diet plan not found" },
-        { status: 404 }
-      );
+      return NextResponse.json({ success: false, error: "Diet plan not found" }, { status: 404 });
     }
 
     // Check authorization
-    if (
-      dietPlan.mentorId !== session.user.id &&
-      dietPlan.studentId !== session.user.id
-    ) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized" },
-        { status: 403 }
-      );
+    if (dietPlan.mentorId !== session.user.id && dietPlan.studentId !== session.user.id) {
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
     }
 
     // Convert TipTap JSON to HTML
     const htmlContent = tiptapJsonToHtml(dietPlan.content);
-    
+
     // Handle tags - could be string, array, or null
-    let tagsString = '';
+    let tagsString = "";
     if (dietPlan.tags) {
-      if (typeof dietPlan.tags === 'string') {
+      if (typeof dietPlan.tags === "string") {
         tagsString = dietPlan.tags;
       } else if (Array.isArray(dietPlan.tags)) {
-        tagsString = dietPlan.tags.join(', ');
+        tagsString = dietPlan.tags.join(", ");
       }
     }
 
@@ -224,18 +209,18 @@ export async function GET(
 <body>
   <div class="header">
     <h1>${dietPlan.title}</h1>
-    ${dietPlan.description ? `<p>${dietPlan.description}</p>` : ''}
+    ${dietPlan.description ? `<p>${dietPlan.description}</p>` : ""}
   </div>
   
   <div class="meta">
     <p><strong>Mentor:</strong> ${dietPlan.mentor.name}</p>
     <p><strong>For:</strong> ${dietPlan.student.name} (${dietPlan.student.email})</p>
-    <p><strong>Created:</strong> ${new Date(dietPlan.createdAt).toLocaleDateString('en-US', {
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    <p><strong>Created:</strong> ${new Date(dietPlan.createdAt).toLocaleDateString("en-US", {
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     })}</p>
-    ${tagsString ? `<p><strong>Tags:</strong> ${tagsString}</p>` : ''}
+    ${tagsString ? `<p><strong>Tags:</strong> ${tagsString}</p>` : ""}
   </div>
   
   <div class="content">
@@ -268,7 +253,7 @@ export async function GET(
     // Return HTML that will trigger print dialog
     return new NextResponse(html, {
       headers: {
-        'Content-Type': 'text/html; charset=utf-8',
+        "Content-Type": "text/html; charset=utf-8",
       },
     });
   } catch (error) {

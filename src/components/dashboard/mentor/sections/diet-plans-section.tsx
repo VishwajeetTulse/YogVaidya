@@ -54,13 +54,9 @@ interface DietPlan {
   createdAt: Date;
 }
 
-import { MentorSectionProps } from "../types";
+import { type MentorSectionProps } from "../types";
 
-interface DietPlansSectionProps extends MentorSectionProps {
-  // Any additional props if needed
-}
-
-export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
+export function DietPlansSection({ userDetails }: MentorSectionProps) {
   const mentorId = userDetails.id;
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
@@ -87,7 +83,7 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
     const fetchData = async () => {
       try {
         setIsLoadingData(true);
-        
+
         // Fetch students using the server-side function
         const studentsData = await getMentorStudentsData();
         if (studentsData.success && studentsData.data) {
@@ -145,7 +141,7 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
 
   const onSubmit = async (isDraft: boolean) => {
     const formData = form.getValues();
-    
+
     // Validation
     if (!formData.studentId) {
       toast.error("Please select a student");
@@ -164,8 +160,11 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
 
     try {
       // Parse tags
-      const tagsArray = formData.tags 
-        ? formData.tags.split(',').map(t => t.trim()).filter(t => t) 
+      const tagsArray = formData.tags
+        ? formData.tags
+            .split(",")
+            .map((t) => t.trim())
+            .filter((t) => t)
         : [];
 
       const response = await fetch("/api/mentor/diet-plans", {
@@ -188,24 +187,21 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
         throw new Error(errorData.error || "Failed to save diet plan");
       }
 
-      const result = await response.json();
+      const _result = await response.json();
 
-      toast.success(
-        isDraft ? "Draft saved successfully!" : "Diet plan sent to student!"
-      );
+      toast.success(isDraft ? "Draft saved successfully!" : "Diet plan sent to student!");
 
       // Reset form
       form.reset();
       setEditorContent(null);
       setSelectedStudentId("");
-      
+
       // Refresh existing plans
       const plansRes = await fetch(`/api/mentor/diet-plans?mentorId=${mentorId}`);
       if (plansRes.ok) {
         const data = await plansRes.json();
         setExistingPlans(data.dietPlans || []);
       }
-      
     } catch (error: any) {
       toast.error(error.message || "Failed to save diet plan");
       console.error(error);
@@ -215,21 +211,30 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
   };
 
   const deletePlan = async (planId: string) => {
-    if (!confirm("Are you sure you want to delete this diet plan?")) return;
+    toast.warning("Are you sure you want to delete this diet plan?", {
+      action: {
+        label: "Delete",
+        onClick: async () => {
+          try {
+            const response = await fetch(`/api/mentor/diet-plans/${planId}`, {
+              method: "DELETE",
+            });
 
-    try {
-      const response = await fetch(`/api/mentor/diet-plans/${planId}`, {
-        method: "DELETE",
-      });
+            if (!response.ok) throw new Error("Failed to delete");
 
-      if (!response.ok) throw new Error("Failed to delete");
-
-      toast.success("Diet plan deleted");
-      setExistingPlans(prev => prev.filter(p => p.id !== planId));
-    } catch (error) {
-      toast.error("Failed to delete diet plan");
-      console.error(error);
-    }
+            toast.success("Diet plan deleted");
+            setExistingPlans((prev) => prev.filter((p) => p.id !== planId));
+          } catch (error) {
+            toast.error("Failed to delete diet plan");
+            console.error(error);
+          }
+        },
+      },
+      cancel: {
+        label: "Cancel",
+        onClick: () => {},
+      },
+    });
   };
 
   if (isLoadingData) {
@@ -267,10 +272,16 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
               </p>
               <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-sm text-blue-800">
-                  <strong>Your Role:</strong> {userDetails.mentorType === "YOGAMENTOR" ? "Yoga Mentor" : userDetails.mentorType === "MEDITATIONMENTOR" ? "Meditation Mentor" : "Mentor"}
+                  <strong>Your Role:</strong>{" "}
+                  {userDetails.mentorType === "YOGAMENTOR"
+                    ? "Yoga Mentor"
+                    : userDetails.mentorType === "MEDITATIONMENTOR"
+                      ? "Meditation Mentor"
+                      : "Mentor"}
                 </p>
                 <p className="text-xs text-blue-600 mt-2">
-                  To access diet planning features, your account needs to be designated as a Diet Planner.
+                  To access diet planning features, your account needs to be designated as a Diet
+                  Planner.
                 </p>
               </div>
             </div>
@@ -280,147 +291,145 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
         <Card>
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
-            <Plus className="h-5 w-5" />
-            Create Diet Plan
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          {students.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground">
-              <p>No students with FLOURISH subscription found.</p>
-              <p className="text-sm mt-2">Diet plans are only available for FLOURISH subscribers.</p>
-            </div>
-          ) : (
-            <form className="space-y-6">
-              {/* Student Selection */}
-              <div>
-                <Label htmlFor="studentId">Select Student *</Label>
-                <select
-                  id="studentId"
-                  {...form.register("studentId")}
-                  onChange={(e) => {
-                    form.setValue("studentId", e.target.value);
-                    setSelectedStudentId(e.target.value);
-                  }}
-                  className="w-full border rounded-md p-2 mt-1"
-                >
-                  <option value="">Choose a student...</option>
-                  {students.map((student) => (
-                    <option key={student.id} value={student.id}>
-                      {student.name} ({student.email})
-                    </option>
-                  ))}
-                </select>
-                {form.formState.errors.studentId && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {form.formState.errors.studentId.message}
-                  </p>
-                )}
+              <Plus className="h-5 w-5" />
+              Create Diet Plan
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            {students.length === 0 ? (
+              <div className="text-center py-8 text-muted-foreground">
+                <p>No students with FLOURISH subscription found.</p>
+                <p className="text-sm mt-2">
+                  Diet plans are only available for FLOURISH subscribers.
+                </p>
               </div>
-
-              {/* Session Selection (Optional) */}
-              {selectedStudentId && sessions.length > 0 && (
+            ) : (
+              <form className="space-y-6">
+                {/* Student Selection */}
                 <div>
-                  <Label htmlFor="sessionId">Link to Session (Optional)</Label>
+                  <Label htmlFor="studentId">Select Student *</Label>
                   <select
-                    id="sessionId"
-                    {...form.register("sessionId")}
+                    id="studentId"
+                    {...form.register("studentId")}
+                    onChange={(e) => {
+                      form.setValue("studentId", e.target.value);
+                      setSelectedStudentId(e.target.value);
+                    }}
                     className="w-full border rounded-md p-2 mt-1"
                   >
-                    <option value="">No session (standalone plan)</option>
-                    {sessions.map((session) => (
-                      <option key={session.id} value={session.id}>
-                        {new Date(session.scheduledAt).toLocaleString()} - {session.sessionType}
+                    <option value="">Choose a student...</option>
+                    {students.map((student) => (
+                      <option key={student.id} value={student.id}>
+                        {student.name} ({student.email})
                       </option>
                     ))}
                   </select>
+                  {form.formState.errors.studentId && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {form.formState.errors.studentId.message}
+                    </p>
+                  )}
                 </div>
-              )}
 
-              {/* Title */}
-              <div>
-                <Label htmlFor="title">Plan Title *</Label>
-                <Input
-                  id="title"
-                  placeholder="e.g., 7-Day Weight Loss Plan"
-                  {...form.register("title")}
-                  className="mt-1"
-                />
-                {form.formState.errors.title && (
-                  <p className="text-sm text-red-500 mt-1">
-                    {form.formState.errors.title.message}
-                  </p>
+                {/* Session Selection (Optional) */}
+                {selectedStudentId && sessions.length > 0 && (
+                  <div>
+                    <Label htmlFor="sessionId">Link to Session (Optional)</Label>
+                    <select
+                      id="sessionId"
+                      {...form.register("sessionId")}
+                      className="w-full border rounded-md p-2 mt-1"
+                    >
+                      <option value="">No session (standalone plan)</option>
+                      {sessions.map((session) => (
+                        <option key={session.id} value={session.id}>
+                          {new Date(session.scheduledAt).toLocaleString()} - {session.sessionType}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
                 )}
-              </div>
 
-              {/* Description */}
-              <div>
-                <Label htmlFor="description">Brief Description (Optional)</Label>
-                <Textarea
-                  id="description"
-                  placeholder="Quick summary of the plan..."
-                  {...form.register("description")}
-                  className="mt-1"
-                  rows={2}
-                />
-              </div>
+                {/* Title */}
+                <div>
+                  <Label htmlFor="title">Plan Title *</Label>
+                  <Input
+                    id="title"
+                    placeholder="e.g., 7-Day Weight Loss Plan"
+                    {...form.register("title")}
+                    className="mt-1"
+                  />
+                  {form.formState.errors.title && (
+                    <p className="text-sm text-red-500 mt-1">
+                      {form.formState.errors.title.message}
+                    </p>
+                  )}
+                </div>
 
-              {/* Tags */}
-              <div>
-                <Label htmlFor="tags">Tags (Optional)</Label>
-                <Input
-                  id="tags"
-                  placeholder="e.g., weight-loss, vegetarian, 1800-cal (comma-separated)"
-                  {...form.register("tags")}
-                  className="mt-1"
-                />
-              </div>
-
-              {/* Rich Text Editor */}
-              <div>
-                <Label>Diet Plan Content *</Label>
-                <div className="mt-1">
-                  <DietPlanEditor
-                    content={editorContent}
-                    onChange={setEditorContent}
-                    placeholder="Start typing your diet plan... Use the toolbar to format text, add tables, and insert images."
+                {/* Description */}
+                <div>
+                  <Label htmlFor="description">Brief Description (Optional)</Label>
+                  <Textarea
+                    id="description"
+                    placeholder="Quick summary of the plan..."
+                    {...form.register("description")}
+                    className="mt-1"
+                    rows={2}
                   />
                 </div>
-              </div>
 
-              {/* Action Buttons */}
-              <div className="flex gap-3">
-                <Button
-                  type="button"
-                  variant="outline"
-                  onClick={() => onSubmit(true)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Save className="h-4 w-4 mr-2" />
-                  )}
-                  Save as Draft
-                </Button>
+                {/* Tags */}
+                <div>
+                  <Label htmlFor="tags">Tags (Optional)</Label>
+                  <Input
+                    id="tags"
+                    placeholder="e.g., weight-loss, vegetarian, 1800-cal (comma-separated)"
+                    {...form.register("tags")}
+                    className="mt-1"
+                  />
+                </div>
 
-                <Button
-                  type="button"
-                  onClick={() => onSubmit(false)}
-                  disabled={isLoading}
-                >
-                  {isLoading ? (
-                    <Loader2 className="h-4 w-4 animate-spin mr-2" />
-                  ) : (
-                    <Send className="h-4 w-4 mr-2" />
-                  )}
-                  Send to Student
-                </Button>
-              </div>
-            </form>
-          )}
-        </CardContent>
-      </Card>
+                {/* Rich Text Editor */}
+                <div>
+                  <Label>Diet Plan Content *</Label>
+                  <div className="mt-1">
+                    <DietPlanEditor
+                      content={editorContent}
+                      onChange={setEditorContent}
+                      placeholder="Start typing your diet plan... Use the toolbar to format text, add tables, and insert images."
+                    />
+                  </div>
+                </div>
+
+                {/* Action Buttons */}
+                <div className="flex gap-3">
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => onSubmit(true)}
+                    disabled={isLoading}
+                  >
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Save className="h-4 w-4 mr-2" />
+                    )}
+                    Save as Draft
+                  </Button>
+
+                  <Button type="button" onClick={() => onSubmit(false)} disabled={isLoading}>
+                    {isLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin mr-2" />
+                    ) : (
+                      <Send className="h-4 w-4 mr-2" />
+                    )}
+                    Send to Student
+                  </Button>
+                </div>
+              </form>
+            )}
+          </CardContent>
+        </Card>
       )}
 
       {/* Existing Diet Plans */}
@@ -453,25 +462,19 @@ export function DietPlansSection({ userDetails }: DietPlansSectionProps) {
                       {new Date(plan.createdAt).toLocaleDateString()}
                     </p>
                     {plan.description && (
-                      <p className="text-sm text-muted-foreground mt-1">
-                        {plan.description}
-                      </p>
+                      <p className="text-sm text-muted-foreground mt-1">{plan.description}</p>
                     )}
                   </div>
                   <div className="flex items-center gap-2">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => window.open(`/dashboard/diet-plan/${plan.id}`, '_blank')}
+                      onClick={() => window.open(`/dashboard/diet-plan/${plan.id}`, "_blank")}
                     >
                       <Eye className="h-4 w-4 mr-1" />
                       View
                     </Button>
-                    <Button
-                      variant="ghost"
-                      size="sm"
-                      onClick={() => deletePlan(plan.id)}
-                    >
+                    <Button variant="ghost" size="sm" onClick={() => deletePlan(plan.id)}>
                       <Trash2 className="h-4 w-4 text-red-500" />
                     </Button>
                   </div>

@@ -20,7 +20,10 @@ import { useRouter } from "next/navigation";
 import { Phone, User, ArrowRight } from "lucide-react";
 
 const profileCompletionSchema = z.object({
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits").regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
+  phoneNumber: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
 });
 
 type ProfileCompletionFormValues = z.infer<typeof profileCompletionSchema>;
@@ -31,10 +34,10 @@ interface ProfileCompletionFormProps {
   redirectTo?: string;
 }
 
-export default function ProfileCompletionForm({ 
-  userEmail, 
-  userName, 
-  redirectTo = "/dashboard" 
+export default function ProfileCompletionForm({
+  userEmail,
+  userName,
+  redirectTo = "/dashboard",
 }: ProfileCompletionFormProps) {
   const [isLoading, setIsLoading] = useState(false);
   const router = useRouter();
@@ -66,7 +69,7 @@ export default function ProfileCompletionForm({
         toast.success("Profile updated successfully!", {
           description: "Your phone number has been added to your account.",
         });
-        
+
         // Redirect to intended destination
         setTimeout(() => {
           router.replace(redirectTo);
@@ -94,15 +97,16 @@ export default function ProfileCompletionForm({
           <div className="w-20 h-20 bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="w-10 h-10 text-white" />
           </div>
-          
+
           {/* Title */}
           <h1 className="text-2xl font-bold bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] bg-clip-text text-transparent mb-2">
             Complete Your Profile
           </h1>
-          
+
           {/* Subtitle */}
           <p className="text-gray-600">
-            {userName ? `Hi ${userName}! ` : ""}We need your phone number to complete your YogVaidya account setup.
+            {userName ? `Hi ${userName}! ` : ""}We need your phone number to complete your YogVaidya
+            account setup.
           </p>
         </div>
 
@@ -111,9 +115,7 @@ export default function ProfileCompletionForm({
             {/* Email Display (Read-only) */}
             {userEmail && (
               <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">
-                  Email Address
-                </label>
+                <label className="text-sm font-medium text-gray-700">Email Address</label>
                 <div className="flex items-center px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
                   <span className="text-gray-600 text-sm">{userEmail}</span>
                 </div>
@@ -126,9 +128,7 @@ export default function ProfileCompletionForm({
               name="phoneNumber"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">
-                    Phone Number *
-                  </FormLabel>
+                  <FormLabel className="text-gray-700 font-medium">Phone Number *</FormLabel>
                   <FormControl>
                     <div className="relative">
                       <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
@@ -164,7 +164,7 @@ export default function ProfileCompletionForm({
             >
               {isLoading ? (
                 <div className="flex items-center">
-                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2"></div>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
                   Updating Profile...
                 </div>
               ) : (
@@ -177,7 +177,8 @@ export default function ProfileCompletionForm({
 
             {/* Note */}
             <p className="text-xs text-gray-500 text-center">
-              By continuing, you agree to provide accurate contact information for your YogVaidya account.
+              By continuing, you agree to provide accurate contact information for your YogVaidya
+              account.
             </p>
           </form>
         </Form>

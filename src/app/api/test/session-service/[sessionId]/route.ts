@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
 import { mongoDateToISOString } from "@/lib/utils/datetime-utils";
 
@@ -29,21 +29,24 @@ export async function GET(
           found: lookupResult.found,
           collection: lookupResult.collection,
           error: lookupResult.error,
-          sessionData: lookupResult.session ? {
-            id: lookupResult.session._id,
-            status: lookupResult.session.status,
-            type: lookupResult.session.sessionType,
-            scheduled: mongoDateToISOString(lookupResult.session.scheduledAt || lookupResult.session.scheduledTime)
-          } : null
+          sessionData: lookupResult.session
+            ? {
+                id: lookupResult.session._id,
+                status: lookupResult.session.status,
+                type: lookupResult.session.sessionType,
+                scheduled: mongoDateToISOString(
+                  lookupResult.session.scheduledAt || lookupResult.session.scheduledTime
+                ),
+              }
+            : null,
         },
-        sessionStats: stats
-      }
+        sessionStats: stats,
+      },
     });
-
   } catch (error) {
     console.error("Error testing session service:", error);
     return NextResponse.json(
-      { success: false, error: error instanceof Error ? error.message : 'Unknown error' },
+      { success: false, error: error instanceof Error ? error.message : "Unknown error" },
       { status: 500 }
     );
   }

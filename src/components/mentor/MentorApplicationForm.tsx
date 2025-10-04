@@ -14,8 +14,6 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Switch } from "@/components/ui/switch";
-import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
@@ -23,10 +21,10 @@ import MentorApplicationSubmission from "./MentorApplicationSubmission";
 import { Separator } from "@/components/ui/separator";
 import { Select } from "../ui/select";
 import { SelectContent, SelectItem, SelectTrigger, SelectValue } from "../ui/select";
-import { 
-  createMentorApplicationAction, 
-  getMentorApplicationsAction, 
-  deleteMentorApplicationAction 
+import {
+  createMentorApplicationAction,
+  getMentorApplicationsAction,
+  deleteMentorApplicationAction,
 } from "@/lib/actions/mentor-application-actions";
 
 const formSchema = z.object({
@@ -34,11 +32,18 @@ const formSchema = z.object({
   email: z.string().email("Invalid email address"),
   phone: z.string().min(8, "Phone number is required"),
   profile: z.string().url("Enter a valid URL").optional().or(z.literal("")),
-  experience: z.number().min(0, "Experience must be a positive number").max(50, "Maximum 50 years experience"),
+  experience: z
+    .number()
+    .min(0, "Experience must be a positive number")
+    .max(50, "Maximum 50 years experience"),
   expertise: z.string().min(2, "Please enter your areas of expertise"),
   certifications: z.string().min(2, "Please enter your certifications"),
   pow: z.any().optional(),
-  sessionPrice: z.coerce.number().min(0, "Price must be at least 0").max(10000, "Price must be less than 10,000").optional(),
+  sessionPrice: z.coerce
+    .number()
+    .min(0, "Price must be at least 0")
+    .max(10000, "Price must be less than 10,000")
+    .optional(),
   consent: z.literal(true, {
     errorMap: () => ({ message: "You must agree to the terms." }),
   }),
@@ -72,8 +77,7 @@ export default function MentorApplicationForm() {
   const [submittedEmail, setSubmittedEmail] = useState<string | null>(null);
   const [deleteLoading, setDeleteLoading] = useState(false);
   const [deleteError, setDeleteError] = useState<string | null>(null);
-  const [existingApplication, setExistingApplication] =
-    useState<MentorApplication | null>(null);
+  const [existingApplication, setExistingApplication] = useState<MentorApplication | null>(null);
   const [fetching, setFetching] = useState(true);
   const router = useRouter();
 
@@ -94,10 +98,14 @@ export default function MentorApplicationForm() {
   });
 
   // Helper function to convert database application to form application
-  const convertDatabaseToForm = (dbApp: Record<string, unknown>): MentorApplication => ({
-    ...dbApp,
-    experience: typeof dbApp.experience === 'string' ? parseInt(dbApp.experience, 10) || 0 : (dbApp.experience as number) || 0
-  } as MentorApplication);
+  const convertDatabaseToForm = (dbApp: Record<string, unknown>): MentorApplication =>
+    ({
+      ...dbApp,
+      experience:
+        typeof dbApp.experience === "string"
+          ? parseInt(dbApp.experience, 10) || 0
+          : (dbApp.experience as number) || 0,
+    }) as MentorApplication;
 
   React.useEffect(() => {
     async function fetchApplication() {
@@ -105,14 +113,13 @@ export default function MentorApplicationForm() {
       try {
         // Get user session to extract email
         const session = await authClient.getSession();
-        const userEmail =
-          session && "data" in session && session.data?.user?.email;
+        const userEmail = session && "data" in session && session.data?.user?.email;
         if (!userEmail) {
           setExistingApplication(null);
           setFetching(false);
           return;
         }
-        
+
         const result = await getMentorApplicationsAction(userEmail);
         if (result.success && result.applications && result.applications.length > 0) {
           setExistingApplication(convertDatabaseToForm(result.applications[0]));
@@ -134,10 +141,8 @@ export default function MentorApplicationForm() {
       try {
         const session = await authClient.getSession();
         if (session && "data" in session && session.data?.user) {
-          if (session.data.user.name)
-            form.setValue("name", session.data.user.name);
-          if (session.data.user.email)
-            form.setValue("email", session.data.user.email);
+          if (session.data.user.name) form.setValue("name", session.data.user.name);
+          if (session.data.user.email) form.setValue("email", session.data.user.email);
         }
       } catch {}
     }
@@ -192,9 +197,9 @@ export default function MentorApplicationForm() {
       if (data.pow instanceof File) {
         formData.append("pow", data.pow);
       }
-      
+
       const result = await createMentorApplicationAction(formData);
-      
+
       if (result.success) {
         setSubmittedEmail(data.email);
         setSubmitted(true);
@@ -226,7 +231,7 @@ export default function MentorApplicationForm() {
     setDeleteError(null);
     try {
       const result = await deleteMentorApplicationAction(submittedEmail);
-      
+
       if (result.success) {
         setSubmitted(false);
         setSubmittedEmail(null);
@@ -280,33 +285,22 @@ export default function MentorApplicationForm() {
       <section className="max-w-7xl mx-auto px-4 pt-3 pb-10">
         <div className="max-w-4xl mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Mentor Application
-            </h1>
-            <p className="text-gray-600">
-              Apply to become a certified YogVaidya mentor
-            </p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Mentor Application</h1>
+            <p className="text-gray-600">Apply to become a certified YogVaidya mentor</p>
           </div>
           <div className="bg-white rounded-2xl p-10 shadow-lg border border-gray-100">
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-8"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8">
                 {/* Personal Information Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                    Personal Information
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Personal Information</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <FormField
                       control={form.control}
                       name="name"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">
-                            Full Name
-                          </FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Full Name</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Your full name"
@@ -323,9 +317,7 @@ export default function MentorApplicationForm() {
                       name="email"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">
-                            Email
-                          </FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Email</FormLabel>
                           <FormControl>
                             <Input
                               type="email"
@@ -343,9 +335,7 @@ export default function MentorApplicationForm() {
                       name="phone"
                       render={({ field }) => (
                         <FormItem>
-                          <FormLabel className="text-gray-700 font-medium">
-                            Phone Number
-                          </FormLabel>
+                          <FormLabel className="text-gray-700 font-medium">Phone Number</FormLabel>
                           <FormControl>
                             <Input
                               placeholder="Your phone number"
@@ -362,9 +352,7 @@ export default function MentorApplicationForm() {
                 <Separator />
                 {/* Professional Details Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                    Professional Details
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Professional Details</h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-x-8 gap-y-6">
                     <FormField
                       control={form.control}
@@ -382,7 +370,9 @@ export default function MentorApplicationForm() {
                               placeholder="Enter years of experience"
                               className="h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
                               {...field}
-                              onChange={(e) => field.onChange(e.target.value ? parseInt(e.target.value, 10) : 0)}
+                              onChange={(e) =>
+                                field.onChange(e.target.value ? parseInt(e.target.value, 10) : 0)
+                              }
                             />
                           </FormControl>
                           <FormMessage className="text-red-500" />
@@ -469,9 +459,7 @@ export default function MentorApplicationForm() {
                 <Separator />
                 {/* Mentor Type Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                    Mentor Type
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Mentor Type</h3>
                   <FormField
                     control={form.control}
                     name="mentorType"
@@ -499,9 +487,7 @@ export default function MentorApplicationForm() {
                 </div>
                 {/* Agreements Section */}
                 <div className="mb-6">
-                  <h3 className="text-lg font-semibold text-gray-700 mb-4">
-                    Agreements
-                  </h3>
+                  <h3 className="text-lg font-semibold text-gray-700 mb-4">Agreements</h3>
                   <FormField
                     control={form.control}
                     name="consent"
@@ -514,24 +500,13 @@ export default function MentorApplicationForm() {
                             id="consent"
                           />
                         </FormControl>
-                        <FormLabel
-                          htmlFor="consent"
-                          className="!mt-0 cursor-pointer"
-                        >
+                        <FormLabel htmlFor="consent" className="!mt-0 cursor-pointer">
                           I agree to the{" "}
-                          <a
-                            href="/terms"
-                            className="underline text-blue-600"
-                            target="_blank"
-                          >
+                          <a href="/terms" className="underline text-blue-600" target="_blank">
                             terms
                           </a>{" "}
                           and{" "}
-                          <a
-                            href="/privacy"
-                            className="underline text-blue-600"
-                            target="_blank"
-                          >
+                          <a href="/privacy" className="underline text-blue-600" target="_blank">
                             privacy policy
                           </a>
                           .
@@ -558,4 +533,3 @@ export default function MentorApplicationForm() {
     </div>
   );
 }
-

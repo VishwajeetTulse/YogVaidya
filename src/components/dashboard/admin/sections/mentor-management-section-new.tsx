@@ -8,19 +8,18 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
-import { 
-  Users, 
-  RefreshCw, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  Users,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
   BarChart3,
   ArrowRightLeft,
   Database,
   Edit,
   Search,
   Trash2,
-  Plus,
-  Eye
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -39,7 +38,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { syncMentorTypes, getMentorStats } from "@/lib/services/mentor-sync";
-import { LucideIcon } from "lucide-react";
 
 interface MentorStats {
   totalMentors: number;
@@ -86,7 +84,10 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, description, icon, onClick }: StatCardProps) => (
-  <Card className={onClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""} onClick={onClick}>
+  <Card
+    className={onClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}
+    onClick={onClick}
+  >
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       {icon}
@@ -155,9 +156,7 @@ export const MentorManagementSection = () => {
 
       if (data.success && data.users) {
         // Filter only mentors
-        const mentorUsers = data.users.filter(
-          (user: Mentor) => user.role === "MENTOR"
-        );
+        const mentorUsers = data.users.filter((user: Mentor) => user.role === "MENTOR");
         setMentors(mentorUsers);
         setFilteredMentors(mentorUsers);
       } else {
@@ -205,9 +204,7 @@ export const MentorManagementSection = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -284,9 +281,7 @@ export const MentorManagementSection = () => {
         // Refresh stats after edit
         loadMentorStats();
       } else {
-        toast.error(
-          `Failed to update mentor: ${data.error || "Unknown error"}`
-        );
+        toast.error(`Failed to update mentor: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error updating mentor:", error);
@@ -312,16 +307,12 @@ export const MentorManagementSection = () => {
 
       if (data.success) {
         toast.success("Mentor deleted successfully");
-        setMentors((mentors) =>
-          mentors.filter((m) => m.id !== mentorToDelete.id)
-        );
+        setMentors((mentors) => mentors.filter((m) => m.id !== mentorToDelete.id));
         setIsDeleteDialogOpen(false);
         // Refresh stats after deletion
         loadMentorStats();
       } else {
-        toast.error(
-          `Failed to delete mentor: ${data.error || "Unknown error"}`
-        );
+        toast.error(`Failed to delete mentor: ${data.error || "Unknown error"}`);
       }
     } catch (error) {
       console.error("Error deleting mentor:", error);
@@ -401,9 +392,7 @@ export const MentorManagementSection = () => {
             <ArrowRightLeft className="h-5 w-5" />
             Mentor Type Distribution
           </CardTitle>
-          <CardDescription>
-            Breakdown of mentors by specialization type
-          </CardDescription>
+          <CardDescription>Breakdown of mentors by specialization type</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
@@ -447,18 +436,11 @@ export const MentorManagementSection = () => {
               ) : (
                 <>
                   <AlertTriangle className="h-5 w-5 text-yellow-600" />
-                  <span className="text-yellow-600 font-medium">
-                    Type inconsistencies detected
-                  </span>
+                  <span className="text-yellow-600 font-medium">Type inconsistencies detected</span>
                 </>
               )}
             </div>
-            <Button
-              onClick={handleSyncMentorTypes}
-              disabled={syncing}
-              variant="outline"
-              size="sm"
-            >
+            <Button onClick={handleSyncMentorTypes} disabled={syncing} variant="outline" size="sm">
               {syncing ? (
                 <>
                   <RefreshCw className="h-4 w-4 mr-2 animate-spin" />
@@ -485,9 +467,7 @@ export const MentorManagementSection = () => {
                   <Eye className="h-5 w-5" />
                   Mentor Management
                 </CardTitle>
-                <CardDescription>
-                  View and edit mentor details
-                </CardDescription>
+                <CardDescription>View and edit mentor details</CardDescription>
               </div>
               <Button onClick={toggleMentorList} variant="outline" size="sm">
                 Hide List
@@ -536,11 +516,7 @@ export const MentorManagementSection = () => {
                       )}
                     </div>
                     <div className="flex items-center gap-2">
-                      <Button
-                        onClick={() => handleEditMentor(mentor)}
-                        size="sm"
-                        variant="outline"
-                      >
+                      <Button onClick={() => handleEditMentor(mentor)} size="sm" variant="outline">
                         <Edit className="h-4 w-4 mr-1" />
                         Edit
                       </Button>
@@ -606,9 +582,7 @@ export const MentorManagementSection = () => {
               <Label htmlFor="specialization">Specialization</Label>
               <Select
                 value={formData.specialization}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, specialization: value })
-                }
+                onValueChange={(value) => setFormData({ ...formData, specialization: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select specialization" />
@@ -651,11 +625,7 @@ export const MentorManagementSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button type="button" onClick={submitMentorEdit}>
@@ -671,23 +641,15 @@ export const MentorManagementSection = () => {
           <DialogHeader>
             <DialogTitle>Delete Mentor</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {mentorToDelete?.name || "this mentor"}? 
-              This action cannot be undone and will remove all associated data.
+              Are you sure you want to delete {mentorToDelete?.name || "this mentor"}? This action
+              cannot be undone and will remove all associated data.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmDeleteMentor}
-            >
+            <Button type="button" variant="destructive" onClick={confirmDeleteMentor}>
               Delete Mentor
             </Button>
           </DialogFooter>

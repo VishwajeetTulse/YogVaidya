@@ -1,9 +1,9 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
-import { MentorType } from "@prisma/client";
+import { type MentorType } from "@prisma/client";
 import { logError } from "@/lib/utils/logger";
 
 // Create mentor application
@@ -23,17 +23,14 @@ export async function POST(req: NextRequest) {
     const proofsDir = path.join(process.cwd(), "public", "proofs");
     // Ensure the directory exists
     await mkdir(proofsDir, { recursive: true });
-    
+
     // Generate unique filename to avoid conflicts
     const fileExtension = path.extname(powFile.name);
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
-    const uniqueFileName = `${email.replace(/[@.]/g, '_')}_${timestamp}_${randomString}${fileExtension}`;
-    
-    await writeFile(
-      path.join(proofsDir, uniqueFileName),
-      Buffer.from(await powFile.arrayBuffer())
-    );
+    const uniqueFileName = `${email.replace(/[@.]/g, "_")}_${timestamp}_${randomString}${fileExtension}`;
+
+    await writeFile(path.join(proofsDir, uniqueFileName), Buffer.from(await powFile.arrayBuffer()));
     powUrl = `/proofs/${uniqueFileName}`;
   }
 
@@ -54,10 +51,10 @@ export async function POST(req: NextRequest) {
     });
 
     // Send confirmation email to mentor
-await sendEmail({
-  to: email,
-  subject: "🧘 YogVaidya Mentor Application Received",
-  text: `
+    await sendEmail({
+      to: email,
+      subject: "🧘 YogVaidya Mentor Application Received",
+      text: `
     <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
       <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
         <h2 style="text-align: center; color: #4a4e69;">🙏 Thank You for Applying, ${name}!</h2>
@@ -84,9 +81,8 @@ await sendEmail({
       </div>
     </div>
   `,
-  html: true
-});
-
+      html: true,
+    });
 
     return NextResponse.json({ success: true, application });
   } catch (error) {
@@ -101,11 +97,11 @@ await sendEmail({
         name,
         mentorType,
         error: (error as Error).message,
-        submissionDate: new Date().toISOString()
+        submissionDate: new Date().toISOString(),
       },
       error as Error
     );
-    
+
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }
@@ -163,5 +159,3 @@ export async function PATCH(req: NextRequest) {
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }
-
-

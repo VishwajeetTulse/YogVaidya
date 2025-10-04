@@ -1,29 +1,29 @@
 // Ticket System Types
 export enum TicketStatus {
-  OPEN = 'OPEN',
-  IN_PROGRESS = 'IN_PROGRESS',
-  WAITING_FOR_USER = 'WAITING_FOR_USER',
-  RESOLVED = 'RESOLVED',
-  CLOSED = 'CLOSED'
+  OPEN = "OPEN",
+  IN_PROGRESS = "IN_PROGRESS",
+  WAITING_FOR_USER = "WAITING_FOR_USER",
+  RESOLVED = "RESOLVED",
+  CLOSED = "CLOSED",
 }
 
 export enum TicketPriority {
-  LOW = 'LOW',
-  MEDIUM = 'MEDIUM',
-  HIGH = 'HIGH',
-  URGENT = 'URGENT'
+  LOW = "LOW",
+  MEDIUM = "MEDIUM",
+  HIGH = "HIGH",
+  URGENT = "URGENT",
 }
 
 export enum TicketCategory {
-  SUBSCRIPTION_ISSUE = 'SUBSCRIPTION_ISSUE',
-  PAYMENT_PROBLEM = 'PAYMENT_PROBLEM',
-  MENTOR_APPLICATION = 'MENTOR_APPLICATION',
-  TECHNICAL_SUPPORT = 'TECHNICAL_SUPPORT',
-  ACCOUNT_ISSUE = 'ACCOUNT_ISSUE',
-  REFUND_REQUEST = 'REFUND_REQUEST',
-  GENERAL_INQUIRY = 'GENERAL_INQUIRY',
-  BUG_REPORT = 'BUG_REPORT',
-  FEATURE_REQUEST = 'FEATURE_REQUEST'
+  SUBSCRIPTION_ISSUE = "SUBSCRIPTION_ISSUE",
+  PAYMENT_PROBLEM = "PAYMENT_PROBLEM",
+  MENTOR_APPLICATION = "MENTOR_APPLICATION",
+  TECHNICAL_SUPPORT = "TECHNICAL_SUPPORT",
+  ACCOUNT_ISSUE = "ACCOUNT_ISSUE",
+  REFUND_REQUEST = "REFUND_REQUEST",
+  GENERAL_INQUIRY = "GENERAL_INQUIRY",
+  BUG_REPORT = "BUG_REPORT",
+  FEATURE_REQUEST = "FEATURE_REQUEST",
 }
 
 export interface TicketUser {
@@ -75,7 +75,7 @@ export interface TicketFilters {
   status?: TicketStatus;
   priority?: TicketPriority;
   category?: TicketCategory;
-  assigned?: 'true' | 'false';
+  assigned?: "true" | "false";
   page?: number;
   limit?: number;
 }

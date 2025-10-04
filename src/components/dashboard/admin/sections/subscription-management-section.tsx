@@ -6,27 +6,35 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 import { Skeleton } from "@/components/ui/skeleton";
 import { toast } from "sonner";
-import { 
-  Search, 
-  Filter, 
-  Edit, 
-  Clock, 
-  RefreshCw, 
-  Download, 
-  TrendingUp, 
-  Users, 
+import {
+  Search,
+  Edit,
+  Clock,
+  RefreshCw,
+  Download,
+  TrendingUp,
+  Users,
   DollarSign,
-  Calendar,
-  AlertTriangle,
-  CheckCircle,
-  XCircle,
   Crown,
   Star,
-  Gem
+  Gem,
 } from "lucide-react";
 
 interface UserSubscription {
@@ -59,7 +67,7 @@ interface SubscriptionStats {
   }>;
   planBreakdown: Record<string, Record<string, number>>;
   growthRate?: number;
-  growthDirection?: 'up' | 'down' | 'neutral';
+  growthDirection?: "up" | "down" | "neutral";
   isFirstMonth?: boolean;
 }
 
@@ -72,19 +80,19 @@ export default function SubscriptionManagementSection() {
   const [planFilter, setPlanFilter] = useState("all");
   const [stats, setStats] = useState<SubscriptionStats | null>(null);
   const [growthLoading, setGrowthLoading] = useState(false);
-  
+
   // Dialog states
   const [selectedUser, setSelectedUser] = useState<UserSubscription | null>(null);
   const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
   const [isExtendTrialDialogOpen, setIsExtendTrialDialogOpen] = useState(false);
-  
+
   // Form data for editing
   const [editFormData, setEditFormData] = useState({
     subscriptionPlan: "",
     subscriptionStatus: "",
     billingPeriod: "",
     autoRenewal: false,
-    extendDays: 7
+    extendDays: 7,
   });
 
   useEffect(() => {
@@ -98,16 +106,16 @@ export default function SubscriptionManagementSection() {
 
   const fetchUsers = async () => {
     try {
-      const response = await fetch('/api/admin/users/subscriptions');
+      const response = await fetch("/api/admin/users/subscriptions");
       const result = await response.json();
-      
+
       if (result.success) {
         setUsers(result.users || []);
       } else {
         toast.error("Failed to load user subscriptions");
       }
     } catch (error) {
-      console.error('Error fetching users:', error);
+      console.error("Error fetching users:", error);
       toast.error("Error loading user data");
     } finally {
       setLoading(false);
@@ -117,33 +125,33 @@ export default function SubscriptionManagementSection() {
   const fetchStats = async () => {
     try {
       setGrowthLoading(true);
-      
+
       // Fetch both subscription stats and growth stats in parallel
       const [statsResponse, growthResponse] = await Promise.all([
-        fetch('/api/admin/subscription-stats'),
-        fetch('/api/admin/growth-stats')
+        fetch("/api/admin/subscription-stats"),
+        fetch("/api/admin/growth-stats"),
       ]);
-      
+
       const statsResult = await statsResponse.json();
       const growthResult = await growthResponse.json();
-      
+
       if (statsResult.success) {
         let combinedStats = statsResult.stats;
-        
+
         // Add growth data if available
         if (growthResult.success) {
           combinedStats = {
             ...combinedStats,
             growthRate: growthResult.growthStats.growthRate,
             growthDirection: growthResult.growthStats.growthDirection,
-            isFirstMonth: growthResult.growthStats.isFirstMonth
+            isFirstMonth: growthResult.growthStats.isFirstMonth,
           };
         }
-        
+
         setStats(combinedStats);
       }
     } catch (error) {
-      console.error('Error fetching stats:', error);
+      console.error("Error fetching stats:", error);
     } finally {
       setGrowthLoading(false);
     }
@@ -151,33 +159,36 @@ export default function SubscriptionManagementSection() {
 
   const filterUsers = () => {
     let filtered = users;
-    
+
     // Search filter
     if (searchTerm) {
       const term = searchTerm.toLowerCase();
-      filtered = filtered.filter(user => 
-        user.email.toLowerCase().includes(term) ||
-        user.name?.toLowerCase().includes(term) ||
-        user.phone?.includes(term)
+      filtered = filtered.filter(
+        (user) =>
+          user.email.toLowerCase().includes(term) ||
+          user.name?.toLowerCase().includes(term) ||
+          user.phone?.includes(term)
       );
     }
-    
+
     // Status filter
     if (statusFilter !== "all") {
       if (statusFilter === "trial") {
-        filtered = filtered.filter(user => user.isTrialActive);
+        filtered = filtered.filter((user) => user.isTrialActive);
       } else if (statusFilter === "expired_trial") {
-        filtered = filtered.filter(user => user.trialUsed && !user.isTrialActive && !user.subscriptionPlan);
+        filtered = filtered.filter(
+          (user) => user.trialUsed && !user.isTrialActive && !user.subscriptionPlan
+        );
       } else {
-        filtered = filtered.filter(user => user.subscriptionStatus === statusFilter);
+        filtered = filtered.filter((user) => user.subscriptionStatus === statusFilter);
       }
     }
-    
+
     // Plan filter
     if (planFilter !== "all") {
-      filtered = filtered.filter(user => user.subscriptionPlan === planFilter);
+      filtered = filtered.filter((user) => user.subscriptionPlan === planFilter);
     }
-    
+
     setFilteredUsers(filtered);
   };
 
@@ -188,38 +199,39 @@ export default function SubscriptionManagementSection() {
       subscriptionStatus: user.subscriptionStatus || "INACTIVE",
       billingPeriod: user.billingPeriod || "monthly",
       autoRenewal: user.autoRenewal,
-      extendDays: 7
+      extendDays: 7,
     });
     setIsEditDialogOpen(true);
   };
 
   const handleExtendTrial = (user: UserSubscription) => {
     setSelectedUser(user);
-    setEditFormData(prev => ({ ...prev, extendDays: 7 }));
+    setEditFormData((prev) => ({ ...prev, extendDays: 7 }));
     setIsExtendTrialDialogOpen(true);
   };
 
   const submitEditUser = async () => {
     if (!selectedUser) return;
-    
+
     try {
       // Convert "NONE" back to null for the API
       const formDataToSubmit = {
         ...editFormData,
-        subscriptionPlan: editFormData.subscriptionPlan === "NONE" ? null : editFormData.subscriptionPlan
+        subscriptionPlan:
+          editFormData.subscriptionPlan === "NONE" ? null : editFormData.subscriptionPlan,
       };
-      
-      const response = await fetch('/api/admin/users/subscription-update', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
+
+      const response = await fetch("/api/admin/users/subscription-update", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: selectedUser.id,
-          ...formDataToSubmit
-        })
+          ...formDataToSubmit,
+        }),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success("User subscription updated successfully");
         setIsEditDialogOpen(false);
@@ -228,26 +240,26 @@ export default function SubscriptionManagementSection() {
         toast.error(result.error || "Failed to update subscription");
       }
     } catch (error) {
-      console.error('Error updating subscription:', error);
+      console.error("Error updating subscription:", error);
       toast.error("Error updating subscription");
     }
   };
 
   const submitExtendTrial = async () => {
     if (!selectedUser) return;
-    
+
     try {
-      const response = await fetch('/api/admin/users/extend-trial', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+      const response = await fetch("/api/admin/users/extend-trial", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           userId: selectedUser.id,
-          extendDays: editFormData.extendDays
-        })
+          extendDays: editFormData.extendDays,
+        }),
       });
-      
+
       const result = await response.json();
-      
+
       if (result.success) {
         toast.success(`Trial extended by ${editFormData.extendDays} days`);
         setIsExtendTrialDialogOpen(false);
@@ -256,26 +268,26 @@ export default function SubscriptionManagementSection() {
         toast.error(result.error || "Failed to extend trial");
       }
     } catch (error) {
-      console.error('Error extending trial:', error);
+      console.error("Error extending trial:", error);
       toast.error("Error extending trial");
     }
   };
 
   const exportData = async () => {
     try {
-      const response = await fetch('/api/admin/export/subscriptions');
+      const response = await fetch("/api/admin/export/subscriptions");
       const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.style.display = 'none';
+      const a = document.createElement("a");
+      a.style.display = "none";
       a.href = url;
-      a.download = `subscriptions-${new Date().toISOString().split('T')[0]}.csv`;
+      a.download = `subscriptions-${new Date().toISOString().split("T")[0]}.csv`;
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       toast.success("Export downloaded successfully");
     } catch (error) {
-      console.error('Error exporting data:', error);
+      console.error("Error exporting data:", error);
       toast.error("Failed to export data");
     }
   };
@@ -287,7 +299,7 @@ export default function SubscriptionManagementSection() {
     if (user.trialUsed && !user.subscriptionPlan) {
       return <Badge variant="destructive">Trial Expired</Badge>;
     }
-    
+
     switch (user.subscriptionStatus) {
       case "ACTIVE":
         return <Badge className="bg-green-100 text-green-800 border-green-200">Active</Badge>;
@@ -319,34 +331,41 @@ export default function SubscriptionManagementSection() {
 
   const formatDate = (dateString: string | null) => {
     if (!dateString) return "N/A";
-    return new Date(dateString).toLocaleDateString('en-IN');
+    return new Date(dateString).toLocaleDateString("en-IN");
   };
 
   const formatCurrency = (amount: number | null) => {
     if (!amount) return "₹0";
-    return `₹${amount.toLocaleString('en-IN')}`;
+    return `₹${amount.toLocaleString("en-IN")}`;
   };
 
-  const formatGrowthRate = (growthRate?: number, growthDirection?: 'up' | 'down' | 'neutral', isFirstMonth?: boolean) => {
+  const formatGrowthRate = (
+    growthRate?: number,
+    growthDirection?: "up" | "down" | "neutral",
+    isFirstMonth?: boolean
+  ) => {
     if (isFirstMonth) {
       return "New Business";
     }
-    
+
     if (growthRate === undefined || growthRate === null) {
       return "N/A";
     }
-    
-    const sign = growthDirection === 'up' ? '+' : growthDirection === 'down' ? '' : '';
+
+    const sign = growthDirection === "up" ? "+" : growthDirection === "down" ? "" : "";
     return `${sign}${Math.abs(growthRate).toFixed(1)}%`;
   };
 
-  const getGrowthColor = (growthDirection?: 'up' | 'down' | 'neutral', isFirstMonth?: boolean) => {
+  const getGrowthColor = (growthDirection?: "up" | "down" | "neutral", isFirstMonth?: boolean) => {
     if (isFirstMonth) return "text-blue-600";
-    
+
     switch (growthDirection) {
-      case 'up': return "text-green-600";
-      case 'down': return "text-red-600";
-      default: return "text-gray-600";
+      case "up":
+        return "text-green-600";
+      case "down":
+        return "text-red-600";
+      default:
+        return "text-gray-600";
     }
   };
 
@@ -393,7 +412,9 @@ export default function SubscriptionManagementSection() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
-                  <p className="text-2xl font-bold text-green-600">{stats.totalActiveSubscriptions}</p>
+                  <p className="text-2xl font-bold text-green-600">
+                    {stats.totalActiveSubscriptions}
+                  </p>
                 </div>
                 <div className="p-3 bg-green-100 rounded-full">
                   <Users className="w-6 h-6 text-green-600" />
@@ -421,7 +442,9 @@ export default function SubscriptionManagementSection() {
               <div className="flex items-center justify-between">
                 <div>
                   <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-purple-600">{formatCurrency(stats.monthlyRevenue)}</p>
+                  <p className="text-2xl font-bold text-purple-600">
+                    {formatCurrency(stats.monthlyRevenue)}
+                  </p>
                 </div>
                 <div className="p-3 bg-purple-100 rounded-full">
                   <DollarSign className="w-6 h-6 text-purple-600" />
@@ -438,32 +461,42 @@ export default function SubscriptionManagementSection() {
                   {growthLoading ? (
                     <div className="text-2xl font-bold text-gray-400">Loading...</div>
                   ) : (
-                    <p className={`text-2xl font-bold ${getGrowthColor(stats?.growthDirection, stats?.isFirstMonth)}`}>
-                      {formatGrowthRate(stats?.growthRate, stats?.growthDirection, stats?.isFirstMonth)}
+                    <p
+                      className={`text-2xl font-bold ${getGrowthColor(stats?.growthDirection, stats?.isFirstMonth)}`}
+                    >
+                      {formatGrowthRate(
+                        stats?.growthRate,
+                        stats?.growthDirection,
+                        stats?.isFirstMonth
+                      )}
                     </p>
                   )}
                   {stats?.isFirstMonth && (
                     <p className="text-xs text-blue-500 mt-1">First month tracking</p>
                   )}
                 </div>
-                <div className={`p-3 rounded-full ${
-                  stats?.isFirstMonth 
-                    ? "bg-blue-100" 
-                    : stats?.growthDirection === 'up' 
-                    ? "bg-green-100" 
-                    : stats?.growthDirection === 'down' 
-                    ? "bg-red-100" 
-                    : "bg-gray-100"
-                }`}>
-                  <TrendingUp className={`w-6 h-6 ${
-                    stats?.isFirstMonth 
-                      ? "text-blue-600" 
-                      : stats?.growthDirection === 'up' 
-                      ? "text-green-600" 
-                      : stats?.growthDirection === 'down' 
-                      ? "text-red-600" 
-                      : "text-gray-600"
-                  }`} />
+                <div
+                  className={`p-3 rounded-full ${
+                    stats?.isFirstMonth
+                      ? "bg-blue-100"
+                      : stats?.growthDirection === "up"
+                        ? "bg-green-100"
+                        : stats?.growthDirection === "down"
+                          ? "bg-red-100"
+                          : "bg-gray-100"
+                  }`}
+                >
+                  <TrendingUp
+                    className={`w-6 h-6 ${
+                      stats?.isFirstMonth
+                        ? "text-blue-600"
+                        : stats?.growthDirection === "up"
+                          ? "text-green-600"
+                          : stats?.growthDirection === "down"
+                            ? "text-red-600"
+                            : "text-gray-600"
+                    }`}
+                  />
                 </div>
               </div>
             </CardContent>
@@ -486,7 +519,7 @@ export default function SubscriptionManagementSection() {
                 />
               </div>
             </div>
-            
+
             <Select value={statusFilter} onValueChange={setStatusFilter}>
               <SelectTrigger className="w-full md:w-48">
                 <SelectValue placeholder="Filter by status" />
@@ -558,38 +591,30 @@ export default function SubscriptionManagementSection() {
                       <div className="min-w-0">
                         <div className="font-medium truncate">{user.name || "N/A"}</div>
                         <div className="text-gray-500 truncate">{user.email}</div>
-                        {user.phone && (
-                          <div className="text-xs text-gray-400">{user.phone}</div>
-                        )}
+                        {user.phone && <div className="text-xs text-gray-400">{user.phone}</div>}
                       </div>
-                      
+
                       <div className="flex items-center gap-2">
                         {getPlanIcon(user.subscriptionPlan)}
-                        <span className="font-medium">
-                          {user.subscriptionPlan || "None"}
-                        </span>
+                        <span className="font-medium">{user.subscriptionPlan || "None"}</span>
                       </div>
-                      
-                      <div>
-                        {getStatusBadge(user)}
-                      </div>
-                      
+
+                      <div>{getStatusBadge(user)}</div>
+
                       <div>
                         <div className="font-medium">
-                          {user.billingPeriod ? 
-                            user.billingPeriod.charAt(0).toUpperCase() + user.billingPeriod.slice(1) 
-                            : "N/A"
-                          }
+                          {user.billingPeriod
+                            ? user.billingPeriod.charAt(0).toUpperCase() +
+                              user.billingPeriod.slice(1)
+                            : "N/A"}
                         </div>
                         <div className="text-xs text-gray-500">
                           {user.autoRenewal ? "Auto-renew" : "Manual"}
                         </div>
                       </div>
-                      
-                      <div>
-                        {formatDate(user.subscriptionStartDate)}
-                      </div>
-                      
+
+                      <div>{formatDate(user.subscriptionStartDate)}</div>
+
                       <div>
                         {user.isTrialActive ? (
                           <span className="text-blue-600 font-medium">
@@ -599,17 +624,11 @@ export default function SubscriptionManagementSection() {
                           formatDate(user.subscriptionEndDate)
                         )}
                       </div>
-                      
-                      <div className="font-medium">
-                        {formatCurrency(user.paymentAmount)}
-                      </div>
-                      
+
+                      <div className="font-medium">{formatCurrency(user.paymentAmount)}</div>
+
                       <div className="flex justify-end gap-2">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditUser(user)}
-                        >
+                        <Button size="sm" variant="outline" onClick={() => handleEditUser(user)}>
                           <Edit className="w-3 h-3" />
                         </Button>
                         {(user.isTrialActive || user.trialUsed) && (
@@ -640,14 +659,16 @@ export default function SubscriptionManagementSection() {
               Update subscription details for {selectedUser?.email}
             </DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label htmlFor="plan">Subscription Plan</Label>
                 <Select
                   value={editFormData.subscriptionPlan}
-                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, subscriptionPlan: value }))}
+                  onValueChange={(value) =>
+                    setEditFormData((prev) => ({ ...prev, subscriptionPlan: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select plan" />
@@ -660,12 +681,14 @@ export default function SubscriptionManagementSection() {
                   </SelectContent>
                 </Select>
               </div>
-              
+
               <div className="space-y-2">
                 <Label htmlFor="status">Status</Label>
                 <Select
                   value={editFormData.subscriptionStatus}
-                  onValueChange={(value) => setEditFormData(prev => ({ ...prev, subscriptionStatus: value }))}
+                  onValueChange={(value) =>
+                    setEditFormData((prev) => ({ ...prev, subscriptionStatus: value }))
+                  }
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Select status" />
@@ -680,12 +703,14 @@ export default function SubscriptionManagementSection() {
                 </Select>
               </div>
             </div>
-            
+
             <div className="space-y-2">
               <Label htmlFor="billing">Billing Period</Label>
               <Select
                 value={editFormData.billingPeriod}
-                onValueChange={(value) => setEditFormData(prev => ({ ...prev, billingPeriod: value }))}
+                onValueChange={(value) =>
+                  setEditFormData((prev) => ({ ...prev, billingPeriod: value }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select billing period" />
@@ -697,14 +722,12 @@ export default function SubscriptionManagementSection() {
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submitEditUser}>
-              Save Changes
-            </Button>
+            <Button onClick={submitEditUser}>Save Changes</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
@@ -714,17 +737,17 @@ export default function SubscriptionManagementSection() {
         <DialogContent className="sm:max-w-[425px]">
           <DialogHeader>
             <DialogTitle>Extend Trial</DialogTitle>
-            <DialogDescription>
-              Extend trial period for {selectedUser?.email}
-            </DialogDescription>
+            <DialogDescription>Extend trial period for {selectedUser?.email}</DialogDescription>
           </DialogHeader>
-          
+
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="extendDays">Extend by (days)</Label>
               <Select
                 value={editFormData.extendDays.toString()}
-                onValueChange={(value) => setEditFormData(prev => ({ ...prev, extendDays: parseInt(value) }))}
+                onValueChange={(value) =>
+                  setEditFormData((prev) => ({ ...prev, extendDays: parseInt(value) }))
+                }
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select days" />
@@ -739,14 +762,12 @@ export default function SubscriptionManagementSection() {
               </Select>
             </div>
           </div>
-          
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsExtendTrialDialogOpen(false)}>
               Cancel
             </Button>
-            <Button onClick={submitExtendTrial}>
-              Extend Trial
-            </Button>
+            <Button onClick={submitExtendTrial}>Extend Trial</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

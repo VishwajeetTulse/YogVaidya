@@ -1,12 +1,12 @@
 "use server";
 
-import { 
-  createMentorApplication, 
-  getMentorApplications, 
+import {
+  createMentorApplication,
+  getMentorApplications,
   deleteMentorApplication,
-  updateMentorApplicationStatus
+  updateMentorApplicationStatus,
 } from "../server/mentorApplicationServer";
-import { MentorType } from "@prisma/client";
+import { type MentorType } from "@prisma/client";
 
 export async function createMentorApplicationAction(formData: FormData) {
   try {
@@ -33,9 +33,9 @@ export async function createMentorApplicationAction(formData: FormData) {
 
     return { success: true, application };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Submission failed" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Submission failed",
     };
   }
 }
@@ -45,9 +45,9 @@ export async function getMentorApplicationsAction(email?: string) {
     const applications = await getMentorApplications(email);
     return { success: true, applications };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Failed to fetch applications" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Failed to fetch applications",
     };
   }
 }
@@ -57,15 +57,15 @@ export async function deleteMentorApplicationAction(email: string) {
     await deleteMentorApplication(email);
     return { success: true };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Delete failed" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Delete failed",
     };
   }
 }
 
 export async function updateMentorApplicationStatusAction(
-  id: string, 
+  id: string,
   status: "approved" | "rejected",
   currentUserRole: string = "ADMIN"
 ) {
@@ -73,10 +73,9 @@ export async function updateMentorApplicationStatusAction(
     const result = await updateMentorApplicationStatus({ id, status, currentUserRole });
     return { success: true, ...result };
   } catch (error) {
-    return { 
-      success: false, 
-      error: error instanceof Error ? error.message : "Status update failed" 
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : "Status update failed",
     };
   }
 }
-

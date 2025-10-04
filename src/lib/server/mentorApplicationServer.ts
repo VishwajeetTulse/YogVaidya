@@ -2,8 +2,8 @@ import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/services/email";
 import { prisma } from "@/lib/config/prisma";
-import { MentorType } from "@prisma/client";
-import { logInfo, logWarning, logError } from "@/lib/utils/logger";
+import { type MentorType } from "@prisma/client";
+import { logInfo, logWarning } from "@/lib/utils/logger";
 
 export async function createMentorApplication({
   name,
@@ -29,17 +29,14 @@ export async function createMentorApplication({
     const proofsDir = path.join(process.cwd(), "public", "proofs");
     // Ensure the directory exists
     await mkdir(proofsDir, { recursive: true });
-    
+
     // Generate unique filename to avoid conflicts
     const fileExtension = path.extname(powFile.name);
     const timestamp = Date.now();
     const randomString = Math.random().toString(36).substring(2, 8);
-    const uniqueFileName = `${email.replace(/[@.]/g, '_')}_${timestamp}_${randomString}${fileExtension}`;
-    
-    await writeFile(
-      path.join(proofsDir, uniqueFileName),
-      Buffer.from(await powFile.arrayBuffer())
-    );
+    const uniqueFileName = `${email.replace(/[@.]/g, "_")}_${timestamp}_${randomString}${fileExtension}`;
+
+    await writeFile(path.join(proofsDir, uniqueFileName), Buffer.from(await powFile.arrayBuffer()));
     powUrl = `/proofs/${uniqueFileName}`;
   }
   const application = await prisma.mentorApplication.create({
@@ -70,7 +67,7 @@ export async function createMentorApplication({
       experience,
       expertise: expertise.substring(0, 100), // Truncate for logging
       hasProofOfWork: !!powUrl,
-      applicationId: application.id
+      applicationId: application.id,
     }
   );
   await sendEmail({
@@ -103,7 +100,7 @@ export async function createMentorApplication({
         </div>
       </div>
     `,
-    html: true
+    html: true,
   });
   return application;
 }
@@ -125,22 +122,22 @@ export async function updateMentorApplicationStatus({
   currentUserRole?: string;
 }) {
   if (!id || !status) throw new Error("Missing id or status");
-  
+
   const updated = await prisma.mentorApplication.update({
     where: { id },
     data: { status },
   });
-  
+
   let redirectUrl = null;
-  
+
   if (status === "approved") {
     // Update user to be a mentor with the appropriate mentor type
     await prisma.user.updateMany({
       where: { email: updated.email },
-      data: { 
-        role: "MENTOR", 
+      data: {
+        role: "MENTOR",
         phone: updated.phone,
-        mentorType: updated.mentorType // Add the mentor type from the application
+        mentorType: updated.mentorType, // Add the mentor type from the application
       },
     });
 
@@ -156,10 +153,10 @@ export async function updateMentorApplicationStatus({
         mentorName: updated.name,
         mentorType: updated.mentorType,
         experience: updated.experience,
-        approvalDate: new Date().toISOString()
+        approvalDate: new Date().toISOString(),
       }
     );
-    
+
     // Send approval email to the new mentor
     try {
       await sendEmail({
@@ -170,7 +167,7 @@ export async function updateMentorApplicationStatus({
             <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
               <h2 style="text-align: center; color: #4a4e69;">🎉 Congratulations, ${updated.name}!</h2>
               <p style="font-size: 15px; color: #333;">
-                We're thrilled to welcome you to the <strong>YogVaidya</strong> mentor community as a <strong>${updated.mentorType === 'YOGAMENTOR' ? 'Yoga' : 'Meditation'} Mentor</strong>!
+                We're thrilled to welcome you to the <strong>YogVaidya</strong> mentor community as a <strong>${updated.mentorType === "YOGAMENTOR" ? "Yoga" : "Meditation"} Mentor</strong>!
               </p>
 
               <div style="background-color: #e8f5e8; padding: 16px; border-left: 4px solid #4caf50; border-radius: 4px; margin: 20px 0;">
@@ -180,7 +177,7 @@ export async function updateMentorApplicationStatus({
               </div>
 
               <div style="text-align: center; margin: 25px 0;">
-                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard" 
+                <a href="${process.env.NEXT_PUBLIC_APP_URL}/dashboard"
                    style="background-color: #5e60ce; color: white; padding: 12px 24px; text-decoration: none; border-radius: 6px; display: inline-block; font-weight: bold;">
                   Access Your Mentor Dashboard
                 </a>
@@ -199,13 +196,13 @@ export async function updateMentorApplicationStatus({
             </div>
           </div>
         `,
-        html: true
+        html: true,
       });
     } catch (emailError) {
       console.error("Failed to send approval email:", emailError);
       // Don't throw error here as the main operation (approval) was successful
     }
-    
+
     redirectUrl = "/dashboard/mentors";
   } else if (status === "rejected") {
     // Log mentor rejection
@@ -221,7 +218,7 @@ export async function updateMentorApplicationStatus({
         mentorType: updated.mentorType,
         experience: updated.experience,
         rejectionDate: new Date().toISOString(),
-        reason: `${currentUserRole.toLowerCase()}_decision`
+        reason: `${currentUserRole.toLowerCase()}_decision`,
       }
     );
 
@@ -257,17 +254,16 @@ export async function updateMentorApplicationStatus({
             </div>
           </div>
         `,
-        html: true
+        html: true,
       });
     } catch (emailError) {
       console.error("Failed to send rejection email:", emailError);
     }
   }
-  
+
   return { application: updated, redirectUrl };
 }
 
 export async function deleteMentorApplication(email: string) {
   return prisma.mentorApplication.deleteMany({ where: { email } });
-} 
-
+}

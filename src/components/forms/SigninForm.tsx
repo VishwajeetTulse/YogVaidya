@@ -129,9 +129,7 @@ export default function SigninPage() {
                 <path d="M4 20h16a2 2 0 0 0 2-2V8a2 2 0 0 0-2-2h-7.93a2 2 0 0 1-1.66-.9l-.82-1.2A2 2 0 0 0 7.93 3H4a2 2 0 0 0-2 2v13c0 1.1.9 2 2 2Z" />
               </svg>
             </div>
-            <span className="text-2xl font-semibold text-gray-800">
-              YogVaidya
-            </span>
+            <span className="text-2xl font-semibold text-gray-800">YogVaidya</span>
           </Link>
         </div>
 
@@ -148,12 +146,8 @@ export default function SigninPage() {
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-20">
         <div className="max-w-md mx-auto">
           <div className="text-center mb-8">
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">
-              Welcome Back
-            </h1>
-            <p className="text-gray-600">
-              Sign in to continue your wellness journey
-            </p>
+            <h1 className="text-3xl font-bold text-gray-800 mb-2">Welcome Back</h1>
+            <p className="text-gray-600">Sign in to continue your wellness journey</p>
           </div>
 
           <div className="bg-white rounded-2xl p-8 shadow-lg">
@@ -164,10 +158,7 @@ export default function SigninPage() {
             )}
 
             <Form {...form}>
-              <form
-                onSubmit={form.handleSubmit(onSubmit)}
-                className="space-y-6"
-              >
+              <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
                 <FormField
                   control={form.control}
                   name="email"
@@ -234,10 +225,7 @@ export default function SigninPage() {
                             checked={field.value}
                             onChange={field.onChange}
                           />
-                          <label
-                            htmlFor="rememberMe"
-                            className="ml-2 block text-sm text-gray-700"
-                          >
+                          <label htmlFor="rememberMe" className="ml-2 block text-sm text-gray-700">
                             Remember me
                           </label>
                         </div>
@@ -255,9 +243,9 @@ export default function SigninPage() {
                 />
                 {/* Seperator */}
                 <div className="flex items-center justify-between mb-4">
-                  <div className="h-px bg-gray-300 flex-grow mr-2"></div>
+                  <div className="h-px bg-gray-300 flex-grow mr-2" />
                   <span className="text-gray-900 text-sm">OR</span>
-                  <div className="h-px bg-gray-300 flex-grow ml-2"></div>
+                  <div className="h-px bg-gray-300 flex-grow ml-2" />
                 </div>
                 <div className="mt-4">
                   <Button
@@ -267,10 +255,7 @@ export default function SigninPage() {
                     className="w-full flex items-center justify-center gap-2 border border-gray-200 bg-white text-gray-700 hover:bg-gray-50 mb-6"
                   >
                     {pendingGoogle ? (
-                      <svg
-                        className="animate-spin h-5 w-5 mr-2 text-gray-400"
-                        viewBox="0 0 24 24"
-                      >
+                      <svg className="animate-spin h-5 w-5 mr-2 text-gray-400" viewBox="0 0 24 24">
                         <circle
                           className="opacity-25"
                           cx="12"
@@ -280,11 +265,7 @@ export default function SigninPage() {
                           strokeWidth="4"
                           fill="none"
                         />
-                        <path
-                          className="opacity-75"
-                          fill="currentColor"
-                          d="M4 12a8 8 0 018-8v8z"
-                        />
+                        <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                       </svg>
                     ) : (
                       <svg className="h-5 w-5" viewBox="0 0 48 48">
@@ -338,8 +319,8 @@ export default function SigninPage() {
 
       {/* Background Elements */}
       <div className="fixed top-0 left-0 w-full h-full pointer-events-none -z-10 overflow-hidden">
-        <div className="absolute top-20 right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl"></div>
-        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#FFCCEA]/10 rounded-full blur-3xl"></div>
+        <div className="absolute top-20 right-20 w-64 h-64 bg-[#76d2fa]/10 rounded-full blur-3xl" />
+        <div className="absolute bottom-20 left-20 w-64 h-64 bg-[#FFCCEA]/10 rounded-full blur-3xl" />
       </div>
     </div>
   );

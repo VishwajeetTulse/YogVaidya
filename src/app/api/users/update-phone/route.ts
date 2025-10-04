@@ -5,14 +5,17 @@ import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
 
 const updatePhoneSchema = z.object({
-  phoneNumber: z.string().min(10, "Phone number must be at least 10 digits").regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
+  phoneNumber: z
+    .string()
+    .min(10, "Phone number must be at least 10 digits")
+    .regex(/^\+?[\d\s-()]+$/, "Please enter a valid phone number"),
 });
 
 export async function POST(request: Request) {
   try {
     // Get the session
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user) {
       return NextResponse.json(
         { success: false, error: "Authentication required" },
@@ -27,9 +30,9 @@ export async function POST(request: Request) {
     // Update user's phone number
     const updatedUser = await prisma.user.update({
       where: { id: session.user.id },
-      data: { 
+      data: {
         phone: validatedData.phoneNumber,
-        updatedAt: new Date()
+        updatedAt: new Date(),
       },
       select: {
         id: true,
@@ -37,25 +40,24 @@ export async function POST(request: Request) {
         email: true,
         phone: true,
         role: true,
-        updatedAt: true
-      }
+        updatedAt: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
       message: "Phone number updated successfully",
-      user: updatedUser
+      user: updatedUser,
     });
-
   } catch (error) {
     console.error("Error updating phone number:", error);
-    
+
     if (error instanceof z.ZodError) {
       return NextResponse.json(
-        { 
-          success: false, 
+        {
+          success: false,
           error: "Invalid phone number format",
-          details: error.errors
+          details: error.errors,
         },
         { status: 400 }
       );

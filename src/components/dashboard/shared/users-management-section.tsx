@@ -8,14 +8,7 @@ import { toast } from "sonner";
 import { useLogger } from "@/hooks/use-logger";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import {
-  Search,
-  UserCog,
-  Trash2,
-  Edit,
-  AlertCircle,
-  ChevronDown,
-} from "lucide-react";
+import { Search, UserCog, Trash2, Edit, AlertCircle, ChevronDown } from "lucide-react";
 import { Separator } from "@/components/ui/separator";
 import {
   Dialog,
@@ -38,14 +31,14 @@ interface User {
 
 export const UsersSection = () => {
   const { logInfo, logWarning, logError } = useLogger();
-  
+
   // Debug the logger hook
   console.log("🔍 useLogger hook initialized (Users Section):", {
     logInfo: typeof logInfo,
     logWarning: typeof logWarning,
-    logError: typeof logError
+    logError: typeof logError,
   });
-  
+
   const [users, setUsers] = useState<User[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
   const [filteredUsers, setFilteredUsers] = useState<User[]>([]);
@@ -75,12 +68,10 @@ export const UsersSection = () => {
 
       if (data.success && data.users) {
         // Filter users to only include regular users (exclude mentors, admins, moderators)
-        const filteredByPermission = data.users.filter(
-          (user: User) => user.role === "USER"
-        );
+        const filteredByPermission = data.users.filter((user: User) => user.role === "USER");
         setUsers(filteredByPermission);
         setFilteredUsers(filteredByPermission);
-        
+
         // Try to detect current user role
         try {
           const roleRes = await fetch("/api/auth/get-session");
@@ -109,25 +100,25 @@ export const UsersSection = () => {
 
   useEffect(() => {
     // Filter users based on search term and role filter
-      let result = [...users];
+    let result = [...users];
 
-      // Apply role filter
-      if (roleFilter !== "ALL") {
-        result = result.filter((user) => user.role === roleFilter);
-      }
+    // Apply role filter
+    if (roleFilter !== "ALL") {
+      result = result.filter((user) => user.role === roleFilter);
+    }
 
-      // Apply search term filter
-      if (searchTerm) {
-        const term = searchTerm.toLowerCase();
-        result = result.filter(
-          (user) =>
-            user.name?.toLowerCase().includes(term) ||
-            user.email.toLowerCase().includes(term) ||
-            user.phone?.toLowerCase().includes(term)
-        );
-      }
+    // Apply search term filter
+    if (searchTerm) {
+      const term = searchTerm.toLowerCase();
+      result = result.filter(
+        (user) =>
+          user.name?.toLowerCase().includes(term) ||
+          user.email.toLowerCase().includes(term) ||
+          user.phone?.toLowerCase().includes(term)
+      );
+    }
 
-      setFilteredUsers(result);
+    setFilteredUsers(result);
   }, [searchTerm, roleFilter, users]);
 
   const handleEditUser = (user: User) => {
@@ -203,12 +194,12 @@ export const UsersSection = () => {
       if (data.success) {
         console.log("✅ User update API call succeeded");
         toast.success("User updated successfully");
-        
+
         // Log user update with debugging
         console.log("🔍 Attempting to log user update...");
         console.log("🔍 logInfo function exists:", typeof logInfo);
         console.log("🔍 Form data:", formData);
-        
+
         try {
           const logResult = await logInfo(
             "USER_PROFILE_UPDATED",
@@ -220,9 +211,9 @@ export const UsersSection = () => {
               updatedFields: {
                 name: formData.name,
                 phone: formData.phone,
-                role: formData.role
+                role: formData.role,
               },
-              updateDate: new Date().toISOString()
+              updateDate: new Date().toISOString(),
             }
           );
           console.log("✅ User update log result:", logResult);
@@ -230,7 +221,7 @@ export const UsersSection = () => {
           console.error("❌ User update logging failed:", logError);
           toast.error("Failed to log the user update. Check console for details.");
         }
-        
+
         setUsers(
           users.map((u) =>
             u.id === editingUser.id
@@ -280,10 +271,10 @@ export const UsersSection = () => {
       if (data.success) {
         console.log("✅ User delete API call succeeded");
         toast.success("User deleted successfully");
-        
+
         // Log user deletion with debugging
         console.log("🔍 Attempting to log user deletion...");
-        
+
         try {
           const logResult = await logWarning(
             "USER_ACCOUNT_DELETED",
@@ -294,7 +285,7 @@ export const UsersSection = () => {
               deletedUserEmail: userToDelete.email,
               deletedUserName: userToDelete.name,
               deletedUserRole: userToDelete.role,
-              deletionDate: new Date().toISOString()
+              deletionDate: new Date().toISOString(),
             }
           );
           console.log("✅ User deletion log result:", logResult);
@@ -302,7 +293,7 @@ export const UsersSection = () => {
           console.error("❌ User deletion logging failed:", logError);
           toast.error("Failed to log the user deletion. Check console for details.");
         }
-        
+
         setUsers(users.filter((u) => u.id !== userToDelete.id));
         setIsDeleteDialogOpen(false);
       } else {
@@ -335,7 +326,8 @@ export const UsersSection = () => {
       <div>
         <h1 className="text-3xl font-bold text-gray-900">User Management</h1>
         <p className="text-gray-600 mt-2">
-          Manage regular platform users and their accounts. (Mentors are managed in the separate Mentor Management section)
+          Manage regular platform users and their accounts. (Mentors are managed in the separate
+          Mentor Management section)
         </p>
       </div>
 
@@ -393,12 +385,8 @@ export const UsersSection = () => {
         ) : filteredUsers.length === 0 ? (
           <div className="text-center py-10">
             <UserCog className="mx-auto h-12 w-12 text-gray-400" />
-            <p className="mt-2 text-lg font-semibold text-gray-700">
-              No Users Found
-            </p>
-            <p className="text-gray-500">
-              Try a different search term or filter.
-            </p>
+            <p className="mt-2 text-lg font-semibold text-gray-700">No Users Found</p>
+            <p className="text-gray-500">Try a different search term or filter.</p>
           </div>
         ) : (
           <div className="overflow-x-auto">
@@ -455,19 +443,13 @@ export const UsersSection = () => {
           <DialogHeader>
             <DialogTitle>Edit User</DialogTitle>
             <DialogDescription>
-              Update the user&apos;s information. Click save when you&apos;re
-              done.
+              Update the user&apos;s information. Click save when you&apos;re done.
             </DialogDescription>
           </DialogHeader>
           <div className="space-y-4 py-4">
             <div className="space-y-2">
               <Label htmlFor="name">Name</Label>
-              <Input
-                id="name"
-                name="name"
-                value={formData.name}
-                onChange={handleFormChange}
-              />
+              <Input id="name" name="name" value={formData.name} onChange={handleFormChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="email">Email</Label>
@@ -481,12 +463,7 @@ export const UsersSection = () => {
             </div>
             <div className="space-y-2">
               <Label htmlFor="phone">Phone</Label>
-              <Input
-                id="phone"
-                name="phone"
-                value={formData.phone}
-                onChange={handleFormChange}
-              />
+              <Input id="phone" name="phone" value={formData.phone} onChange={handleFormChange} />
             </div>
             <div className="space-y-2">
               <Label htmlFor="role">Role</Label>
@@ -518,10 +495,7 @@ export const UsersSection = () => {
           </div>
           <DialogFooter>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsEditDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
                 Cancel
               </Button>
               <Button onClick={submitUserEdit}>Save Changes</Button>
@@ -538,42 +512,30 @@ export const UsersSection = () => {
               <AlertCircle className="h-5 w-5 mr-2" /> Confirm Deletion
             </DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete this user? This action cannot be
-              undone.
+              Are you sure you want to delete this user? This action cannot be undone.
             </DialogDescription>
           </DialogHeader>
 
           {userToDelete && (
             <div className="py-4">
               <div className="space-y-1">
-                <p className="font-medium">
-                  {userToDelete.name || "Unnamed user"}
-                </p>
+                <p className="font-medium">{userToDelete.name || "Unnamed user"}</p>
                 <p className="text-sm text-gray-600">{userToDelete.email}</p>
-                <p className="text-sm text-gray-600">
-                  Role: {userToDelete.role}
-                </p>
+                <p className="text-sm text-gray-600">Role: {userToDelete.role}</p>
               </div>
               <Separator className="my-4" />
               <p className="text-sm text-red-600">
-                This will delete the user account and all associated mentor
-                applications.
+                This will delete the user account and all associated mentor applications.
               </p>
             </div>
           )}
 
           <DialogFooter>
             <div className="flex justify-end gap-2">
-              <Button
-                variant="outline"
-                onClick={() => setIsDeleteDialogOpen(false)}
-              >
+              <Button variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
                 Cancel
               </Button>
-              <Button
-                className="bg-red-600 hover:bg-red-700"
-                onClick={confirmDeleteUser}
-              >
+              <Button className="bg-red-600 hover:bg-red-700" onClick={confirmDeleteUser}>
                 Delete User
               </Button>
             </div>
@@ -583,4 +545,3 @@ export const UsersSection = () => {
     </div>
   );
 };
-

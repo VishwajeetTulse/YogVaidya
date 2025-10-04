@@ -13,9 +13,13 @@ class AvailabilityStore {
   private availabilityMap: Map<string, MentorAvailability> = new Map();
 
   // Set mentor availability
-  setAvailability(mentorId: string, isAvailable: boolean, mentorData?: { name?: string; mentorType?: string }) {
+  setAvailability(
+    mentorId: string,
+    isAvailable: boolean,
+    mentorData?: { name?: string; mentorType?: string }
+  ) {
     const existing = this.availabilityMap.get(mentorId);
-    
+
     this.availabilityMap.set(mentorId, {
       mentorId,
       isAvailable,
@@ -24,7 +28,9 @@ class AvailabilityStore {
       mentorType: mentorData?.mentorType || existing?.mentorType,
     });
 
-    console.log(`🔄 Mentor ${mentorId} availability updated to: ${isAvailable ? 'AVAILABLE' : 'UNAVAILABLE'}`);
+    console.log(
+      `🔄 Mentor ${mentorId} availability updated to: ${isAvailable ? "AVAILABLE" : "UNAVAILABLE"}`
+    );
     return this.availabilityMap.get(mentorId);
   }
 
@@ -54,21 +60,21 @@ class AvailabilityStore {
   // Get availability summary
   getAvailabilitySummary() {
     const all = this.getAllAvailability();
-    const available = all.filter(m => m.isAvailable).length;
-    const unavailable = all.filter(m => !m.isAvailable).length;
-    
+    const available = all.filter((m) => m.isAvailable).length;
+    const unavailable = all.filter((m) => !m.isAvailable).length;
+
     return {
       total: all.length,
       available,
       unavailable,
-      availabilityRate: all.length > 0 ? (available / all.length) * 100 : 0
+      availabilityRate: all.length > 0 ? (available / all.length) * 100 : 0,
     };
   }
 
   // Clear all data (for testing/reset)
   clear() {
     this.availabilityMap.clear();
-    console.log('🧹 Availability store cleared');
+    console.log("🧹 Availability store cleared");
   }
 }
 

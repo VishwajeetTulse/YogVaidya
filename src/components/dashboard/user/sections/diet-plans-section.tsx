@@ -5,7 +5,7 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Loader2, FileText, Lock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
-import { SectionProps } from "../types";
+import { type SectionProps } from "../types";
 import Link from "next/link";
 
 interface DietPlan {
@@ -31,23 +31,25 @@ export function DietPlansSection({ userDetails }: SectionProps) {
         setIsLoading(true);
         console.log("🔍 Fetching diet plans for student...");
         const response = await fetch("/api/mentor/diet-plans");
-        
+
         console.log("📡 Response status:", response.status);
         console.log("📡 Response ok:", response.ok);
-        console.log("📡 Response headers:", response.headers.get('content-type'));
-        
+        console.log("📡 Response headers:", response.headers.get("content-type"));
+
         if (!response.ok) {
           let errorData;
-          const contentType = response.headers.get('content-type');
-          
-          if (contentType && contentType.includes('application/json')) {
-            errorData = await response.json().catch(() => ({ error: 'Failed to parse error response' }));
+          const contentType = response.headers.get("content-type");
+
+          if (contentType && contentType.includes("application/json")) {
+            errorData = await response
+              .json()
+              .catch(() => ({ error: "Failed to parse error response" }));
           } else {
             const text = await response.text();
             console.error("❌ Non-JSON error response:", text);
             errorData = { error: text || `HTTP ${response.status}` };
           }
-          
+
           console.error("❌ Error response:", errorData);
           throw new Error(errorData.error || "Failed to fetch diet plans");
         }
@@ -68,9 +70,8 @@ export function DietPlansSection({ userDetails }: SectionProps) {
   }, []);
 
   // Check if user has FLOURISH subscription
-  const hasFlourishAccess = 
-    userDetails.subscriptionPlan === "FLOURISH" && 
-    userDetails.subscriptionStatus === "ACTIVE";
+  const hasFlourishAccess =
+    userDetails.subscriptionPlan === "FLOURISH" && userDetails.subscriptionStatus === "ACTIVE";
 
   if (isLoading) {
     return (
@@ -99,7 +100,8 @@ export function DietPlansSection({ userDetails }: SectionProps) {
             </div>
             <h3 className="text-xl font-semibold">Personalized Diet Plans</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Get custom diet plans created by expert diet planners. This feature is available exclusively for FLOURISH subscribers.
+              Get custom diet plans created by expert diet planners. This feature is available
+              exclusively for FLOURISH subscribers.
             </p>
             <div className="bg-muted/50 p-4 rounded-lg max-w-md mx-auto">
               <p className="text-sm text-muted-foreground">
@@ -138,7 +140,8 @@ export function DietPlansSection({ userDetails }: SectionProps) {
             </div>
             <h3 className="text-xl font-semibold">No Diet Plans Yet</h3>
             <p className="text-muted-foreground max-w-md mx-auto">
-              Your diet planner will create personalized diet plans for you after your consultation sessions.
+              Your diet planner will create personalized diet plans for you after your consultation
+              sessions.
             </p>
             <p className="text-sm text-muted-foreground">
               Book a session with a diet planning expert to get started!
@@ -172,9 +175,7 @@ export function DietPlansSection({ userDetails }: SectionProps) {
                 <CardHeader>
                   <CardTitle className="text-lg truncate">{plan.title}</CardTitle>
                   {plan.description && (
-                    <p className="text-sm text-muted-foreground line-clamp-2">
-                      {plan.description}
-                    </p>
+                    <p className="text-sm text-muted-foreground line-clamp-2">{plan.description}</p>
                   )}
                 </CardHeader>
                 <CardContent>
@@ -183,11 +184,11 @@ export function DietPlansSection({ userDetails }: SectionProps) {
                       <p>By: {plan.mentor.name}</p>
                       <p>Created: {new Date(plan.createdAt).toLocaleDateString()}</p>
                     </div>
-                    
+
                     {plan.tags && plan.tags.length > 0 && (
                       <div className="flex flex-wrap gap-1">
                         {plan.tags.slice(0, 3).map((tag, index) => (
-                          <span 
+                          <span
                             key={index}
                             className="text-xs bg-purple-100 text-purple-700 px-2 py-1 rounded"
                           >
@@ -196,10 +197,10 @@ export function DietPlansSection({ userDetails }: SectionProps) {
                         ))}
                       </div>
                     )}
-                    
-                    <Button 
+
+                    <Button
                       className="w-full"
-                      onClick={() => window.open(`/dashboard/diet-plan/${plan.id}`, '_blank')}
+                      onClick={() => window.open(`/dashboard/diet-plan/${plan.id}`, "_blank")}
                     >
                       <ExternalLink className="h-4 w-4 mr-2" />
                       View Diet Plan

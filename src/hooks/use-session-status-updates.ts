@@ -1,4 +1,4 @@
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef } from "react";
 
 /**
  * Hook to automatically update session statuses
@@ -12,35 +12,39 @@ export function useSessionStatusUpdates(
 
   const updateSessionStatuses = async () => {
     try {
-      console.log('🔄 Checking for session status updates...');
-      
+      console.log("🔄 Checking for session status updates...");
+
       // Use the admin endpoint for client-side updates (no auth required)
-      const response = await fetch('/api/admin/update-session-status', {
-        method: 'POST',
+      const response = await fetch("/api/admin/update-session-status", {
+        method: "POST",
         headers: {
-          'content-type': 'application/json'
-        }
+          "content-type": "application/json",
+        },
       });
 
       if (response.ok) {
         const result = await response.json();
         if (result.startedSessions > 0 || result.completedSessions > 0) {
-          console.log(`✅ Session status updated: ${result.startedSessions} started, ${result.completedSessions} completed`);
-          
+          console.log(
+            `✅ Session status updated: ${result.startedSessions} started, ${result.completedSessions} completed`
+          );
+
           // You could emit an event here to refresh relevant UI components
-          window.dispatchEvent(new CustomEvent('session-status-updated', { 
-            detail: { 
-              started: result.startedSessions, 
-              completed: result.completedSessions,
-              updates: result.updates 
-            } 
-          }));
+          window.dispatchEvent(
+            new CustomEvent("session-status-updated", {
+              detail: {
+                started: result.startedSessions,
+                completed: result.completedSessions,
+                updates: result.updates,
+              },
+            })
+          );
         }
       } else {
-        console.warn('Failed to update session statuses:', response.statusText);
+        console.warn("Failed to update session statuses:", response.statusText);
       }
     } catch (error) {
-      console.error('Error updating session statuses:', error);
+      console.error("Error updating session statuses:", error);
     }
   };
 
@@ -68,8 +72,8 @@ export function useSessionStatusUpdates(
   }, [enabled, intervalMs]);
 
   // Return manual trigger function
-  return { 
+  return {
     updateNow: updateSessionStatuses,
-    isEnabled: enabled 
+    isEnabled: enabled,
   };
 }

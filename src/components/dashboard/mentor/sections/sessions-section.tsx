@@ -19,7 +19,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { UpdateSessionStatus } from "@/lib/session";
-import { getMentorSessions, MentorSessionData } from "@/lib/server/mentor-sessions-server";
+import { getMentorSessions, type MentorSessionData } from "@/lib/server/mentor-sessions-server";
 
 interface MentorSessionsData {
   mentorInfo: {
@@ -45,9 +45,9 @@ export const SessionsSection = () => {
     // Helper function to safely convert to valid Date object
     const safeToDate = (dateValue: any): Date => {
       if (!dateValue) {
-        console.warn('⚠️ Null/undefined date value found for scheduledTime:', dateValue);
+        console.warn("⚠️ Null/undefined date value found for scheduledTime:", dateValue);
         // Return a date far in the past to indicate an error, not current time
-        return new Date('2000-01-01T00:00:00Z');
+        return new Date("2000-01-01T00:00:00Z");
       }
 
       // If it's already a Date object, return it
@@ -56,7 +56,7 @@ export const SessionsSection = () => {
       }
 
       // Try to parse as Date from string
-      if (typeof dateValue === 'string') {
+      if (typeof dateValue === "string") {
         const date = new Date(dateValue);
         if (!isNaN(date.getTime())) {
           return date;
@@ -64,7 +64,7 @@ export const SessionsSection = () => {
       }
 
       // If it's a MongoDB date object with $date property
-      if (typeof dateValue === 'object' && dateValue !== null && '$date' in dateValue) {
+      if (typeof dateValue === "object" && dateValue !== null && "$date" in dateValue) {
         const mongoDate = new Date(dateValue.$date);
         if (!isNaN(mongoDate.getTime())) {
           return mongoDate;
@@ -72,66 +72,68 @@ export const SessionsSection = () => {
       }
 
       // Last resort: log the issue and return a past date to indicate error
-      console.error('❌ Unable to parse date value:', {
+      console.error("❌ Unable to parse date value:", {
         value: dateValue,
         type: typeof dateValue,
-        stringified: JSON.stringify(dateValue)
+        stringified: JSON.stringify(dateValue),
       });
-      return new Date('2000-01-01T00:00:00Z');
+      return new Date("2000-01-01T00:00:00Z");
     };
 
     return {
       ...serverData,
       sessions: serverData.sessions.map((session: MentorSessionData) => {
-        console.log('🔍 Processing session:', {
+        console.log("🔍 Processing session:", {
           id: session.id,
           status: session.status,
           scheduledTime: session.scheduledTime,
           scheduledTimeType: typeof session.scheduledTime,
           scheduledTimeValue: session.scheduledTime,
           isValidDate: session.scheduledTime instanceof Date,
-          parsedDate: session.scheduledTime ? new Date(session.scheduledTime).toISOString() : 'null'
+          parsedDate: session.scheduledTime
+            ? new Date(session.scheduledTime).toISOString()
+            : "null",
         });
         return {
           ...session,
           scheduledTime: safeToDate(session.scheduledTime),
           createdAt: safeToDate(session.createdAt),
-          updatedAt: safeToDate(session.updatedAt)
+          updatedAt: safeToDate(session.updatedAt),
         };
-      })
+      }),
     };
   };
 
-// Load mentor sessions using server action
-const loadMentorSessions = useCallback(async () => {
-  if (!session?.user) return;
-  
-  try {
-    const result = await getMentorSessions();
-    
-    if (result.success && result.data) {
-      setMentorSessionsData(formatMentorSessionsData(result.data));
-    } else {
-      console.error("Failed to load sessions:", result.error);
-      toast.error("Failed to load your sessions");
-    }
-  } catch (error) {
-    console.error("Error loading sessions:", error);
-    toast.error("Failed to load your sessions");
-  } finally {
-    setLoading(false);
-  }
-}, [session]);
+  // Load mentor sessions using server action
+  const loadMentorSessions = useCallback(async () => {
+    if (!session?.user) return;
 
-useEffect(() => {
-  loadMentorSessions();
-}, [loadMentorSessions, session]);
+    try {
+      const result = await getMentorSessions();
+
+      if (result.success && result.data) {
+        setMentorSessionsData(formatMentorSessionsData(result.data));
+      } else {
+        console.error("Failed to load sessions:", result.error);
+        toast.error("Failed to load your sessions");
+      }
+    } catch (error) {
+      console.error("Error loading sessions:", error);
+      toast.error("Failed to load your sessions");
+    } finally {
+      setLoading(false);
+    }
+  }, [session]);
+
+  useEffect(() => {
+    loadMentorSessions();
+  }, [loadMentorSessions, session]);
 
   // Update duration display every minute for ongoing sessions
   useEffect(() => {
     const interval = setInterval(() => {
       // Force re-render to update elapsed time for ongoing sessions
-      setUpdateTrigger(prev => prev + 1);
+      setUpdateTrigger((prev) => prev + 1);
     }, 60000); // Update every minute
 
     return () => clearInterval(interval);
@@ -142,7 +144,7 @@ useEffect(() => {
     startTransition(async () => {
       try {
         const result = await getMentorSessions();
-        
+
         if (result.success && result.data) {
           setMentorSessionsData(formatMentorSessionsData(result.data));
           toast.success("Sessions refreshed successfully");
@@ -158,35 +160,35 @@ useEffect(() => {
 
   // Function to handle start session
   const handleStartSession = (sessionItem: MentorSessionData) => {
-    console.log('🔍 handleStartSession called with:', {
+    console.log("🔍 handleStartSession called with:", {
       sessionItem,
       sessionItemType: typeof sessionItem,
-      sessionItemKeys: sessionItem ? Object.keys(sessionItem) : 'undefined',
+      sessionItemKeys: sessionItem ? Object.keys(sessionItem) : "undefined",
       id: sessionItem?.id,
       idType: typeof sessionItem?.id,
       idTrimmed: sessionItem?.id?.trim(),
-      isValid: !!(sessionItem?.id && sessionItem.id.trim())
+      isValid: !!(sessionItem?.id && sessionItem.id.trim()),
     });
 
     // Check if sessionItem exists
     if (!sessionItem) {
-      console.error('❌ sessionItem is undefined/null');
-      toast.error('Session data is missing');
+      console.error("❌ sessionItem is undefined/null");
+      toast.error("Session data is missing");
       return;
     }
 
     // Check if id exists and is valid
-    if (!sessionItem.id || typeof sessionItem.id !== 'string' || sessionItem.id.trim() === '') {
-      console.error('❌ Invalid session ID:', {
+    if (!sessionItem.id || typeof sessionItem.id !== "string" || sessionItem.id.trim() === "") {
+      console.error("❌ Invalid session ID:", {
         id: sessionItem.id,
         idType: typeof sessionItem.id,
-        fullSessionItem: sessionItem
+        fullSessionItem: sessionItem,
       });
       toast.error(`Cannot start session: Invalid session ID (${sessionItem.id})`);
       return;
     }
 
-    console.log('✅ All validations passed, calling UpdateSessionStatus with ID:', sessionItem.id);
+    console.log("✅ All validations passed, calling UpdateSessionStatus with ID:", sessionItem.id);
 
     try {
       UpdateSessionStatus("ONGOING", sessionItem.id);
@@ -196,8 +198,8 @@ useEffect(() => {
       }, 1000);
       toast.success("Session started successfully");
     } catch (error) {
-      console.error('❌ Error calling UpdateSessionStatus:', error);
-      toast.error('Failed to start session');
+      console.error("❌ Error calling UpdateSessionStatus:", error);
+      toast.error("Failed to start session");
     }
   };
 
@@ -206,10 +208,10 @@ useEffect(() => {
     try {
       // Use the proper completion API which handles delayed sessions
       const response = await fetch(`/api/sessions/${sessionItem.id}/complete`, {
-        method: 'POST',
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json'
-        }
+          "Content-Type": "application/json",
+        },
       });
 
       const result = await response.json();
@@ -221,7 +223,7 @@ useEffect(() => {
           loadMentorSessions();
         }, 1000);
       } else {
-        throw new Error(result.error || 'Failed to complete session');
+        throw new Error(result.error || "Failed to complete session");
       }
     } catch (error) {
       console.error("Error completing session:", error);
@@ -229,17 +231,13 @@ useEffect(() => {
     }
   };
 
-
-
   // Show loading state
   if (loading) {
     return (
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your scheduled sessions.
-          </p>
+          <p className="text-gray-600 mt-2">Manage your scheduled sessions.</p>
         </div>
         <div className="text-center py-8">
           <p className="text-gray-500">Loading your sessions...</p>
@@ -254,9 +252,7 @@ useEffect(() => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
-          <p className="text-gray-600 mt-2">
-            Manage your scheduled sessions.
-          </p>
+          <p className="text-gray-600 mt-2">Manage your scheduled sessions.</p>
         </div>
         <div className="text-center py-8">
           <p className="text-gray-500">No session data available.</p>
@@ -280,12 +276,14 @@ useEffect(() => {
   const getSessionTypeBadgeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
     return type === "YOGA"
       ? "from-[#76d2fa] to-[#5a9be9]"
-      : type === "MEDITATION" 
-      ? "from-[#876aff] to-[#9966cc]"
-      : "from-[#22c55e] to-[#16a34a]";
+      : type === "MEDITATION"
+        ? "from-[#876aff] to-[#9966cc]"
+        : "from-[#22c55e] to-[#16a34a]";
   };
 
-  const getMentorTypeDisplay = (mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null) => {
+  const getMentorTypeDisplay = (
+    mentorType: "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null
+  ) => {
     if (mentorType === "YOGAMENTOR") return "Yoga Mentor";
     if (mentorType === "MEDITATIONMENTOR") return "Meditation Mentor";
     if (mentorType === "DIETPLANNER") return "Diet Planner";
@@ -305,9 +303,9 @@ useEffect(() => {
         return Math.max(elapsedMinutes, 1); // Minimum 1 minute
       }
     }
-    
+
     // For COMPLETED sessions: uses stored duration
-    // For SCHEDULED sessions: uses planned duration 
+    // For SCHEDULED sessions: uses planned duration
     // For all cases: duration is provided by server
     return sessionItem.duration || 60;
   };
@@ -323,32 +321,38 @@ useEffect(() => {
   };
 
   // Safe sorting function
-  const sortByScheduledTime = (a: MentorSessionData, b: MentorSessionData, ascending = true): number => {
+  const sortByScheduledTime = (
+    a: MentorSessionData,
+    b: MentorSessionData,
+    ascending = true
+  ): number => {
     const dateA = getValidDate(a.scheduledTime);
     const dateB = getValidDate(b.scheduledTime);
-    
+
     // Handle null dates: put them at the end
     if (!dateA && !dateB) return 0;
     if (!dateA) return 1;
     if (!dateB) return -1;
-    
+
     const diff = dateA.getTime() - dateB.getTime();
     return ascending ? diff : -diff;
   };
 
   // Filter sessions for upcoming (all scheduled sessions, including delayed ones)
   const upcomingSessions = scheduledSessions
-    .filter(
-      (session: MentorSessionData) => {
-        // Include all sessions with SCHEDULED status, even if delayed/past due
-        return session.status === "SCHEDULED";
-      }
-    )
+    .filter((session: MentorSessionData) => {
+      // Include all sessions with SCHEDULED status, even if delayed/past due
+      return session.status === "SCHEDULED";
+    })
     .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
 
   // Separate upcoming sessions by category (handle missing sessionCategory gracefully)
-  const upcomingSubscriptionSessions = upcomingSessions.filter(session => (session as any).sessionCategory === "subscription");
-  const upcomingIndividualSessions = upcomingSessions.filter(session => (session as any).sessionCategory === "individual");
+  const upcomingSubscriptionSessions = upcomingSessions.filter(
+    (session) => (session as any).sessionCategory === "subscription"
+  );
+  const upcomingIndividualSessions = upcomingSessions.filter(
+    (session) => (session as any).sessionCategory === "individual"
+  );
 
   // Filter sessions for ongoing
   const ongoingSessions = scheduledSessions
@@ -356,8 +360,12 @@ useEffect(() => {
     .sort((a, b) => sortByScheduledTime(a, b, false)); // Changed to false for newest first
 
   // Separate ongoing sessions by category
-  const ongoingSubscriptionSessions = ongoingSessions.filter(session => (session as any).sessionCategory === "subscription");
-  const ongoingIndividualSessions = ongoingSessions.filter(session => (session as any).sessionCategory === "individual");
+  const ongoingSubscriptionSessions = ongoingSessions.filter(
+    (session) => (session as any).sessionCategory === "subscription"
+  );
+  const ongoingIndividualSessions = ongoingSessions.filter(
+    (session) => (session as any).sessionCategory === "individual"
+  );
 
   // Filter sessions for completed
   const completedSessions = scheduledSessions
@@ -365,8 +373,12 @@ useEffect(() => {
     .sort((a, b) => sortByScheduledTime(a, b, false));
 
   // Separate completed sessions by category
-  const completedSubscriptionSessions = completedSessions.filter(session => (session as any).sessionCategory === "subscription");
-  const completedIndividualSessions = completedSessions.filter(session => (session as any).sessionCategory === "individual");
+  const completedSubscriptionSessions = completedSessions.filter(
+    (session) => (session as any).sessionCategory === "subscription"
+  );
+  const completedIndividualSessions = completedSessions.filter(
+    (session) => (session as any).sessionCategory === "individual"
+  );
 
   // Filter sessions for cancelled
   const cancelledSessions = scheduledSessions
@@ -374,21 +386,30 @@ useEffect(() => {
     .sort((a, b) => sortByScheduledTime(a, b, false));
 
   // Separate cancelled sessions by category
-  const cancelledSubscriptionSessions = cancelledSessions.filter(session => (session as any).sessionCategory === "subscription");
-  const cancelledIndividualSessions = cancelledSessions.filter(session => (session as any).sessionCategory === "individual");
+  const cancelledSubscriptionSessions = cancelledSessions.filter(
+    (session) => (session as any).sessionCategory === "subscription"
+  );
+  const cancelledIndividualSessions = cancelledSessions.filter(
+    (session) => (session as any).sessionCategory === "individual"
+  );
 
-  const renderSessionCard = (sessionItem: MentorSessionData, isUpcoming: boolean = false, isOngoing: boolean = false) => {
+  const renderSessionCard = (
+    sessionItem: MentorSessionData,
+    isUpcoming: boolean = false,
+    isOngoing: boolean = false
+  ) => {
     // Defensive programming: Handle null/undefined scheduledTime first
     const scheduledTime = sessionItem.scheduledTime ? new Date(sessionItem.scheduledTime) : null;
     const isValidDate = scheduledTime && !isNaN(scheduledTime.getTime());
-    const currentTime = new Date();
+    const _currentTime = new Date();
 
     const isCompleted = sessionItem.status === "COMPLETED";
     const isCancelled = sessionItem.status === "CANCELLED";
-    
+
     if (isValidDate) {
       console.log(
-        "Time Zone:", scheduledTime.toLocaleString("en-US", {
+        "Time Zone:",
+        scheduledTime.toLocaleString("en-US", {
           timeZone: "Asia/Kolkata",
           hour: "numeric",
           minute: "2-digit",
@@ -419,23 +440,23 @@ useEffect(() => {
                     isOngoing
                       ? "bg-orange-100 text-orange-800"
                       : isUpcoming
-                      ? "bg-blue-100 text-blue-800"
-                      : isCompleted
-                      ? "bg-green-100 text-green-800"
-                      : isCancelled
-                      ? "bg-red-100 text-red-800"
-                      : "bg-gray-100 text-gray-800"
+                        ? "bg-blue-100 text-blue-800"
+                        : isCompleted
+                          ? "bg-green-100 text-green-800"
+                          : isCancelled
+                            ? "bg-red-100 text-red-800"
+                            : "bg-gray-100 text-gray-800"
                   }`}
                 >
                   {isOngoing
                     ? "ONGOING"
                     : isUpcoming
-                    ? "UPCOMING"
-                    : isCompleted
-                    ? "COMPLETED"
-                    : isCancelled
-                    ? "CANCELLED"
-                    : "SCHEDULED"}
+                      ? "UPCOMING"
+                      : isCompleted
+                        ? "COMPLETED"
+                        : isCancelled
+                          ? "CANCELLED"
+                          : "SCHEDULED"}
                 </span>
               </div>
               <p className="text-gray-500 capitalize">
@@ -449,15 +470,17 @@ useEffect(() => {
                     scheduledTime.getFullYear() === 2000 ? (
                       <span className="text-red-500">Date unavailable</span>
                     ) : (
-                      scheduledTime.toLocaleString("en-US", {
-                        timeZone: "Asia/Kolkata",
-                        day: "2-digit",
-                        month: "2-digit",
-                        year: "2-digit",
-                        hour: "numeric",
-                        minute: "2-digit",
-                        hour12: true,
-                      }).replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")
+                      scheduledTime
+                        .toLocaleString("en-US", {
+                          timeZone: "Asia/Kolkata",
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "2-digit",
+                          hour: "numeric",
+                          minute: "2-digit",
+                          hour12: true,
+                        })
+                        .replace(/(\d{2})\/(\d{2})\/(\d{2}), (.+)/, "$1/$2/$3 $4")
                     )
                   ) : (
                     <span className="text-red-500">Date not available</span>
@@ -477,7 +500,7 @@ useEffect(() => {
                   {sessionItem.eligibleStudents.active} active
                 </span>
               </div>
-              
+
               {/* Student eligibility breakdown */}
               <div className="mt-3 flex flex-wrap gap-2">
                 {sessionItem.eligibleStudents.byPlan.SEED > 0 && (
@@ -542,8 +565,12 @@ useEffect(() => {
                 <Button
                   variant="destructive"
                   onClick={() => {
-                    if (!sessionItem?.id || typeof sessionItem.id !== 'string' || sessionItem.id.trim() === '') {
-                      console.error('❌ Invalid session ID for cancel:', sessionItem?.id);
+                    if (
+                      !sessionItem?.id ||
+                      typeof sessionItem.id !== "string" ||
+                      sessionItem.id.trim() === ""
+                    ) {
+                      console.error("❌ Invalid session ID for cancel:", sessionItem?.id);
                       toast.error(`Cannot cancel session: Invalid session ID (${sessionItem?.id})`);
                       return;
                     }
@@ -555,8 +582,8 @@ useEffect(() => {
                       }, 1000);
                       toast.success("Session cancelled");
                     } catch (error) {
-                      console.error('❌ Error cancelling session:', error);
-                      toast.error('Failed to cancel session');
+                      console.error("❌ Error cancelling session:", error);
+                      toast.error("Failed to cancel session");
                     }
                   }}
                 >
@@ -573,7 +600,7 @@ useEffect(() => {
     );
   };
 
-  const renderTabContent = (sessions: MentorSessionData[], emptyMessage: string) => {
+  const _renderTabContent = (sessions: MentorSessionData[], emptyMessage: string) => {
     if (loading) {
       return (
         <div className="text-center py-8">
@@ -588,9 +615,7 @@ useEffect(() => {
           <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
           <p className="text-gray-500 text-lg mb-2">{emptyMessage}</p>
           <p className="text-gray-400">
-            {activeTab === "upcoming"
-              ? "Schedule your first session from the Schedule tab!"
-              : ""}
+            {activeTab === "upcoming" ? "Schedule your first session from the Schedule tab!" : ""}
           </p>
         </div>
       );
@@ -610,11 +635,11 @@ useEffect(() => {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            My Sessions
-          </h1>
+          <h1 className="text-3xl font-bold text-gray-900">My Sessions</h1>
           <p className="text-gray-600 mt-2">
-            View and manage your {getMentorTypeDisplay(mentorSessionsData.mentorInfo.mentorType).toLowerCase()} sessions and eligible students.
+            View and manage your{" "}
+            {getMentorTypeDisplay(mentorSessionsData.mentorInfo.mentorType).toLowerCase()} sessions
+            and eligible students.
           </p>
         </div>
         <Button
@@ -623,9 +648,7 @@ useEffect(() => {
           disabled={isPending}
           className="flex items-center gap-2"
         >
-          <RefreshCw
-            className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`}
-          />
+          <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
           Refresh
         </Button>
       </div>
@@ -641,7 +664,8 @@ useEffect(() => {
               {mentorSessionsData.mentorInfo.name || "Mentor"}
             </h3>
             <p className="text-gray-600">
-              {getMentorTypeDisplay(mentorSessionsData.mentorInfo.mentorType)} • {scheduledSessions.length} total sessions
+              {getMentorTypeDisplay(mentorSessionsData.mentorInfo.mentorType)} •{" "}
+              {scheduledSessions.length} total sessions
             </p>
           </div>
         </div>
@@ -673,7 +697,9 @@ useEffect(() => {
               </h3>
               {upcomingSubscriptionSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {upcomingSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, true, false))}
+                  {upcomingSubscriptionSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, true, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -691,7 +717,9 @@ useEffect(() => {
               </h3>
               {upcomingIndividualSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {upcomingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, true, false))}
+                  {upcomingIndividualSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, true, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -713,7 +741,9 @@ useEffect(() => {
               </h3>
               {ongoingSubscriptionSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {ongoingSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                  {ongoingSubscriptionSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, true)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -731,7 +761,9 @@ useEffect(() => {
               </h3>
               {ongoingIndividualSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {ongoingIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, true))}
+                  {ongoingIndividualSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, true)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -753,7 +785,9 @@ useEffect(() => {
               </h3>
               {completedSubscriptionSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {completedSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                  {completedSubscriptionSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -771,7 +805,9 @@ useEffect(() => {
               </h3>
               {completedIndividualSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {completedIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                  {completedIndividualSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -793,7 +829,9 @@ useEffect(() => {
               </h3>
               {cancelledSubscriptionSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {cancelledSubscriptionSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                  {cancelledSubscriptionSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -811,7 +849,9 @@ useEffect(() => {
               </h3>
               {cancelledIndividualSessions.length > 0 ? (
                 <div className="grid gap-4">
-                  {cancelledIndividualSessions.map((sessionItem) => renderSessionCard(sessionItem, false, false))}
+                  {cancelledIndividualSessions.map((sessionItem) =>
+                    renderSessionCard(sessionItem, false, false)
+                  )}
                 </div>
               ) : (
                 <div className="text-center py-6 bg-gray-50 rounded-lg">
@@ -826,4 +866,3 @@ useEffect(() => {
     </div>
   );
 };
-

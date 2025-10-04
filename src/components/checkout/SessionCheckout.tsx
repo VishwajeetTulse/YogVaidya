@@ -1,14 +1,20 @@
-'use client'
+"use client";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Check, Calendar, Clock, User, IndianRupeeIcon, Phone, Mail, Award, Star, ChevronDown } from "lucide-react";
+import { Check, Calendar, Clock, User, IndianRupeeIcon, Award, Star } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import Script from "next/script";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
@@ -43,35 +49,35 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
     activeSessionsCount: number;
     completedSessionsCount: number;
   } | null>(null);
-  
+
   // Form state
-  const [sessionDate, setSessionDate] = useState('');
-  const [sessionTime, setSessionTime] = useState(''); // This will store 24hr format internally
-  const [selectedHour, setSelectedHour] = useState('');
-  const [selectedMinute, setSelectedMinute] = useState('');
-  const [selectedPeriod, setSelectedPeriod] = useState('');
-  const [notes, setNotes] = useState('');
+  const [sessionDate, setSessionDate] = useState("");
+  const [sessionTime, setSessionTime] = useState(""); // This will store 24hr format internally
+  const [selectedHour, setSelectedHour] = useState("");
+  const [selectedMinute, setSelectedMinute] = useState("");
+  const [selectedPeriod, setSelectedPeriod] = useState("");
+  const [notes, setNotes] = useState("");
 
   // Generate time options
   const hours = Array.from({ length: 12 }, (_, i) => {
     const hour = i + 1;
-    return { value: hour.toString(), label: hour.toString().padStart(2, '0') };
+    return { value: hour.toString(), label: hour.toString().padStart(2, "0") };
   });
 
   const minutes = Array.from({ length: 12 }, (_, i) => {
     const minute = i * 5;
-    return { value: minute.toString(), label: minute.toString().padStart(2, '0') };
+    return { value: minute.toString(), label: minute.toString().padStart(2, "0") };
   });
 
   const periods = [
-    { value: 'AM', label: 'AM' },
-    { value: 'PM', label: 'PM' }
+    { value: "AM", label: "AM" },
+    { value: "PM", label: "PM" },
   ];
 
   // Update sessionTime when hour/minute/period changes
   useEffect(() => {
     if (selectedHour && selectedMinute && selectedPeriod) {
-      const time12 = `${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')} ${selectedPeriod}`;
+      const time12 = `${selectedHour.padStart(2, "0")}:${selectedMinute.padStart(2, "0")} ${selectedPeriod}`;
       const time24 = convertTo24Hour(time12);
       setSessionTime(time24);
     }
@@ -79,58 +85,58 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
 
   // Convert current state to 24-hour format
   const convertStateToTime24 = (): string => {
-    if (!selectedHour || !selectedMinute || !selectedPeriod) return '';
-    
+    if (!selectedHour || !selectedMinute || !selectedPeriod) return "";
+
     let hour = parseInt(selectedHour);
-    if (selectedPeriod === 'AM' && hour === 12) hour = 0;
-    if (selectedPeriod === 'PM' && hour !== 12) hour += 12;
-    
-    return `${hour.toString().padStart(2, '0')}:${selectedMinute}`;
+    if (selectedPeriod === "AM" && hour === 12) hour = 0;
+    if (selectedPeriod === "PM" && hour !== 12) hour += 12;
+
+    return `${hour.toString().padStart(2, "0")}:${selectedMinute}`;
   };
 
   // Get display time
   const getDisplayTime = (): string => {
     if (selectedHour && selectedMinute && selectedPeriod) {
-      return `${selectedHour.padStart(2, '0')}:${selectedMinute.padStart(2, '0')} ${selectedPeriod}`;
+      return `${selectedHour.padStart(2, "0")}:${selectedMinute.padStart(2, "0")} ${selectedPeriod}`;
     }
-    return '';
+    return "";
   };
 
   // Helper function to convert 12hr to 24hr format for storage
   const convertTo24Hour = (time12: string): string => {
-    if (!time12) return '';
-    const [time, period] = time12.split(' ');
-    const [hours, minutes] = time.split(':');
+    if (!time12) return "";
+    const [time, period] = time12.split(" ");
+    const [hours, minutes] = time.split(":");
     let hour24 = parseInt(hours, 10);
-    
-    if (period === 'PM' && hour24 !== 12) {
+
+    if (period === "PM" && hour24 !== 12) {
       hour24 += 12;
-    } else if (period === 'AM' && hour24 === 12) {
+    } else if (period === "AM" && hour24 === 12) {
       hour24 = 0;
     }
-    
-    return `${hour24.toString().padStart(2, '0')}:${minutes}`;
+
+    return `${hour24.toString().padStart(2, "0")}:${minutes}`;
   };
 
   // Helper function to convert 24hr to 12hr format for display
-  const convertTo12Hour = (time24: string): string => {
-    if (!time24) return '';
-    const [hours, minutes] = time24.split(':');
+  const _convertTo12Hour = (time24: string): string => {
+    if (!time24) return "";
+    const [hours, minutes] = time24.split(":");
     const hour24 = parseInt(hours, 10);
     const hour12 = hour24 === 0 ? 12 : hour24 > 12 ? hour24 - 12 : hour24;
-    const ampm = hour24 >= 12 ? 'PM' : 'AM';
+    const ampm = hour24 >= 12 ? "PM" : "AM";
     return `${hour12}:${minutes} ${ampm}`;
   };
 
   // Helper function to format date
   const formatDate = (dateString: string): string => {
-    if (!dateString) return '';
+    if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString('en-US', {
-      weekday: 'long',
-      year: 'numeric',
-      month: 'long',
-      day: 'numeric'
+    return date.toLocaleDateString("en-US", {
+      weekday: "long",
+      year: "numeric",
+      month: "long",
+      day: "numeric",
     });
   };
 
@@ -141,21 +147,23 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
         // First try the individual mentor API
         let response = await fetch(`/api/mentor/${mentorId}`);
         let result = await response.json();
-        
+
         if (result.success) {
           setMentorData(result.data);
-          
+
           // Check user's existing sessions with this mentor
           try {
             const sessionResponse = await fetch(`/api/mentor/${mentorId}/sessions`);
             const sessionResult = await sessionResponse.json();
-            
+
             if (sessionResult.success) {
               setSessionStatus(sessionResult.data);
               setCanBookSession(sessionResult.data.canBookNewSession);
-              
+
               if (!sessionResult.data.canBookNewSession) {
-                toast.warning("You already have an active session with this mentor. Complete your current session before booking a new one.");
+                toast.warning(
+                  "You already have an active session with this mentor. Complete your current session before booking a new one."
+                );
               }
             }
           } catch (sessionError) {
@@ -166,7 +174,7 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
           console.log("Individual mentor API failed, trying fallback...");
           response = await fetch(`/api/mentor/get-approved-mentors`);
           result = await response.json();
-          
+
           if (result.success) {
             const mentor = result.data.find((m: any) => m.id === mentorId);
             if (mentor) {
@@ -212,13 +220,18 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
 
     try {
       console.log("🚀 Starting session booking process...");
-      console.log("📋 Booking data:", { mentorId, sessionDate, sessionTime: convertStateToTime24(), notes });
-      
+      console.log("📋 Booking data:", {
+        mentorId,
+        sessionDate,
+        sessionTime: convertStateToTime24(),
+        notes,
+      });
+
       // Create booking order
-      const response = await fetch('/api/mentor/book-session', {
-        method: 'POST',
+      const response = await fetch("/api/mentor/book-session", {
+        method: "POST",
         headers: {
-          'Content-Type': 'application/json',
+          "Content-Type": "application/json",
         },
         body: JSON.stringify({
           mentorId,
@@ -230,20 +243,22 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
 
       console.log("📡 Response status:", response.status);
       console.log("📄 Response ok:", response.ok);
-      
+
       const data = await response.json();
       console.log("📋 Response data:", data);
 
       if (!data.success) {
         // Handle specific error cases
         if (response.status === 409) {
-          toast.error("You already have an active session with this mentor. Please complete your current session first.");
+          toast.error(
+            "You already have an active session with this mentor. Please complete your current session first."
+          );
         } else if (response.status === 404) {
           toast.error("Mentor not found or unavailable for booking.");
         } else {
-          toast.error(data.error || 'Failed to create booking');
+          toast.error(data.error || "Failed to create booking");
         }
-        throw new Error(data.error || 'Failed to create booking');
+        throw new Error(data.error || "Failed to create booking");
       }
 
       // Initialize Razorpay payment
@@ -257,10 +272,10 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
         handler: async function (response: RazorpayResponse) {
           try {
             // Verify payment
-            const verifyResponse = await fetch('/api/mentor/verify-session-payment', {
-              method: 'POST',
+            const verifyResponse = await fetch("/api/mentor/verify-session-payment", {
+              method: "POST",
               headers: {
-                'Content-Type': 'application/json',
+                "Content-Type": "application/json",
               },
               body: JSON.stringify({
                 razorpay_order_id: response.razorpay_order_id,
@@ -294,16 +309,15 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
           color: "#5a9be9",
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             setLoading(false);
-          }
-        }
+          },
+        },
       };
 
       // @ts-expect-error importing Razorpay from cdn
-      const razorpay = new (window).Razorpay(options);
+      const razorpay = new window.Razorpay(options);
       razorpay.open();
-
     } catch (error) {
       console.error("Error booking session:", error);
       toast.error("Failed to initiate booking. Please try again.");
@@ -312,14 +326,14 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
   };
 
   // Get minimum date (today)
-  const today = new Date().toISOString().split('T')[0];
+  const today = new Date().toISOString().split("T")[0];
 
   if (loadingMentor) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50'>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="relative">
-            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-16 w-16 border-4 border-indigo-100 border-t-indigo-600 mx-auto mb-4" />
             <div className="absolute inset-0 flex items-center justify-center">
               <Calendar className="h-6 w-6 text-indigo-600" />
             </div>
@@ -333,13 +347,15 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
 
   if (!mentorData) {
     return (
-      <div className='flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-red-100'>
+      <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-red-50 via-orange-50 to-red-100">
         <div className="text-center bg-white p-8 rounded-2xl shadow-xl">
           <div className="h-16 w-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
             <User className="h-8 w-8 text-red-600" />
           </div>
           <p className="text-red-700 font-medium text-lg mb-2">Mentor not found</p>
-          <p className="text-gray-600 text-sm">The mentor you're looking for is currently unavailable</p>
+          <p className="text-gray-600 text-sm">
+            The mentor you&apos;re looking for is currently unavailable
+          </p>
         </div>
       </div>
     );
@@ -378,7 +394,7 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                         </AvatarFallback>
                       </Avatar>
                       <div className="absolute -bottom-1 -right-1 h-6 w-6 bg-green-500 rounded-full border-2 border-white flex items-center justify-center">
-                        <div className="h-2 w-2 bg-white rounded-full"></div>
+                        <div className="h-2 w-2 bg-white rounded-full" />
                       </div>
                     </div>
                     <div className="flex-1">
@@ -397,7 +413,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                       <Award className="h-5 w-5 text-blue-600 mt-0.5" />
                       <div>
                         <p className="font-medium text-gray-900">Experience</p>
-                        <p className="text-sm text-gray-600">{mentorData.experience} years of expertise</p>
+                        <p className="text-sm text-gray-600">
+                          {mentorData.experience} years of expertise
+                        </p>
                       </div>
                     </div>
                   )}
@@ -429,7 +447,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                       <p className="text-sm font-medium text-gray-700 mb-1">Session Price</p>
                       <div className="flex items-center justify-center gap-1 mb-2">
                         <IndianRupeeIcon className="h-8 w-8 text-indigo-600" />
-                        <span className="text-4xl font-bold text-indigo-600">{mentorData.sessionPrice}</span>
+                        <span className="text-4xl font-bold text-indigo-600">
+                          {mentorData.sessionPrice}
+                        </span>
                       </div>
                       <p className="text-sm text-gray-600">per session</p>
                       <div className="mt-3 inline-flex items-center px-3 py-1 bg-green-100 text-green-800 rounded-full text-xs font-medium">
@@ -472,8 +492,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                         Active Session In Progress
                       </h3>
                       <p className="text-yellow-700 mb-3">
-                        You currently have {sessionStatus.activeSessionsCount} active session(s) with this mentor. 
-                        Please complete your current session before booking a new one.
+                        You currently have {sessionStatus.activeSessionsCount} active session(s)
+                        with this mentor. Please complete your current session before booking a new
+                        one.
                       </p>
                       <div className="text-sm text-yellow-600">
                         <p>• Our pay-per-session model allows one active session at a time</p>
@@ -491,13 +512,16 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                     <div className="flex items-center gap-2">
                       <Check className="h-5 w-5 text-green-600" />
                       <p className="text-green-800 font-medium">
-                        You've completed {sessionStatus.completedSessionsCount} session(s) with this mentor. Ready to book another!
+                        You&apos;ve completed {sessionStatus.completedSessionsCount} session(s) with
+                        this mentor. Ready to book another!
                       </p>
                     </div>
                   </div>
                 )}
                 <CardHeader className="pb-6">
-                  <CardTitle className="text-2xl font-bold text-gray-900">Session Details</CardTitle>
+                  <CardTitle className="text-2xl font-bold text-gray-900">
+                    Session Details
+                  </CardTitle>
                   <CardDescription className="text-lg text-gray-600">
                     Choose your preferred date and time for the session
                   </CardDescription>
@@ -506,7 +530,10 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                   {/* Date and Time Selection - Enhanced */}
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-3">
-                      <Label htmlFor="sessionDate" className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                      <Label
+                        htmlFor="sessionDate"
+                        className="flex items-center gap-2 text-base font-semibold text-gray-700"
+                      >
                         <Calendar className="h-5 w-5 text-indigo-600" />
                         Select Date
                       </Label>
@@ -521,21 +548,30 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                         disabled={!canBookSession}
                       />
                       <p className="text-sm text-gray-500">
-                        {canBookSession ? "Available dates from today onwards" : "Complete your current session to book a new one"}
+                        {canBookSession
+                          ? "Available dates from today onwards"
+                          : "Complete your current session to book a new one"}
                       </p>
                     </div>
 
                     <div className="space-y-3">
-                      <Label htmlFor="sessionTime" className="flex items-center gap-2 text-base font-semibold text-gray-700">
+                      <Label
+                        htmlFor="sessionTime"
+                        className="flex items-center gap-2 text-base font-semibold text-gray-700"
+                      >
                         <Clock className="h-5 w-5 text-indigo-600" />
                         Select Time
                       </Label>
-                      
+
                       {/* 12-Hour Time Picker */}
                       <div className="grid grid-cols-3 gap-3">
                         <div className="space-y-2">
                           <Label className="text-sm text-gray-600">Hour</Label>
-                          <Select value={selectedHour} onValueChange={setSelectedHour} disabled={!canBookSession}>
+                          <Select
+                            value={selectedHour}
+                            onValueChange={setSelectedHour}
+                            disabled={!canBookSession}
+                          >
                             <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-indigo-500 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
                               <SelectValue placeholder="Hour" />
                             </SelectTrigger>
@@ -548,10 +584,14 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                             </SelectContent>
                           </Select>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label className="text-sm text-gray-600">Minute</Label>
-                          <Select value={selectedMinute} onValueChange={setSelectedMinute} disabled={!canBookSession}>
+                          <Select
+                            value={selectedMinute}
+                            onValueChange={setSelectedMinute}
+                            disabled={!canBookSession}
+                          >
                             <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-indigo-500 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
                               <SelectValue placeholder="Min" />
                             </SelectTrigger>
@@ -564,10 +604,14 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                             </SelectContent>
                           </Select>
                         </div>
-                        
+
                         <div className="space-y-2">
                           <Label className="text-sm text-gray-600">Period</Label>
-                          <Select value={selectedPeriod} onValueChange={setSelectedPeriod} disabled={!canBookSession}>
+                          <Select
+                            value={selectedPeriod}
+                            onValueChange={setSelectedPeriod}
+                            disabled={!canBookSession}
+                          >
                             <SelectTrigger className="h-12 border-2 border-gray-200 focus:border-indigo-500 rounded-xl disabled:opacity-50 disabled:cursor-not-allowed">
                               <SelectValue placeholder="AM/PM" />
                             </SelectTrigger>
@@ -581,14 +625,13 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                           </Select>
                         </div>
                       </div>
-                      
+
                       <p className="text-sm text-gray-500">
-                        {!canBookSession 
-                          ? 'Time selection disabled - complete your current session first'
-                          : getDisplayTime() 
-                            ? `Selected: ${getDisplayTime()}` 
-                            : 'Choose your preferred time'
-                        }
+                        {!canBookSession
+                          ? "Time selection disabled - complete your current session first"
+                          : getDisplayTime()
+                            ? `Selected: ${getDisplayTime()}`
+                            : "Choose your preferred time"}
                       </p>
                     </div>
                   </div>
@@ -608,10 +651,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                       disabled={!canBookSession}
                     />
                     <p className="text-sm text-gray-500">
-                      {canBookSession 
+                      {canBookSession
                         ? "Help your mentor prepare by sharing your expectations and goals"
-                        : "Notes section disabled - complete your current session to book a new one"
-                      }
+                        : "Notes section disabled - complete your current session to book a new one"}
                     </p>
                   </div>
 
@@ -628,7 +670,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                             <Calendar className="h-5 w-5 text-green-600" />
                             <div>
                               <p className="text-sm font-medium text-green-700">Date</p>
-                              <p className="text-green-800 font-semibold">{formatDate(sessionDate)}</p>
+                              <p className="text-green-800 font-semibold">
+                                {formatDate(sessionDate)}
+                              </p>
                             </div>
                           </div>
                           <div className="flex items-center gap-3">
@@ -651,7 +695,9 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                             <IndianRupeeIcon className="h-5 w-5 text-green-600" />
                             <div>
                               <p className="text-sm font-medium text-green-700">Total Amount</p>
-                              <p className="text-green-800 font-semibold text-xl">₹{mentorData.sessionPrice}</p>
+                              <p className="text-green-800 font-semibold text-xl">
+                                ₹{mentorData.sessionPrice}
+                              </p>
                             </div>
                           </div>
                         </div>
@@ -661,14 +707,14 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
 
                   {/* Enhanced Payment Button */}
                   <div className="pt-4">
-                    <Button 
+                    <Button
                       onClick={handleBookSession}
                       disabled={loading || !sessionDate || !sessionTime || !canBookSession}
                       className="w-full h-14 text-lg font-semibold bg-gradient-to-r from-indigo-600 to-purple-600 hover:from-indigo-700 hover:to-purple-700 rounded-xl shadow-lg hover:shadow-xl transition-all duration-300 transform hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:transform-none"
                     >
                       {loading ? (
                         <div className="flex items-center gap-3">
-                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white"></div>
+                          <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-white" />
                           <span>Processing Payment...</span>
                         </div>
                       ) : !canBookSession ? (
@@ -686,7 +732,7 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
                     {/* Enhanced Security Notes */}
                     <div className="mt-6 bg-gray-50 p-4 rounded-xl">
                       <div className="flex items-center gap-2 mb-3">
-                        <div className="h-2 w-2 bg-green-500 rounded-full"></div>
+                        <div className="h-2 w-2 bg-green-500 rounded-full" />
                         <span className="font-medium text-gray-800">Secure & Protected</span>
                       </div>
                       <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-xs text-gray-600">

@@ -24,7 +24,12 @@ interface MentorApplicationSubmissionProps {
   deleteError: string | null;
 }
 
-const MentorApplicationSubmission: React.FC<MentorApplicationSubmissionProps> = ({ application, onDelete, deleteLoading, deleteError }) => {
+const MentorApplicationSubmission: React.FC<MentorApplicationSubmissionProps> = ({
+  application,
+  onDelete,
+  deleteLoading,
+  deleteError,
+}) => {
   if (!application) return <div>No application found.</div>;
   return (
     <div className="max-w-2xl mx-auto bg-white rounded-2xl p-10 shadow-lg border border-gray-100 mt-10 mb-10 text-center">
@@ -53,13 +58,14 @@ const MentorApplicationSubmission: React.FC<MentorApplicationSubmissionProps> = 
         <div>
           <div className="font-semibold text-gray-700">Certifications:</div>
           <div className="text-gray-900 break-words">{application.certifications}</div>
-        </div>        {application.powUrl && (
+        </div>{" "}
+        {application.powUrl && (
           <div className="md:col-span-2">
             <div className="font-semibold text-gray-700">Proof of Work:</div>
             <div className="text-gray-900 break-words">
-              <a 
-                href={application.powUrl} 
-                target="_blank" 
+              <a
+                href={application.powUrl}
+                target="_blank"
                 rel="noopener noreferrer"
                 className="text-blue-600 hover:text-blue-800 underline"
               >
@@ -78,4 +84,3 @@ const MentorApplicationSubmission: React.FC<MentorApplicationSubmissionProps> = 
 };
 
 export default MentorApplicationSubmission;
-

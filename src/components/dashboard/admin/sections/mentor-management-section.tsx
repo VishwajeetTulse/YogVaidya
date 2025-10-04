@@ -8,18 +8,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { toast } from "sonner";
 import { useLogger } from "@/hooks/use-logger";
-import { 
-  Users, 
-  RefreshCw, 
-  CheckCircle, 
-  AlertTriangle, 
+import {
+  Users,
+  RefreshCw,
+  CheckCircle,
+  AlertTriangle,
   BarChart3,
   ArrowRightLeft,
   Edit,
   Search,
   Trash2,
-  Plus,
-  Eye
+  Eye,
 } from "lucide-react";
 import {
   Dialog,
@@ -38,7 +37,6 @@ import {
 } from "@/components/ui/select";
 import { Switch } from "@/components/ui/switch";
 import { getMentorStats } from "@/lib/services/mentor-sync";
-import { LucideIcon } from "lucide-react";
 
 interface MentorStats {
   totalMentors: number;
@@ -80,7 +78,10 @@ interface StatCardProps {
 }
 
 const StatCard = ({ title, value, description, icon, onClick }: StatCardProps) => (
-  <Card className={onClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""} onClick={onClick}>
+  <Card
+    className={onClick ? "cursor-pointer hover:bg-gray-50 transition-colors" : ""}
+    onClick={onClick}
+  >
     <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
       <CardTitle className="text-sm font-medium">{title}</CardTitle>
       {icon}
@@ -94,14 +95,14 @@ const StatCard = ({ title, value, description, icon, onClick }: StatCardProps) =
 
 export const MentorManagementSection = () => {
   const { logInfo, logWarning, logError } = useLogger();
-  
+
   // Debug the logger hook
   console.log("🔍 useLogger hook initialized:", {
     logInfo: typeof logInfo,
     logWarning: typeof logWarning,
-    logError: typeof logError
+    logError: typeof logError,
   });
-  
+
   const [stats, setStats] = useState<MentorStats | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
@@ -155,10 +156,8 @@ export const MentorManagementSection = () => {
 
       if (data.success && data.users) {
         // Filter only mentors
-        const mentorUsers = data.users.filter(
-          (user: Mentor) => user.role === "MENTOR"
-        );
-        
+        const mentorUsers = data.users.filter((user: Mentor) => user.role === "MENTOR");
+
         // Try to detect current user role from the response or make a separate call
         // The /api/users endpoint returns all users, so we can check if we have permission
         // If we got a successful response, we know we have ADMIN or MODERATOR role
@@ -218,9 +217,7 @@ export const MentorManagementSection = () => {
     setIsDeleteDialogOpen(true);
   };
 
-  const handleFormChange = (
-    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
-  ) => {
+  const handleFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData({
       ...formData,
@@ -275,12 +272,12 @@ export const MentorManagementSection = () => {
       if (data.success) {
         console.log("✅ Mentor update API call succeeded");
         toast.success("Mentor updated successfully");
-        
+
         // Log mentor update with debugging
         console.log("🔍 Attempting to log mentor update...");
         console.log("🔍 logInfo function exists:", typeof logInfo);
         console.log("🔍 Form data:", formData);
-        
+
         try {
           const logResult = await logInfo(
             "MENTOR_PROFILE_UPDATED",
@@ -293,9 +290,9 @@ export const MentorManagementSection = () => {
                 name: formData.name,
                 phone: formData.phone,
                 mentorType: formData.mentorType,
-                isAvailable: formData.isAvailable
+                isAvailable: formData.isAvailable,
               },
-              updateDate: new Date().toISOString()
+              updateDate: new Date().toISOString(),
             }
           );
           console.log("✅ Log result:", logResult);
@@ -303,7 +300,7 @@ export const MentorManagementSection = () => {
           console.error("❌ Logging failed:", logError);
           toast.error("Failed to log the update. Check console for details.");
         }
-        
+
         // Update the mentor in the local state
         setMentors((mentors) =>
           mentors.map((m) =>
@@ -323,10 +320,8 @@ export const MentorManagementSection = () => {
         // Refresh stats after edit
         loadMentorStats();
       } else {
-        toast.error(
-          `Failed to update mentor: ${data.error || "Unknown error"}`
-        );
-        
+        toast.error(`Failed to update mentor: ${data.error || "Unknown error"}`);
+
         // Log mentor update failure
         await logError(
           "MENTOR_UPDATE_FAILED",
@@ -336,7 +331,7 @@ export const MentorManagementSection = () => {
             mentorId: editingMentor.id,
             mentorEmail: formData.email,
             error: data.error || "Unknown error",
-            attemptedUpdates: formData
+            attemptedUpdates: formData,
           }
         );
       }
@@ -364,7 +359,7 @@ export const MentorManagementSection = () => {
 
       if (data.success) {
         toast.success("Mentor deleted successfully");
-        
+
         // Log mentor deletion
         await logWarning(
           "MENTOR_DELETED",
@@ -376,21 +371,17 @@ export const MentorManagementSection = () => {
             mentorName: mentorToDelete.name,
             mentorType: mentorToDelete.mentorType,
             deletionDate: new Date().toISOString(),
-            reason: `${currentUserRole.toLowerCase()}_action`
+            reason: `${currentUserRole.toLowerCase()}_action`,
           }
         );
-        
-        setMentors((mentors) =>
-          mentors.filter((m) => m.id !== mentorToDelete.id)
-        );
+
+        setMentors((mentors) => mentors.filter((m) => m.id !== mentorToDelete.id));
         setIsDeleteDialogOpen(false);
         // Refresh stats after deletion
         loadMentorStats();
       } else {
-        toast.error(
-          `Failed to delete mentor: ${data.error || "Unknown error"}`
-        );
-        
+        toast.error(`Failed to delete mentor: ${data.error || "Unknown error"}`);
+
         // Log mentor deletion failure
         await logError(
           "MENTOR_DELETION_FAILED",
@@ -399,7 +390,7 @@ export const MentorManagementSection = () => {
           {
             mentorId: mentorToDelete.id,
             mentorEmail: mentorToDelete.email,
-            error: data.error || "Unknown error"
+            error: data.error || "Unknown error",
           }
         );
       }
@@ -429,17 +420,10 @@ export const MentorManagementSection = () => {
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold text-gray-900">
-            Mentor Management
-          </h1>
-          <p className="text-gray-600 mt-2">
-            Manage platform mentors and their information.
-          </p>
+          <h1 className="text-3xl font-bold text-gray-900">Mentor Management</h1>
+          <p className="text-gray-600 mt-2">Manage platform mentors and their information.</p>
         </div>
-        <Button
-          onClick={toggleMentorList}
-          className="flex items-center gap-2"
-        >
+        <Button onClick={toggleMentorList} className="flex items-center gap-2">
           <Eye className="h-4 w-4" />
           {showMentorList ? "Hide Mentors" : "View Mentors"}
         </Button>
@@ -481,9 +465,7 @@ export const MentorManagementSection = () => {
             <ArrowRightLeft className="h-5 w-5" />
             Mentor Type Distribution
           </CardTitle>
-          <CardDescription>
-            Breakdown of mentors by specialization type
-          </CardDescription>
+          <CardDescription>Breakdown of mentors by specialization type</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="grid gap-4 md:grid-cols-3">
@@ -522,9 +504,7 @@ export const MentorManagementSection = () => {
           {filteredMentors.length === 0 ? (
             <div className="text-center py-10">
               <Users className="mx-auto h-12 w-12 text-gray-400" />
-              <p className="mt-2 text-lg font-semibold text-gray-700">
-                No Mentors Found
-              </p>
+              <p className="mt-2 text-lg font-semibold text-gray-700">No Mentors Found</p>
               <p className="text-gray-500">
                 {searchTerm
                   ? "Try a different search term."
@@ -551,11 +531,7 @@ export const MentorManagementSection = () => {
                     )}
                   </div>
                   <div className="flex items-center gap-2">
-                    <Button
-                      onClick={() => handleEditMentor(mentor)}
-                      size="sm"
-                      variant="outline"
-                    >
+                    <Button onClick={() => handleEditMentor(mentor)} size="sm" variant="outline">
                       <Edit className="h-4 w-4 mr-1" />
                       Edit
                     </Button>
@@ -620,9 +596,7 @@ export const MentorManagementSection = () => {
               <Label htmlFor="mentorType">Mentor Type</Label>
               <Select
                 value={formData.mentorType}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, mentorType: value })
-                }
+                onValueChange={(value) => setFormData({ ...formData, mentorType: value })}
               >
                 <SelectTrigger>
                   <SelectValue placeholder="Select mentor type" />
@@ -644,11 +618,7 @@ export const MentorManagementSection = () => {
             </div>
           </div>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsEditDialogOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsEditDialogOpen(false)}>
               Cancel
             </Button>
             <Button type="button" onClick={submitMentorEdit}>
@@ -664,23 +634,15 @@ export const MentorManagementSection = () => {
           <DialogHeader>
             <DialogTitle>Delete Mentor</DialogTitle>
             <DialogDescription>
-              Are you sure you want to delete {mentorToDelete?.name || "this mentor"}? 
-              This action cannot be undone and will remove all associated data.
+              Are you sure you want to delete {mentorToDelete?.name || "this mentor"}? This action
+              cannot be undone and will remove all associated data.
             </DialogDescription>
           </DialogHeader>
           <DialogFooter>
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setIsDeleteDialogOpen(false)}
-            >
+            <Button type="button" variant="outline" onClick={() => setIsDeleteDialogOpen(false)}>
               Cancel
             </Button>
-            <Button
-              type="button"
-              variant="destructive"
-              onClick={confirmDeleteMentor}
-            >
+            <Button type="button" variant="destructive" onClick={confirmDeleteMentor}>
               Delete Mentor
             </Button>
           </DialogFooter>

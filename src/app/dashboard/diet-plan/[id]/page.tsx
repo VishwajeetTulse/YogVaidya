@@ -6,14 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { DietPlanViewer } from "@/components/dashboard/user/DietPlanViewer";
-import { 
-  ArrowLeft, 
-  Download, 
-  Calendar, 
-  User, 
-  FileText,
-  Loader2 
-} from "lucide-react";
+import { ArrowLeft, Download, Calendar, User, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 interface DietPlan {
@@ -54,13 +47,13 @@ export default function DietPlanDetailPage() {
       console.log("🔍 Fetching diet plan:", planId);
       const response = await fetch(`/api/diet-plans/${planId}`);
       console.log("📡 Response status:", response.status);
-      
+
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
         console.error("❌ Error response:", errorData);
         throw new Error(errorData.error || "Failed to fetch diet plan");
       }
-      
+
       const data = await response.json();
       console.log("✅ Diet plan data:", data);
       setDietPlan(data.dietPlan);
@@ -75,15 +68,15 @@ export default function DietPlanDetailPage() {
   const downloadAsPDF = async () => {
     try {
       setIsDownloading(true);
-      
+
       // Open the download URL in a new window
       // The HTML will auto-trigger print dialog
       const printWindow = window.open(
         `/api/diet-plans/${planId}/download`,
-        '_blank',
-        'width=800,height=600'
+        "_blank",
+        "width=800,height=600"
       );
-      
+
       if (!printWindow) {
         toast.error("Please allow pop-ups to download diet plan");
         return;
@@ -113,11 +106,7 @@ export default function DietPlanDetailPage() {
           <CardContent className="py-10 text-center">
             <FileText className="h-12 w-12 text-gray-400 mx-auto mb-4" />
             <h2 className="text-xl font-semibold">Diet Plan Not Found</h2>
-            <Button 
-              variant="outline" 
-              className="mt-4"
-              onClick={() => router.back()}
-            >
+            <Button variant="outline" className="mt-4" onClick={() => router.back()}>
               <ArrowLeft className="h-4 w-4 mr-2" />
               Go Back
             </Button>
@@ -128,30 +117,24 @@ export default function DietPlanDetailPage() {
   }
 
   // Handle tags - could be string or already parsed
-  const tags = dietPlan.tags 
-    ? (typeof dietPlan.tags === 'string' 
-        ? dietPlan.tags.split(',').map(t => t.trim()) 
-        : Array.isArray(dietPlan.tags) 
-          ? dietPlan.tags 
-          : [])
+  const tags = dietPlan.tags
+    ? typeof dietPlan.tags === "string"
+      ? dietPlan.tags.split(",").map((t) => t.trim())
+      : Array.isArray(dietPlan.tags)
+        ? dietPlan.tags
+        : []
     : [];
 
   return (
     <div className="container mx-auto py-8 max-w-4xl">
       {/* Header Actions */}
       <div className="flex items-center justify-between mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => router.back()}
-        >
+        <Button variant="ghost" onClick={() => router.back()}>
           <ArrowLeft className="h-4 w-4 mr-2" />
           Back
         </Button>
 
-        <Button 
-          onClick={downloadAsPDF}
-          disabled={isDownloading}
-        >
+        <Button onClick={downloadAsPDF} disabled={isDownloading}>
           {isDownloading ? (
             <Loader2 className="h-4 w-4 mr-2 animate-spin" />
           ) : (
@@ -168,14 +151,10 @@ export default function DietPlanDetailPage() {
             <div>
               <CardTitle className="text-2xl">{dietPlan.title}</CardTitle>
               {dietPlan.description && (
-                <p className="text-muted-foreground mt-2">
-                  {dietPlan.description}
-                </p>
+                <p className="text-muted-foreground mt-2">{dietPlan.description}</p>
               )}
             </div>
-            {dietPlan.isDraft && (
-              <Badge variant="secondary">Draft</Badge>
-            )}
+            {dietPlan.isDraft && <Badge variant="secondary">Draft</Badge>}
           </div>
 
           {/* Tags */}
@@ -201,10 +180,10 @@ export default function DietPlanDetailPage() {
             </span>
             <span className="flex items-center gap-1">
               <Calendar className="h-4 w-4" />
-              {new Date(dietPlan.createdAt).toLocaleDateString('en-US', {
-                year: 'numeric',
-                month: 'long',
-                day: 'numeric'
+              {new Date(dietPlan.createdAt).toLocaleDateString("en-US", {
+                year: "numeric",
+                month: "long",
+                day: "numeric",
               })}
             </span>
           </div>

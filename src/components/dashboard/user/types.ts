@@ -1,6 +1,6 @@
-import { LucideIcon } from "lucide-react";
-import { UserDetails } from "@/lib/userDetails";
-import { Prisma, SubscriptionPlan } from "@prisma/client";
+import { type LucideIcon } from "lucide-react";
+import { type UserDetails } from "@/lib/userDetails";
+import { type Prisma, type SubscriptionPlan } from "@prisma/client";
 
 export interface CancellationResponse {
   success: boolean;
@@ -49,14 +49,20 @@ export interface DashboardProps {
   setViewMode: (mode: "cards" | "comparison") => void;
   cancellingSubscription: boolean;
   handleCancelSubscription: () => Promise<CancellationResponse>;
-  handleUpgradeSubscription: (planId: string, billingPeriod: "monthly" | "annual") => Promise<UpgradeResponse>;
+  handleUpgradeSubscription: (
+    planId: string,
+    billingPeriod: "monthly" | "annual"
+  ) => Promise<UpgradeResponse>;
   formatDate: (date: Date | null | undefined) => string;
   getStatusColor: (status: string) => string;
   refreshSubscriptionData: () => Promise<void>;
 }
 
-export interface SectionProps extends Omit<Partial<DashboardProps>, 'loading' | 'userDetails' | 'activeSection' | 'setActiveSection'> {
+export interface SectionProps
+  extends Omit<
+    Partial<DashboardProps>,
+    "loading" | "userDetails" | "activeSection" | "setActiveSection"
+  > {
   userDetails: UserDetails;
   setActiveSection: (section: string) => void;
 }
-

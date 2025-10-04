@@ -8,26 +8,28 @@ import Footer from "@/components/layout/Footer";
 import Navbar from "@/components/layout/Navbar";
 import EnhancedMentorCarousel from "@/components/mentor/EnhancedMentorCarousel";
 import Link from "next/link";
-import { Mentor } from "@/lib/types/mentor";
+import { type Mentor } from "@/lib/types/mentor";
 
 export default function MentorsPage() {
-  console.log('🚀 MentorsPage component loaded');
+  console.log("🚀 MentorsPage component loaded");
   // alert('🚀 MentorsPage component loaded!'); // Uncomment to test
-  
+
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [timeSlotsMap, setTimeSlotsMap] = useState<Record<string, boolean>>({});
 
-  console.log('🔧 Current state - mentors:', mentors.length, 'loading:', loading);
+  console.log("🔧 Current state - mentors:", mentors.length, "loading:", loading);
 
   // Fetch mentors' time slots for today and upcoming days
   const fetchMentorTimeSlots = async (mentorIds: string[]) => {
     try {
       const today = new Date();
-      const todayString = today.toISOString().split('T')[0];
+      const todayString = today.toISOString().split("T")[0];
 
-      console.log(`🔍 Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`);
+      console.log(
+        `🔍 Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`
+      );
 
       const timeSlotsAvailability: Record<string, boolean> = {};
 
@@ -37,35 +39,40 @@ export default function MentorsPage() {
           // First, try to get all available slots for this mentor (not just today)
           const url = `/api/mentor/timeslots?mentorId=${mentorId}&available=true`;
           console.log(`📞 Fetching: ${url}`);
-          
+
           const response = await fetch(url);
           const data = await response.json();
-          
+
           console.log(`📊 Response for mentor ${mentorId}:`, data);
-          
+
           if (data.success && data.data) {
             console.log(`⏰ Time slots found for mentor ${mentorId}:`, data.data.length);
-            
+
             // Check if mentor has any available time slots in the future
             const availableSlots = data.data.filter((slot: any) => {
               const slotDate = new Date(slot.startTime);
               const isActive = slot.isActive;
               const isNotBooked = !slot.isBooked;
               const isFuture = slotDate > new Date(); // Any future slots
-              
+
               console.log(`  📅 Slot ${slot._id}: ${slotDate.toISOString()}`);
               console.log(`    - Is active: ${isActive}`);
               console.log(`    - Not booked: ${isNotBooked}`);
               console.log(`    - Is future: ${isFuture}`);
-              
+
               return isActive && isNotBooked && isFuture;
             });
-            
+
             const hasAvailableSlots = availableSlots.length > 0;
-            console.log(`✅ Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`);
+            console.log(
+              `✅ Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`
+            );
             timeSlotsAvailability[mentorId] = hasAvailableSlots;
           } else {
-            console.log(`❌ No time slots or error for mentor ${mentorId}:`, data.error || 'No slots');
+            console.log(
+              `❌ No time slots or error for mentor ${mentorId}:`,
+              data.error || "No slots"
+            );
             timeSlotsAvailability[mentorId] = false;
           }
         } catch (err) {
@@ -74,30 +81,30 @@ export default function MentorsPage() {
         }
       }
 
-      console.log('📊 Final time slots availability map:', timeSlotsAvailability);
+      console.log("📊 Final time slots availability map:", timeSlotsAvailability);
       setTimeSlotsMap(timeSlotsAvailability);
     } catch (err) {
-      console.error('❌ Error fetching mentor time slots:', err);
+      console.error("❌ Error fetching mentor time slots:", err);
     }
   };
 
   // Fetch mentors data
   const fetchMentors = async () => {
     try {
-      console.log('📡 fetchMentors called - starting to load mentors');
+      console.log("📡 fetchMentors called - starting to load mentors");
       setLoading(true);
-      const response = await fetch('/api/mentor/get-approved-mentors');
+      const response = await fetch("/api/mentor/get-approved-mentors");
       const data = await response.json();
-      
-      console.log('📊 Mentors API response:', data);
-      
+
+      console.log("📊 Mentors API response:", data);
+
       if (data.success) {
         setMentors(data.mentors);
-        
+
         // Fetch time slots for all mentors
         const mentorIds = data.mentors.map((mentor: Mentor) => mentor.id.toString());
-        console.log('⏰ About to fetch time slots for mentors:', mentorIds);
-        
+        console.log("⏰ About to fetch time slots for mentors:", mentorIds);
+
         // Temporarily hardcode the time slots data based on server logs
         // TODO: Fix the fetchMentorTimeSlots function
         const tempTimeSlotsMap: Record<string, boolean> = {};
@@ -106,23 +113,22 @@ export default function MentorsPage() {
           // Based on server logs:
           // p27belqfkUe1sppnuFpG4nSupFZj8Fme (Vishwajeet) has 1 slot
           // WcK4xas9IP8q0y2kJyHCFruYxtmpGAv5 (Rohan) has 0 slots
-          if (mentorId === 'p27belqfkUe1sppnuFpG4nSupFZj8Fme') {
+          if (mentorId === "p27belqfkUe1sppnuFpG4nSupFZj8Fme") {
             tempTimeSlotsMap[mentorId] = true; // Has slots
           } else {
             tempTimeSlotsMap[mentorId] = false; // No slots
           }
         });
-        console.log('🔧 Setting timeSlotsMap:', tempTimeSlotsMap);
+        console.log("🔧 Setting timeSlotsMap:", tempTimeSlotsMap);
         setTimeSlotsMap(tempTimeSlotsMap);
-        
+
         await fetchMentorTimeSlots(mentorIds);
-        
       } else {
-        setError(data.error || 'Failed to fetch mentors');
+        setError(data.error || "Failed to fetch mentors");
       }
     } catch (err) {
-      setError('Failed to fetch mentors');
-      console.error('Error fetching mentors:', err);
+      setError("Failed to fetch mentors");
+      console.error("Error fetching mentors:", err);
     } finally {
       setLoading(false);
     }
@@ -131,7 +137,7 @@ export default function MentorsPage() {
   // Removed real-time availability fetching - we only use time slot availability now
 
   useEffect(() => {
-    console.log('🎯 useEffect triggered - calling fetchMentors()');
+    console.log("🎯 useEffect triggered - calling fetchMentors()");
     fetchMentors();
 
     // Remove real-time availability polling - we only use time slot availability now
@@ -141,24 +147,25 @@ export default function MentorsPage() {
   const transformMentorWithRealTimeAvailability = (mentor: Mentor) => {
     // Get time slot availability for today
     const hasTimeSlotsToday = timeSlotsMap[mentor.id.toString()] ?? false;
-    
+
     // Only use time slot availability
     const finalAvailability = hasTimeSlotsToday;
-    
+
     console.log(`👤 Mentor ${mentor.name} (${mentor.email}):`);
     console.log(`   - Mentor ID: ${mentor.id.toString()}`);
     console.log(`   - DB availability: ${mentor.available}`);
     console.log(`   - Time slots map:`, timeSlotsMap);
     console.log(`   - Has time slots today: ${hasTimeSlotsToday}`);
     console.log(`   - Final availability: ${finalAvailability}`);
-    
+
     return {
       id: mentor.id,
       name: mentor.name,
       specialty: mentor.specialty,
-      experience: typeof mentor.experience === 'string' ? 
-        parseInt(mentor.experience, 10) || 0 : 
-        mentor.experience || 0,
+      experience:
+        typeof mentor.experience === "string"
+          ? parseInt(mentor.experience, 10) || 0
+          : mentor.experience || 0,
       imageUrl: mentor.image,
       available: finalAvailability, // Use combined availability (real-time + time slots)
       description: mentor.bio || mentor.description,
@@ -171,13 +178,13 @@ export default function MentorsPage() {
   // Categorize mentors by type with real-time availability
   const categorizedMentors = {
     liveSession: mentors
-      .filter(mentor => mentor.mentorType === 'YOGAMENTOR')
+      .filter((mentor) => mentor.mentorType === "YOGAMENTOR")
       .map(transformMentorWithRealTimeAvailability),
     dietPlanning: mentors
-      .filter(mentor => mentor.mentorType === 'DIETPLANNER')
+      .filter((mentor) => mentor.mentorType === "DIETPLANNER")
       .map(transformMentorWithRealTimeAvailability),
     meditation: mentors
-      .filter(mentor => mentor.mentorType === 'MEDITATIONMENTOR')
+      .filter((mentor) => mentor.mentorType === "MEDITATIONMENTOR")
       .map(transformMentorWithRealTimeAvailability),
   };
   return (
@@ -188,7 +195,7 @@ export default function MentorsPage() {
       {/* Hero Section */}
       <section className="max-w-7xl mx-auto px-4 pt-10 pb-10 relative">
         <div className="text-center mb-16 relative">
-          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2"></div>
+          <div className="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-1/2" />
           <span className="inline-block px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium mb-4">
             Expert Guidance
           </span>
@@ -203,7 +210,7 @@ export default function MentorsPage() {
         {/* Loading State */}
         {loading && (
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4"></div>
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
             <p className="text-gray-600">Loading mentors...</p>
           </div>
         )}
@@ -212,10 +219,7 @@ export default function MentorsPage() {
         {error && (
           <div className="text-center py-20">
             <p className="text-red-600 mb-4">Error: {error}</p>
-            <Button 
-              onClick={() => window.location.reload()} 
-              variant="outline"
-            >
+            <Button onClick={() => window.location.reload()} variant="outline">
               Try Again
             </Button>
           </div>
@@ -225,21 +229,21 @@ export default function MentorsPage() {
         {!loading && !error && (
           <>
             {/* Live Session Mentors */}
-            <EnhancedMentorCarousel 
+            <EnhancedMentorCarousel
               mentors={categorizedMentors.liveSession}
               title="Live Session Mentors"
               colorClass="bg-[#76d2fa]"
             />
 
             {/* Diet Planning Mentors */}
-            <EnhancedMentorCarousel 
+            <EnhancedMentorCarousel
               mentors={categorizedMentors.dietPlanning}
               title="Diet Planning Experts"
               colorClass="bg-[#ff7dac]"
             />
 
             {/* Meditation Mentors */}
-            <EnhancedMentorCarousel 
+            <EnhancedMentorCarousel
               mentors={categorizedMentors.meditation}
               title="Meditation Guides"
               colorClass="bg-[#876aff]"
@@ -255,7 +259,7 @@ export default function MentorsPage() {
                 Share your expertise as a YogVaidya mentor
               </h3>
               <p className="text-gray-600 mb-6">
-                If you&apos;re an experienced yoga instructor, nutritionist, or meditation guide, 
+                If you&apos;re an experienced yoga instructor, nutritionist, or meditation guide,
                 join our team of mentors and help others on their wellness journey.
               </p>
               <div className="space-y-3 mb-8">
@@ -302,4 +306,4 @@ export default function MentorsPage() {
       <Footer />
     </div>
   );
-} 
+}

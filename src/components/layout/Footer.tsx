@@ -3,15 +3,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
-import {
-  Facebook,
-  Twitter,
-  Linkedin,
-  Instagram,
-  MessageCircle,
-  X,
-  Sparkles,
-} from "lucide-react";
+import { Facebook, Twitter, Linkedin, Instagram, MessageCircle, X, Sparkles } from "lucide-react";
 import { useChat } from "@ai-sdk/react";
 import ReactMarkdown from "react-markdown";
 export default function Footer() {
@@ -27,7 +19,7 @@ export default function Footer() {
   // Show tooltip after component mounts every time
   useEffect(() => {
     if (!isClient) return;
-    
+
     const timer = setTimeout(() => {
       setShowTooltip(true);
     }, 2000); // Show tooltip after 2 seconds
@@ -62,8 +54,8 @@ export default function Footer() {
               your wellness journey?
             </h2>
             <p className="mb-6">
-              Connect with certified mentors for Yoga, Meditation, and Diet Planning.
-              Start with a free consultation or chat with our AI assistant.
+              Connect with certified mentors for Yoga, Meditation, and Diet Planning. Start with a
+              free consultation or chat with our AI assistant.
             </p>
 
             <div className="flex space-x-4">
@@ -73,7 +65,7 @@ export default function Footer() {
               >
                 <MessageCircle className="mr-2 h-4 w-4" /> Chat with AI
               </Button>
-              
+
               <Link href="/mentors">
                 <Button className="bg-white hover:bg-gray-100 text-gray-800 rounded-md">
                   FIND MENTORS
@@ -99,8 +91,8 @@ export default function Footer() {
               <div className="max-w-xs">
                 <div className="h-12 border-l-2 border-gray-800 pl-4 mb-4">
                   <p>
-                    Transform your lifestyle with personalized guidance from
-                    certified professionals in Yoga, Meditation, and Nutrition.
+                    Transform your lifestyle with personalized guidance from certified professionals
+                    in Yoga, Meditation, and Nutrition.
                   </p>
                 </div>
               </div>
@@ -112,7 +104,7 @@ export default function Footer() {
           {/* Email and Social Media */}
           <div>
             {/* Social Media Icons */}
-            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mb-6">              
+            <div className="grid grid-cols-1 md:grid-cols-1 gap-8 mb-6">
               {/* Legal & Support Links */}
               <div className="flex flex-wrap gap-x-6 gap-y-2">
                 <Link href="/privacy" className="hover:opacity-80">
@@ -158,10 +150,7 @@ export default function Footer() {
 
             {/* Email */}
             <div className="mb-1 text-sm uppercase">EMAIL</div>
-            <a
-              href="mailto:hello@yogvaidya.com"
-              className="text-lg font-medium hover:opacity-80"
-            >
+            <a href="mailto:hello@yogvaidya.com" className="text-lg font-medium hover:opacity-80">
               hello@yogvaidya.com
             </a>
           </div>
@@ -197,7 +186,7 @@ export default function Footer() {
         >
           <MessageCircle size={24} />
           {/* Pulse animation for users */}
-          <div className="absolute inset-0 rounded-full bg-[#76d2fa] animate-ping opacity-30"></div>
+          <div className="absolute inset-0 rounded-full bg-[#76d2fa] animate-ping opacity-30" />
         </button>
 
         {/* Tooltip/Popup */}
@@ -217,9 +206,7 @@ export default function Footer() {
                 <Sparkles size={20} className="text-white" />
               </div>
               <div className="flex-1">
-                <h4 className="font-semibold text-gray-800 mb-2">
-                  Hi there! 👋
-                </h4>
+                <h4 className="font-semibold text-gray-800 mb-2">Hi there! 👋</h4>
                 <p className="text-sm text-gray-600 mb-4 leading-relaxed">
                   Need help starting your yoga journey? I&apos;m here to guide you.
                 </p>
@@ -244,7 +231,7 @@ export default function Footer() {
             </div>
 
             {/* Tooltip arrow */}
-            <div className="absolute bottom-[-8px] right-8 w-4 h-4 bg-white border-r border-b border-gray-200 transform rotate-45"></div>
+            <div className="absolute bottom-[-8px] right-8 w-4 h-4 bg-white border-r border-b border-gray-200 transform rotate-45" />
           </div>
         )}
       </div>
@@ -255,7 +242,7 @@ export default function Footer() {
           <div className="bg-[#76d2fa] p-4 text-white flex justify-between items-center">
             <h3 className="font-medium">Chat with YogaBot</h3>
             <Button
-              variant={"ghost"}
+              variant="ghost"
               onClick={toggleChat}
               className="text-white hover:bg-transparent"
             >
@@ -273,9 +260,7 @@ export default function Footer() {
                 messages.map((message) => (
                   <div
                     key={message.id}
-                    className={`flex ${
-                      message.role === "user" ? "justify-end" : "justify-start"
-                    }`}
+                    className={`flex ${message.role === "user" ? "justify-end" : "justify-start"}`}
                   >
                     <div
                       className={`max-w-xs px-3 py-2 rounded-lg text-sm ${
@@ -290,9 +275,7 @@ export default function Footer() {
                 ))
               )}
               {error && (
-                <div className="text-red-500 text-sm text-center">
-                  Error: {error.message}
-                </div>
+                <div className="text-red-500 text-sm text-center">Error: {error.message}</div>
               )}
             </div>
 

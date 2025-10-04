@@ -27,26 +27,24 @@ export async function getMentorStudentsData(): Promise<MentorStudentsResponse> {
   try {
     // Get the session using headers
     const session = await auth.api.getSession({ headers: await headers() });
-    
+
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
     }
 
     // Verify the user is a mentor (this check is also done in getMentorStudents)
     const mentorStudentsData = await getMentorStudents(session.user.id);
-    
-    return { 
-      success: true, 
+
+    return {
+      success: true,
       data: {
         totalActiveStudents: mentorStudentsData.totalActiveStudents,
         mentorSessions: mentorStudentsData.mentorSessions,
-        students: mentorStudentsData.students as MentorStudentData[]
-      }
+        students: mentorStudentsData.students as MentorStudentData[],
+      },
     };
-
   } catch (error) {
     console.error("Error fetching mentor students data:", error);
     return { success: false, error: "Failed to fetch students data" };
   }
 }
-

@@ -1,25 +1,25 @@
-import { NextResponse, NextRequest } from 'next/server';
-import { auth } from '@/lib/config/auth';
-import { PrismaClient } from '@prisma/client';
+import { NextResponse, type NextRequest } from "next/server";
+import { auth } from "@/lib/config/auth";
+import { PrismaClient } from "@prisma/client";
 
 const prisma = new PrismaClient();
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
-    
+
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: 'Unauthorized' }, { status: 401 });
+      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     // Check if user is admin
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true }
+      select: { role: true },
     });
 
-    if (!user || user.role !== 'ADMIN') {
-      return NextResponse.json({ success: false, error: 'Access denied' }, { status: 403 });
+    if (!user || user.role !== "ADMIN") {
+      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
     }
 
     // Get subscription statistics
@@ -27,36 +27,33 @@ export async function GET(req: NextRequest) {
       // Active subscriptions count (only for customers with USER role)
       prisma.user.count({
         where: {
-          role: 'USER', // Only count actual customers
-          OR: [
-            { subscriptionStatus: 'ACTIVE' },
-            { subscriptionStatus: 'ACTIVE_UNTIL_END' }
-          ]
-        }
+          role: "USER", // Only count actual customers
+          OR: [{ subscriptionStatus: "ACTIVE" }, { subscriptionStatus: "ACTIVE_UNTIL_END" }],
+        },
       }),
 
       // Trial users count (only for customers with USER role)
       prisma.user.count({
         where: {
-          role: 'USER', // Only count actual customers
-          isTrialActive: true
-        }
+          role: "USER", // Only count actual customers
+          isTrialActive: true,
+        },
       }),
 
       // Calculate monthly revenue (rough estimate)
       prisma.user.aggregate({
         where: {
           AND: [
-            { role: 'USER' }, // Only count actual customers
-            { subscriptionStatus: 'ACTIVE' },
+            { role: "USER" }, // Only count actual customers
+            { subscriptionStatus: "ACTIVE" },
             { paymentAmount: { gt: 0 } },
-            { billingPeriod: 'monthly' }
-          ]
+            { billingPeriod: "monthly" },
+          ],
         },
         _sum: {
-          paymentAmount: true
-        }
-      })
+          paymentAmount: true,
+        },
+      }),
     ]);
 
     // Get recent activity (simplified)
@@ -64,26 +61,26 @@ export async function GET(req: NextRequest) {
       {
         user: "Recent subscription changes",
         action: "System monitoring active",
-        timestamp: new Date().toISOString()
-      }
+        timestamp: new Date().toISOString(),
+      },
     ];
 
     // Get plan breakdown (only for customers with USER role)
     const planStats = await prisma.user.groupBy({
-      by: ['subscriptionPlan', 'subscriptionStatus'],
+      by: ["subscriptionPlan", "subscriptionStatus"],
       where: {
-        role: 'USER' // Only count actual customers
+        role: "USER", // Only count actual customers
       },
       _count: {
-        id: true
-      }
+        id: true,
+      },
     });
 
     const planBreakdown: Record<string, Record<string, number>> = {};
-    planStats.forEach(stat => {
-      const plan = stat.subscriptionPlan || 'None';
-      const status = stat.subscriptionStatus || 'None';
-      
+    planStats.forEach((stat) => {
+      const plan = stat.subscriptionPlan || "None";
+      const status = stat.subscriptionStatus || "None";
+
       if (!planBreakdown[plan]) {
         planBreakdown[plan] = {};
       }
@@ -95,19 +92,21 @@ export async function GET(req: NextRequest) {
       totalTrialUsers,
       monthlyRevenue: monthlyRevenue._sum.paymentAmount || 0,
       recentActivity,
-      planBreakdown
+      planBreakdown,
     };
 
-    return NextResponse.json({ 
-      success: true, 
-      stats 
+    return NextResponse.json({
+      success: true,
+      stats,
     });
-
   } catch (error) {
-    console.error('Error fetching subscription stats:', error);
-    return NextResponse.json({ 
-      success: false, 
-      error: 'Failed to fetch subscription stats' 
-    }, { status: 500 });
+    console.error("Error fetching subscription stats:", error);
+    return NextResponse.json(
+      {
+        success: false,
+        error: "Failed to fetch subscription stats",
+      },
+      { status: 500 }
+    );
   }
 }

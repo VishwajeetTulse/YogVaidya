@@ -14,7 +14,7 @@ export default function PhoneRequiredNotice({
   onComplete,
   title = "Phone Number Required",
   description = "Please add your phone number to complete this action. We need it for session notifications and account security.",
-  actionText = "Add Phone Number"
+  actionText = "Add Phone Number",
 }: PhoneRequiredNoticeProps) {
   return (
     <Card className="p-8 text-center max-w-md mx-auto">
@@ -24,14 +24,10 @@ export default function PhoneRequiredNotice({
       </div>
 
       {/* Title */}
-      <h2 className="text-xl font-semibold text-gray-800 mb-3">
-        {title}
-      </h2>
+      <h2 className="text-xl font-semibold text-gray-800 mb-3">{title}</h2>
 
       {/* Description */}
-      <p className="text-gray-600 mb-6">
-        {description}
-      </p>
+      <p className="text-gray-600 mb-6">{description}</p>
 
       {/* Alert Box */}
       <div className="bg-amber-50 border border-amber-200 rounded-lg p-4 mb-6">

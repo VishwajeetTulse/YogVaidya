@@ -1,4 +1,4 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { authClient } from "@/lib/auth-client";
 import { prisma } from "@/lib/config/prisma";
@@ -9,10 +9,7 @@ export async function GET(req: NextRequest) {
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     // Check if user has admin or moderator privileges
@@ -21,10 +18,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     const users = await prisma.user.findMany({
@@ -53,17 +47,14 @@ export async function GET(req: NextRequest) {
 export async function PATCH(req: NextRequest) {
   try {
     console.log("🔍 PATCH /api/users - Starting user update request");
-    
+
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
     console.log("🔍 Session check:", session ? "Session found" : "No session");
-    
+
     if (!session?.user) {
       console.log("❌ No authenticated user found");
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     // Check if user has admin privileges
@@ -75,15 +66,19 @@ export async function PATCH(req: NextRequest) {
 
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
       console.log("❌ Insufficient permissions - Role:", currentUser?.role);
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     const { id, name, email, phone, role, password } = await req.json();
-    console.log("🔍 Update data received:", { id, name, email, phone, role, hasPassword: !!password });
-    
+    console.log("🔍 Update data received:", {
+      id,
+      name,
+      email,
+      phone,
+      role,
+      hasPassword: !!password,
+    });
+
     // Add extra validation for role changes
     if (role) {
       // Only admins can change roles to ADMIN or MODERATOR
@@ -97,13 +92,15 @@ export async function PATCH(req: NextRequest) {
       // Get the target user
       const targetUser = await prisma.user.findUnique({
         where: { id },
-        select: { role: true }
+        select: { role: true },
       });
-      
+
       // Moderators can't modify admins or other moderators
-      if (targetUser && 
-          (targetUser.role === "ADMIN" || targetUser.role === "MODERATOR") && 
-          currentUser.role !== "ADMIN") {
+      if (
+        targetUser &&
+        (targetUser.role === "ADMIN" || targetUser.role === "MODERATOR") &&
+        currentUser.role !== "ADMIN"
+      ) {
         return NextResponse.json(
           { error: "Moderators can't modify admin or moderator accounts" },
           { status: 403 }
@@ -122,23 +119,24 @@ export async function PATCH(req: NextRequest) {
     // Handle password update if provided
     if (password && password.trim() !== "") {
       // Hash the password
-      const { hash } = await import('bcryptjs');
+      const { hash } = await import("bcryptjs");
       const hashedPassword = await hash(password, 10);
-        // Find and update the account with new password
+      // Find and update the account with new password
       const accountExists = await prisma.account.findFirst({
-        where: { 
+        where: {
           userId: id,
-          providerId: "email_and_password" // Changed from "credentials" to match better-auth expectation
-        }
+          providerId: "email_and_password", // Changed from "credentials" to match better-auth expectation
+        },
       });
-      
+
       if (accountExists) {
         // Update existing account
         await prisma.account.update({
           where: { id: accountExists.id },
-          data: { password: hashedPassword, updatedAt: new Date() }
+          data: { password: hashedPassword, updatedAt: new Date() },
         });
-      } else {        // Create new account entry with password
+      } else {
+        // Create new account entry with password
         await prisma.account.create({
           data: {
             id: crypto.randomUUID(),
@@ -148,7 +146,7 @@ export async function PATCH(req: NextRequest) {
             password: hashedPassword,
             createdAt: new Date(),
             updatedAt: new Date(),
-          }
+          },
         });
       }
     }
@@ -164,17 +162,14 @@ export async function PATCH(req: NextRequest) {
 export async function DELETE(req: NextRequest) {
   try {
     console.log("🔍 DELETE /api/users - Starting user deletion request");
-    
+
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
     console.log("🔍 Session check:", session ? "Session found" : "No session");
-    
+
     if (!session?.user) {
       console.log("❌ No authenticated user found");
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     // Check if user has admin or moderator privileges
@@ -186,24 +181,21 @@ export async function DELETE(req: NextRequest) {
 
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
       console.log("❌ Insufficient permissions - Role:", currentUser?.role);
-      return NextResponse.json(
-        { error: "Insufficient permissions" },
-        { status: 403 }
-      );
+      return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     const { id } = await req.json();
     console.log("🔍 User ID to delete:", id);
     // Find the user to get their email and role
     const user = await prisma.user.findUnique({ where: { id } });
-    
+
     if (!user) {
       console.log("❌ User not found:", id);
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
-    
+
     console.log("🔍 User to delete:", { email: user.email, role: user.role });
-    
+
     // Add protection for admin and moderator accounts
     if ((user.role === "ADMIN" || user.role === "MODERATOR") && currentUser.role !== "ADMIN") {
       console.log("❌ Attempting to delete protected account:", user.role);
@@ -212,21 +204,21 @@ export async function DELETE(req: NextRequest) {
         { status: 403 }
       );
     }
-    
+
     // Delete all sessions for this user
     await prisma.session.deleteMany({ where: { userId: id } });
-    
+
     // Delete all accounts for this user
     await prisma.account.deleteMany({ where: { userId: id } });
-    
+
     // Delete mentor applications by email
     await prisma.mentorApplication.deleteMany({ where: { email: user.email } });
-    
+
     // Finally delete the user
     await prisma.user.delete({ where: { id } });
-    
+
     console.log("✅ User deleted successfully:", user.email);
-    
+
     return NextResponse.json({ success: true });
   } catch (error) {
     console.error("❌ Error in DELETE /api/users:", error);
@@ -240,10 +232,7 @@ export async function POST(req: NextRequest) {
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { error: "Authentication required" },
-        { status: 401 }
-      );
+      return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
     // Check if user has admin privileges
@@ -258,8 +247,8 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const { name, email, phone, role, password } : {[x : string] : string} = await req.json();
-    
+    const { name, email, phone, role, password }: { [x: string]: string } = await req.json();
+
     // Validate role - only allow creating MODERATOR accounts through this endpoint
     if (role !== "MODERATOR") {
       return NextResponse.json(
@@ -282,22 +271,25 @@ export async function POST(req: NextRequest) {
     });
 
     if (existingUser) {
-      return NextResponse.json(
-        { error: "A user with this email already exists" },
-        { status: 409 }
-      );
+      return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
     }
-    const {data, error } = await authClient.signUp.email({email : email, password : password, name : name,  phone : phone, role : "MODERATOR"})
+    const { data, error } = await authClient.signUp.email({
+      email: email,
+      password: password,
+      name: name,
+      phone: phone,
+      role: "MODERATOR",
+    });
     console.log(error);
     console.log(data);
-    
+
     // Send an email with credentials
     try {
       // Import the email sending utility
-      const { sendEmail } = await import('@/lib/services/email');
-      
+      const { sendEmail } = await import("@/lib/services/email");
+
       const emailSubject = "Your YogaVaidya Moderator Account";
-const emailHtml = `
+      const emailHtml = `
   <div style="background-color: #f9f9f9; padding: 30px; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;">
     <div style="max-width: 600px; margin: auto; background: white; padding: 25px; border-radius: 8px; box-shadow: 0 4px 12px rgba(0,0,0,0.05);">
       <h2 style="text-align: center; color: #4a4e69;">👋 Welcome to YogVaidya, ${name}!</h2>
@@ -334,7 +326,6 @@ const emailHtml = `
   </div>
 `;
 
-      
       await sendEmail({
         to: email,
         subject: emailSubject,
@@ -346,15 +337,14 @@ const emailHtml = `
       // We don't want to fail the whole request if just the email fails
       // The account is still created successfully
     }
-    
-    return NextResponse.json({ 
-      success: true, 
-      user : data,
-      message: "Moderator account created successfully. Credentials have been emailed."
+
+    return NextResponse.json({
+      success: true,
+      user: data,
+      message: "Moderator account created successfully. Credentials have been emailed.",
     });
   } catch (error) {
     console.error("Error creating moderator:", error);
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
   }
 }
-

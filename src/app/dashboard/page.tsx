@@ -11,7 +11,7 @@ const dashboardPage = async () => {
   const session = await auth.api.getSession({ headers: await headers() });
   if (!session) {
     redirect("/signin");
-  }  // Role-based rendering
+  } // Role-based rendering
   switch (session.user?.role) {
     case "MENTOR":
       // Now using a unified mentor dashboard for all mentor types
@@ -26,4 +26,3 @@ const dashboardPage = async () => {
 };
 
 export default dashboardPage;
-

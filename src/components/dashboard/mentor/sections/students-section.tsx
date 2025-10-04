@@ -6,7 +6,7 @@ import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
 import { getMentorType } from "@/lib/mentor-type";
 import { useSession } from "@/lib/auth-client";
-import { User } from "@prisma/client";
+import { type User } from "@prisma/client";
 
 export const StudentsSection = () => {
   const [students, setstudents] = useState<User[]>([]);
@@ -22,7 +22,7 @@ export const StudentsSection = () => {
         const mentortype = await getMentorType(session?.user || { email: "" });
         console.log("Fetching students for mentor type:", mentortype);
         const studentsData = await getStudents(mentortype);
-        
+
         setstudents(studentsData);
       } catch (error) {
         console.error("Error fetching students:", error);
@@ -39,9 +39,7 @@ export const StudentsSection = () => {
       <div className="space-y-6">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
-          <p className="text-gray-600 mt-2">
-            Connect with and track your students&apos; progress.
-          </p>
+          <p className="text-gray-600 mt-2">Connect with and track your students&apos; progress.</p>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -63,15 +61,9 @@ export const StudentsSection = () => {
   if (error) {
     return (
       <div className="text-center py-10">
-        <h2 className="text-xl font-semibold text-gray-800">
-          Error Loading Students
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800">Error Loading Students</h2>
         <p className="text-gray-500 mt-2">{error}</p>
-        <Button
-          onClick={() => window.location.reload()}
-          className="mt-4"
-          variant="outline"
-        >
+        <Button onClick={() => window.location.reload()} className="mt-4" variant="outline">
           Try Again
         </Button>
       </div>
@@ -82,9 +74,7 @@ export const StudentsSection = () => {
     return (
       <div className="text-center py-10">
         <Users className="h-12 w-12 text-gray-400 mx-auto mb-4" />
-        <h2 className="text-xl font-semibold text-gray-800">
-          No Students Found
-        </h2>
+        <h2 className="text-xl font-semibold text-gray-800">No Students Found</h2>
         <p className="text-gray-500 mt-2">
           Start by inviting students to join your mentorship program.
         </p>
@@ -95,9 +85,7 @@ export const StudentsSection = () => {
     <div className="space-y-6">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
-        <p className="text-gray-600 mt-2">
-          Connect with and track your students&apos; progress.
-        </p>
+        <p className="text-gray-600 mt-2">Connect with and track your students&apos; progress.</p>
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -112,9 +100,7 @@ export const StudentsSection = () => {
                   {student.name ? student.name.charAt(0).toUpperCase() : "?"}
                 </span>
               </div>
-              <h3 className="font-semibold text-lg">
-                {student.name ?? "Unknown"}
-              </h3>
+              <h3 className="font-semibold text-lg">{student.name ?? "Unknown"}</h3>
               <p className="text-gray-500 text-sm">
                 Joined on{" "}
                 {student.subscriptionStartDate

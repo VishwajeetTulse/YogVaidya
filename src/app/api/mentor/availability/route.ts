@@ -1,11 +1,11 @@
-import { NextRequest, NextResponse } from "next/server";
+import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -13,7 +13,7 @@ export async function PATCH(request: NextRequest) {
     // Check if user is a mentor
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { role: true, mentorType: true }
+      select: { role: true, mentorType: true },
     });
 
     if (!user || user.role !== "MENTOR") {
@@ -34,29 +34,25 @@ export async function PATCH(request: NextRequest) {
         id: true,
         name: true,
         isAvailable: true,
-        mentorType: true
-      }
+        mentorType: true,
+      },
     });
 
     return NextResponse.json({
       success: true,
-      message: `Availability updated to ${isAvailable ? 'Available' : 'Unavailable'}`,
-      data: updatedUser
+      message: `Availability updated to ${isAvailable ? "Available" : "Unavailable"}`,
+      data: updatedUser,
     });
-
   } catch (error) {
     console.error("Error updating mentor availability:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }
 
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
-    
+
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
@@ -64,13 +60,13 @@ export async function GET(request: NextRequest) {
     // Get current mentor data with availability
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
-      select: { 
+      select: {
         id: true,
         name: true,
         isAvailable: true,
         role: true,
-        mentorType: true
-      }
+        mentorType: true,
+      },
     });
 
     if (!user || user.role !== "MENTOR") {
@@ -79,14 +75,10 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json({
       success: true,
-      data: user
+      data: user,
     });
-
   } catch (error) {
     console.error("Error fetching mentor availability:", error);
-    return NextResponse.json(
-      { error: "Internal server error" },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
   }
 }

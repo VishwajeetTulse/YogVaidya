@@ -20,7 +20,10 @@ import {
 } from "@/components/ui/form";
 
 const pricingSchema = z.object({
-  sessionPrice: z.coerce.number().min(0, "Price must be at least 0").max(10000, "Price must be less than 10,000"),
+  sessionPrice: z.coerce
+    .number()
+    .min(0, "Price must be at least 0")
+    .max(10000, "Price must be less than 10,000"),
 });
 
 type PricingFormData = z.infer<typeof pricingSchema>;
@@ -32,7 +35,7 @@ interface PricingData {
 export default function PricingSection() {
   const [loading, setLoading] = useState(true);
   const [updating, setUpdating] = useState(false);
-  const [pricingData, setPricingData] = useState<PricingData | null>(null);
+  const [_pricingData, setPricingData] = useState<PricingData | null>(null);
 
   const form = useForm<PricingFormData>({
     resolver: zodResolver(pricingSchema),
@@ -123,9 +126,7 @@ export default function PricingSection() {
           <IndianRupee className="h-5 w-5" />
           Session Pricing
         </CardTitle>
-        <CardDescription>
-          Set your pricing for one-on-one sessions with students
-        </CardDescription>
+        <CardDescription>Set your pricing for one-on-one sessions with students</CardDescription>
       </CardHeader>
       <CardContent className="space-y-6">
         <Form {...form}>
@@ -150,9 +151,7 @@ export default function PricingSection() {
                       />
                     </div>
                   </FormControl>
-                  <FormDescription>
-                    Set your price in Indian Rupees (₹) per session
-                  </FormDescription>
+                  <FormDescription>Set your price in Indian Rupees (₹) per session</FormDescription>
                   <FormMessage />
                 </FormItem>
               )}
@@ -185,11 +184,10 @@ export default function PricingSection() {
         {/* Additional Information */}
         <div className="text-sm text-muted-foreground space-y-2">
           <p>
-            <strong>Note:</strong> Your pricing will be visible to students when they book sessions with you.
+            <strong>Note:</strong> Your pricing will be visible to students when they book sessions
+            with you.
           </p>
-          <p>
-            You can update your pricing anytime. Changes will apply to new bookings only.
-          </p>
+          <p>You can update your pricing anytime. Changes will apply to new bookings only.</p>
         </div>
       </CardContent>
     </Card>

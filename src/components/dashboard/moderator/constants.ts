@@ -9,7 +9,7 @@ import {
   UserCheck,
   Ticket,
 } from "lucide-react";
-import { ModeratorSidebarMenuItem } from "./types";
+import { type ModeratorSidebarMenuItem } from "./types";
 
 export const MODERATOR_SIDEBAR_MENU_ITEMS: ModeratorSidebarMenuItem[] = [
   {
@@ -67,4 +67,3 @@ export const MODERATOR_SIDEBAR_MENU_ITEMS: ModeratorSidebarMenuItem[] = [
     description: "Get help when needed",
   },
 ];
-

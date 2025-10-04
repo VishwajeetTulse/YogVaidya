@@ -1,15 +1,9 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import {
-  Calendar,
-  Award,
-  PlayCircle,
-  Users,
-  ChevronRight,
-} from "lucide-react";
-import { SectionProps } from "../types";
+import { Calendar, Award, PlayCircle, Users, ChevronRight } from "lucide-react";
+import { type SectionProps } from "../types";
 import { useEffect, useState } from "react";
-import { getUserDashboardData, DashboardData } from "@/lib/actions/dashboard-data";
+import { getUserDashboardData, type DashboardData } from "@/lib/actions/dashboard-data";
 
 export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
@@ -17,13 +11,21 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
 
   // Check user subscription status
   const isOnActiveTrial = userDetails?.isTrialActive === true;
-  const hasActiveSubscription = userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === 'ACTIVE';
-  const hasCancelledSubscription = userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === 'ACTIVE_UNTIL_END';
+  const hasActiveSubscription =
+    userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === "ACTIVE";
+  const hasCancelledSubscription =
+    userDetails?.subscriptionPlan && userDetails?.subscriptionStatus === "ACTIVE_UNTIL_END";
   const hasNoAccess = !isOnActiveTrial && !hasActiveSubscription && !hasCancelledSubscription;
 
   // Calculate days remaining in trial
-  const trialDaysRemaining = userDetails?.trialEndDate 
-    ? Math.max(0, Math.ceil((new Date(userDetails.trialEndDate).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))
+  const trialDaysRemaining = userDetails?.trialEndDate
+    ? Math.max(
+        0,
+        Math.ceil(
+          (new Date(userDetails.trialEndDate).getTime() - new Date().getTime()) /
+            (1000 * 60 * 60 * 24)
+        )
+      )
     : 0;
 
   // Fetch dashboard data
@@ -47,12 +49,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           Welcome back, {userDetails?.name || "Yogi"}!
         </h1>
         <p className="text-gray-600 mt-2">
-          {isOnActiveTrial 
+          {isOnActiveTrial
             ? "Enjoy full access during your trial period!"
-            : hasNoAccess 
+            : hasNoAccess
               ? "Subscribe to unlock personalized yoga sessions."
-              : "Continue your wellness journey with personalized yoga sessions."
-          }
+              : "Continue your wellness journey with personalized yoga sessions."}
         </p>
       </div>
 
@@ -98,7 +99,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
                 </p>
               </div>
             </div>
-            <Button 
+            <Button
               onClick={() => setActiveSection("subscription")}
               className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white"
             >
@@ -112,13 +113,17 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
       <Card className="p-6">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
-          {hasNoAccess ? "Sample Schedule (Locked)" : isOnActiveTrial ? "Today's Schedule (Trial)" : "Today's Schedule"}
+          {hasNoAccess
+            ? "Sample Schedule (Locked)"
+            : isOnActiveTrial
+              ? "Today's Schedule (Trial)"
+              : "Today's Schedule"}
         </h2>
-        
+
         {loading ? (
           <div className="space-y-3">
-            <div className="animate-pulse bg-gray-200 h-16 rounded-lg"></div>
-            <div className="animate-pulse bg-gray-200 h-16 rounded-lg"></div>
+            <div className="animate-pulse bg-gray-200 h-16 rounded-lg" />
+            <div className="animate-pulse bg-gray-200 h-16 rounded-lg" />
           </div>
         ) : hasNoAccess ? (
           <div className="text-center py-12">
@@ -127,9 +132,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
             </div>
             <h3 className="text-lg font-medium text-gray-700 mb-2">Schedule Locked</h3>
             <p className="text-gray-500 mb-4 max-w-sm mx-auto">
-              Subscribe to access your personalized daily schedule with yoga sessions, meditation, and mentor meetings.
+              Subscribe to access your personalized daily schedule with yoga sessions, meditation,
+              and mentor meetings.
             </p>
-            <Button 
+            <Button
               onClick={() => setActiveSection("subscription")}
               className="bg-gradient-to-r from-red-500 to-pink-600 hover:from-red-600 hover:to-pink-700 text-white"
             >
@@ -143,50 +149,53 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
               const currentTime = new Date();
               const sessionEndTime = new Date(sessionTime.getTime() + 45 * 60000); // Assume 45 minutes duration
               const joinAllowedTime = new Date(sessionTime.getTime() - 15 * 60000); // 15 minutes before start
-              
+
               const canJoin = currentTime >= joinAllowedTime && currentTime <= sessionEndTime;
               const isWithinTimeWindow = currentTime <= sessionEndTime;
-              const isUpcoming = (session.status === 'SCHEDULED' || session.status === 'ONGOING') && isWithinTimeWindow;
-              
+              const isUpcoming =
+                (session.status === "SCHEDULED" || session.status === "ONGOING") &&
+                isWithinTimeWindow;
+
               return (
-                <div key={session.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                  session.type === 'yoga' 
-                    ? 'bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30'
-                    : 'bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30'
-                }`}>
+                <div
+                  key={session.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    session.type === "yoga"
+                      ? "bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30"
+                      : "bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30"
+                  }`}
+                >
                   <div className="flex items-center gap-3">
-                    <div className={`w-2 h-2 rounded-full ${
-                      session.type === 'yoga' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
-                    }`}></div>
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                      }`}
+                     />
                     <div>
                       <p className="font-medium">{session.title}</p>
                       <p className="text-sm text-gray-500">
-                        with Mentor {session.mentor} • {session.time} {isOnActiveTrial && "(Trial Access)"}
+                        with Mentor {session.mentor} • {session.time}{" "}
+                        {isOnActiveTrial && "(Trial Access)"}
                       </p>
                     </div>
                   </div>
                   {index === 0 && isUpcoming ? (
                     canJoin ? (
-                      <Button 
-                        size="sm" 
-                        className={session.type === 'yoga' ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : ""}
-                        variant={session.type === 'meditation' ? "outline" : "default"}
+                      <Button
+                        size="sm"
+                        className={session.type === "yoga" ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : ""}
+                        variant={session.type === "meditation" ? "outline" : "default"}
                       >
                         Join
                       </Button>
                     ) : (
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        disabled
-                        className="text-gray-400"
-                      >
+                      <Button size="sm" variant="outline" disabled className="text-gray-400">
                         {currentTime < joinAllowedTime ? "Soon" : "Ended"}
                       </Button>
                     )
                   ) : (
-                    <Button 
-                      size="sm" 
+                    <Button
+                      size="sm"
                       variant="outline"
                       className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
                     >
@@ -222,72 +231,84 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
       </Card>
 
       {/* Upcoming Sessions - Show if user has access and upcoming sessions exist */}
-      {!hasNoAccess && dashboardData?.upcomingSessions && dashboardData.upcomingSessions.length > 0 && (
-        <Card className="p-6">
-          <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
-            <Calendar className="w-5 h-5" />
-            Upcoming Sessions
-          </h2>
-          <div className="space-y-3">
-            {dashboardData.upcomingSessions.map((session) => (
-              <div key={session.id} className={`flex items-center justify-between p-3 rounded-lg border ${
-                session.type === 'yoga' 
-                  ? 'bg-gradient-to-r from-[#76d2fa]/10 to-[#5a9be9]/5 border-[#76d2fa]/20'
-                  : 'bg-gradient-to-r from-[#FFCCEA]/10 to-[#ffa6c5]/5 border-[#FFCCEA]/20'
-              }`}>
-                <div className="flex items-center gap-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    session.type === 'yoga' ? 'bg-[#76d2fa]' : 'bg-[#ff7dac]'
-                  }`}></div>
-                  <div>
-                    <p className="font-medium">{session.title}</p>
-                    <p className="text-sm text-gray-500">
-                      with Mentor {session.mentor} • {session.time}
-                    </p>
+      {!hasNoAccess &&
+        dashboardData?.upcomingSessions &&
+        dashboardData.upcomingSessions.length > 0 && (
+          <Card className="p-6">
+            <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
+              <Calendar className="w-5 h-5" />
+              Upcoming Sessions
+            </h2>
+            <div className="space-y-3">
+              {dashboardData.upcomingSessions.map((session) => (
+                <div
+                  key={session.id}
+                  className={`flex items-center justify-between p-3 rounded-lg border ${
+                    session.type === "yoga"
+                      ? "bg-gradient-to-r from-[#76d2fa]/10 to-[#5a9be9]/5 border-[#76d2fa]/20"
+                      : "bg-gradient-to-r from-[#FFCCEA]/10 to-[#ffa6c5]/5 border-[#FFCCEA]/20"
+                  }`}
+                >
+                  <div className="flex items-center gap-3">
+                    <div
+                      className={`w-2 h-2 rounded-full ${
+                        session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                      }`}
+                     />
+                    <div>
+                      <p className="font-medium">{session.title}</p>
+                      <p className="text-sm text-gray-500">
+                        with Mentor {session.mentor} • {session.time}
+                      </p>
+                    </div>
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <span
+                      className={`px-2 py-1 text-xs rounded-full ${
+                        session.status === "SCHEDULED"
+                          ? "bg-green-100 text-green-700"
+                          : "bg-gray-100 text-gray-700"
+                      }`}
+                    >
+                      {session.status}
+                    </span>
                   </div>
                 </div>
-                <div className="flex items-center gap-2">
-                  <span className={`px-2 py-1 text-xs rounded-full ${
-                    session.status === 'SCHEDULED' 
-                      ? 'bg-green-100 text-green-700'
-                      : 'bg-gray-100 text-gray-700'
-                  }`}>
-                    {session.status}
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        </Card>
-      )}
+              ))}
+            </div>
+          </Card>
+        )}
 
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card
           className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
-            hasNoAccess 
-              ? 'bg-gradient-to-br from-red-50 to-pink-50 border border-red-200' 
+            hasNoAccess
+              ? "bg-gradient-to-br from-red-50 to-pink-50 border border-red-200"
               : isOnActiveTrial
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'
-                : 'bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30'
+                ? "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
+                : "bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30"
           }`}
-          onClick={() => hasNoAccess ? setActiveSection("subscription") : setActiveSection("classes")}
+          onClick={() =>
+            hasNoAccess ? setActiveSection("subscription") : setActiveSection("classes")
+          }
         >
           <div className="flex items-center gap-3">
-            <PlayCircle className={`w-8 h-8 ${
-              hasNoAccess ? 'text-red-600' : isOnActiveTrial ? 'text-blue-600' : 'text-[#76d2fa]'
-            }`} />
+            <PlayCircle
+              className={`w-8 h-8 ${
+                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-[#76d2fa]"
+              }`}
+            />
             <div>
               <p className="font-medium">
                 {hasNoAccess ? "Unlock Practice Sessions" : "Start Practice"}
               </p>
               <p className="text-sm text-gray-500">
-                {hasNoAccess 
-                  ? "Subscribe to begin sessions" 
-                  : isOnActiveTrial 
-                    ? "Continue trial sessions" 
-                    : "Begin your session"
-                }
+                {hasNoAccess
+                  ? "Subscribe to begin sessions"
+                  : isOnActiveTrial
+                    ? "Continue trial sessions"
+                    : "Begin your session"}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
@@ -295,29 +316,30 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
         </Card>
         <Card
           className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
-            hasNoAccess 
-              ? 'bg-gradient-to-br from-red-50 to-pink-50 border border-red-200' 
+            hasNoAccess
+              ? "bg-gradient-to-br from-red-50 to-pink-50 border border-red-200"
               : isOnActiveTrial
-                ? 'bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200'
-                : 'bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30'
+                ? "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
+                : "bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30"
           }`}
-          onClick={() => hasNoAccess ? setActiveSection("subscription") : setActiveSection("mentors")}
+          onClick={() =>
+            hasNoAccess ? setActiveSection("subscription") : setActiveSection("mentors")
+          }
         >
           <div className="flex items-center gap-3">
-            <Users className={`w-8 h-8 ${
-              hasNoAccess ? 'text-red-600' : isOnActiveTrial ? 'text-blue-600' : 'text-[#ff7dac]'
-            }`} />
+            <Users
+              className={`w-8 h-8 ${
+                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-[#ff7dac]"
+              }`}
+            />
             <div>
-              <p className="font-medium">
-                {hasNoAccess ? "Get Personal Mentor" : "Book Session"}
-              </p>
+              <p className="font-medium">{hasNoAccess ? "Get Personal Mentor" : "Book Session"}</p>
               <p className="text-sm text-gray-500">
-                {hasNoAccess 
-                  ? "Subscribe for mentor access" 
-                  : isOnActiveTrial 
-                    ? "Book trial mentor session" 
-                    : "Schedule with mentor"
-                }
+                {hasNoAccess
+                  ? "Subscribe for mentor access"
+                  : isOnActiveTrial
+                    ? "Book trial mentor session"
+                    : "Schedule with mentor"}
               </p>
             </div>
             <ChevronRight className="w-4 h-4 text-gray-400 ml-auto" />
@@ -327,4 +349,3 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
     </div>
   );
 };
-
