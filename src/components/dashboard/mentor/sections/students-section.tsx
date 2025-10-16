@@ -20,7 +20,6 @@ export const StudentsSection = () => {
         setLoading(true);
         setError(null);
         const mentortype = await getMentorType(session?.user || { email: "" });
-        console.log("Fetching students for mentor type:", mentortype);
         const studentsData = await getStudents(mentortype);
 
         setstudents(studentsData);

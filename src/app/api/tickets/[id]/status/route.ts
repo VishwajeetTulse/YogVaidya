@@ -3,6 +3,7 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketStatus } from "@/lib/types/tickets";
 import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
+import type { Prisma } from "@prisma/client";
 
 // PATCH /api/tickets/[id]/status - Update ticket status
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -28,7 +29,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     try {
       // First, get the current ticket to log the status change
-      const currentTicket = await (prisma as any).ticket?.findUnique({
+      const currentTicket = await prisma.ticket.findUnique({
         where: { id: ticketId },
         select: { status: true, ticketNumber: true },
       });
@@ -40,7 +41,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       const oldStatus = currentTicket.status;
 
       // Prepare update data
-      const updateData: any = {
+      const updateData: Prisma.TicketUpdateInput = {
         status,
         updatedAt: new Date(),
       };
@@ -56,7 +57,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
 
       // Update the ticket status
-      const updatedTicket = await (prisma as any).ticket?.update({
+      const updatedTicket = await prisma.ticket.update({
         where: { id: ticketId },
         data: updateData,
         include: {
@@ -94,6 +95,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       );
 
       // Create a system message about the status change
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).ticketMessage?.create({
         data: {
           id: crypto.randomUUID(),

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
@@ -8,6 +8,8 @@ import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { toast } from "sonner";
 import { Calendar, Clock, IndianRupee, ArrowLeft, BookOpen } from "lucide-react";
+import type { DateValue } from "@/lib/types/utils";
+import { isMongoDate } from "@/lib/types/mongodb";
 
 interface TimeSlot {
   _id: string;
@@ -73,7 +75,7 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
   }, [mentorId, router]);
 
   // Fetch available time slots for this mentor
-  const fetchTimeSlots = async () => {
+  const fetchTimeSlots = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -91,7 +93,7 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
     } finally {
       setLoading(false);
     }
-  };
+  }, [mentorId]);
 
   // Book a time slot
   const bookTimeSlot = (timeSlotId: string) => {
@@ -99,15 +101,19 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
   };
 
   // Format date and time with robust date handling
-  const formatDateTime = (dateTime: string | any) => {
+  const formatDateTime = (dateTime: DateValue): { date: string; time: string } => {
     let date: Date;
 
     // Handle different date formats
-    if (typeof dateTime === "object" && dateTime.$date) {
+    if (isMongoDate(dateTime)) {
       // MongoDB Extended JSON format
       date = new Date(dateTime.$date);
     } else if (typeof dateTime === "string") {
       // ISO string format
+      date = new Date(dateTime);
+    } else if (dateTime instanceof Date) {
+      date = dateTime;
+    } else if (typeof dateTime === "number") {
       date = new Date(dateTime);
     } else {
       // Fallback to current date if invalid
@@ -146,20 +152,32 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
   };
 
   // Get duration with robust date handling
-  const getDuration = (startTime: string | any, endTime: string | any) => {
+  const getDuration = (startTime: DateValue, endTime: DateValue): string => {
     let start: Date, end: Date;
 
     // Handle MongoDB Extended JSON format
-    if (typeof startTime === "object" && startTime.$date) {
+    if (isMongoDate(startTime)) {
       start = new Date(startTime.$date);
-    } else {
+    } else if (typeof startTime === "string") {
       start = new Date(startTime);
+    } else if (startTime instanceof Date) {
+      start = startTime;
+    } else if (typeof startTime === "number") {
+      start = new Date(startTime);
+    } else {
+      start = new Date();
     }
 
-    if (typeof endTime === "object" && endTime.$date) {
+    if (isMongoDate(endTime)) {
       end = new Date(endTime.$date);
-    } else {
+    } else if (typeof endTime === "string") {
       end = new Date(endTime);
+    } else if (endTime instanceof Date) {
+      end = endTime;
+    } else if (typeof endTime === "number") {
+      end = new Date(endTime);
+    } else {
+      end = new Date();
     }
 
     // Validate dates
@@ -175,7 +193,7 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
 
   useEffect(() => {
     fetchTimeSlots();
-  }, [mentorId]);
+  }, [fetchTimeSlots]);
 
   if (loadingMentor) {
     return (

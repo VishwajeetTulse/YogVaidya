@@ -14,15 +14,13 @@ export async function UpdateSessionStatus(
     }
 
     // First try to find and update in Schedule collection (legacy sessions)
-    console.log(`🔍 Looking for session ${sessionId} in Schedule collection`);
+
     const scheduleSession = await prisma.schedule.findUnique({
       where: { id: sessionId },
     });
 
     if (scheduleSession) {
-      console.log(
-        `✅ Found session ${sessionId} in Schedule collection, updating status to ${status}`
-      );
+
       // Use raw MongoDB operation to ensure proper date handling
       await prisma.$runCommandRaw({
         update: "schedule",
@@ -38,16 +36,12 @@ export async function UpdateSessionStatus(
           },
         ],
       });
-      console.log(`✅ Schedule session ${sessionId} status updated to ${status}`);
+
       return { success: true, source: "schedule" };
     }
 
-    console.log(
-      `❌ Session ${sessionId} not found in Schedule collection, trying SessionBooking collection`
-    );
-
     // If not found in Schedule, try SessionBooking collection
-    console.log(`🔍 Looking for session ${sessionId} in SessionBooking collection`);
+
     const sessionBooking = await prisma.sessionBooking
       .findUnique({
         where: { id: sessionId },
@@ -55,7 +49,6 @@ export async function UpdateSessionStatus(
       .catch(async (error) => {
         // If we get a type conversion error, it's likely due to string dates
         if (error.code === "P2023" && error.message.includes("Failed to convert")) {
-          console.log("Detected date type issue, attempting to fix and retry...");
 
           // Try to fix the date field for this specific record using raw query
           try {
@@ -123,8 +116,6 @@ export async function UpdateSessionStatus(
               ],
             });
 
-            console.log(`Fixed date fields for session ${sessionId}`);
-
             // Now retry the find operation
             return await prisma.sessionBooking.findUnique({
               where: { id: sessionId },
@@ -154,7 +145,7 @@ export async function UpdateSessionStatus(
           },
         ],
       });
-      console.log(`SessionBooking ${sessionId} status updated to ${status}`);
+
       return { success: true, source: "booking" };
     }
 

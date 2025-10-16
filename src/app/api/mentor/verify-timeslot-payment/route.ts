@@ -3,6 +3,14 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
+import type { Prisma } from "@prisma/client";
+
+// Interface for timeSlot properties from MongoDB
+interface TimeSlotData {
+  _id?: string;
+  startTime?: string;
+  endTime?: string;
+}
 
 const verifyPaymentSchema = z.object({
   razorpay_order_id: z.string().min(1, "Order ID is required"),
@@ -21,7 +29,7 @@ const verifyPaymentSchema = z.object({
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("🔐 Verifying time slot payment...");
+    console.warn("🔐 Verifying time slot payment...");
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -57,7 +65,7 @@ export async function POST(request: NextRequest) {
       );
     }
 
-    console.log("✅ Payment signature verified");
+    console.warn("✅ Payment signature verified");
 
     const { prisma } = await import("@/lib/config/prisma");
 
@@ -67,7 +75,7 @@ export async function POST(request: NextRequest) {
       filter: { _id: timeSlotId },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     let timeSlotPrice = 500; // Default fallback
 
     if (
@@ -80,7 +88,7 @@ export async function POST(request: NextRequest) {
       Array.isArray(timeSlotResult.cursor.firstBatch) &&
       timeSlotResult.cursor.firstBatch.length > 0
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0] as any;
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
       timeSlotPrice =
         timeSlot &&
         typeof timeSlot === "object" &&
@@ -94,26 +102,32 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
+    // Cast to TimeSlotData for property access
+    const slot = timeSlot as unknown as TimeSlotData;
+
     // Calculate duration if not provided
     let sessionDuration = duration;
-    if (!sessionDuration && timeSlot.startTime && timeSlot.endTime) {
-      const start = new Date(timeSlot.startTime);
-      const end = new Date(timeSlot.endTime);
+    if (!sessionDuration && slot.startTime && slot.endTime) {
+      const start = new Date(slot.startTime);
+      const end = new Date(slot.endTime);
       sessionDuration = Math.round((end.getTime() - start.getTime()) / (1000 * 60));
     }
 
     // NOW create the SessionBooking (only after payment is verified)
-    console.log("💾 Creating SessionBooking record after payment verification...");
+    console.warn("💾 Creating SessionBooking record after payment verification...");
 
     try {
       // Use type assertion to include duration field
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const bookingData: any = {
         id: bookingId,
         userId: userId || session.user.id,
-        mentorId: mentorId || timeSlot.mentorId,
+        mentorId: (mentorId || timeSlot.mentorId) as string,
         timeSlotId: timeSlotId,
-        sessionType: sessionType || timeSlot.sessionType,
-        scheduledAt: scheduledAt ? new Date(scheduledAt) : new Date(timeSlot.startTime),
+        sessionType: (sessionType || timeSlot.sessionType) as string,
+        scheduledAt: scheduledAt
+          ? new Date(scheduledAt as string)
+          : new Date(timeSlot.startTime as string),
         duration: sessionDuration || 60,
         status: "SCHEDULED",
         notes: notes || "",
@@ -131,8 +145,8 @@ export async function POST(request: NextRequest) {
         data: bookingData,
       });
 
-      console.log("✅ SessionBooking created successfully:", booking.id);
-    } catch (error: any) {
+      console.warn("✅ SessionBooking created successfully:", booking.id);
+    } catch (error: unknown) {
       console.error("❌ Failed to create SessionBooking:", error);
       return NextResponse.json(
         { success: false, error: "Failed to create booking after payment verification" },
@@ -150,13 +164,13 @@ export async function POST(request: NextRequest) {
           q: { _id: timeSlotId },
           u: {
             $inc: { currentStudents: 1 },
-            $set: createDateUpdate({}),
+            $set: createDateUpdate({}) as Prisma.InputJsonValue,
           },
         },
       ],
     });
 
-    console.log("✅ Time slot student count updated");
+    console.warn("✅ Time slot student count updated");
 
     return NextResponse.json({
       success: true,

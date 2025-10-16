@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, Clock, PlayCircle, ExternalLink, RefreshCw } from "lucide-react";
@@ -13,6 +13,8 @@ import {
   type UserSessionsResponse,
 } from "@/lib/server/user-sessions-server";
 import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
+import type { DateValue } from "@/lib/types/utils";
+import { isMongoDate } from "@/lib/types/mongodb";
 // import { Prisma } from "@prisma/client";
 
 interface SessionData {
@@ -62,21 +64,13 @@ export const ClassesSection = () => {
   }, []);
 
   // Helper function to load sessions (extracted for reuse)
-  const loadUserSessions = async () => {
+  const loadUserSessions = useCallback(async () => {
     if (!session?.user) return;
 
     try {
-      console.log("📚 Loading user sessions for:", session.user.id);
       const result = await getUserSessions();
 
-      console.log("📊 User sessions result:", result);
-
       if (result.success && result.data) {
-        console.log("✅ Formatting sessions data:", result.data.sessions?.length || 0, "sessions");
-        console.log(
-          "📋 Raw sessions from server:",
-          result.data.sessions?.map((s) => ({ id: s.id, status: s.status, title: s.title }))
-        );
         setSessionsData(formatSessionsData(result.data));
       } else {
         console.error("Failed to load sessions:", result.error);
@@ -88,7 +82,7 @@ export const ClassesSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [session?.user]);
 
   // Helper function to convert server data to component format
   const formatSessionsData = (serverData: UserSessionsResponse["data"]): UserSessionsData => {
@@ -97,14 +91,19 @@ export const ClassesSection = () => {
     }
 
     // Helper function to safely convert to valid ISO string
-    const safeToISOString = (dateValue: any): string | null => {
+    const safeToISOString = (dateValue: DateValue): string | null => {
+      // Handle null/undefined
+      if (!dateValue) {
+        console.warn("Null/undefined date value found, skipping session");
+        return null;
+      }
+
       // Handle MongoDB extended JSON date format: {$date: 'ISO_STRING'}
-      if (typeof dateValue === "object" && dateValue !== null && "$date" in dateValue) {
+      if (isMongoDate(dateValue)) {
         const isoString = dateValue.$date;
         if (typeof isoString === "string") {
           const date = new Date(isoString);
           if (!isNaN(date.getTime())) {
-            console.log("✅ Converted MongoDB date format:", isoString);
             return date.toISOString();
           }
         }
@@ -123,10 +122,21 @@ export const ClassesSection = () => {
         return null;
       }
 
-      // If it's a Date object or something else
-      const date = new Date(dateValue);
-      if (!isNaN(date.getTime())) {
-        return date.toISOString();
+      // If it's a Date object
+      if (dateValue instanceof Date) {
+        if (!isNaN(dateValue.getTime())) {
+          return dateValue.toISOString();
+        }
+        console.warn("Invalid Date object found, skipping session:", dateValue);
+        return null;
+      }
+
+      // If it's a number (timestamp)
+      if (typeof dateValue === "number") {
+        const date = new Date(dateValue);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
       }
 
       // If completely invalid, return null to filter out this session
@@ -142,14 +152,6 @@ export const ClassesSection = () => {
           if (scheduledTime === null) {
             return null; // Mark for filtering
           }
-
-          // Debug: Log session data including duration
-          console.log(`📊 Processing session ${session.id}:`, {
-            status: session.status,
-            duration: session.duration,
-            title: session.title,
-            manualStartTime: session.manualStartTime,
-          });
 
           // Convert manualStartTime if it exists
           const manualStartTime = session.manualStartTime
@@ -169,16 +171,14 @@ export const ClassesSection = () => {
   // Load user sessions using server action
   useEffect(() => {
     loadUserSessions();
-  }, [session]);
+  }, [loadUserSessions]);
 
   // Listen for session status updates and refresh automatically
   useEffect(() => {
     const handleSessionStatusUpdate = (event: CustomEvent) => {
       const { started, completed } = event.detail;
-      console.log(`🔄 Session status updated: ${started} started, ${completed} completed`);
 
       if (started > 0 || completed > 0) {
-        console.log("♻️ Auto-refreshing sessions due to status update...");
         // Refresh sessions data without showing toast to avoid spam
         loadUserSessions();
       }
@@ -194,7 +194,7 @@ export const ClassesSection = () => {
         handleSessionStatusUpdate as EventListener
       );
     };
-  }, [session]);
+  }, [loadUserSessions]);
 
   // Refresh function for manual updates
   const refreshSessions = async () => {
@@ -231,7 +231,6 @@ export const ClassesSection = () => {
   // This handles the case where users without subscription have booked paid sessions
   if (availableSessions.length > 0) {
     // User has sessions, show them regardless of subscription status
-    console.log(`📚 User has ${availableSessions.length} sessions, displaying them`);
   } else {
     // No sessions available - check if user needs subscription
     if (sessionsData?.needsSubscription) {
@@ -248,18 +247,12 @@ export const ClassesSection = () => {
 
   // Upcoming sessions: SCHEDULED or ONGOING sessions
   const upcomingSessions = availableSessions.filter((session) => {
-    console.log(
-      `🔍 Filtering session ${session.id}: status=${session.status}, title=${session.title}`
-    );
-
     if (session.status === "COMPLETED" || session.status === "CANCELLED") {
-      console.log(`❌ Session ${session.id} filtered out: ${session.status}`);
       return false;
     }
 
     // For ONGOING sessions, always show them in upcoming (they're active and joinable)
     if (session.status === "ONGOING") {
-      console.log(`✅ Session ${session.id} included: ONGOING session`);
       return true;
     }
 
@@ -268,24 +261,11 @@ export const ClassesSection = () => {
     const sessionEndTime = new Date(sessionTime.getTime() + session.duration * 60000);
     const currentTime = new Date();
 
-    const shouldInclude = currentTime <= sessionEndTime;
-    console.log(
-      `⏰ Session ${session.id} time check: current=${currentTime.toISOString()}, end=${sessionEndTime.toISOString()}, include=${shouldInclude}`
-    );
-
-    return shouldInclude;
+    return currentTime <= sessionEndTime;
   });
 
   const completedSessions = availableSessions.filter((session) => session.status === "COMPLETED");
   const cancelledSessions = availableSessions.filter((session) => session.status === "CANCELLED");
-
-  console.log(
-    `📊 Session counts: Total=${availableSessions.length}, Upcoming=${upcomingSessions.length}, Completed=${completedSessions.length}, Cancelled=${cancelledSessions.length}`
-  );
-  console.log(
-    `🎯 Upcoming sessions:`,
-    upcomingSessions.map((s) => ({ id: s.id, status: s.status, title: s.title }))
-  );
 
   const getSessionTypeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
     if (type === "YOGA") return "from-[#76d2fa] to-[#5a9be9]";
@@ -325,13 +305,6 @@ export const ClassesSection = () => {
   };
 
   const renderSessionCard = (sessionItem: SessionData) => {
-    // Debug logging for duration
-    console.log(`🎯 Rendering session ${sessionItem.id}:`, {
-      status: sessionItem.status,
-      duration: sessionItem.duration,
-      title: sessionItem.title,
-    });
-
     // Defensive programming: Ensure valid date
     const sessionTime = new Date(sessionItem.scheduledTime);
     if (isNaN(sessionTime.getTime())) {

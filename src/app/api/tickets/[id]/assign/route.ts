@@ -25,14 +25,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
 
     try {
       // Get ticket details and assignee information for logging
-      const currentTicket = await (prisma as any).ticket?.findUnique({
+      const currentTicket = await prisma.ticket.findUnique({
         where: { id: ticketId },
         select: { ticketNumber: true },
       });
 
       let assigneeName = null;
       if (assigneeId) {
-        const assignee = await (prisma as any).user?.findUnique({
+        const assignee = await prisma.user.findUnique({
           where: { id: assigneeId },
           select: { name: true, email: true },
         });
@@ -40,7 +40,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       }
 
       // Update the ticket assignment
-      const updatedTicket = await (prisma as any).ticket?.update({
+      const updatedTicket = await prisma.ticket.update({
         where: { id: ticketId },
         data: {
           assignedToId: assigneeId || null,
@@ -81,6 +81,7 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
       );
 
       // Create a system message about the assignment
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       await (prisma as any).ticketMessage?.create({
         data: {
           id: crypto.randomUUID(),

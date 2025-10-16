@@ -46,14 +46,14 @@ export async function GET(req: NextRequest) {
 // Edit user (name, email, phone, role)
 export async function PATCH(req: NextRequest) {
   try {
-    console.log("🔍 PATCH /api/users - Starting user update request");
+
 
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
-    console.log("🔍 Session check:", session ? "Session found" : "No session");
+
 
     if (!session?.user) {
-      console.log("❌ No authenticated user found");
+
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
@@ -62,22 +62,14 @@ export async function PATCH(req: NextRequest) {
       where: { id: session.user.id },
     });
 
-    console.log("🔍 Current user role:", currentUser?.role);
+
 
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
-      console.log("❌ Insufficient permissions - Role:", currentUser?.role);
+
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     const { id, name, email, phone, role, password } = await req.json();
-    console.log("🔍 Update data received:", {
-      id,
-      name,
-      email,
-      phone,
-      role,
-      hasPassword: !!password,
-    });
 
     // Add extra validation for role changes
     if (role) {
@@ -114,7 +106,7 @@ export async function PATCH(req: NextRequest) {
       data: { name, email, phone, role },
     });
 
-    console.log("✅ User updated successfully:", user.email);
+
 
     // Handle password update if provided
     if (password && password.trim() !== "") {
@@ -161,14 +153,14 @@ export async function PATCH(req: NextRequest) {
 // Delete user and their mentor application(s)
 export async function DELETE(req: NextRequest) {
   try {
-    console.log("🔍 DELETE /api/users - Starting user deletion request");
+
 
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
-    console.log("🔍 Session check:", session ? "Session found" : "No session");
+
 
     if (!session?.user) {
-      console.log("❌ No authenticated user found");
+
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
@@ -177,28 +169,28 @@ export async function DELETE(req: NextRequest) {
       where: { id: session.user.id },
     });
 
-    console.log("🔍 Current user role:", currentUser?.role);
+
 
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
-      console.log("❌ Insufficient permissions - Role:", currentUser?.role);
+
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
     const { id } = await req.json();
-    console.log("🔍 User ID to delete:", id);
+
     // Find the user to get their email and role
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-      console.log("❌ User not found:", id);
+
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-    console.log("🔍 User to delete:", { email: user.email, role: user.role });
+
 
     // Add protection for admin and moderator accounts
     if ((user.role === "ADMIN" || user.role === "MODERATOR") && currentUser.role !== "ADMIN") {
-      console.log("❌ Attempting to delete protected account:", user.role);
+
       return NextResponse.json(
         { error: "Only admins can delete admin or moderator accounts" },
         { status: 403 }
@@ -217,7 +209,7 @@ export async function DELETE(req: NextRequest) {
     // Finally delete the user
     await prisma.user.delete({ where: { id } });
 
-    console.log("✅ User deleted successfully:", user.email);
+
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -273,15 +265,15 @@ export async function POST(req: NextRequest) {
     if (existingUser) {
       return NextResponse.json({ error: "A user with this email already exists" }, { status: 409 });
     }
-    const { data, error } = await authClient.signUp.email({
+    const { data } = await authClient.signUp.email({
       email: email,
       password: password,
       name: name,
       phone: phone,
       role: "MODERATOR",
     });
-    console.log(error);
-    console.log(data);
+
+
 
     // Send an email with credentials
     try {

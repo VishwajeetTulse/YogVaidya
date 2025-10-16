@@ -3,6 +3,7 @@
 import React from "react";
 import { UnifiedDashboard } from "../shared/unified-dashboard";
 import { ADMIN_SIDEBAR_MENU_ITEMS } from "../admin/constants";
+import type { AdminSectionProps } from "../admin/types";
 
 // Import all admin section components
 import { OverviewSection } from "../admin/sections/overview-section";
@@ -23,7 +24,7 @@ const ADMIN_SECTION_COMPONENTS = {
   "mentor-management": MentorManagementSection,
   moderators: ModeratorManagementSection,
   subscriptions: SubscriptionManagementSection,
-  tickets: (props: any) => (
+  tickets: (props: AdminSectionProps) => (
     <TicketsSection userRole="ADMIN" currentUserId={props.userDetails?.id} />
   ),
   logs: LogsSection,

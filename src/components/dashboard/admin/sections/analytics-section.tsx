@@ -48,7 +48,6 @@ export const AnalyticsSection = () => {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        console.log(`Analytics: Fetching data (attempt ${retryCount + 1})`);
         const response = await fetch(`/api/analytics`);
         const data = await response.json();
 
@@ -100,7 +99,6 @@ export const AnalyticsSection = () => {
         };
 
         setAnalyticsData(sanitizedData);
-        console.log("Analytics data fetched successfully:", sanitizedData);
         setLoading(false); // Success! Stop loading
       } catch (err) {
         console.error("Analytics error:", err);
@@ -126,9 +124,6 @@ export const AnalyticsSection = () => {
     if (retryCount > 0 && retryCount <= MAX_RETRIES) {
       // Exponential backoff: 2^retryCount * 1000ms (1s, 2s, 4s)
       const delay = Math.pow(2, retryCount) * 1000;
-      console.log(
-        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`
-      );
 
       retryTimer = setTimeout(() => {
         fetchAnalytics();
@@ -409,7 +404,6 @@ const CombinedGrowthChart = ({
   const maxRevenue = Math.max(...revenueData.map((item) => item.amount));
   userData.reverse();
   revenueData.reverse();
-  console.log(userData, revenueData);
   return (
     <div className="flex h-full items-end space-x-8 justify-around">
       {userData.map((item, index) => {

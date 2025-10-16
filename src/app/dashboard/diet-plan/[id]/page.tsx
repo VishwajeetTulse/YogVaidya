@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useParams, useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
@@ -8,12 +8,13 @@ import { Badge } from "@/components/ui/badge";
 import { DietPlanViewer } from "@/components/dashboard/user/DietPlanViewer";
 import { ArrowLeft, Download, Calendar, User, FileText, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import type { EditorContent } from "@/lib/types/utils";
 
 interface DietPlan {
   id: string;
   title: string;
   description: string | null;
-  content: any;
+  content: EditorContent;
   tags: string | string[] | null;
   isDraft: boolean;
   createdAt: Date;
@@ -38,15 +39,9 @@ export default function DietPlanDetailPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [isDownloading, setIsDownloading] = useState(false);
 
-  useEffect(() => {
-    fetchDietPlan();
-  }, [planId]);
-
-  const fetchDietPlan = async () => {
+  const fetchDietPlan = useCallback(async () => {
     try {
-      console.log("🔍 Fetching diet plan:", planId);
       const response = await fetch(`/api/diet-plans/${planId}`);
-      console.log("📡 Response status:", response.status);
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
@@ -55,7 +50,6 @@ export default function DietPlanDetailPage() {
       }
 
       const data = await response.json();
-      console.log("✅ Diet plan data:", data);
       setDietPlan(data.dietPlan);
     } catch (error) {
       console.error("Error fetching diet plan:", error);
@@ -63,7 +57,11 @@ export default function DietPlanDetailPage() {
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [planId]);
+
+  useEffect(() => {
+    fetchDietPlan();
+  }, [fetchDietPlan]);
 
   const downloadAsPDF = async () => {
     try {

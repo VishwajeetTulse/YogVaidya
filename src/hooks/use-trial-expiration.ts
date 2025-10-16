@@ -33,7 +33,7 @@ export function useTrialExpiration({
       updateTrialStatus(session.user.email)
         .then((success) => {
           if (success) {
-            console.log("Trial status updated in database");
+
             onTrialExpired?.();
           } else {
             console.error("Failed to update trial status in database");

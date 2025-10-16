@@ -1,12 +1,12 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useState, Suspense } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useSearchParams, useRouter } from "next/navigation";
 import ProfileCompletionForm from "@/components/forms/ProfileCompletionForm";
 import { Skeleton } from "@/components/ui/skeleton";
 
-export default function CompleteProfilePage() {
+function CompleteProfileContent() {
   const { data: session, isPending } = useSession();
   const searchParams = useSearchParams();
   const router = useRouter();
@@ -73,5 +73,23 @@ export default function CompleteProfilePage() {
       userName={session.user.name || undefined}
       redirectTo={redirectTo}
     />
+  );
+}
+
+export default function CompleteProfilePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center">
+          <div className="w-full max-w-md space-y-4">
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+            <Skeleton className="h-12 w-full" />
+          </div>
+        </div>
+      }
+    >
+      <CompleteProfileContent />
+    </Suspense>
   );
 }

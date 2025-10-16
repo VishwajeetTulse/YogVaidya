@@ -5,20 +5,28 @@ import { prisma } from "@/lib/config/prisma";
 import { getUserSubscription } from "@/lib/subscriptions";
 import { type Prisma } from "@prisma/client";
 import { headers } from "next/headers";
+import type { ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
 
 /**
  * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
  */
-function convertMongoDate(dateValue: any): Date | null {
+function convertMongoDate(dateValue: DateValue): Date | null {
   if (!dateValue) return null;
 
   try {
     // Handle MongoDB extended JSON format like { "$date": "2024-01-01T00:00:00.000Z" }
-    if (typeof dateValue === "object" && dateValue.$date && typeof dateValue.$date === "string") {
+    if (isMongoDate(dateValue)) {
       return new Date(dateValue.$date);
     }
 
-    // Handle regular date strings and Date objects
+    // Handle Date objects
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+
+    // Handle regular date strings
     return new Date(dateValue);
   } catch (error) {
     console.error("Error converting date:", error);
@@ -70,8 +78,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     // Helper function to fetch paid one-on-one session bookings
     const fetchPaidSessionBookings = async (userId: string): Promise<UserSessionData[]> => {
       try {
-        console.log("🔍 Fetching paid session bookings for user:", userId);
-
         const sessionBookingsResult = await prisma.$runCommandRaw({
           aggregate: "sessionBooking",
           pipeline: [
@@ -212,8 +218,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           cursor: {},
         });
 
-        console.log("🔍 Raw aggregation result:", JSON.stringify(sessionBookingsResult, null, 2));
-
         let sessionBookings: UserSessionData[] = [];
         if (
           sessionBookingsResult &&
@@ -225,26 +229,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
           Array.isArray(sessionBookingsResult.cursor.firstBatch)
         ) {
           sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
-          console.log(
-            "📋 Extracted session bookings:",
-            sessionBookings.map((b) => ({
-              id: b.id,
-              status: b.status,
-              title: b.title,
-              duration: b.duration,
-            }))
-          );
-        } else {
-          console.log("⚠️ Unexpected aggregation result structure:", {
-            hasCursor: "cursor" in (sessionBookingsResult as any),
-            cursorType: typeof (sessionBookingsResult as any)?.cursor,
-            hasFirstBatch: "firstBatch" in ((sessionBookingsResult as any)?.cursor || {}),
-            firstBatchType: typeof (sessionBookingsResult as any)?.cursor?.firstBatch,
-            isArray: Array.isArray((sessionBookingsResult as any)?.cursor?.firstBatch),
-          });
         }
 
-        console.log(`📅 Found ${sessionBookings.length} paid session bookings`);
         return sessionBookings;
       } catch (error) {
         console.error("Error fetching paid session bookings:", error);
@@ -275,15 +261,9 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
 
     if (!subscription) {
       // User has no subscription record, check for paid one-on-one bookings
-      console.log("👤 User has no subscription, checking for paid bookings...");
       const paidBookings = await fetchPaidSessionBookings(session.user.id);
 
       if (paidBookings.length > 0) {
-        console.log(`✅ Found ${paidBookings.length} paid bookings, showing sessions`);
-        console.log(
-          "📋 Paid bookings details:",
-          paidBookings.map((b) => ({ id: b.id, status: b.status, title: b.title }))
-        );
         return {
           success: true,
           data: {
@@ -298,7 +278,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       }
 
       // No subscription and no paid bookings
-      console.log("❌ No subscription and no paid bookings found");
       return {
         success: true,
         data: {
@@ -311,12 +290,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         },
       };
     }
-
-    console.log("👤 User has subscription:", {
-      status: subscription.subscriptionStatus,
-      plan: subscription.subscriptionPlan,
-      id: subscription.id,
-    });
 
     // Check if user needs subscription
     // For cancelled subscriptions, check nextBillingDate instead of subscriptionEndDate
@@ -343,13 +316,9 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
 
     if (needsSubscription) {
       // User needs subscription, but check for paid one-on-one bookings first
-      console.log("👤 User needs subscription, checking for paid bookings...");
       const paidBookings = await fetchPaidSessionBookings(session.user.id);
 
       if (paidBookings.length > 0) {
-        console.log(
-          `✅ Found ${paidBookings.length} paid bookings, showing sessions despite expired subscription`
-        );
         return {
           success: true,
           data: {
@@ -396,12 +365,8 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     // FLOURISH plan gets both YOGA and MEDITATION sessions (no additional filter needed)
 
     // Get sessions from both Schedule and SessionBooking collections
-    console.log("📊 Fetching sessions from both Schedule and SessionBooking collections...");
-    console.log(`👤 User ID: ${session.user.id}`);
-    console.log(`📋 Session filters:`, sessionFilters);
 
     // 1. Get sessions from SessionBooking collection (new time slot bookings)
-    console.log("🔍 Querying SessionBooking collection...");
     const sessionBookingsResult = await prisma.$runCommandRaw({
       aggregate: "sessionBooking",
       pipeline: [
@@ -539,11 +504,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       cursor: {},
     });
 
-    console.log(
-      "🔍 Active subscriber - Raw SessionBooking aggregation result:",
-      JSON.stringify(sessionBookingsResult, null, 2)
-    );
-
     let sessionBookings: UserSessionData[] = [];
     if (
       sessionBookingsResult &&
@@ -555,34 +515,27 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       Array.isArray(sessionBookingsResult.cursor.firstBatch)
     ) {
       sessionBookings = sessionBookingsResult.cursor.firstBatch as unknown as UserSessionData[];
-      console.log(
-        "📋 Active subscriber session bookings:",
-        sessionBookings.map((b) => ({
-          id: b.id,
-          status: b.status,
-          title: b.title,
-          duration: b.duration,
-        }))
-      );
     }
-
-    console.log(`📅 Found ${sessionBookings.length} session bookings`);
 
     // 2. Get sessions from Schedule collection (legacy sessions) - filtered by subscription plan
     // Use $runCommandRaw to handle corrupted date strings in the database
 
     // Build MongoDB match filter from Prisma where clause
-    const buildMongoMatch = (filters: any) => {
-      const match: any = {};
+    const buildMongoMatch = (filters: Record<string, unknown>): Record<string, unknown> => {
+      const match: Record<string, unknown> = {};
 
-      if (filters.userId) match.userId = filters.userId;
       if (filters.mentorId) match.mentorId = filters.mentorId;
 
       // Handle status filter
       if (filters.status) {
         if (typeof filters.status === "string") {
           match.status = filters.status;
-        } else if (filters.status.in && Array.isArray(filters.status.in)) {
+        } else if (
+          typeof filters.status === "object" &&
+          filters.status !== null &&
+          "in" in filters.status &&
+          Array.isArray(filters.status.in)
+        ) {
           match.status = { $in: filters.status.in };
         }
       }
@@ -594,7 +547,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       aggregate: "schedule",
       pipeline: [
         {
-          $match: buildMongoMatch(sessionFilters),
+          $match: buildMongoMatch(sessionFilters) as Prisma.InputJsonValue,
         },
         {
           $lookup: {
@@ -653,7 +606,7 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       cursor: {},
     });
 
-    let sessions: any[] = [];
+    let sessions: ScheduleDocument[] = [];
     if (
       scheduleResult &&
       typeof scheduleResult === "object" &&
@@ -663,31 +616,15 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       "firstBatch" in scheduleResult.cursor &&
       Array.isArray(scheduleResult.cursor.firstBatch)
     ) {
-      sessions = scheduleResult.cursor.firstBatch;
+      sessions = (scheduleResult as unknown as MongoCommandResult<ScheduleDocument>).cursor!
+        .firstBatch;
     }
-
-    console.log(`📅 Active subscriber - Found ${sessions.length} legacy schedule sessions`);
-    console.log(
-      "📋 Legacy sessions details:",
-      sessions.map((s) => ({
-        id: s.id || s._id,
-        status: s.status,
-        title: s.title,
-        duration: s.duration,
-        scheduledTime: s.scheduledTime,
-      }))
-    );
 
     const formattedSessions: UserSessionData[] = sessions.map((session) => {
       const scheduledTime = convertMongoDate(session.scheduledTime);
 
-      console.log(`🔧 Formatting legacy session ${session.id || session._id}:`, {
-        rawDuration: session.duration,
-        status: session.status,
-      });
-
       return {
-        id: session.id || session._id,
+        id: session._id.toString(),
         title: session.title,
         scheduledTime: scheduledTime || new Date(), // Fallback to current date if conversion fails
         duration: session.duration || 60, // Default to 60 minutes if not available
@@ -696,13 +633,15 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         link: session.link, // Add session link for legacy sessions
         mentor: {
           id: session.mentorId,
-          name: session.mentorName,
-          mentorType: session.mentorType,
+          name: (session as unknown as { mentorName?: string }).mentorName || "Unknown",
+          mentorType:
+            ((session as unknown as { mentorType?: string }).mentorType as
+              | "YOGAMENTOR"
+              | "MEDITATIONMENTOR"
+              | "DIETPLANNER") || null,
         },
       };
     });
-
-    console.log(`📅 Found ${formattedSessions.length} legacy schedule sessions`);
 
     // 3. Combine sessions from both sources
     const allSessions = [...sessionBookings, ...formattedSessions];
@@ -710,19 +649,6 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
     // 4. Sort by scheduled time (most recent first for display purposes)
     allSessions.sort(
       (a, b) => new Date(b.scheduledTime).getTime() - new Date(a.scheduledTime).getTime()
-    );
-
-    console.log(
-      `✅ Total unified sessions: ${allSessions.length} (${sessionBookings.length} bookings + ${formattedSessions.length} legacy)`
-    );
-    console.log(
-      "📋 Final sessions being returned:",
-      allSessions.map((s) => ({
-        id: s.id,
-        status: s.status,
-        title: s.title,
-        scheduledTime: s.scheduledTime,
-      }))
     );
 
     return {

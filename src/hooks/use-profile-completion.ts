@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { useSession } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
 
@@ -23,9 +23,9 @@ export function useProfileCompletion({
   const [isLoading, setIsLoading] = useState(true);
   const [hasPhone, setHasPhone] = useState<boolean | null>(null);
 
-  const redirectToCompletion = () => {
+  const redirectToCompletion = useCallback(() => {
     router.push(`/complete-profile?redirectTo=${encodeURIComponent(redirectTo)}`);
-  };
+  }, [router, redirectTo]);
 
   useEffect(() => {
     if (isPending) return;
@@ -58,7 +58,7 @@ export function useProfileCompletion({
     };
 
     checkProfile();
-  }, [session, isPending, autoRedirect, redirectTo, router]);
+  }, [session, isPending, autoRedirect, redirectToCompletion]);
 
   return {
     isLoading,

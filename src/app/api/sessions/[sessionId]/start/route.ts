@@ -29,9 +29,9 @@ export async function POST(
     const session = lookupResult.session;
 
     // Check if session is in SCHEDULED status
-    if (session.status !== "SCHEDULED") {
+    if (session?.status !== "SCHEDULED") {
       return NextResponse.json(
-        { error: `Session is already ${session.status.toLowerCase()}` },
+        { error: `Session is already ${session?.status.toLowerCase()}` },
         { status: 400 }
       );
     }

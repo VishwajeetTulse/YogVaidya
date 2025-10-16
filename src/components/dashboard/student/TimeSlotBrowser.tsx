@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -51,7 +51,7 @@ export default function StudentTimeSlotBrowser() {
   });
 
   // Fetch available time slots
-  const fetchTimeSlots = async () => {
+  const fetchTimeSlots = useCallback(async () => {
     try {
       setLoading(true);
 
@@ -77,7 +77,7 @@ export default function StudentTimeSlotBrowser() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   // Book a time slot
   const bookTimeSlot = async (timeSlotId: string) => {
@@ -115,7 +115,7 @@ export default function StudentTimeSlotBrowser() {
   };
 
   // Filter time slots based on search and filters
-  const applyFilters = () => {
+  const applyFilters = useCallback(() => {
     let filtered = [...timeSlots];
 
     // Filter by availability
@@ -143,7 +143,7 @@ export default function StudentTimeSlotBrowser() {
     }
 
     setFilteredSlots(filtered);
-  };
+  }, [timeSlots, filters]);
 
   // Format date and time
   const formatDateTime = (dateTime: string) => {
@@ -185,11 +185,11 @@ export default function StudentTimeSlotBrowser() {
 
   useEffect(() => {
     fetchTimeSlots();
-  }, []);
+  }, [fetchTimeSlots]);
 
   useEffect(() => {
     applyFilters();
-  }, [filters, timeSlots]);
+  }, [applyFilters]);
 
   return (
     <div className="max-w-7xl mx-auto p-6 space-y-6">

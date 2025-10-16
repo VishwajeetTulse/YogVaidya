@@ -29,9 +29,11 @@ export async function POST(
     const session = lookupResult.session;
 
     // Check if session is in ONGOING status
-    if (session.status !== "ONGOING") {
+    if (!session || session.status !== "ONGOING") {
       return NextResponse.json(
-        { error: `Session must be ongoing to complete. Current status: ${session.status}` },
+        {
+          error: `Session must be ongoing to complete. Current status: ${session?.status || "unknown"}`,
+        },
         { status: 400 }
       );
     }

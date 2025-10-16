@@ -112,7 +112,6 @@ export default function Checkout({ plan }: { plan: string }) {
   const handleCheckout = async () => {
     // Check if user is authenticated before proceeding
     if (!session?.user?.id) {
-      console.log("Session state:", session);
       toast.error("Please sign in to complete your purchase.");
       router.push("/signin");
       return;
@@ -144,7 +143,6 @@ export default function Checkout({ plan }: { plan: string }) {
       });
 
       const data = await response.json();
-      console.log("API response:", data);
 
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
@@ -168,8 +166,6 @@ export default function Checkout({ plan }: { plan: string }) {
               throw new Error("User session not found");
             }
 
-            console.log("Payment verified, updating subscription for user:", session.user.id);
-
             // Create/update subscription using server action
             const subscriptionResult = await createUserSubscription({
               userId: session.user.id,
@@ -188,8 +184,6 @@ export default function Checkout({ plan }: { plan: string }) {
               toast.error(
                 "Payment successful but subscription update failed. Please contact support."
               );
-            } else {
-              console.log("Subscription updated successfully:", subscriptionResult.user);
             }
 
             // Success - redirect to dashboard with success message

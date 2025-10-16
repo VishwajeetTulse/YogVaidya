@@ -16,7 +16,7 @@ export async function GET() {
 
     try {
       // Try to access sessionBooking model
-      const bookings = await (prisma as any).sessionBooking.findMany({
+      const bookings = await prisma.sessionBooking.findMany({
         where: {
           userId: session.user.id,
         },
@@ -39,9 +39,9 @@ export async function GET() {
         success: true,
         data: bookings,
       });
-    } catch (error) {
+    } catch {
       // If sessionBooking model doesn't exist yet, return empty array
-      console.log("SessionBooking model not available yet:", error);
+
       return NextResponse.json({
         success: true,
         data: [],

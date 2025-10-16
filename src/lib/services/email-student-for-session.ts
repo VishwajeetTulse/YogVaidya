@@ -73,8 +73,6 @@ export async function sendEmail(sessionDetails: Schedule) {
       html: htmlContent,
     });
 
-    console.log("Email sent (dev mode):", info.messageId);
-    console.log("Preview URL: http://localhost:1080");
 
     return {
       success: true,

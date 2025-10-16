@@ -13,6 +13,8 @@ import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { toast } from "sonner";
 import { Loader2, Plus, Save, Send, Eye, Trash2, FileText } from "lucide-react";
 import { getMentorStudentsData } from "@/lib/server/mentor-students-server";
+import type { EditorContent } from "@/lib/types/utils";
+import type { JSONContent } from "@tiptap/core";
 
 // Validation schema
 const dietPlanSchema = z.object({
@@ -20,7 +22,7 @@ const dietPlanSchema = z.object({
   sessionId: z.string().optional(),
   title: z.string().min(3, "Title must be at least 3 characters"),
   description: z.string().optional(),
-  content: z.any(), // TipTap JSON
+  content: z.custom<JSONContent>(), // TipTap JSON
   tags: z.string().optional(), // Comma-separated tags
   isDraft: z.boolean().optional(),
 });
@@ -60,7 +62,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
   const mentorId = userDetails.id;
   const [isLoading, setIsLoading] = useState(false);
   const [isLoadingData, setIsLoadingData] = useState(true);
-  const [editorContent, setEditorContent] = useState<any>(null);
+  const [editorContent, setEditorContent] = useState<EditorContent | null>(null);
   const [students, setStudents] = useState<Student[]>([]);
   const [sessions, setSessions] = useState<Session[]>([]);
   const [existingPlans, setExistingPlans] = useState<DietPlan[]>([]);
@@ -92,7 +94,6 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
             (s) => s.subscriptionPlan === "FLOURISH"
           );
           setStudents(flourishStudents);
-          console.log("🍎 Found FLOURISH students:", flourishStudents.length);
         } else {
           console.error("❌ Failed to fetch students:", studentsData.error);
           toast.error("Failed to load students");
@@ -202,8 +203,9 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
         const data = await plansRes.json();
         setExistingPlans(data.dietPlans || []);
       }
-    } catch (error: any) {
-      toast.error(error.message || "Failed to save diet plan");
+    } catch (error: unknown) {
+      const errorMessage = error instanceof Error ? error.message : "Failed to save diet plan";
+      toast.error(errorMessage);
       console.error(error);
     } finally {
       setIsLoading(false);
@@ -394,7 +396,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
                   <Label>Diet Plan Content *</Label>
                   <div className="mt-1">
                     <DietPlanEditor
-                      content={editorContent}
+                      content={editorContent ?? undefined}
                       onChange={setEditorContent}
                       placeholder="Start typing your diet plan... Use the toolbar to format text, add tables, and insert images."
                     />

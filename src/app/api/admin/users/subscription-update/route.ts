@@ -1,4 +1,6 @@
-import { NextResponse, type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/config/auth";
 import { PrismaClient } from "@prisma/client";
 
@@ -30,7 +32,7 @@ export async function PATCH(req: NextRequest) {
     }
 
     // Build update data
-    const updateData: any = {
+    const updateData: Prisma.UserUpdateInput = {
       updatedAt: new Date(),
     };
 

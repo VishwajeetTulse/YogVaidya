@@ -2,6 +2,10 @@ import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
+import type { Prisma } from "@prisma/client";
+import type { TimeSlotDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
 
 // Schema for creating time slots
 const createTimeSlotSchema = z.object({
@@ -28,8 +32,6 @@ const _getTimeSlotsSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    console.log("🚀 Creating mentor time slot...");
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -74,8 +76,6 @@ export async function POST(request: Request) {
 
     if (isRecurring && recurringDays.length > 0) {
       // ENHANCED: Generate multiple time slots for recurring schedule
-      console.log(`🔄 Creating recurring time slots for days: ${recurringDays.join(", ")}`);
-
       const { generateRecurringTimeSlots } = await import("@/lib/recurring-slots-generator");
 
       const result = await generateRecurringTimeSlots({
@@ -94,8 +94,6 @@ export async function POST(request: Request) {
       });
 
       if (result.success) {
-        console.log(`✅ Successfully created ${result.slotsCreated} recurring time slots`);
-
         return NextResponse.json({
           success: true,
           message: `Created ${result.slotsCreated} recurring time slots for the next 7 days`,
@@ -117,7 +115,6 @@ export async function POST(request: Request) {
       }
     } else {
       // EXISTING: Create single time slot (non-recurring)
-      console.log("📅 Creating single time slot (non-recurring)");
 
       const timeSlotId = `slot_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -142,8 +139,6 @@ export async function POST(request: Request) {
           bookedBy: null,
         },
       });
-
-      console.log("✅ Single time slot created successfully:", timeSlot.id);
 
       return NextResponse.json({
         success: true,
@@ -180,8 +175,6 @@ export async function POST(request: Request) {
 
 export async function GET(request: Request) {
   try {
-    console.log("🔍 Fetching mentor time slots...");
-
     const { searchParams } = new URL(request.url);
     const mentorId = searchParams.get("mentorId");
     const date = searchParams.get("date");
@@ -191,7 +184,7 @@ export async function GET(request: Request) {
     const { prisma } = await import("@/lib/config/prisma");
 
     // Build filter for MongoDB query
-    const filter: any = {
+    const filter: Record<string, unknown> = {
       isActive: true,
     };
 
@@ -222,12 +215,12 @@ export async function GET(request: Request) {
     // Fetch time slots using raw MongoDB operation
     const timeSlotsResult = await prisma.$runCommandRaw({
       find: "mentorTimeSlot",
-      filter: filter,
+      filter: filter as unknown as Prisma.InputJsonValue,
       sort: { startTime: -1 }, // Changed to -1 to show recent time slots first
     });
 
     // Parse the MongoDB result
-    let timeSlots: any[] = [];
+    let timeSlots: TimeSlotDocument[] = [];
     if (
       timeSlotsResult &&
       typeof timeSlotsResult === "object" &&
@@ -237,11 +230,12 @@ export async function GET(request: Request) {
       "firstBatch" in timeSlotsResult.cursor &&
       Array.isArray(timeSlotsResult.cursor.firstBatch)
     ) {
-      timeSlots = timeSlotsResult.cursor.firstBatch;
+      timeSlots = (timeSlotsResult as unknown as MongoCommandResult<TimeSlotDocument>).cursor!
+        .firstBatch;
     }
 
     // Get mentor details for each slot
-    const mentorIds = [...new Set(timeSlots.map((slot: any) => slot.mentorId))];
+    const mentorIds = [...new Set(timeSlots.map((slot) => slot.mentorId))];
     const mentors = await prisma.user.findMany({
       where: {
         id: { in: mentorIds },
@@ -257,15 +251,18 @@ export async function GET(request: Request) {
     });
 
     // Enhance time slots with mentor data and availability check
-    let enhancedTimeSlots = timeSlots.map((slot: any) => {
+    let enhancedTimeSlots = timeSlots.map((slot) => {
       const mentor = mentors.find((m) => m.id === slot.mentorId);
 
       // Convert MongoDB Extended JSON dates to ISO strings for frontend
-      const convertDateToString = (dateValue: any): string => {
-        if (dateValue && typeof dateValue === "object" && dateValue.$date) {
-          return dateValue.$date;
+      const convertDateToString = (dateValue: DateValue): string => {
+        if (isMongoDate(dateValue)) {
+          return String(dateValue.$date);
         }
-        return dateValue;
+        if (dateValue instanceof Date) {
+          return dateValue.toISOString();
+        }
+        return String(dateValue);
       };
 
       return {
@@ -280,8 +277,6 @@ export async function GET(request: Request) {
 
     // If filtering by availability, also check for pending session bookings
     if (available === "true") {
-      console.log("🔍 Checking for pending bookings to filter unavailable slots...");
-
       const timeSlotIds = enhancedTimeSlots.map((slot) => slot._id);
 
       // Get pending session bookings for these time slots
@@ -305,7 +300,12 @@ export async function GET(request: Request) {
         cursor: {},
       });
 
-      let pendingBookings: any[] = [];
+      interface BookingCount {
+        _id: string;
+        count: number;
+      }
+
+      let pendingBookings: BookingCount[] = [];
       if (
         pendingBookingsResult &&
         typeof pendingBookingsResult === "object" &&
@@ -315,28 +315,19 @@ export async function GET(request: Request) {
         "firstBatch" in pendingBookingsResult.cursor &&
         Array.isArray(pendingBookingsResult.cursor.firstBatch)
       ) {
-        pendingBookings = pendingBookingsResult.cursor.firstBatch;
+        pendingBookings = (pendingBookingsResult as unknown as MongoCommandResult<BookingCount>)
+          .cursor!.firstBatch;
       }
 
-      console.log(`📊 Found pending bookings for ${pendingBookings.length} time slots`);
-
       // Filter out time slots that are fully booked (including pending bookings)
-      enhancedTimeSlots = enhancedTimeSlots.filter((slot: any) => {
+      enhancedTimeSlots = enhancedTimeSlots.filter((slot) => {
         const pendingCount = pendingBookings.find((pb) => pb._id === slot._id)?.count || 0;
         const totalBooked = (slot.currentStudents || 0) + pendingCount;
         const isAvailable = totalBooked < slot.maxStudents;
 
-        if (!isAvailable) {
-          console.log(
-            `🚫 Filtering out fully booked slot: ${slot._id} (${totalBooked}/${slot.maxStudents})`
-          );
-        }
-
         return isAvailable;
       });
     }
-
-    console.log(`✅ Found ${enhancedTimeSlots.length} time slots`);
 
     return NextResponse.json({
       success: true,

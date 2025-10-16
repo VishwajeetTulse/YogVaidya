@@ -3,6 +3,19 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import Razorpay from "razorpay";
+import type { SessionBookingDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
+import type { Prisma } from "@prisma/client";
+
+// Interface for timeSlot properties from MongoDB
+interface TimeSlotData {
+  _id?: string;
+  mentorId?: string;
+  sessionType?: string;
+  price?: number;
+  currentStudents?: number;
+  maxStudents?: number;
+}
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -16,7 +29,7 @@ const bookTimeSlotSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    console.log("🚀 Booking time slot...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -34,7 +47,7 @@ export async function POST(request: Request) {
       filter: { _id: timeSlotId, isActive: true },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     if (
       timeSlotResult &&
       typeof timeSlotResult === "object" &&
@@ -44,15 +57,18 @@ export async function POST(request: Request) {
       "firstBatch" in timeSlotResult.cursor &&
       Array.isArray(timeSlotResult.cursor.firstBatch)
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
     }
 
     if (!timeSlot) {
       return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
+    // Cast to our interface for property access
+    const slot = timeSlot as unknown as TimeSlotData;
+
     // Check if slot is already booked or at capacity
-    if (timeSlot.currentStudents >= timeSlot.maxStudents) {
+    if ((slot.currentStudents || 0) >= (slot.maxStudents || 1)) {
       return NextResponse.json(
         { success: false, error: "Time slot is fully booked" },
         { status: 409 }
@@ -64,13 +80,13 @@ export async function POST(request: Request) {
       find: "sessionBooking",
       filter: {
         userId: session.user.id,
-        mentorId: timeSlot.mentorId,
+        mentorId: slot.mentorId,
         status: { $in: ["PENDING", "CONFIRMED"] },
         paymentStatus: "COMPLETED",
       },
     });
 
-    let existingSessions: any[] = [];
+    let existingSessions: SessionBookingDocument[] = [];
     if (
       existingSessionsResult &&
       typeof existingSessionsResult === "object" &&
@@ -80,7 +96,9 @@ export async function POST(request: Request) {
       "firstBatch" in existingSessionsResult.cursor &&
       Array.isArray(existingSessionsResult.cursor.firstBatch)
     ) {
-      existingSessions = existingSessionsResult.cursor.firstBatch;
+      existingSessions = (
+        existingSessionsResult as unknown as MongoCommandResult<SessionBookingDocument>
+      ).cursor!.firstBatch;
     }
 
     if (existingSessions.length > 0) {
@@ -93,7 +111,7 @@ export async function POST(request: Request) {
     // Get mentor details
     const mentor = await prisma.user.findFirst({
       where: {
-        id: timeSlot.mentorId,
+        id: slot.mentorId,
         role: "MENTOR",
       },
       select: {
@@ -110,7 +128,7 @@ export async function POST(request: Request) {
     }
 
     // Create Razorpay order
-    const amount = timeSlot.price || mentor.sessionPrice || 500; // Use slot price or mentor default
+    const amount = (slot.price || mentor.sessionPrice || 500) as number; // Use slot price or mentor default
     const _orderId = `order_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
     const receipt = `ts_${Date.now()}`.substring(0, 13); // Limit to 13 characters
 
@@ -121,12 +139,12 @@ export async function POST(request: Request) {
       notes: {
         userId: session.user.id,
         timeSlotId: timeSlotId,
-        mentorId: timeSlot.mentorId,
-        sessionType: timeSlot.sessionType,
+        mentorId: slot.mentorId as string,
+        sessionType: slot.sessionType as string,
       },
     });
 
-    console.log("✅ Razorpay order created successfully:", razorpayOrder.id);
+
 
     return NextResponse.json({
       success: true,

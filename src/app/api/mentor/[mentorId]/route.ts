@@ -11,8 +11,6 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
 
     const { mentorId } = await params;
 
-    console.log(`🔍 Looking for mentor with ID: ${mentorId}`);
-
     const { prisma } = await import("@/lib/config/prisma");
 
     // First, let's check if the mentor exists at all
@@ -27,15 +25,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
       },
     });
 
-    console.log(`🔍 Mentor existence check:`, mentorExists);
-
     if (!mentorExists) {
-      console.log(`❌ Mentor not found with ID: ${mentorId}`);
       return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     if (mentorExists.role !== "MENTOR") {
-      console.log(`❌ User ${mentorId} is not a mentor, role: ${mentorExists.role}`);
       return NextResponse.json({ success: false, error: "User is not a mentor" }, { status: 400 });
     }
 

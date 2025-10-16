@@ -13,8 +13,6 @@ export async function GET(
   try {
     const { sessionId } = await params;
 
-    console.log(`🧪 Testing SessionService with ID: ${sessionId}`);
-
     // Test session lookup
     const lookupResult = await SessionService.findSession(sessionId);
 
@@ -35,7 +33,7 @@ export async function GET(
                 status: lookupResult.session.status,
                 type: lookupResult.session.sessionType,
                 scheduled: mongoDateToISOString(
-                  lookupResult.session.scheduledAt || lookupResult.session.scheduledTime
+                  (lookupResult.session.scheduledAt || lookupResult.session.scheduledTime) as Date
                 ),
               }
             : null,

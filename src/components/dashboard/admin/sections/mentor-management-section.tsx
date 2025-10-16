@@ -96,13 +96,6 @@ const StatCard = ({ title, value, description, icon, onClick }: StatCardProps) =
 export const MentorManagementSection = () => {
   const { logInfo, logWarning, logError } = useLogger();
 
-  // Debug the logger hook
-  console.log("🔍 useLogger hook initialized:", {
-    logInfo: typeof logInfo,
-    logWarning: typeof logWarning,
-    logError: typeof logError,
-  });
-
   const [stats, setStats] = useState<MentorStats | null>(null);
   const [mentors, setMentors] = useState<Mentor[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
@@ -167,7 +160,6 @@ export const MentorManagementSection = () => {
           const roleData = await roleRes.json();
           if (roleData?.user?.role) {
             setCurrentUserRole(roleData.user.role);
-            console.log("🔍 Detected current user role:", roleData.user.role);
           }
         } catch (roleError) {
           console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
@@ -270,16 +262,11 @@ export const MentorManagementSection = () => {
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ Mentor update API call succeeded");
         toast.success("Mentor updated successfully");
 
-        // Log mentor update with debugging
-        console.log("🔍 Attempting to log mentor update...");
-        console.log("🔍 logInfo function exists:", typeof logInfo);
-        console.log("🔍 Form data:", formData);
-
+        // Log mentor update
         try {
-          const logResult = await logInfo(
+          await logInfo(
             "MENTOR_PROFILE_UPDATED",
             currentUserRole,
             `Updated mentor profile: ${formData.email}`,
@@ -295,7 +282,6 @@ export const MentorManagementSection = () => {
               updateDate: new Date().toISOString(),
             }
           );
-          console.log("✅ Log result:", logResult);
         } catch (logError) {
           console.error("❌ Logging failed:", logError);
           toast.error("Failed to log the update. Check console for details.");

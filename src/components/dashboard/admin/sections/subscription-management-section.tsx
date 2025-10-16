@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -100,10 +100,6 @@ export default function SubscriptionManagementSection() {
     fetchStats();
   }, []);
 
-  useEffect(() => {
-    filterUsers();
-  }, [searchTerm, statusFilter, planFilter, users]);
-
   const fetchUsers = async () => {
     try {
       const response = await fetch("/api/admin/users/subscriptions");
@@ -157,7 +153,7 @@ export default function SubscriptionManagementSection() {
     }
   };
 
-  const filterUsers = () => {
+  const filterUsers = useCallback(() => {
     let filtered = users;
 
     // Search filter
@@ -190,7 +186,11 @@ export default function SubscriptionManagementSection() {
     }
 
     setFilteredUsers(filtered);
-  };
+  }, [users, searchTerm, statusFilter, planFilter]);
+
+  useEffect(() => {
+    filterUsers();
+  }, [filterUsers]);
 
   const handleEditUser = (user: UserSubscription) => {
     setSelectedUser(user);

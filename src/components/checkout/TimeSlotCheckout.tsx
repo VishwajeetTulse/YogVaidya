@@ -18,6 +18,15 @@ interface RazorpayResponse {
   razorpay_signature: string;
 }
 
+interface RazorpayError {
+  code?: string;
+  description?: string;
+  source?: string;
+  step?: string;
+  reason?: string;
+  metadata?: Record<string, unknown>;
+}
+
 interface TimeSlot {
   _id: string;
   startTime: string;
@@ -104,8 +113,6 @@ export default function TimeSlotCheckout() {
     setLoading(true);
 
     try {
-      console.log("🚀 Starting time slot booking process...");
-
       // First, create the booking (this reserves the slot)
       const bookingResponse = await fetch(`/api/mentor/timeslots/${timeSlotId}/book`, {
         method: "POST",
@@ -117,10 +124,7 @@ export default function TimeSlotCheckout() {
         }),
       });
 
-      console.log("📡 Booking response status:", bookingResponse.status);
-
       const bookingData = await bookingResponse.json();
-      console.log("📋 Booking response data:", bookingData);
 
       if (!bookingData.success) {
         // Handle specific error cases
@@ -219,11 +223,10 @@ export default function TimeSlotCheckout() {
         },
         modal: {
           ondismiss: function () {
-            console.log("⚠️ Payment dismissed/cancelled by user");
             toast.info("Payment cancelled. The session slot is still available for booking.");
             setLoading(false);
           },
-          onerror: function (error: any) {
+          onerror: function (error: RazorpayError) {
             console.error("💥 Razorpay error:", error);
             toast.error("Payment failed. Please try again.");
             setLoading(false);

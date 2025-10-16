@@ -14,12 +14,8 @@ export async function getUserBillingHistory(userEmail: string) {
       throw new Error("Invalid email format");
     }
 
-    console.log(`Fetching billing history for user: ${userEmail}`);
-
     // Get payment history from Razorpay
     const paymentHistory = await getPaymentHistory(userEmail, 50); // Increased limit to get more complete history
-
-    console.log(`Found ${paymentHistory.length} payments for user: ${userEmail}`);
 
     // Transform the data for better display
     const billingHistory = paymentHistory.map((payment) => {
@@ -64,10 +60,6 @@ export async function getUserBillingHistory(userEmail: string) {
     const validBillingHistory = billingHistory
       .filter((bill) => bill && bill.id)
       .sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
-
-    console.log(
-      `Returning ${validBillingHistory.length} valid billing records for user: ${userEmail}`
-    );
 
     return validBillingHistory;
   } catch (error) {

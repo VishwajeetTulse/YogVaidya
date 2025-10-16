@@ -28,13 +28,6 @@ export async function GET(req: NextRequest) {
     const previousMonthStart = new Date(now.getFullYear(), now.getMonth() - 1, 1);
     const previousMonthEnd = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
 
-    console.log("Growth calculation date ranges:", {
-      currentMonthStart: currentMonthStart.toISOString(),
-      previousMonthStart: previousMonthStart.toISOString(),
-      previousMonthEnd: previousMonthEnd.toISOString(),
-      note: "Tracking only paying customers with paymentAmount > 0",
-    });
-
     // Count new paying subscribers in current month
     // Only include users who have actually paid for subscriptions
     const currentMonthNewSubscribers = await prisma.user.count({
@@ -142,8 +135,6 @@ export async function GET(req: NextRequest) {
       breakdown: currentMonthBreakdown,
       isFirstMonth: previousMonthNewSubscribers === 0 && currentMonthNewSubscribers > 0,
     };
-
-    console.log("Growth statistics calculated:", growthStats);
 
     return NextResponse.json({
       success: true,

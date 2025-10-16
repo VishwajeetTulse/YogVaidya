@@ -5,6 +5,7 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
+  output   = "../node_modules/.prisma/client"
 }
 
 enum Role {
@@ -119,7 +120,7 @@ model User {
   trialEndDate          DateTime?
   autoRenewal           Boolean?          // Changed from default(true) to optional
   trialUsed             Boolean           @default(false)
-  
+
   sessionPrice          Float?            // Price for one-on-one sessions (in rupees)
 
   sessions              Session[]
@@ -133,8 +134,8 @@ model User {
   mentorTimeSlots       MentorTimeSlot[]  @relation("MentorTimeSlots")
   studentDietPlans      DietPlan[]        @relation("StudentDietPlans")
   mentorDietPlans       DietPlan[]        @relation("MentorDietPlans")
-  
-  
+
+
   @@unique([email])
   @@map("user")
 }
@@ -199,16 +200,16 @@ model MentorApplication {
   userId         String?
   status         String?  // <-- Add this line for application status
   mentorType     MentorType?
-  
+
   // Relations
   timeSlots      MentorTimeSlot[]
   sessionBookings SessionBooking[]
-  
+
   @@map("mentor_application")
 }
 
 model SystemLog {
-  id        String      @id @map("_id") 
+  id        String      @id @map("_id")
   timestamp DateTime    @default(now())
   userId    String?
   user      User?       @relation(fields: [userId], references: [id], onDelete: SetNull)
@@ -229,7 +230,7 @@ model SystemLog {
 }
 
 model Schedule {
-  id            String         @id @map("_id") 
+  id            String         @id @map("_id")
   title         String
   scheduledTime DateTime
   link          String
@@ -237,10 +238,10 @@ model Schedule {
   sessionType   SessionType
   status        ScheduleStatus @default(SCHEDULED)
   mentorId      String
-  
+
   // Manual start tracking (prevents auto-completion if session manually started)
   manualStartTime   DateTime?      // When the session was actually started
-  
+
   mentor        User           @relation(fields: [mentorId], references: [id], onDelete: Cascade)
   sessionBookings SessionBooking[] @relation("ScheduleBookings")
   createdAt     DateTime       @default(now())
@@ -273,7 +274,7 @@ model MentorTimeSlot {
   isActive          Boolean        @default(true)  // Whether this slot is available for booking
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
-  
+
   // Relations
   mentor            User           @relation("MentorTimeSlots", fields: [mentorId], references: [id], onDelete: Cascade)
   mentorApplication MentorApplication? @relation(fields: [mentorApplicationId], references: [id], onDelete: SetNull)
@@ -302,13 +303,13 @@ model SessionBooking {
   paymentDetails    Json?          // Payment information
   amount            Float?         // Payment amount
   paymentStatus     String?        // Payment status
-  
+
   // Manual start tracking (prevents auto-completion if session manually started)
   manualStartTime   DateTime?      // When the session was actually started
-  
+
   createdAt         DateTime       @default(now())
   updatedAt         DateTime       @updatedAt
-  
+
   // Relations
   user              User           @relation("StudentBookings", fields: [userId], references: [id], onDelete: Cascade)
   mentor            User           @relation("MentorBookings", fields: [mentorId], references: [id], onDelete: Cascade)
@@ -336,19 +337,19 @@ model Ticket {
   status          TicketStatus   @default(OPEN)
   priority        TicketPriority @default(MEDIUM)
   category        TicketCategory
-  
+
   // User who created the ticket
   userId          String
   user            User           @relation(fields: [userId], references: [id], onDelete: Cascade)
-  
+
   // Moderator assigned to the ticket (optional)
   assignedToId    String?
   assignedTo      User?          @relation("AssignedTickets", fields: [assignedToId], references: [id], onDelete: SetNull)
-  
+
   // Metadata
   tags            String[]       @default([])
   metadata        Json?          // For storing additional context like related entities
-  
+
   // Timestamps
   createdAt       DateTime       @default(now())
   updatedAt       DateTime       @updatedAt
@@ -366,7 +367,7 @@ model Ticket {
 
 model DietPlan {
   id              String          @id @default(auto()) @map("_id") @db.ObjectId
-  
+
   // Relationships
   studentId       String
   student         User            @relation("StudentDietPlans", fields: [studentId], references: [id], onDelete: Cascade)
@@ -374,25 +375,25 @@ model DietPlan {
   mentor          User            @relation("MentorDietPlans", fields: [mentorId], references: [id], onDelete: Cascade)
   sessionId       String?         @db.ObjectId // Optional - link to specific booking
   session         SessionBooking? @relation("SessionDietPlans", fields: [sessionId], references: [id], onDelete: SetNull)
-  
+
   // Content - TipTap stores as JSON
   content         Json            // Rich text content (ProseMirror JSON format)
-  
+
   // Metadata
   title           String          // e.g., "7-Day Weight Loss Plan"
   description     String?         // Brief summary for list view
   tags            String[]        @default([]) // e.g., ["weight-loss", "vegetarian", "1800-cal"]
-  
+
   // Status
   isActive        Boolean         @default(true)
   isDraft         Boolean         @default(false)
-  
+
   // Tracking
   viewCount       Int             @default(0)
   lastViewedAt    DateTime?
   createdAt       DateTime        @default(now())
   updatedAt       DateTime        @updatedAt
-  
+
   @@index([studentId])
   @@index([mentorId])
   @@index([sessionId])

@@ -3,6 +3,19 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
+import type { Prisma, SessionType } from "@prisma/client";
+
+// Interface for timeSlot properties from MongoDB
+interface TimeSlotData {
+  _id?: string;
+  mentorId?: string;
+  sessionType?: string;
+  startTime?: string;
+  endTime?: string;
+  price?: number;
+  currentStudents?: number;
+  maxStudents?: number;
+}
 
 const verifyTimeSlotPaymentSchema = z.object({
   razorpay_order_id: z.string(),
@@ -14,7 +27,7 @@ const verifyTimeSlotPaymentSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    console.log("🔍 Verifying time slot payment...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -47,7 +60,7 @@ export async function POST(request: Request) {
       filter: { _id: timeSlotId },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     if (
       timeSlotResult &&
       typeof timeSlotResult === "object" &&
@@ -57,17 +70,20 @@ export async function POST(request: Request) {
       "firstBatch" in timeSlotResult.cursor &&
       Array.isArray(timeSlotResult.cursor.firstBatch)
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
     }
 
     if (!timeSlot) {
       return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
+    // Cast to our interface for property access
+    const slot = timeSlot as unknown as TimeSlotData;
+
     // Get mentor details
     const mentor = await prisma.user.findFirst({
       where: {
-        id: timeSlot.mentorId,
+        id: slot.mentorId,
         role: "MENTOR",
       },
       select: {
@@ -86,7 +102,7 @@ export async function POST(request: Request) {
     // Get mentor application for reference
     const mentorApplication = await prisma.mentorApplication.findFirst({
       where: {
-        OR: [{ userId: timeSlot.mentorId }, { email: mentor.email }],
+        OR: [{ userId: slot.mentorId }, { email: mentor.email }],
         status: "approved",
       },
     });
@@ -95,19 +111,19 @@ export async function POST(request: Request) {
     const sessionBookingData = {
       _id: `session_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`,
       userId: session.user.id,
-      mentorId: timeSlot.mentorId,
+      mentorId: slot.mentorId,
       mentorApplicationId: mentorApplication?.id || null,
       timeSlotId: timeSlotId,
-      sessionType: timeSlot.sessionType,
-      scheduledAt: new Date(timeSlot.startTime),
+      sessionType: slot.sessionType,
+      scheduledAt: new Date(slot.startTime!),
       status: "CONFIRMED",
       notes: notes || "",
-      amount: timeSlot.price || mentor.sessionPrice || 500,
+      amount: slot.price || mentor.sessionPrice || 500,
       paymentStatus: "COMPLETED",
       paymentDetails: {
         razorpayOrderId: razorpay_order_id,
         razorpayPaymentId: razorpay_payment_id,
-        amount: timeSlot.price || mentor.sessionPrice || 500,
+        amount: slot.price || mentor.sessionPrice || 500,
         currency: "INR",
       },
       // Removed createdAt and updatedAt - let Prisma auto-generate these
@@ -118,7 +134,7 @@ export async function POST(request: Request) {
 
     // Calculate duration from timeSlot
     const sessionDuration = Math.round(
-      (timeSlot.endTime.getTime() - timeSlot.startTime.getTime()) / (1000 * 60)
+      (new Date(slot.endTime!).getTime() - new Date(slot.startTime!).getTime()) / (1000 * 60)
     );
 
     // Create the session booking using Prisma to ensure proper date handling
@@ -126,23 +142,23 @@ export async function POST(request: Request) {
       data: {
         id: sessionBookingData._id,
         userId: sessionBookingData.userId,
-        mentorId: sessionBookingData.mentorId,
+        mentorId: sessionBookingData.mentorId as string,
         mentorApplicationId: sessionBookingData.mentorApplicationId,
         timeSlotId: sessionBookingData.timeSlotId,
-        sessionType: sessionBookingData.sessionType,
+        sessionType: sessionBookingData.sessionType as SessionType,
         scheduledAt: sessionBookingData.scheduledAt,
         duration: sessionDuration,
         status: "SCHEDULED", // Use proper enum value
         notes: sessionBookingData.notes,
         paymentStatus: sessionBookingData.paymentStatus,
-        amount: sessionBookingData.amount,
+        amount: sessionBookingData.amount as number,
         paymentDetails: sessionBookingData.paymentDetails,
       },
     });
 
     // Update the time slot to mark as booked
-    const updatedCurrentStudents = timeSlot.currentStudents + 1;
-    const isNowBooked = updatedCurrentStudents >= timeSlot.maxStudents;
+    const updatedCurrentStudents = (slot.currentStudents || 0) + 1;
+    const isNowBooked = updatedCurrentStudents >= (slot.maxStudents || 1);
 
     await prisma.$runCommandRaw({
       update: "mentorTimeSlot",
@@ -152,11 +168,11 @@ export async function POST(request: Request) {
           currentStudents: updatedCurrentStudents,
           isBooked: isNowBooked,
           bookedBy: timeSlot.maxStudents === 1 ? session.user.id : timeSlot.bookedBy,
-        }),
+        }) as Prisma.InputJsonValue,
       },
     });
 
-    console.log("✅ Time slot booking completed successfully");
+
 
     return NextResponse.json({
       success: true,

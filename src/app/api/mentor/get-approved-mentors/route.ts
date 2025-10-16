@@ -42,9 +42,7 @@ export async function GET() {
             select: { isAvailable: true },
           });
           isAvailable = availabilityData?.isAvailable ?? true;
-          console.log(
-            `🔄 Mentor ${application.name} (${application.email}): isAvailable = ${isAvailable}`
-          );
+
         } catch (error) {
           console.error(`Error fetching availability for ${application.email}:`, error);
         }

@@ -3,6 +3,7 @@
 import React from "react";
 import { UnifiedDashboard } from "../shared/unified-dashboard";
 import { MODERATOR_SIDEBAR_MENU_ITEMS } from "../moderator/constants";
+import type { ModeratorSectionProps } from "../moderator/types";
 
 // Import all moderator section components
 import { OverviewSection } from "../moderator/sections/overview-section";
@@ -23,7 +24,7 @@ const MODERATOR_SECTION_COMPONENTS = {
   "mentor-management": MentorManagementSection,
   analytics: AnalyticsSection,
   subscriptions: SubscriptionSection,
-  tickets: (props: any) => (
+  tickets: (props: ModeratorSectionProps) => (
     <TicketsSection userRole="MODERATOR" currentUserId={props.userDetails?.id} />
   ),
   settings: SettingsSection,

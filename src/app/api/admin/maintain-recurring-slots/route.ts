@@ -11,9 +11,16 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { maintainRecurringSlots } from "@/lib/recurring-slots-generator";
 
+// Interface for statistics data from MongoDB
+interface StatisticsData {
+  totalRecurringSlots: number;
+  futureSlots: number;
+  pastSlots: number;
+}
+
 export async function POST(_request: Request) {
   try {
-    console.log("🔧 Manual recurring slots maintenance triggered via API");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -39,13 +46,11 @@ export async function POST(_request: Request) {
       );
     }
 
-    console.log(`👤 Maintenance triggered by: ${user.role} (${session.user.id})`);
-
     // Run the maintenance function
     const result = await maintainRecurringSlots();
 
     if (result.success) {
-      console.log(`✅ Manual maintenance completed successfully`);
+
 
       return NextResponse.json({
         success: true,
@@ -137,10 +142,10 @@ export async function GET(_request: Request) {
       stats.cursor &&
       typeof stats.cursor === "object" &&
       "firstBatch" in stats.cursor &&
-      Array.isArray((stats.cursor as any).firstBatch) &&
-      (stats.cursor as any).firstBatch.length > 0
+      Array.isArray((stats.cursor as { firstBatch: unknown[] }).firstBatch) &&
+      (stats.cursor as { firstBatch: unknown[] }).firstBatch.length > 0
     ) {
-      statistics = (stats.cursor as any).firstBatch[0];
+      statistics = (stats.cursor as unknown as { firstBatch: StatisticsData[] }).firstBatch[0];
     }
 
     return NextResponse.json({

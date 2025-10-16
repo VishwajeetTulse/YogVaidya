@@ -28,6 +28,14 @@ import {
 } from "@/components/ui/table";
 import LogsExportSection from "./logs-export-section";
 
+// Type for ticket metadata
+interface TicketMetadata {
+  ticketNumber?: string;
+  oldStatus?: string;
+  newStatus?: string;
+  assignedToName?: string;
+}
+
 export const LogsSection: React.FC<AdminSectionProps> = () => {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [isLoading, setIsLoading] = useState(true);
@@ -324,25 +332,26 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
                       <TableCell className="max-w-xs">
                         {log.category === "TICKET" && log.metadata ? (
                           <div className="space-y-1 text-xs text-gray-600">
-                            {(log.metadata as any).ticketNumber && (
+                            {(log.metadata as TicketMetadata).ticketNumber && (
                               <div className="flex items-center gap-1">
                                 <span className="font-semibold">Ticket:</span>
                                 <Badge variant="outline" className="text-xs">
-                                  {(log.metadata as any).ticketNumber}
+                                  {(log.metadata as TicketMetadata).ticketNumber}
                                 </Badge>
                               </div>
                             )}
-                            {(log.metadata as any).oldStatus && (log.metadata as any).newStatus && (
-                              <div className="text-xs">
-                                <span className="font-semibold">Status:</span>{" "}
-                                {(log.metadata as any).oldStatus} →{" "}
-                                {(log.metadata as any).newStatus}
-                              </div>
-                            )}
-                            {(log.metadata as any).assignedToName && (
+                            {(log.metadata as TicketMetadata).oldStatus &&
+                              (log.metadata as TicketMetadata).newStatus && (
+                                <div className="text-xs">
+                                  <span className="font-semibold">Status:</span>{" "}
+                                  {(log.metadata as TicketMetadata).oldStatus} →{" "}
+                                  {(log.metadata as TicketMetadata).newStatus}
+                                </div>
+                              )}
+                            {(log.metadata as TicketMetadata).assignedToName && (
                               <div className="text-xs">
                                 <span className="font-semibold">Assigned to:</span>{" "}
-                                {(log.metadata as any).assignedToName}
+                                {(log.metadata as TicketMetadata).assignedToName}
                               </div>
                             )}
                           </div>

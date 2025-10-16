@@ -7,10 +7,15 @@
 import { ObjectId } from "mongodb";
 import { prisma } from "@/lib/config/prisma";
 import { createDateUpdate } from "@/lib/utils/date-utils";
+import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
+import type { Prisma, ScheduleStatus } from "@prisma/client";
+
+// Union type for sessions from either collection
+type SessionDocument = SessionBookingDocument | ScheduleDocument;
 
 export interface SessionLookupResult {
   found: boolean;
-  session: any | null;
+  session: SessionDocument | null;
   collection: "sessionBooking" | "schedule" | null;
   error?: string;
 }
@@ -21,13 +26,23 @@ export interface SessionUpdateResult {
   error?: string;
 }
 
+interface SessionStatResult {
+  _id: string;
+  count: number;
+}
+
+interface MongoCommandResult {
+  cursor: {
+    firstBatch: SessionStatResult[];
+  };
+}
+
 export class SessionService {
   /**
    * Find a session by ID across all collections
    */
   static async findSession(sessionId: string): Promise<SessionLookupResult> {
     try {
-      console.log(`🔍 Looking for session: ${sessionId}`);
 
       // 1. Try sessionBooking collection first
       const sessionBookingResult = await prisma.$runCommandRaw({
@@ -36,8 +51,9 @@ export class SessionService {
       });
 
       if (this.isValidResult(sessionBookingResult)) {
-        const session = (sessionBookingResult as any).cursor.firstBatch[0];
-        console.log(`✅ Found session in sessionBooking collection: ${session._id}`);
+        const session = (sessionBookingResult as { cursor: { firstBatch: Prisma.JsonObject[] } })
+          .cursor.firstBatch[0] as unknown as SessionDocument;
+
         return {
           found: true,
           session,
@@ -52,8 +68,9 @@ export class SessionService {
       });
 
       if (this.isValidResult(scheduleResult)) {
-        const session = (scheduleResult as any).cursor.firstBatch[0];
-        console.log(`✅ Found session in schedule collection: ${session._id}`);
+        const session = (scheduleResult as { cursor: { firstBatch: Prisma.JsonObject[] } }).cursor
+          .firstBatch[0] as unknown as SessionDocument;
+
         return {
           found: true,
           session,
@@ -71,8 +88,10 @@ export class SessionService {
           });
 
           if (this.isValidResult(objectIdSessionBooking)) {
-            const session = (objectIdSessionBooking as any).cursor.firstBatch[0];
-            console.log(`✅ Found session in sessionBooking collection (ObjectId): ${session._id}`);
+            const session = (
+              objectIdSessionBooking as { cursor: { firstBatch: Prisma.JsonObject[] } }
+            ).cursor.firstBatch[0] as unknown as SessionDocument;
+
             return {
               found: true,
               session,
@@ -87,20 +106,20 @@ export class SessionService {
           });
 
           if (this.isValidResult(objectIdSchedule)) {
-            const session = (objectIdSchedule as any).cursor.firstBatch[0];
-            console.log(`✅ Found session in schedule collection (ObjectId): ${session._id}`);
+            const session = (objectIdSchedule as { cursor: { firstBatch: Prisma.JsonObject[] } })
+              .cursor.firstBatch[0] as unknown as SessionDocument;
+
             return {
               found: true,
               session,
               collection: "schedule",
             };
           }
-        } catch (objectIdError) {
-          console.log(`⚠️ ObjectId conversion failed: ${objectIdError}`);
+        } catch {
+          // ObjectId conversion failed, continue
         }
       }
 
-      console.log(`❌ Session not found: ${sessionId}`);
       return {
         found: false,
         session: null,
@@ -124,10 +143,10 @@ export class SessionService {
   static async updateSessionStatus(
     sessionId: string,
     newStatus: string,
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     additionalUpdates: Record<string, any> = {}
   ): Promise<SessionUpdateResult> {
     try {
-      console.log(`🔄 Updating session ${sessionId} to status: ${newStatus}`);
 
       // First find the session
       const lookupResult = await this.findSession(sessionId);
@@ -141,7 +160,7 @@ export class SessionService {
       }
 
       // Prepare update data with proper Date objects
-      const updateData: any = {
+      const updateData = {
         $set: createDateUpdate({
           status: newStatus,
           ...additionalUpdates,
@@ -154,32 +173,26 @@ export class SessionService {
         updates: [
           {
             q: { _id: sessionId },
-            u: updateData,
+            u: updateData as Prisma.InputJsonValue,
           },
         ],
       });
 
-      const updatedCount = (updateResult as any)?.nModified || 0;
-      console.log(`✅ Updated ${updatedCount} session(s) in ${lookupResult.collection}`);
+      const updatedCount = (updateResult as { nModified?: number })?.nModified || 0;
 
       // If this is a schedule entry, also update related session bookings
       if (lookupResult.collection === "schedule") {
         // Use Prisma client operations to avoid string date conversion
         try {
-          const relatedBookingsUpdate = await prisma.sessionBooking.updateMany({
+          await prisma.sessionBooking.updateMany({
             where: { timeSlotId: sessionId },
             data: {
-              status: status as any, // Type cast to handle ScheduleStatus enum
+              status: status as unknown as ScheduleStatus,
               updatedAt: new Date(), // Ensure proper Date object
             },
           });
-
-          console.log(`✅ Updated ${relatedBookingsUpdate.count} related session booking(s)`);
-        } catch (error) {
-          console.log(
-            "⚠️ Could not update related bookings (non-critical):",
-            (error as Error).message
-          );
+        } catch {
+          // Related bookings update failed, continue
         }
       }
 
@@ -210,19 +223,21 @@ export class SessionService {
    * Complete a session (mark as COMPLETED)
    */
   static async completeSession(sessionId: string): Promise<SessionUpdateResult> {
-    console.log(`✅ Completing session ${sessionId}`);
+
     return this.updateSessionStatus(sessionId, "COMPLETED", {});
   }
 
   /**
    * Check if a MongoDB result is valid
    */
-  private static isValidResult(result: any): boolean {
+  private static isValidResult(result: unknown): boolean {
     return (
-      result &&
+      result !== null &&
+      result !== undefined &&
       typeof result === "object" &&
       "cursor" in result &&
-      result.cursor &&
+      result.cursor !== null &&
+      result.cursor !== undefined &&
       typeof result.cursor === "object" &&
       "firstBatch" in result.cursor &&
       Array.isArray(result.cursor.firstBatch) &&
@@ -272,11 +287,11 @@ export class SessionService {
         scheduledSessions: 0,
         ongoingSessions: 0,
         completedSessions: 0,
-        scheduleEntries: Number((scheduleStats as any)?.n) || 0,
+        scheduleEntries: Number((scheduleStats as { n?: number })?.n) || 0,
       };
 
       if (this.isValidResult(sessionBookingStats)) {
-        (sessionBookingStats as any).cursor.firstBatch.forEach((stat: any) => {
+        (sessionBookingStats as unknown as MongoCommandResult).cursor.firstBatch.forEach((stat) => {
           stats.totalSessions += stat.count;
           switch (stat._id) {
             case "SCHEDULED":

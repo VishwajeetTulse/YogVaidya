@@ -5,6 +5,9 @@ import { prisma } from "@/lib/config/prisma";
 import { getUserSubscription } from "@/lib/subscriptions";
 import { headers } from "next/headers";
 import { type Prisma } from "@prisma/client";
+import type { SessionBookingDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
 
 export interface UserMentorData {
   id: string;
@@ -58,7 +61,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
     // Get user subscription details
     const subscriptionResult = await getUserSubscription(session.user.id);
-    console.log("Subscription Result:", subscriptionResult);
+
     if (!subscriptionResult.success) {
       return { success: false, error: "Failed to get subscription details" };
     }
@@ -86,10 +89,6 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     // 4. Has multiple sessions with the user (indicates ongoing relationship)
     const fetchMentorsFromPaidBookings = async (userId: string): Promise<UserMentorData[]> => {
       try {
-        console.log(
-          "🔍 Fetching mentors with ongoing relationships from paid session bookings for user:",
-          userId
-        );
 
         // First, let's check if there are any session bookings for this user at all
         const allUserBookings = await prisma.$runCommandRaw({
@@ -104,7 +103,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           cursor: {},
         });
 
-        let allBookings: any[] = [];
+        let allBookings: SessionBookingDocument[] = [];
         if (
           allUserBookings &&
           typeof allUserBookings === "object" &&
@@ -114,12 +113,12 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           "firstBatch" in allUserBookings.cursor &&
           Array.isArray(allUserBookings.cursor.firstBatch)
         ) {
-          allBookings = allUserBookings.cursor.firstBatch;
+          allBookings = (allUserBookings as unknown as MongoCommandResult<SessionBookingDocument>)
+            .cursor!.firstBatch;
         }
 
-        console.log(`🔍 Total session bookings for user: ${allBookings.length}`);
         if (allBookings.length > 0) {
-          console.log("📋 Sample booking:", JSON.stringify(allBookings[0], null, 2));
+
         }
 
         // Use raw MongoDB aggregation to fetch session bookings with mentor details
@@ -254,7 +253,19 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           cursor: {},
         });
 
-        let mentorsFromBookings: any[] = [];
+        interface MentorWithRelationship {
+          id: string;
+          name: string;
+          email: string;
+          mentorType: Record<string, unknown>;
+          image: string | null;
+          phone: string | null;
+          createdAt: DateValue;
+          sessionCount: number;
+          hasOngoingRelationship: boolean;
+        }
+
+        let mentorsFromBookings: MentorWithRelationship[] = [];
         if (
           sessionBookingsResult &&
           typeof sessionBookingsResult === "object" &&
@@ -264,33 +275,16 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
           "firstBatch" in sessionBookingsResult.cursor &&
           Array.isArray(sessionBookingsResult.cursor.firstBatch)
         ) {
-          mentorsFromBookings = sessionBookingsResult.cursor.firstBatch;
+          mentorsFromBookings = (
+            sessionBookingsResult as unknown as MongoCommandResult<MentorWithRelationship>
+          ).cursor!.firstBatch;
         }
-
-        console.log(
-          `📅 Found ${mentorsFromBookings.length} mentors with ongoing relationships (excluding completed one-to-one sessions)`
-        );
 
         // Debug: Log the raw result for troubleshooting
         if (mentorsFromBookings.length > 0) {
-          console.log(
-            "🔍 Mentors with ongoing relationships:",
-            JSON.stringify(
-              mentorsFromBookings.map((m) => ({
-                id: m.id,
-                name: m.name,
-                email: m.email,
-                sessionCount: m.sessionCount,
-                hasOngoingRelationship: m.hasOngoingRelationship,
-              })),
-              null,
-              2
-            )
-          );
+
         } else {
-          console.log(
-            "🔍 No mentors with ongoing relationships found - user may only have completed one-to-one sessions"
-          );
+
         }
 
         // Get mentor applications for additional data
@@ -312,17 +306,29 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
         const mentorApplicationMap = new Map(mentorApplications.map((app) => [app.email, app]));
 
+        // Helper to convert dates
+        const convertDate = (dateValue: DateValue): Date => {
+          if (!dateValue) return new Date();
+          if (isMongoDate(dateValue)) return new Date(dateValue.$date);
+          if (dateValue instanceof Date) return dateValue;
+          return new Date(dateValue);
+        };
+
         // Format the mentors data
         return mentorsFromBookings.map((mentor) => {
           const mentorApplication = mentorApplicationMap.get(mentor.email);
+          const mentorType =
+            (mentor.mentorType as { type?: string } | null)?.type ||
+            mentorApplication?.mentorType ||
+            null;
           return {
             id: mentor.id,
             name: mentor.name,
             email: mentor.email,
-            mentorType: mentor.mentorType || mentorApplication?.mentorType || null,
+            mentorType: mentorType as "YOGAMENTOR" | "MEDITATIONMENTOR" | "DIETPLANNER" | null,
             image: mentor.image,
             phone: mentor.phone,
-            createdAt: new Date(mentor.createdAt),
+            createdAt: convertDate(mentor.createdAt),
             experience: mentorApplication?.experience || undefined,
             expertise: mentorApplication?.expertise || undefined,
             certifications: mentorApplication?.certifications || undefined,
@@ -342,11 +348,11 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
     if (!subscription) {
       // User has no subscription record, check for paid mentor bookings
-      console.log("👤 User has no subscription, checking for paid mentor bookings...");
+
       const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
 
       if (paidMentors.length > 0) {
-        console.log(`✅ Found ${paidMentors.length} mentors from paid bookings, showing mentors`);
+
         return {
           success: true,
           data: {
@@ -387,17 +393,14 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         ? new Date(subscription.subscriptionEndDate) <= now
         : false;
     }
-    console.log("Needs Subscription:", needsSubscription);
 
     // If user needs subscription, check for paid mentor bookings first
     if (needsSubscription) {
-      console.log("👤 User needs subscription, checking for paid mentor bookings...");
+
       const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
 
       if (paidMentors.length > 0) {
-        console.log(
-          `✅ Found ${paidMentors.length} mentors from paid bookings, showing mentors despite expired subscription`
-        );
+
         return {
           success: true,
           data: {
@@ -517,7 +520,15 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       // FLOURISH gets both types (no filter)
 
       // Get sessions with mentor using raw query to handle datetime conversion
-      const matchConditions: any = {
+      interface MatchConditions {
+        mentorId: string;
+        scheduledTime: {
+          $gte: Date;
+        };
+        sessionType?: string;
+      }
+
+      const matchConditions: MatchConditions = {
         mentorId: assignedMentor.id,
         scheduledTime: {
           $gte: subscription!.subscriptionStartDate || new Date(0),
@@ -525,14 +536,14 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       };
 
       if (sessionTypeFilter.sessionType) {
-        matchConditions.sessionType = sessionTypeFilter.sessionType;
+        matchConditions.sessionType = String(sessionTypeFilter.sessionType);
       }
 
       const sessionsWithMentorResult = await prisma.$runCommandRaw({
         aggregate: "Schedule",
         pipeline: [
           {
-            $match: matchConditions,
+            $match: matchConditions as unknown as Prisma.InputJsonValue,
           },
           {
             $addFields: {
@@ -554,7 +565,14 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         cursor: {},
       });
 
-      let sessionsWithMentor: any[] = [];
+      interface ScheduleSession {
+        _id: string;
+        scheduledTime: Date | string | null;
+        status?: string;
+        [key: string]: unknown;
+      }
+
+      let sessionsWithMentor: ScheduleSession[] = [];
       if (
         sessionsWithMentorResult &&
         typeof sessionsWithMentorResult === "object" &&
@@ -564,22 +582,33 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         "firstBatch" in sessionsWithMentorResult.cursor &&
         Array.isArray(sessionsWithMentorResult.cursor.firstBatch)
       ) {
-        sessionsWithMentor = sessionsWithMentorResult.cursor.firstBatch.map((session: any) => ({
-          ...session,
-          scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-        }));
+        sessionsWithMentor = sessionsWithMentorResult.cursor.firstBatch.map(
+          (session): ScheduleSession => {
+            const jsonObj = session as Prisma.JsonObject;
+            return {
+              ...jsonObj,
+              _id: String(jsonObj._id || ""),
+              scheduledTime: jsonObj.scheduledTime ? new Date(String(jsonObj.scheduledTime)) : null,
+            };
+          }
+        );
       }
 
       const currentTime = new Date();
       sessionStats = {
         totalScheduled: sessionsWithMentor.length,
         upcomingWithMentor: sessionsWithMentor.filter(
-          (s) => new Date(s.scheduledTime) > currentTime && (s.status === "SCHEDULED" || !s.status)
+          (s) =>
+            s.scheduledTime &&
+            new Date(s.scheduledTime) > currentTime &&
+            (s.status === "SCHEDULED" || !s.status)
         ).length,
         completedWithMentor: sessionsWithMentor.filter(
           (s) =>
             s.status === "COMPLETED" ||
-            (new Date(s.scheduledTime) <= currentTime && (!s.status || s.status === "SCHEDULED"))
+            (s.scheduledTime &&
+              new Date(s.scheduledTime) <= currentTime &&
+              (!s.status || s.status === "SCHEDULED"))
         ).length,
       };
     }

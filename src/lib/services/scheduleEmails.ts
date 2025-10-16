@@ -13,10 +13,8 @@ export function scheduleEmailReminder(session: Schedule) {
     return;
   }
 
-  console.log(`📆 Scheduling email for session '${session.id}' at ${reminderTime.toString()}`);
-
   schedule.scheduleJob(reminderTime, async () => {
-    console.log(`📩 Sending email for session '${session.id}'`);
+
     await sendEmail(session);
   });
 }

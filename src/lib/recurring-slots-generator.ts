@@ -3,6 +3,9 @@
  * Handles generation of individual time slot instances for recurring slots
  */
 
+import type { SessionType } from "@prisma/client";
+import type { TimeSlotDocument } from "@/lib/types/sessions";
+
 interface RecurringSlotConfig {
   mentorId: string;
   sessionType: string;
@@ -21,7 +24,7 @@ interface RecurringSlotConfig {
 interface SlotGenerationResult {
   success: boolean;
   slotsCreated: number;
-  slots: any[];
+  slots: TimeSlotDocument[];
   error?: string;
 }
 
@@ -71,14 +74,6 @@ export async function generateRecurringTimeSlots(
           return tomorrow;
         })();
 
-    console.log(
-      `🔄 Generating recurring slots for ${generateForDays} days starting from ${generationStartDate.toDateString()}...`
-    );
-    console.log(`📅 Recurring days: ${recurringDays.join(", ")}`);
-    console.log(
-      `📅 Generation window: ${generationStartDate.toDateString()} to ${new Date(generationStartDate.getTime() + (generateForDays - 1) * 24 * 60 * 60 * 1000).toDateString()}`
-    );
-
     // Generate slots for the next N days starting from the specified date
     for (let dayOffset = 0; dayOffset < generateForDays; dayOffset++) {
       const targetDate = new Date(generationStartDate.getTime() + dayOffset * 24 * 60 * 60 * 1000);
@@ -94,7 +89,6 @@ export async function generateRecurringTimeSlots(
 
         // Double-check: Skip if slot is somehow in the past (should never happen now)
         if (slotStart <= now) {
-          console.log(`⚠️  Unexpected: Skipping past slot: ${slotStart.toLocaleString()}`);
           continue;
         }
 
@@ -120,7 +114,6 @@ export async function generateRecurringTimeSlots(
         };
 
         slotsToCreate.push(slotData);
-        console.log(`✅ Prepared slot for ${dayName} ${slotStart.toLocaleString()}`);
       }
     }
 
@@ -151,7 +144,7 @@ export async function generateRecurringTimeSlots(
             mentorApplicationId: slot.mentorApplicationId,
             startTime: slot.startTime,
             endTime: slot.endTime,
-            sessionType: slot.sessionType as any, // Type assertion for enum
+            sessionType: slot.sessionType as unknown as SessionType,
             maxStudents: slot.maxStudents,
             currentStudents: slot.currentStudents,
             isRecurring: slot.isRecurring,
@@ -164,18 +157,7 @@ export async function generateRecurringTimeSlots(
             bookedBy: slot.bookedBy,
           })),
         });
-
-        console.log(
-          `🎉 Generated ${uniqueSlots.length} recurring time slots for mentor ${mentorId}`
-        );
-        if (slotsToCreate.length > uniqueSlots.length) {
-          console.log(`ℹ️  Skipped ${slotsToCreate.length - uniqueSlots.length} duplicate slots`);
-        }
-      } else {
-        console.log(`ℹ️  All ${slotsToCreate.length} slots already exist - no duplicates created`);
       }
-    } else {
-      console.log(`ℹ️  No slots generated - no matching days in the next ${generateForDays} days`);
     }
 
     const actualSlotsCreated =
@@ -194,7 +176,7 @@ export async function generateRecurringTimeSlots(
     return {
       success: true,
       slotsCreated: actualSlotsCreated,
-      slots: slotsToCreate,
+      slots: slotsToCreate as unknown as TimeSlotDocument[],
     };
   } catch (error) {
     console.error("❌ Error generating recurring slots:", error);
@@ -218,7 +200,7 @@ export async function maintainRecurringSlots(): Promise<{
   error?: string;
 }> {
   try {
-    console.log("🔧 Starting daily recurring slots maintenance...");
+
     const { prisma } = await import("@/lib/config/prisma");
 
     const now = new Date();
@@ -226,7 +208,6 @@ export async function maintainRecurringSlots(): Promise<{
     today.setHours(0, 0, 0, 0);
 
     // Step 1: Clean up old slots (slots that have already passed)
-    console.log(`🗑️  Cleaning up slots older than: ${now.toISOString()}`);
 
     const deleteResult = await prisma.mentorTimeSlot.deleteMany({
       where: {
@@ -238,7 +219,6 @@ export async function maintainRecurringSlots(): Promise<{
     });
 
     const slotsDeleted = deleteResult.count;
-    console.log(`🗑️  Deleted ${slotsDeleted} expired recurring slots`);
 
     // Step 2: Find all unique recurring templates (patterns)
     // We use findMany with distinct-like logic since we need the actual data
@@ -263,14 +243,13 @@ export async function maintainRecurringSlots(): Promise<{
     });
 
     // Group by template pattern to find unique recurring schedules
-    const templateMap = new Map<
-      string,
-      {
-        pattern: any;
-        count: number;
-        latestSlot: any;
-      }
-    >();
+    interface TemplatePattern {
+      pattern: Record<string, unknown>;
+      count: number;
+      latestSlot: Record<string, unknown>;
+    }
+
+    const templateMap = new Map<string, TemplatePattern>();
 
     for (const slot of allRecurringSlots) {
       const startTime = new Date(slot.startTime);
@@ -311,24 +290,25 @@ export async function maintainRecurringSlots(): Promise<{
         const existing = templateMap.get(templateKey)!;
         existing.count++;
         // Keep track of the latest slot for this pattern
-        if (new Date(slot.startTime) > new Date(existing.latestSlot.startTime)) {
-          existing.latestSlot = slot;
+        /* eslint-disable @typescript-eslint/no-explicit-any */
+        if (
+          new Date(slot.startTime) >
+          new Date((existing.latestSlot as Record<string, any>).startTime)
+        ) {
+          existing.latestSlot = slot as unknown as Record<string, unknown>;
         }
+        /* eslint-enable @typescript-eslint/no-explicit-any */
       }
     }
-
-    console.log(`📋 Found ${templateMap.size} unique recurring patterns`);
 
     let totalGenerated = 0;
 
     // Step 3: For each template, ensure we have enough future slots (7-day window)
     for (const [_templateKey, templateInfo] of templateMap) {
-      const pattern = templateInfo.pattern;
-      const currentCount = templateInfo.count;
-      const latestSlot = new Date(templateInfo.latestSlot.startTime);
-
-      console.log(`🔄 Processing pattern for mentor ${pattern.mentorId} (${pattern.sessionType})`);
-      console.log(`   Current slots: ${currentCount}, Days: [${pattern.recurringDays.join(", ")}]`);
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const pattern = templateInfo.pattern as Record<string, any>;
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
+      const latestSlot = new Date((templateInfo.latestSlot as Record<string, any>).startTime);
 
       // Calculate how many days ahead we need to extend the window
       const daysBeyondLatest = Math.ceil(
@@ -351,10 +331,6 @@ export async function maintainRecurringSlots(): Promise<{
       );
 
       if (slotsToGenerate > 0) {
-        console.log(
-          `   📅 Generating ${slotsToGenerate} additional slots starting from ${startGenerationDate.toDateString()}`
-        );
-
         const result = await generateRecurringTimeSlots({
           mentorId: pattern.mentorId,
           sessionType: pattern.sessionType,
@@ -371,15 +347,8 @@ export async function maintainRecurringSlots(): Promise<{
         });
 
         totalGenerated += result.slotsCreated;
-        console.log(`   ✅ Generated ${result.slotsCreated} new slots`);
-      } else {
-        console.log(`   ✅ Pattern has sufficient future slots`);
       }
     }
-
-    console.log(
-      `✅ Daily maintenance completed. Generated ${totalGenerated} new slots, deleted ${slotsDeleted} old slots.`
-    );
 
     return {
       success: true,

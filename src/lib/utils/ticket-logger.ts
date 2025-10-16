@@ -1,4 +1,6 @@
 import { prisma } from "@/lib/config/prisma";
+import type { TicketMetadata } from "@/lib/types/utils";
+import type { CreateTicketRequest } from "@/lib/types/tickets";
 
 export enum TicketLogLevel {
   INFO = "INFO",
@@ -37,7 +39,7 @@ interface TicketLogData {
   action: TicketAction;
   level: TicketLogLevel;
   details: string;
-  metadata?: any;
+  metadata?: TicketMetadata;
   ipAddress?: string;
   userAgent?: string;
 }
@@ -84,12 +86,7 @@ export class TicketLogger {
       });
 
       // Console log for development (can be removed in production)
-      console.log(`[TICKET_LOG] ${level}: ${action} - ${details}`, {
-        ticketId,
-        ticketNumber,
-        userId,
-        metadata: enhancedMetadata,
-      });
+
     } catch (error) {
       // Fail silently to not disrupt ticket operations
       console.error("Failed to log ticket action:", error);
@@ -103,7 +100,7 @@ export class TicketLogger {
     ticketId: string,
     ticketNumber: string,
     userId: string,
-    ticketData: any,
+    ticketData: CreateTicketRequest,
     request?: Request
   ) {
     await this.log({

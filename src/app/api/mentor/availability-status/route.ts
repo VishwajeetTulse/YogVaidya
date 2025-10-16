@@ -17,8 +17,6 @@ export async function GET(_request: NextRequest) {
       },
     });
 
-    console.log(`📊 Found ${mentors.length} mentors with MENTOR role`);
-
     // Get availability data separately to avoid TypeScript issues
     const mentorsWithAvailability = await Promise.all(
       mentors.map(async (mentor) => {
@@ -30,7 +28,6 @@ export async function GET(_request: NextRequest) {
           });
 
           const isAvailable = availabilityData?.isAvailable ?? true;
-          console.log(`👤 ${mentor.name} (${mentor.email}): isAvailable = ${isAvailable}`);
 
           return {
             ...mentor,
@@ -59,10 +56,6 @@ export async function GET(_request: NextRequest) {
         return acc;
       },
       {} as Record<string, { isAvailable: boolean; lastUpdated: Date; mentorType: string | null }>
-    );
-
-    console.log(
-      `✅ Returning availability data: Available=${mentorsWithAvailability.filter((m) => m.isAvailable).length}, Unavailable=${mentorsWithAvailability.filter((m) => !m.isAvailable).length}`
     );
 
     return NextResponse.json({

@@ -79,7 +79,6 @@ export const AnalyticsSection = () => {
     const fetchAnalytics = async () => {
       try {
         setLoading(true);
-        console.log(`Analytics: Fetching data (attempt ${retryCount + 1})`);
         const response = await fetch("/api/analytics");
         const data = await response.json();
 
@@ -154,9 +153,6 @@ export const AnalyticsSection = () => {
     if (retryCount > 0 && retryCount <= MAX_RETRIES) {
       // Exponential backoff: 2^retryCount * 1000ms (1s, 2s, 4s)
       const delay = Math.pow(2, retryCount) * 1000;
-      console.log(
-        `Analytics: Retrying in ${delay}ms (attempt ${retryCount + 1}/${MAX_RETRIES + 1})`
-      );
 
       retryTimer = setTimeout(() => {
         fetchAnalytics();

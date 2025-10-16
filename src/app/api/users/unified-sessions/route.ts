@@ -3,10 +3,13 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
+import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log("🔄 Fetching unified user sessions...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -14,7 +17,7 @@ export async function GET(_request: NextRequest) {
     }
 
     const userId = session.user.id;
-    console.log(`👤 Fetching sessions for user: ${userId}`);
+
 
     // Get sessions from SessionBooking collection (new time slot bookings)
     const sessionBookingsResult = await prisma.$runCommandRaw({
@@ -87,7 +90,7 @@ export async function GET(_request: NextRequest) {
       cursor: {},
     });
 
-    let sessionBookings: any[] = [];
+    let sessionBookings: SessionBookingDocument[] = [];
     if (
       sessionBookingsResult &&
       typeof sessionBookingsResult === "object" &&
@@ -97,10 +100,12 @@ export async function GET(_request: NextRequest) {
       "firstBatch" in sessionBookingsResult.cursor &&
       Array.isArray(sessionBookingsResult.cursor.firstBatch)
     ) {
-      sessionBookings = sessionBookingsResult.cursor.firstBatch;
+      sessionBookings = (
+        sessionBookingsResult as unknown as MongoCommandResult<SessionBookingDocument>
+      ).cursor!.firstBatch;
     }
 
-    console.log(`📊 Found ${sessionBookings.length} session bookings`);
+
 
     // Get sessions from Schedule collection (legacy sessions)
     const _scheduleSessionsResult = await prisma.$runCommandRaw({
@@ -150,17 +155,31 @@ export async function GET(_request: NextRequest) {
       cursor: {},
     });
 
-    const scheduleSessions: any[] = [];
+    const scheduleSessions: ScheduleDocument[] = [];
     // For now, we'll focus on SessionBooking data since Schedule doesn't have userId
     // This can be extended later if needed
 
+    // Helper to convert dates safely
+    const convertDate = (dateValue: DateValue): Date => {
+      if (!dateValue) return new Date();
+      if (isMongoDate(dateValue)) return new Date(dateValue.$date);
+      if (dateValue instanceof Date) return dateValue;
+      return new Date(dateValue);
+    };
+
     // Combine and sort sessions
     const allSessions = [...sessionBookings, ...scheduleSessions];
-    allSessions.sort(
-      (a, b) => new Date(a.scheduledTime).getTime() - new Date(b.scheduledTime).getTime()
-    );
+    allSessions.sort((a, b) => {
+      const aDate = convertDate(
+        (a as SessionBookingDocument).scheduledAt || (a as ScheduleDocument).scheduledTime
+      );
+      const bDate = convertDate(
+        (b as SessionBookingDocument).scheduledAt || (b as ScheduleDocument).scheduledTime
+      );
+      return aDate.getTime() - bDate.getTime();
+    });
 
-    console.log(`✅ Total unified sessions: ${allSessions.length}`);
+
 
     return NextResponse.json({
       success: true,

@@ -223,7 +223,7 @@ export const ScheduleSection = () => {
       form.setValue("sessionLink", editingSlot.sessionLink || "");
       form.setValue("notes", editingSlot.notes);
     }
-  }, [session, form, editingSlot]);
+  }, [session, form, editingSlot, activeTab, subscriptionForm]);
 
   // Load time slots from API
   const loadTimeSlots = useCallback(async () => {
@@ -286,13 +286,9 @@ export const ScheduleSection = () => {
   };
 
   useEffect(() => {
-    console.log("🎯 Mentor dashboard: Loading data...", {
-      hasSession: !!session?.user,
-      userId: session?.user?.id,
-    });
     loadTimeSlots();
     loadSubscriptionSessions();
-  }, [loadTimeSlots, loadSubscriptionSessions, session]);
+  }, [loadTimeSlots, loadSubscriptionSessions, session?.user]);
 
   const onSubmit = async (data: TimeSlotFormData) => {
     setSubmitting(true);

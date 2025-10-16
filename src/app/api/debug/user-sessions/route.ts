@@ -3,11 +3,8 @@ import { getUserSessions } from "@/lib/server/user-sessions-server";
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log("🔧 DEBUG: Testing getUserSessions function...");
 
     const result = await getUserSessions();
-
-    console.log("🔧 DEBUG: getUserSessions result:", JSON.stringify(result, null, 2));
 
     return NextResponse.json(result);
   } catch (error) {

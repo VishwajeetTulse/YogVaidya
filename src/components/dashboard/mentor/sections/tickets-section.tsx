@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -60,7 +60,7 @@ export const TicketsSection = () => {
   const [category, setCategory] = useState<TicketCategory>(TicketCategory.GENERAL_INQUIRY);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     setLoading(true);
     try {
       const queryParams = new URLSearchParams({
@@ -85,11 +85,11 @@ export const TicketsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, searchTerm, filters]);
 
   useEffect(() => {
     fetchTickets();
-  }, [currentPage, searchTerm, filters]);
+  }, [fetchTickets]);
 
   const handleFilterChange = (key: keyof TicketFilters, value: string | undefined) => {
     setFilters((prev) => ({ ...prev, [key]: value }));

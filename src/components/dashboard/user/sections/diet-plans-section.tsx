@@ -7,12 +7,13 @@ import { Loader2, FileText, Lock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { type SectionProps } from "../types";
 import Link from "next/link";
+import type { EditorContent } from "@/lib/types/utils";
 
 interface DietPlan {
   id: string;
   title: string;
   description?: string;
-  content: any;
+  content: EditorContent;
   tags: string[];
   mentor: {
     name: string;
@@ -29,12 +30,7 @@ export function DietPlansSection({ userDetails }: SectionProps) {
     const fetchDietPlans = async () => {
       try {
         setIsLoading(true);
-        console.log("🔍 Fetching diet plans for student...");
         const response = await fetch("/api/mentor/diet-plans");
-
-        console.log("📡 Response status:", response.status);
-        console.log("📡 Response ok:", response.ok);
-        console.log("📡 Response headers:", response.headers.get("content-type"));
 
         if (!response.ok) {
           let errorData;
@@ -55,8 +51,6 @@ export function DietPlansSection({ userDetails }: SectionProps) {
         }
 
         const data = await response.json();
-        console.log("✅ Diet plans data:", data);
-        console.log("✅ Number of plans:", data.dietPlans?.length || 0);
         setDietPlans(data.dietPlans || []);
       } catch (error) {
         console.error("💥 Error fetching diet plans:", error);

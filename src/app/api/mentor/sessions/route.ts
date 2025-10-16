@@ -2,13 +2,15 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
+import type { SessionBookingDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 export async function GET(request: NextRequest) {
   try {
-    console.log("🚀 Fetching mentor session bookings...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
-    console.log("👤 Current session user:", session?.user?.id, "role:", session?.user?.role);
+
 
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -17,11 +19,11 @@ export async function GET(request: NextRequest) {
     // Get mentorId from query params or use session user id
     const url = new URL(request.url);
     const mentorId = url.searchParams.get("mentorId") || session.user.id;
-    console.log("🎯 Looking for sessions for mentorId:", mentorId);
+
 
     // Verify the user is authorized to access this mentor's sessions
     if (mentorId !== session.user.id) {
-      console.log("❌ User not authorized to access this mentor's sessions");
+
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -33,7 +35,7 @@ export async function GET(request: NextRequest) {
       },
     });
 
-    console.log("🔍 User lookup result:", user ? "FOUND MENTOR" : "NOT A MENTOR");
+
 
     if (!user) {
       return NextResponse.json(
@@ -42,7 +44,7 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    console.log(`🔍 Searching for session bookings for mentor: ${mentorId}`);
+
 
     // First, let's check if there are any session bookings at all
     const allBookings = await prisma.$runCommandRaw({
@@ -50,7 +52,7 @@ export async function GET(request: NextRequest) {
       filter: {},
     });
 
-    let totalBookings: any[] = [];
+    let totalBookings: SessionBookingDocument[] = [];
     if (
       allBookings &&
       typeof allBookings === "object" &&
@@ -60,15 +62,13 @@ export async function GET(request: NextRequest) {
       "firstBatch" in allBookings.cursor &&
       Array.isArray(allBookings.cursor.firstBatch)
     ) {
-      totalBookings = allBookings.cursor.firstBatch;
+      totalBookings = (allBookings as unknown as MongoCommandResult<SessionBookingDocument>).cursor!
+        .firstBatch;
     }
 
-    console.log(`📊 Total session bookings in database: ${totalBookings.length}`);
+
     if (totalBookings.length > 0) {
-      console.log(
-        "📋 All booking mentorIds:",
-        totalBookings.map((b) => b.mentorId)
-      );
+
     }
 
     // Use MongoDB raw command to fetch session bookings
@@ -140,7 +140,7 @@ export async function GET(request: NextRequest) {
       cursor: {},
     });
 
-    let bookings: any[] = [];
+    let bookings: SessionBookingDocument[] = [];
     if (
       sessionBookings &&
       typeof sessionBookings === "object" &&
@@ -150,11 +150,9 @@ export async function GET(request: NextRequest) {
       "firstBatch" in sessionBookings.cursor &&
       Array.isArray(sessionBookings.cursor.firstBatch)
     ) {
-      bookings = sessionBookings.cursor.firstBatch;
+      bookings = (sessionBookings as unknown as MongoCommandResult<SessionBookingDocument>).cursor!
+        .firstBatch;
     }
-
-    console.log(`📊 Found ${bookings.length} session bookings for mentor ${mentorId}`);
-    console.log("📋 Raw session bookings:", JSON.stringify(bookings, null, 2));
 
     // Preserve Date objects instead of converting to ISO strings
     const processedBookings = bookings.map((booking) => ({

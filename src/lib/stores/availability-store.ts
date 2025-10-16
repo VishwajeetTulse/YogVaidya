@@ -28,9 +28,6 @@ class AvailabilityStore {
       mentorType: mentorData?.mentorType || existing?.mentorType,
     });
 
-    console.log(
-      `🔄 Mentor ${mentorId} availability updated to: ${isAvailable ? "AVAILABLE" : "UNAVAILABLE"}`
-    );
     return this.availabilityMap.get(mentorId);
   }
 
@@ -74,7 +71,7 @@ class AvailabilityStore {
   // Clear all data (for testing/reset)
   clear() {
     this.availabilityMap.clear();
-    console.log("🧹 Availability store cleared");
+
   }
 }
 

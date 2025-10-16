@@ -6,7 +6,7 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   const { messages } = await req.json();
-  console.log("Received messages:", messages);
+
   const result = streamText({
     model: google("gemini-2.0-flash"),
     messages,
@@ -178,6 +178,6 @@ After your trial, select the plan that fits your lifestyle:
 
 Always encourage first-time users to start their free trial, remind returning users about the available subscription plans, emphasize that there's no wrong way to begin, and remind them that our certified mentors are there to guide them every step of the way.`,
   });
-  console.log("AI response:", result.text);
+
   return result.toDataStreamResponse();
 }

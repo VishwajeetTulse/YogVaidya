@@ -16,12 +16,10 @@ export function useLogger() {
     level: "INFO" | "WARNING" | "ERROR";
     metadata?: Prisma.JsonValue;
   }) => {
-    console.log("=== CLIENT-SIDE LOGGING ===");
-    console.log("Logging params:", params);
+
 
     setIsLogging(true);
     try {
-      console.log("Sending request to /api/admin/logs");
 
       const response = await fetch("/api/admin/logs", {
         method: "POST",
@@ -31,8 +29,6 @@ export function useLogger() {
         body: JSON.stringify(params),
       });
 
-      console.log("Response status:", response.status);
-      console.log("Response ok:", response.ok);
 
       if (!response.ok) {
         const errorText = await response.text();
@@ -41,7 +37,7 @@ export function useLogger() {
       }
 
       const result = await response.json();
-      console.log("Log creation result:", result);
+
       return result;
     } catch (error) {
       console.error("Error creating log:", error);

@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketLogger } from "@/lib/utils/ticket-logger";
+import type { Prisma } from "@prisma/client";
 
 export async function GET(request: NextRequest) {
   try {
@@ -24,7 +25,7 @@ export async function GET(request: NextRequest) {
     const ticketId = searchParams.get("ticketId");
 
     // Build filter conditions
-    const where: any = {
+    const where: Prisma.SystemLogWhereInput = {
       category: "TICKET",
     };
 
@@ -41,12 +42,12 @@ export async function GET(request: NextRequest) {
 
     // Apply additional filters
     if (action) where.action = action;
-    if (level) where.level = level;
+    if (level) where.level = level as Prisma.EnumLogLevelFilter;
     if (ticketId) {
       where.metadata = {
         path: ["ticketId"],
         equals: ticketId,
-      };
+      } as Prisma.JsonNullableFilter;
     }
 
     try {

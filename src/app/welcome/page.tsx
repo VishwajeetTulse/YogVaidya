@@ -1,10 +1,10 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 
-export default function WelcomePage() {
+function WelcomeContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
 
@@ -105,11 +105,11 @@ export default function WelcomePage() {
           <div
             className="w-2 h-2 bg-[#5abe9b] rounded-full animate-bounce"
             style={{ animationDelay: "0.1s" }}
-           />
+          />
           <div
             className="w-2 h-2 bg-[#5a9be9] rounded-full animate-bounce"
             style={{ animationDelay: "0.2s" }}
-           />
+          />
         </div>
       </div>
 
@@ -117,5 +117,21 @@ export default function WelcomePage() {
       <div className="absolute top-10 right-10 w-32 h-32 bg-[#76d2fa]/5 rounded-full blur-3xl" />
       <div className="absolute bottom-10 left-10 w-40 h-40 bg-[#5abe9b]/5 rounded-full blur-3xl" />
     </div>
+  );
+}
+
+export default function WelcomePage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="flex min-h-screen items-center justify-center bg-gradient-to-br from-[#f0f9ff] via-white to-[#f0fdf4]">
+          <div className="text-center">
+            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-[#5abe9b] mx-auto" />
+          </div>
+        </div>
+      }
+    >
+      <WelcomeContent />
+    </Suspense>
   );
 }

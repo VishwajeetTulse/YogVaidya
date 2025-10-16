@@ -32,10 +32,11 @@ import {
 } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import type { EditorContent as EditorContentType } from "@/lib/types/utils";
 
 interface DietPlanEditorProps {
-  content?: any; // TipTap JSON
-  onChange: (json: any) => void;
+  content?: EditorContentType; // TipTap JSON
+  onChange: (json: EditorContentType) => void;
   placeholder?: string;
 }
 

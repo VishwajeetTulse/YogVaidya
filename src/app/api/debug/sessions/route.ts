@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { mongoDateToISOString } from "@/lib/utils/datetime-utils";
 import { ObjectId } from "mongodb";
+import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 /**
  * GET /api/debug/sessions
@@ -9,7 +11,7 @@ import { ObjectId } from "mongodb";
  */
 export async function GET() {
   try {
-    console.log("🔍 Deep debugging session data structure...");
+
 
     // 1. Check sessionBooking collection
     const recentSessions = await prisma.$runCommandRaw({
@@ -18,7 +20,7 @@ export async function GET() {
       limit: 5,
     });
 
-    let sessionsData: any[] = [];
+    let sessionsData: SessionBookingDocument[] = [];
     if (
       recentSessions &&
       typeof recentSessions === "object" &&
@@ -28,7 +30,8 @@ export async function GET() {
       "firstBatch" in recentSessions.cursor &&
       Array.isArray(recentSessions.cursor.firstBatch)
     ) {
-      sessionsData = recentSessions.cursor.firstBatch;
+      sessionsData = (recentSessions as unknown as MongoCommandResult<SessionBookingDocument>)
+        .cursor!.firstBatch;
     }
 
     // 2. Check schedule collection
@@ -38,7 +41,7 @@ export async function GET() {
       limit: 5,
     });
 
-    let scheduleData: any[] = [];
+    let scheduleData: ScheduleDocument[] = [];
     if (
       scheduleEntries &&
       typeof scheduleEntries === "object" &&
@@ -48,7 +51,8 @@ export async function GET() {
       "firstBatch" in scheduleEntries.cursor &&
       Array.isArray(scheduleEntries.cursor.firstBatch)
     ) {
-      scheduleData = scheduleEntries.cursor.firstBatch;
+      scheduleData = (scheduleEntries as unknown as MongoCommandResult<ScheduleDocument>).cursor!
+        .firstBatch;
     }
 
     // 3. Test specific session lookups with detailed logging
@@ -56,7 +60,7 @@ export async function GET() {
 
     // Test a known failing session ID
     const failingSessionId = "schedule_1758358728740_egnbxikyh";
-    console.log(`🔍 Testing failing session ID: ${failingSessionId}`);
+
 
     // Test in sessionBooking collection
     const sessionBookingTest = await prisma.$runCommandRaw({
@@ -179,7 +183,7 @@ export async function GET() {
       debug: {
         totalRecentSessions: sessionsData.length,
         totalScheduleEntries: scheduleData.length,
-        recentSessions: sessionsData.map((s: any) => ({
+        recentSessions: sessionsData.map((s) => ({
           id: s._id,
           status: s.status,
           type: s.sessionType,
@@ -190,11 +194,11 @@ export async function GET() {
           amount: s.amount,
           paymentStatus: s.paymentStatus,
         })),
-        scheduleEntries: scheduleData.map((s: any) => ({
+        scheduleEntries: scheduleData.map((s) => ({
           id: s._id,
           status: s.status,
           type: s.sessionType,
-          scheduled: mongoDateToISOString(s.scheduledTime || s.scheduledAt),
+          scheduled: mongoDateToISOString(s.scheduledTime),
           title: s.title,
           mentorId: s.mentorId,
         })),

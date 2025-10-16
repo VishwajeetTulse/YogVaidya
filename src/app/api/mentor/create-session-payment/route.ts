@@ -18,7 +18,6 @@ const razorpay = new Razorpay({
 
 export async function POST(request: NextRequest) {
   try {
-    console.log("🚀 Creating payment order for time slot booking...");
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -41,8 +40,6 @@ export async function POST(request: NextRequest) {
         type: "timeslot_booking",
       },
     });
-
-    console.log("✅ Payment order created:", order.id);
 
     return NextResponse.json({
       success: true,

@@ -5,14 +5,12 @@ export async function POST(request: NextRequest) {
   try {
     const { email, isAvailable } = await request.json();
 
-    console.log(`🔧 Testing: Setting ${email} availability to ${isAvailable}`);
+
 
     const updatedUser = await prisma.user.updateMany({
       where: { email: email },
       data: { isAvailable: isAvailable },
     });
-
-    console.log(`✅ Updated ${updatedUser.count} user(s)`);
 
     return NextResponse.json({
       success: true,

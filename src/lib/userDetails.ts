@@ -169,47 +169,47 @@ export async function getAllUsersDetails(): Promise<{
 
 /**
  * Print user details to console (development helper)
+ * NOTE: Disabled to reduce console noise in production builds
  */
-export async function printUserDetails(userId: string): Promise<void> {
-  const result = await getUserDetails(userId);
-
+export async function printUserDetails(_userId: string): Promise<void> {
+  // Debug function - disabled in production
+  // Uncomment if needed for development debugging
+  return;
+  
+  /* const result = await getUserDetails(userId);
   if (result.success && result.user) {
-    console.log("=== USER DETAILS ===");
-    console.log("Basic Information:");
-    console.log(`- ID: ${result.user.id}`);
-    console.log(`- Name: ${result.user.name || "Not set"}`);
-    console.log(`- Email: ${result.user.email}`);
-    console.log(`- Phone: ${result.user.phone || "Not set"}`);
-    console.log(`- Role: ${result.user.role}`);
-    console.log(`- Mentor Type: ${result.user.mentorType || "N/A"}`);
-    console.log(`- Email Verified: ${result.user.emailVerified ? "Yes" : "No"}`);
-    console.log(`- Profile Image: ${result.user.image || "Not set"}`);
-    console.log(`- Created At: ${result.user.createdAt.toISOString()}`);
-    console.log(`- Updated At: ${result.user.updatedAt.toISOString()}`);
 
-    console.log("\nSubscription Information:");
-    console.log(`- Plan: ${result.user.subscriptionPlan}`);
-    console.log(`- Status: ${result.user.subscriptionStatus}`);
-    console.log(`- Start Date: ${result.user.subscriptionStartDate?.toISOString() || "Not set"}`);
-    console.log(`- End Date: ${result.user.subscriptionEndDate?.toISOString() || "Not set"}`);
-    console.log(`- Billing Period: ${result.user.billingPeriod || "Not set"}`);
-    console.log(`- Payment Amount: ₹${result.user.paymentAmount || 0}`);
-    console.log(`- Is Trial Active: ${result.user.isTrialActive ? "Yes" : "No"}`);
-    console.log(`- Trial End Date: ${result.user.trialEndDate?.toISOString() || "Not set"}`);
-    console.log(`- Auto Renewal: ${result.user.autoRenewal ? "Yes" : "No"}`);
-    console.log(`- Last Payment: ${result.user.lastPaymentDate?.toISOString() || "Not set"}`);
-    console.log(`- Next Billing: ${result.user.nextBillingDate?.toISOString() || "Not set"}`);
 
-    console.log("\nRazorpay Information:");
-    console.log(`- Subscription ID: ${result.user.razorpaySubscriptionId || "Not set"}`);
-    console.log(`- Customer ID: ${result.user.razorpayCustomerId || "Not set"}`);
 
-    console.log("\nRelated Data:");
-    console.log(`- Active Sessions: ${result.user.sessionsCount}`);
-    console.log(`- Linked Accounts: ${result.user.accountsCount}`);
 
-    console.log("=== END USER DETAILS ===");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
   } else {
     console.error("Failed to fetch user details:", result.error);
-  }
+  } */
 }

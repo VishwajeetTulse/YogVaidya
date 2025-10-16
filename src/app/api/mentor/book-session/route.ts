@@ -3,6 +3,19 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import Razorpay from "razorpay";
+import type { Prisma } from "@prisma/client";
+
+// Interface for timeSlot properties from MongoDB
+interface TimeSlotData {
+  _id?: string;
+  mentorId?: string;
+  sessionType?: string;
+  startTime?: string;
+  endTime?: string;
+  price?: number;
+  currentStudents?: number;
+  maxStudents?: number;
+}
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID!,
@@ -19,20 +32,14 @@ const bookSessionSchema = z.object({
 });
 
 export async function POST(request: Request) {
-  console.log("🚀 Book session API called - Time Slot Based");
   try {
-    console.log("📡 Checking authentication...");
     const session = await auth.api.getSession({ headers: await headers() });
-    console.log("👤 Session found:", !!session?.user?.id);
 
     if (!session?.user?.id) {
-      console.log("❌ Unauthorized access attempt");
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
-    console.log("📝 Parsing request body...");
     const body = await request.json();
-    console.log("📋 Request data:", body);
 
     const { timeSlotId, notes, mentorId, sessionDate, sessionTime } = bookSessionSchema.parse(body);
 
@@ -40,8 +47,6 @@ export async function POST(request: Request) {
 
     // NEW APPROACH: Time Slot Based Booking
     if (timeSlotId) {
-      console.log("🎯 Time slot based booking for slot:", timeSlotId);
-
       // Get the time slot details and check availability
       const timeSlotResult = await prisma.$runCommandRaw({
         find: "mentorTimeSlot",
@@ -52,7 +57,7 @@ export async function POST(request: Request) {
         },
       });
 
-      let timeSlot: any = null;
+      let timeSlot: Prisma.JsonObject | null = null;
       if (
         timeSlotResult &&
         typeof timeSlotResult === "object" &&
@@ -63,41 +68,31 @@ export async function POST(request: Request) {
         Array.isArray(timeSlotResult.cursor.firstBatch) &&
         timeSlotResult.cursor.firstBatch.length > 0
       ) {
-        timeSlot = timeSlotResult.cursor.firstBatch[0];
+        timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
       }
 
       if (!timeSlot) {
-        console.log("❌ Time slot not found or fully booked");
         return NextResponse.json(
           { success: false, error: "Time slot not available or fully booked" },
           { status: 404 }
         );
       }
 
+      // Cast to TimeSlotData for property access
+      const slot = timeSlot as unknown as TimeSlotData;
+
       // Double-check availability at application level
-      if (timeSlot.currentStudents >= timeSlot.maxStudents) {
-        console.log("❌ Time slot is fully booked", {
-          currentStudents: timeSlot.currentStudents,
-          maxStudents: timeSlot.maxStudents,
-        });
+      if ((slot.currentStudents || 0) >= (slot.maxStudents || 1)) {
         return NextResponse.json(
           { success: false, error: "Time slot is fully booked" },
           { status: 409 }
         );
       }
 
-      console.log("✅ Time slot found:", {
-        id: timeSlot._id,
-        startTime: timeSlot.startTime,
-        endTime: timeSlot.endTime,
-        price: timeSlot.price,
-        mentorId: timeSlot.mentorId,
-      });
-
       // Get mentor details
       const mentor = await prisma.user.findFirst({
         where: {
-          id: timeSlot.mentorId,
+          id: slot.mentorId,
           role: "MENTOR",
           isAvailable: true,
         },
@@ -111,7 +106,6 @@ export async function POST(request: Request) {
       });
 
       if (!mentor) {
-        console.log("❌ Mentor not found or not available");
         return NextResponse.json(
           { success: false, error: "Mentor not available" },
           { status: 404 }
@@ -119,7 +113,6 @@ export async function POST(request: Request) {
       }
 
       // Check if user already has an active session with this mentor
-      console.log("🔍 Checking for existing sessions with this mentor...");
       const existingSession = await prisma.$runCommandRaw({
         find: "sessionBooking",
         filter: {
@@ -140,7 +133,6 @@ export async function POST(request: Request) {
         existingSession.cursor.firstBatch.length > 0;
 
       if (hasExistingSessions) {
-        console.log("❌ User already has an active session with this mentor");
         return NextResponse.json(
           {
             success: false,
@@ -152,36 +144,30 @@ export async function POST(request: Request) {
       }
 
       // Use time slot price or mentor default price
-      const sessionPrice = timeSlot.price || mentor.sessionPrice || 500;
+      const sessionPrice = slot.price || mentor.sessionPrice || 500;
 
       if (!sessionPrice || sessionPrice <= 0) {
-        console.log("❌ Session pricing not set or invalid:", sessionPrice);
         return NextResponse.json(
           { success: false, error: "Session pricing not set" },
           { status: 400 }
         );
       }
 
-      console.log("💳 Creating Razorpay order for time slot booking...");
-      console.log("💰 Amount:", sessionPrice, "INR");
-
       // Create Razorpay order
       const order = await razorpay.orders.create({
-        amount: sessionPrice * 100, // Convert to paise
+        amount: (sessionPrice * 100) as number, // Convert to paise
         currency: "INR",
         receipt: `slot_${Date.now().toString().slice(-8)}`,
         notes: {
-          timeSlotId: timeSlot._id,
-          mentorId: timeSlot.mentorId,
+          timeSlotId: slot._id as string,
+          mentorId: slot.mentorId as string,
           studentId: session.user.id,
-          startTime: timeSlot.startTime,
-          endTime: timeSlot.endTime,
-          sessionType: timeSlot.sessionType,
+          startTime: slot.startTime as string,
+          endTime: slot.endTime as string,
+          sessionType: slot.sessionType as string,
           type: "timeslot_booking",
         },
       });
-
-      console.log("✅ Razorpay order created successfully:", order.id);
 
       return NextResponse.json({
         success: true,
@@ -210,8 +196,6 @@ export async function POST(request: Request) {
 
     // LEGACY APPROACH: Keep backward compatibility for old API calls
     else if (mentorId && sessionDate && sessionTime) {
-      console.log("🔄 Legacy booking approach for mentor:", mentorId);
-
       // Keep the existing logic for backward compatibility
       let mentor;
       try {

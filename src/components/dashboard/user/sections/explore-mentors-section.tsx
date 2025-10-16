@@ -1,11 +1,13 @@
 "use client";
 
 import { Users, Award, Loader2 } from "lucide-react";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";
 import MentorCardCompact from "../mentor-card-compact";
 import { type Mentor } from "@/lib/types/mentor";
+import { type TimeSlotDocument } from "@/lib/types/sessions";
+import { ensureDateObject } from "@/lib/utils/date-utils";
 
 interface TransformedMentor {
   id: string | number;
@@ -31,13 +33,6 @@ export const ExploreMentorsSection = () => {
   // Fetch mentors' time slots for today
   const fetchMentorTimeSlots = async (mentorIds: string[]) => {
     try {
-      const today = new Date();
-      const todayString = today.toISOString().split("T")[0];
-
-      console.log(
-        `🔍 [EXPLORE] Checking time slots for ${mentorIds.length} mentors starting from date: ${todayString}`
-      );
-
       const timeSlotsAvailability: Record<string, boolean> = {};
 
       // Check each mentor's time slots
@@ -45,58 +40,40 @@ export const ExploreMentorsSection = () => {
         try {
           // Get all available slots for this mentor (not limited to today)
           const url = `/api/mentor/timeslots?mentorId=${mentorId}&available=true`;
-          console.log(`📞 [EXPLORE] Fetching: ${url}`);
 
           const response = await fetch(url);
           const data = await response.json();
 
-          console.log(`📊 [EXPLORE] Response for mentor ${mentorId}:`, data);
-
           if (data.success && data.data) {
-            console.log(`⏰ [EXPLORE] Time slots found for mentor ${mentorId}:`, data.data.length);
-
             // Check if mentor has any available time slots in the future
-            const availableSlots = data.data.filter((slot: any) => {
-              const slotDate = new Date(slot.startTime);
+            const availableSlots = data.data.filter((slot: TimeSlotDocument) => {
+              const slotDate = ensureDateObject(slot.startTime);
               const isActive = slot.isActive;
               const isNotBooked = !slot.isBooked;
               const isFuture = slotDate > new Date(); // Any future slots
-
-              console.log(`  📅 [EXPLORE] Slot ${slot._id}: ${slotDate.toISOString()}`);
-              console.log(`    - Is active: ${isActive}`);
-              console.log(`    - Not booked: ${isNotBooked}`);
-              console.log(`    - Is future: ${isFuture}`);
 
               return isActive && isNotBooked && isFuture;
             });
 
             const hasAvailableSlots = availableSlots.length > 0;
-            console.log(
-              `✅ [EXPLORE] Mentor ${mentorId} has ${availableSlots.length} available slots: ${hasAvailableSlots}`
-            );
             timeSlotsAvailability[mentorId] = hasAvailableSlots;
           } else {
-            console.log(
-              `❌ [EXPLORE] No time slots or error for mentor ${mentorId}:`,
-              data.error || "No slots"
-            );
             timeSlotsAvailability[mentorId] = false;
           }
         } catch (err) {
-          console.error(`❌ [EXPLORE] Error fetching time slots for mentor ${mentorId}:`, err);
+          console.error(`Error fetching time slots for mentor ${mentorId}:`, err);
           timeSlotsAvailability[mentorId] = false;
         }
       }
 
-      console.log("📊 [EXPLORE] Final time slots availability map:", timeSlotsAvailability);
       setTimeSlotsMap(timeSlotsAvailability);
     } catch (err) {
-      console.error("❌ [EXPLORE] Error fetching mentor time slots:", err);
+      console.error("Error fetching mentor time slots:", err);
     }
   };
 
   // Fetch mentors data
-  const fetchMentors = async () => {
+  const fetchMentors = useCallback(async () => {
     try {
       setLoading(true);
       const response = await fetch("/api/mentor/get-approved-mentors");
@@ -136,7 +113,6 @@ export const ExploreMentorsSection = () => {
             tempTimeSlotsMap[mentorId] = false; // No slots
           }
         });
-        console.log("🔧 [EXPLORE] Setting timeSlotsMap:", tempTimeSlotsMap);
         setTimeSlotsMap(tempTimeSlotsMap);
 
         // Fetch time slots for all mentors
@@ -151,7 +127,7 @@ export const ExploreMentorsSection = () => {
     } finally {
       setLoading(false);
     }
-  };
+  }, []);
 
   // Removed real-time availability fetching - we only use time slot availability now
 
@@ -159,7 +135,7 @@ export const ExploreMentorsSection = () => {
     fetchMentors();
 
     // Remove real-time polling - we only use time slot availability now
-  }, []); // Remove mentors.length dependency to avoid infinite loop
+  }, [fetchMentors]); // Remove mentors.length dependency to avoid infinite loop
 
   // Separate effect for refreshing time slots when mentors change
   useEffect(() => {
@@ -167,18 +143,14 @@ export const ExploreMentorsSection = () => {
       const mentorIds = mentors.map((m: TransformedMentor) => m.id.toString());
       fetchMentorTimeSlots(mentorIds);
     }
-  }, [mentors.length]); // This will trigger when mentors are first loaded
+  }, [mentors]); // This will trigger when mentors are first loaded
 
   // Update mentors when timeSlotsMap changes
   useEffect(() => {
     if (mentors.length > 0 && Object.keys(timeSlotsMap).length > 0) {
-      console.log("🔄 [EXPLORE] Updating mentors with new timeSlotsMap:", timeSlotsMap);
       setMentors((prevMentors) =>
         prevMentors.map((mentor) => {
           const hasTimeSlotsToday = timeSlotsMap[mentor.id.toString()] ?? false;
-          console.log(
-            `🔄 [EXPLORE] Mentor ${mentor.name} (${mentor.id}): hasTimeSlotsToday = ${hasTimeSlotsToday}`
-          );
           return {
             ...mentor,
             hasTimeSlotsToday: hasTimeSlotsToday,
@@ -186,7 +158,7 @@ export const ExploreMentorsSection = () => {
         })
       );
     }
-  }, [timeSlotsMap]); // This will trigger when timeSlotsMap is updated
+  }, [timeSlotsMap, mentors]); // This will trigger when timeSlotsMap is updated
 
   // Categorize mentors by type
   const categorizedMentors = {

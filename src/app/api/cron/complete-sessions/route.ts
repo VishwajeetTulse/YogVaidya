@@ -4,14 +4,13 @@ import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
 export async function POST(_request: Request) {
   try {
-    console.log("🕒 Running session completion cron job...");
 
     // Verify this is an internal cron request or from a trusted source
     const authHeader = (await headers()).get("authorization");
     const cronSecret = process.env.CRON_SECRET || "dev-secret";
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      console.log("❌ Unauthorized cron request");
+
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
@@ -20,10 +19,6 @@ export async function POST(_request: Request) {
 
     const startedCount = updates.filter((u) => u.newStatus === "ONGOING").length;
     const completedCount = updates.filter((u) => u.newStatus === "COMPLETED").length;
-
-    console.log(
-      `✅ Session completion cron completed: ${startedCount} started, ${completedCount} completed`
-    );
 
     return NextResponse.json({
       success: true,

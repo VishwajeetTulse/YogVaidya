@@ -6,10 +6,25 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 
+interface UserInfo {
+  id: string;
+  name: string | null;
+  email: string;
+  phone?: string | null;
+  role: string;
+  subscriptionPlan: string | null;
+  subscriptionStatus: string | null;
+  trialStartDate: string | null;
+  trialEndDate: string | null;
+  createdAt: string | Date;
+  updatedAt: string | Date;
+  [key: string]: unknown;
+}
+
 export default function TrialDebugPage() {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
-  const [userInfo, setUserInfo] = useState<any>(null);
+  const [userInfo, setUserInfo] = useState<UserInfo | null>(null);
 
   const checkUserStatus = async () => {
     setLoading(true);
@@ -36,8 +51,6 @@ export default function TrialDebugPage() {
     try {
       const response = await fetch("/api/users/start-trial", { method: "POST" });
       const result = await response.json();
-
-      console.log("Trial result:", result);
 
       if (result.success) {
         toast.success("Trial start attempted - check console");

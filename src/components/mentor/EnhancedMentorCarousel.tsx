@@ -69,10 +69,8 @@ const MentorCard: React.FC<{ mentor: EnhancedMentorProps; colorClass: string }> 
             <div className="relative mr-3 md:mr-0 md:mb-2">
               <Avatar
                 className={cn(
-                  "w-16 h-16 md:w-16 md:h-16 border-3 border-white shadow-md transition-all duration-300",
-                  mentor.available
-                    ? "ring-2 ring-green-400 ring-offset-1"
-                    : "ring-2 ring-gray-300 ring-offset-1"
+                  "w-16 h-16 md:w-16 md:h-16 border-3 border-white shadow-md transition-all duration-300 ring-2 ring-offset-1",
+                  mentor.available ? "ring-green-400" : "ring-gray-300"
                 )}
               >
                 <AvatarImage src={mentor.imageUrl} alt={mentor.name} />

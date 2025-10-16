@@ -255,7 +255,6 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
               textColorClass = "text-red-700";
               headingColorClass = "text-red-800";
             }
-            console.log("log:", log);
             return (
               <div
                 key={log.id}

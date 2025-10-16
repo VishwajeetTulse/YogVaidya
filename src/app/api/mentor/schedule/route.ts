@@ -3,6 +3,10 @@ import { auth } from "@/lib/config/auth";
 import { z } from "zod";
 import { scheduleEmailReminder } from "@/lib/services/scheduleEmails";
 import { prisma } from "@/lib/config/prisma";
+import type { ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
+
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -69,7 +73,15 @@ export async function GET(request: NextRequest) {
       cursor: {},
     });
 
-    let scheduledSessions: any[] = [];
+    // Helper to convert MongoDB dates
+    const convertMongoDate = (dateValue: DateValue): Date | null => {
+      if (!dateValue) return null;
+      if (isMongoDate(dateValue)) return new Date(dateValue.$date);
+      if (dateValue instanceof Date) return dateValue;
+      return new Date(dateValue);
+    };
+
+    let scheduledSessions: ScheduleDocument[] = [];
     if (
       scheduledSessionsResult &&
       typeof scheduledSessionsResult === "object" &&
@@ -79,10 +91,12 @@ export async function GET(request: NextRequest) {
       "firstBatch" in scheduledSessionsResult.cursor &&
       Array.isArray(scheduledSessionsResult.cursor.firstBatch)
     ) {
-      scheduledSessions = scheduledSessionsResult.cursor.firstBatch.map((session: any) => ({
+      const result = (scheduledSessionsResult as unknown as MongoCommandResult<ScheduleDocument>)
+        .cursor!.firstBatch;
+      scheduledSessions = result.map((session) => ({
         ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-      }));
+        scheduledTime: session.scheduledTime ? convertMongoDate(session.scheduledTime) : null,
+      })) as ScheduleDocument[];
     }
 
     // Transform the data to match the expected format

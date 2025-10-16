@@ -171,12 +171,11 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
           }
         } else {
           // Fallback: try to find mentor in the approved mentors list
-          console.log("Individual mentor API failed, trying fallback...");
           response = await fetch(`/api/mentor/get-approved-mentors`);
           result = await response.json();
 
           if (result.success) {
-            const mentor = result.data.find((m: any) => m.id === mentorId);
+            const mentor = result.data.find((m: MentorData) => m.id === mentorId);
             if (mentor) {
               setMentorData(mentor);
             } else {
@@ -219,14 +218,6 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
     setLoading(true);
 
     try {
-      console.log("🚀 Starting session booking process...");
-      console.log("📋 Booking data:", {
-        mentorId,
-        sessionDate,
-        sessionTime: convertStateToTime24(),
-        notes,
-      });
-
       // Create booking order
       const response = await fetch("/api/mentor/book-session", {
         method: "POST",
@@ -241,11 +232,7 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
         }),
       });
 
-      console.log("📡 Response status:", response.status);
-      console.log("📄 Response ok:", response.ok);
-
       const data = await response.json();
-      console.log("📋 Response data:", data);
 
       if (!data.success) {
         // Handle specific error cases

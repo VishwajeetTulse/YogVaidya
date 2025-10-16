@@ -3,7 +3,7 @@ import { prisma } from "@/lib/config/prisma";
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log("🔍 Testing database connection and availability data...");
+
 
     // Test 1: Check all users with MENTOR role
     const allMentors = await prisma.user.findMany({
@@ -16,7 +16,7 @@ export async function GET(_request: NextRequest) {
       },
     });
 
-    console.log(`📊 Found ${allMentors.length} mentors in database`);
+
 
     // Test 2: Try to get isAvailable field for each mentor
     const mentorsWithAvailability = [];
@@ -28,14 +28,14 @@ export async function GET(_request: NextRequest) {
         });
 
         // Access isAvailable property directly from the object
-        const isAvailable = (fullUser as any)?.isAvailable ?? true;
+        const isAvailable = fullUser?.isAvailable ?? true;
 
         mentorsWithAvailability.push({
           ...mentor,
           isAvailable: isAvailable,
         });
 
-        console.log(`👤 ${mentor.name}: isAvailable = ${isAvailable}`);
+
       } catch (error) {
         console.error(`❌ Error getting availability for ${mentor.name}:`, error);
         mentorsWithAvailability.push({

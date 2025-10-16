@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -36,11 +36,11 @@ import {
   Trash2,
 } from "lucide-react";
 import { format, formatDistanceToNow } from "date-fns";
+import type { TicketMetadata } from "@/lib/types/utils";
 
 interface TicketLog {
   id: string;
-  timestamp: string;
-  userId: string | null;
+  timestamp: Date;
   user: {
     id: string;
     name: string | null;
@@ -51,7 +51,7 @@ interface TicketLog {
   category: string;
   details: string;
   level: string;
-  metadata: any;
+  metadata: TicketMetadata;
   ipAddress: string | null;
   userAgent: string | null;
 }
@@ -83,7 +83,7 @@ export default function TicketLogsSection() {
   const [limit, setLimit] = useState<number>(50);
 
   // Fetch ticket logs
-  const fetchTicketLogs = async () => {
+  const fetchTicketLogs = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
@@ -114,11 +114,11 @@ export default function TicketLogsSection() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [timeframe, actionFilter, levelFilter, ticketIdFilter, limit]);
 
   useEffect(() => {
     fetchTicketLogs();
-  }, [timeframe, actionFilter, levelFilter, ticketIdFilter, limit]);
+  }, [fetchTicketLogs]);
 
   // Filter logs by search term
   const filteredLogs = logs.filter((log) => {

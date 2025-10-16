@@ -26,13 +26,8 @@ export async function getBillingHistoryAction(userEmail: string) {
     }
 
     const cleanEmail = userEmail.trim();
-    console.log(`getBillingHistoryAction called for verified email: ${cleanEmail}`);
 
     const history = await getUserBillingHistory(cleanEmail);
-
-    console.log(
-      `getBillingHistoryAction returning ${history.length} records for verified email: ${cleanEmail}`
-    );
 
     // Note: Email validation happens at the Razorpay service level where raw payment data is available
     // The billing history returned here has already been filtered for the specific user

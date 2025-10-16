@@ -4,6 +4,29 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { getMentorType } from "../mentor-type";
 import { prisma } from "@/lib/config/prisma";
+import type { ScheduleDocument, SessionBookingDocument } from "@/lib/types/sessions";
+import type { DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
+
+/**
+ * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
+ */
+function _convertMongoDate(dateValue: DateValue): Date | null {
+  if (!dateValue) return null;
+
+  try {
+    if (isMongoDate(dateValue)) {
+      return new Date(dateValue.$date);
+    }
+    if (dateValue instanceof Date) {
+      return dateValue;
+    }
+    return new Date(dateValue);
+  } catch (error) {
+    console.error("Error converting date:", error);
+    return null;
+  }
+}
 
 // Helper function to get students for a specific mentor
 // Uses similar logic to getStudents from students.ts but adds mentor-specific filtering
@@ -19,7 +42,7 @@ export async function getMentorStudents(mentorId: string) {
       select: { email: true },
     });
     const mentortype = await getMentorType(mentoremail || { email: "" });
-    console.log("Fetching students for mentor type:", mentortype);
+
     // Get all active students with role "USER" (excluding mentors who have role "MENTOR")
     const allActiveStudents = await prisma.user.findMany({
       where: {
@@ -200,7 +223,9 @@ export async function getMentorOverviewData(): Promise<{
       typeof sessionsThisWeekResult.cursor.firstBatch[0] === "object" &&
       "totalSessions" in sessionsThisWeekResult.cursor.firstBatch[0]
     ) {
-      sessionsThisWeek = (sessionsThisWeekResult.cursor.firstBatch[0] as any).totalSessions || 0;
+      sessionsThisWeek =
+        (sessionsThisWeekResult.cursor.firstBatch[0] as { totalSessions?: number }).totalSessions ||
+        0;
     }
 
     // Get today's sessions from both schedule and sessionBooking collections
@@ -230,30 +255,52 @@ export async function getMentorOverviewData(): Promise<{
       },
     });
 
-    let todaysSessions: any[] = [];
+    interface ProcessedSession {
+      id: string;
+      title: string;
+      scheduledTime: Date | null;
+      duration: number;
+      sessionType: string;
+      status: string;
+      sessionCategory: "subscription" | "individual";
+      [key: string]: unknown;
+    }
+
+    let todaysSessions: ProcessedSession[] = [];
 
     // Process schedule sessions
     if (Array.isArray(todaysScheduleSessionsResult)) {
-      const scheduleSessions = todaysScheduleSessionsResult.map((session: any) => ({
-        ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-        sessionCategory: "subscription",
-      }));
+      const scheduleSessions = (todaysScheduleSessionsResult as ScheduleDocument[]).map(
+        (session): ProcessedSession => ({
+          ...session,
+          id: String(session._id || session.id),
+          title: String(session.title || "Session"),
+          scheduledTime: session.scheduledTime ? _convertMongoDate(session.scheduledTime) : null,
+          duration: session.duration || 60,
+          sessionType: String(session.sessionType),
+          status: String(session.status),
+          sessionCategory: "subscription",
+        })
+      );
       todaysSessions.push(...scheduleSessions);
     }
 
     // Process booking sessions (individual slots)
     if (Array.isArray(todaysBookingSessionsResult)) {
-      const bookingSessions = todaysBookingSessionsResult.map((session: any) => ({
-        ...session,
-        id: session._id || session.id,
-        title: `${session.sessionType} Session`, // Generate title since bookings might not have titles
-        scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
-        duration:
-          session.duration ||
-          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
-        sessionCategory: "individual",
-      }));
+      const bookingSessions = (todaysBookingSessionsResult as SessionBookingDocument[]).map(
+        (session): ProcessedSession => ({
+          ...session,
+          id: String(session._id || session.id),
+          title: `${session.sessionType} Session`, // Generate title since bookings might not have titles
+          scheduledTime: session.scheduledAt ? _convertMongoDate(session.scheduledAt) : null,
+          duration:
+            session.duration ||
+            (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
+          sessionType: String(session.sessionType),
+          status: String(session.status),
+          sessionCategory: "individual",
+        })
+      );
       todaysSessions.push(...bookingSessions);
     }
 
@@ -291,30 +338,41 @@ export async function getMentorOverviewData(): Promise<{
       },
     });
 
-    let upcomingSessions: any[] = [];
+    let upcomingSessions: ProcessedSession[] = [];
 
     // Process schedule sessions
     if (Array.isArray(upcomingScheduleSessionsResult)) {
-      const scheduleSessions = upcomingScheduleSessionsResult.map((session: any) => ({
-        ...session,
-        scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
-        sessionCategory: "subscription",
-      }));
+      const scheduleSessions = (upcomingScheduleSessionsResult as ScheduleDocument[]).map(
+        (session): ProcessedSession => ({
+          ...session,
+          id: String(session._id || session.id),
+          title: String(session.title || "Session"),
+          scheduledTime: session.scheduledTime ? _convertMongoDate(session.scheduledTime) : null,
+          duration: session.duration || 60,
+          sessionType: String(session.sessionType),
+          status: String(session.status),
+          sessionCategory: "subscription",
+        })
+      );
       upcomingSessions.push(...scheduleSessions);
     }
 
     // Process booking sessions (individual slots)
     if (Array.isArray(upcomingBookingSessionsResult)) {
-      const bookingSessions = upcomingBookingSessionsResult.map((session: any) => ({
-        ...session,
-        id: session._id || session.id,
-        title: `${session.sessionType} Session`,
-        scheduledTime: session.scheduledAt ? new Date(session.scheduledAt) : null,
-        duration:
-          session.duration ||
-          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
-        sessionCategory: "individual",
-      }));
+      const bookingSessions = (upcomingBookingSessionsResult as SessionBookingDocument[]).map(
+        (session): ProcessedSession => ({
+          ...session,
+          id: String(session._id || session.id),
+          title: `${session.sessionType} Session`,
+          scheduledTime: session.scheduledAt ? _convertMongoDate(session.scheduledAt) : null,
+          duration:
+            session.duration ||
+            (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
+          sessionType: String(session.sessionType),
+          status: String(session.status),
+          sessionCategory: "individual",
+        })
+      );
       upcomingSessions.push(...bookingSessions);
     }
 
@@ -390,24 +448,20 @@ export async function getMentorOverviewData(): Promise<{
       sessionsThisWeek,
       averageRating: 4.8, // Placeholder - you might want to add a reviews/ratings table
       todaysSessions: todaysSessions.map((session) => ({
-        id: session.id || session._id,
-        title: session.title || `${session.sessionType} Session`,
-        scheduledTime: session.scheduledTime,
-        duration:
-          session.duration ||
-          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
-        sessionType: session.sessionType,
-        status: session.status,
+        id: session.id,
+        title: session.title,
+        scheduledTime: session.scheduledTime!, // Already filtered to non-null in processing
+        duration: session.duration,
+        sessionType: session.sessionType as "YOGA" | "MEDITATION" | "DIET",
+        status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
       })),
       upcomingSessions: upcomingSessions.map((session) => ({
-        id: session.id || session._id,
-        title: session.title || `${session.sessionType} Session`,
-        scheduledTime: session.scheduledTime,
-        duration:
-          session.duration ||
-          (session.sessionType === "MEDITATION" ? 30 : session.sessionType === "DIET" ? 45 : 60),
-        sessionType: session.sessionType,
-        status: session.status,
+        id: session.id,
+        title: session.title,
+        scheduledTime: session.scheduledTime!, // Already filtered to non-null in processing
+        duration: session.duration,
+        sessionType: session.sessionType as "YOGA" | "MEDITATION" | "DIET",
+        status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
       })),
       recentActivity: recentActivity.map((activity) => ({
         id: activity.id,

@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -43,12 +43,9 @@ import {
   TicketCategory,
   type CreateTicketRequest,
 } from "@/lib/types/tickets";
+import type { SectionProps } from "../types";
 
-interface UserTicketsSectionProps {
-  userDetails?: any;
-}
-
-export function UserTicketsSection({}: UserTicketsSectionProps) {
+export function UserTicketsSection({}: SectionProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
   const [loading, setLoading] = useState(true);
   const [creating, setCreating] = useState(false);
@@ -69,7 +66,7 @@ export function UserTicketsSection({}: UserTicketsSectionProps) {
   });
 
   // Fetch tickets
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       const params = new URLSearchParams({
@@ -97,7 +94,7 @@ export function UserTicketsSection({}: UserTicketsSectionProps) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [currentPage, statusFilter, priorityFilter, categoryFilter]);
 
   // Create new ticket
   const handleCreateTicket = async () => {
@@ -180,7 +177,7 @@ export function UserTicketsSection({}: UserTicketsSectionProps) {
 
   useEffect(() => {
     fetchTickets();
-  }, [currentPage, statusFilter, priorityFilter, categoryFilter]);
+  }, [fetchTickets]);
 
   return (
     <div className="space-y-6">

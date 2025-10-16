@@ -3,10 +3,12 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
+import type { SessionBookingDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 export async function GET(_request: NextRequest) {
   try {
-    console.log("📅 Fetching student's booked sessions...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -14,7 +16,7 @@ export async function GET(_request: NextRequest) {
     }
 
     const userId = session.user.id;
-    console.log(`👤 Fetching booked sessions for student: ${userId}`);
+
 
     // Get user's session bookings with mentor and time slot details
     const sessionBookingsResult = await prisma.$runCommandRaw({
@@ -101,7 +103,7 @@ export async function GET(_request: NextRequest) {
       cursor: {},
     });
 
-    let sessions: any[] = [];
+    let sessions: SessionBookingDocument[] = [];
     if (
       sessionBookingsResult &&
       typeof sessionBookingsResult === "object" &&
@@ -111,33 +113,33 @@ export async function GET(_request: NextRequest) {
       "firstBatch" in sessionBookingsResult.cursor &&
       Array.isArray(sessionBookingsResult.cursor.firstBatch)
     ) {
-      sessions = sessionBookingsResult.cursor.firstBatch;
+      sessions = (sessionBookingsResult as unknown as MongoCommandResult<SessionBookingDocument>)
+        .cursor!.firstBatch;
     }
 
-    console.log(`📊 Found ${sessions.length} booked sessions for student`);
+
 
     // Preserve Date objects instead of converting to ISO strings
-    const processedSessions = sessions.map((session) => ({
-      ...session,
-      scheduledTime: session.scheduledTime,
-      createdAt: session.createdAt,
-      timeSlot: session.timeSlot
-        ? {
-            ...session.timeSlot,
-            startTime: session.timeSlot.startTime,
-            endTime: session.timeSlot.endTime,
-          }
-        : session.timeSlot,
-    }));
+    const processedSessions = sessions.map((session) => {
+      const timeSlot = session.timeSlot as Record<string, unknown> | undefined;
+      return {
+        ...session,
+        scheduledTime: session.scheduledTime,
+        createdAt: session.createdAt,
+        timeSlot: timeSlot
+          ? {
+              ...timeSlot,
+              startTime: timeSlot.startTime,
+              endTime: timeSlot.endTime,
+            }
+          : timeSlot,
+      };
+    });
 
     // Separate sessions by status for better organization
     const upcomingSessions = processedSessions.filter((s) => s.status === "SCHEDULED");
     const ongoingSessions = processedSessions.filter((s) => s.status === "ONGOING");
     const completedSessions = processedSessions.filter((s) => s.status === "COMPLETED");
-
-    console.log(
-      `📅 Sessions breakdown: ${upcomingSessions.length} upcoming, ${ongoingSessions.length} ongoing, ${completedSessions.length} completed`
-    );
 
     return NextResponse.json({
       success: true,

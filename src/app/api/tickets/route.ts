@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
+import type { Prisma } from "@prisma/client";
 
 // Import types from our custom types (since Prisma types might not be available yet)
 import { TicketStatus, TicketPriority, TicketCategory } from "@/lib/types/tickets";
@@ -13,7 +14,7 @@ async function generateTicketNumber(): Promise<string> {
 
   try {
     // Try to find the latest ticket number for this year
-    const latestTicket = await (prisma as any).ticket?.findFirst({
+    const latestTicket = await prisma.ticket.findFirst({
       where: {
         ticketNumber: {
           startsWith: prefix,
@@ -33,7 +34,7 @@ async function generateTicketNumber(): Promise<string> {
     return `${prefix}${nextNumber.toString().padStart(3, "0")}`;
   } catch {
     // If there's an error accessing tickets (e.g., collection doesn't exist yet)
-    console.log("Tickets collection not yet available, using fallback numbering");
+
     return `${prefix}001`;
   }
 }
@@ -57,7 +58,7 @@ export async function GET(request: NextRequest) {
     const offset = (page - 1) * limit;
 
     // Build filter conditions based on user role
-    const whereConditions: any = {};
+    const whereConditions: Prisma.TicketWhereInput = {};
 
     if (session.user.role === "USER") {
       whereConditions.userId = session.user.id;
@@ -71,14 +72,14 @@ export async function GET(request: NextRequest) {
     // Admins see all tickets without additional restrictions
 
     // Add filters (handle 'all' values from Select components)
-    if (status && status !== "all") whereConditions.status = status;
-    if (priority && priority !== "all") whereConditions.priority = priority;
-    if (category && category !== "all") whereConditions.category = category;
+    if (status && status !== "all") whereConditions.status = status as TicketStatus;
+    if (priority && priority !== "all") whereConditions.priority = priority as TicketPriority;
+    if (category && category !== "all") whereConditions.category = category as TicketCategory;
 
     try {
       // Try to query the database
       const [tickets, totalCount] = await Promise.all([
-        (prisma as any).ticket?.findMany({
+        prisma.ticket.findMany({
           where: whereConditions,
           include: {
             user: {
@@ -102,7 +103,7 @@ export async function GET(request: NextRequest) {
           skip: offset,
           take: limit,
         }) || [],
-        (prisma as any).ticket?.count({ where: whereConditions }) || 0,
+        prisma.ticket.count({ where: whereConditions }) || 0,
       ]);
 
       return NextResponse.json({
@@ -168,7 +169,7 @@ export async function POST(request: NextRequest) {
       const ticketNumber = await generateTicketNumber();
 
       // Try to create the ticket in the database
-      const ticket = await (prisma as any).ticket?.create({
+      const ticket = await prisma.ticket.create({
         data: {
           id: crypto.randomUUID(),
           ticketNumber,
@@ -193,6 +194,7 @@ export async function POST(request: NextRequest) {
 
       // Create initial message
       if (ticket) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         await (prisma as any).ticketMessage?.create({
           data: {
             id: crypto.randomUUID(),

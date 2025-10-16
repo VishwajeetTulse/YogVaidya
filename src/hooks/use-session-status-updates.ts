@@ -12,7 +12,6 @@ export function useSessionStatusUpdates(
 
   const updateSessionStatuses = async () => {
     try {
-      console.log("🔄 Checking for session status updates...");
 
       // Use the admin endpoint for client-side updates (no auth required)
       const response = await fetch("/api/admin/update-session-status", {
@@ -25,9 +24,6 @@ export function useSessionStatusUpdates(
       if (response.ok) {
         const result = await response.json();
         if (result.startedSessions > 0 || result.completedSessions > 0) {
-          console.log(
-            `✅ Session status updated: ${result.startedSessions} started, ${result.completedSessions} completed`
-          );
 
           // You could emit an event here to refresh relevant UI components
           window.dispatchEvent(

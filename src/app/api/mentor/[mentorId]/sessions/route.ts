@@ -1,6 +1,8 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+import type { SessionBookingDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 export async function GET(request: Request, { params }: { params: Promise<{ mentorId: string }> }) {
   try {
@@ -23,7 +25,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
     });
 
     // Parse the MongoDB result
-    let sessions: any[] = [];
+    let sessions: SessionBookingDocument[] = [];
     if (
       existingSessions &&
       typeof existingSessions === "object" &&
@@ -33,15 +35,16 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
       "firstBatch" in existingSessions.cursor &&
       Array.isArray(existingSessions.cursor.firstBatch)
     ) {
-      sessions = existingSessions.cursor.firstBatch;
+      sessions = (existingSessions as unknown as MongoCommandResult<SessionBookingDocument>).cursor!
+        .firstBatch;
     }
 
     // Check for active sessions
     const activeSessions = sessions.filter(
-      (session: any) => session.status === "SCHEDULED" || session.status === "ONGOING"
+      (session) => session.status === "SCHEDULED" || session.status === "ONGOING"
     );
 
-    const completedSessions = sessions.filter((session: any) => session.status === "COMPLETED");
+    const completedSessions = sessions.filter((session) => session.status === "COMPLETED");
 
     return NextResponse.json({
       success: true,

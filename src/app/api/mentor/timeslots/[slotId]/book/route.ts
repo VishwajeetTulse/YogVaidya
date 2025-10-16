@@ -5,7 +5,6 @@ import { headers } from "next/headers";
 export async function POST(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;
-    console.log("🚀 Booking time slot:", resolvedParams.slotId);
 
     // Check authentication
     const session = await auth.api.getSession({ headers: await headers() });
@@ -19,6 +18,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     const { prisma } = await import("@/lib/config/prisma");
 
     // Try Prisma first, with explicit DateTime conversion fallback
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     let timeSlot: any = null;
 
     try {
@@ -37,9 +37,17 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
           },
         },
       });
-    } catch (error: any) {
+    } catch (error: unknown) {
       // If DateTime conversion fails, fall back to raw query
-      if (error.code === "P2023" && error.message.includes("DateTime")) {
+      if (
+        error &&
+        typeof error === "object" &&
+        "code" in error &&
+        error.code === "P2023" &&
+        "message" in error &&
+        typeof error.message === "string" &&
+        error.message.includes("DateTime")
+      ) {
         console.warn("🔧 DateTime conversion failed, using raw query fallback");
 
         const timeSlotResult = await prisma.$runCommandRaw({
@@ -60,6 +68,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
           Array.isArray(timeSlotResult.cursor.firstBatch) &&
           timeSlotResult.cursor.firstBatch.length > 0
         ) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
           const rawSlot = timeSlotResult.cursor.firstBatch[0] as any;
 
           // Convert MongoDB _id to id for compatibility
@@ -101,18 +110,15 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     }
 
     if (!timeSlot) {
-      console.log("❌ Time slot not found");
       return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
     }
 
     if (!timeSlot.mentor) {
-      console.log("❌ Mentor not found for this time slot");
       return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
     // Check if slot has capacity
     if (timeSlot && timeSlot.currentStudents >= timeSlot.maxStudents) {
-      console.log("❌ Time slot fully booked by capacity check");
       return NextResponse.json(
         { success: false, error: "Time slot is fully booked" },
         { status: 409 }
@@ -120,7 +126,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     }
 
     if (!timeSlot) {
-      console.log("❌ Time slot not found or fully booked");
       return NextResponse.json(
         { success: false, error: "Time slot not available or fully booked" },
         { status: 404 }
@@ -139,12 +144,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
 
     const totalBooked = (timeSlot.currentStudents || 0) + confirmedBookingsCount;
     if (totalBooked >= timeSlot.maxStudents) {
-      console.log("❌ Time slot fully booked", {
-        currentStudents: timeSlot.currentStudents,
-        confirmedBookings: confirmedBookingsCount,
-        maxStudents: timeSlot.maxStudents,
-        totalBooked,
-      });
       return NextResponse.json(
         { success: false, error: "Time slot is fully booked" },
         { status: 409 }
@@ -159,8 +158,6 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     const sessionDuration = Math.round(
       (timeSlot.endTime.getTime() - timeSlot.startTime.getTime()) / (1000 * 60)
     );
-
-    console.log("📋 Prepared booking data with ID:", bookingId, "(not saved to DB yet)");
 
     // Return the booking data for payment processing
     // NOTE: No database record is created yet - it will be created after payment verification
@@ -206,7 +203,6 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
-    console.log("🗑️ Cancelling time slot booking:", resolvedParams.slotId);
 
     return NextResponse.json({
       success: true,

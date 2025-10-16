@@ -1,12 +1,14 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+import type { DateValue } from "@/lib/types/utils";
+import { isMongoDate } from "@/lib/types/mongodb";
+import type { Prisma } from "@prisma/client";
 
 // GET /api/mentor/timeslots/[slotId] - Get a specific time slot (public access for booking)
 export async function GET(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;
-    console.log("🔍 Fetching time slot for booking:", resolvedParams.slotId);
 
     const { prisma } = await import("@/lib/config/prisma");
 
@@ -19,7 +21,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
       },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     if (
       timeSlotResult &&
       typeof timeSlotResult === "object" &&
@@ -30,7 +32,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
       Array.isArray(timeSlotResult.cursor.firstBatch) &&
       timeSlotResult.cursor.firstBatch.length > 0
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
     }
 
     if (!timeSlot) {
@@ -40,7 +42,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
     // Get mentor details
     const mentor = await prisma.user.findFirst({
       where: {
-        id: timeSlot.mentorId,
+        id: String(timeSlot.mentorId),
         role: "MENTOR",
       },
       select: {
@@ -57,22 +59,32 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
       return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
     }
 
-    console.log("✅ Time slot found with mentor details");
-
     // Helper function to convert MongoDB date to proper format (consistent with timeslots route)
-    const convertDateToString = (dateValue: any): string => {
-      if (dateValue && typeof dateValue === "object" && dateValue.$date) {
-        return dateValue.$date;
+    const convertDateToString = (dateValue: DateValue): string => {
+      if (isMongoDate(dateValue)) {
+        const mongoDateValue = dateValue.$date;
+        return typeof mongoDateValue === "number"
+          ? new Date(mongoDateValue).toISOString()
+          : mongoDateValue;
       }
-      return dateValue;
+      if (dateValue instanceof Date) {
+        return dateValue.toISOString();
+      }
+      if (typeof dateValue === "string") {
+        return dateValue;
+      }
+      if (typeof dateValue === "number") {
+        return new Date(dateValue).toISOString();
+      }
+      return "";
     };
 
     return NextResponse.json({
       success: true,
       data: {
         _id: timeSlot._id,
-        startTime: convertDateToString(timeSlot.startTime),
-        endTime: convertDateToString(timeSlot.endTime),
+        startTime: convertDateToString(timeSlot.startTime as DateValue),
+        endTime: convertDateToString(timeSlot.endTime as DateValue),
         sessionType: timeSlot.sessionType,
         maxStudents: timeSlot.maxStudents,
         currentStudents: timeSlot.currentStudents,
@@ -107,7 +119,6 @@ export async function DELETE(
 ) {
   try {
     const resolvedParams = await params;
-    console.log("🗑️ Deleting time slot:", resolvedParams.slotId);
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -125,7 +136,7 @@ export async function DELETE(
       },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     if (
       timeSlotResult &&
       typeof timeSlotResult === "object" &&
@@ -136,7 +147,7 @@ export async function DELETE(
       Array.isArray(timeSlotResult.cursor.firstBatch) &&
       timeSlotResult.cursor.firstBatch.length > 0
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
     }
 
     if (!timeSlot) {
@@ -168,8 +179,6 @@ export async function DELETE(
       ],
     });
 
-    console.log("✅ Time slot deleted successfully");
-
     return NextResponse.json({
       success: true,
       data: {
@@ -191,7 +200,6 @@ export async function DELETE(
 export async function PUT(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;
-    console.log("✏️ Updating time slot:", resolvedParams.slotId);
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -221,7 +229,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slot
       },
     });
 
-    let timeSlot: any = null;
+    let timeSlot: Prisma.JsonObject | null = null;
     if (
       timeSlotResult &&
       typeof timeSlotResult === "object" &&
@@ -232,7 +240,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slot
       Array.isArray(timeSlotResult.cursor.firstBatch) &&
       timeSlotResult.cursor.firstBatch.length > 0
     ) {
-      timeSlot = timeSlotResult.cursor.firstBatch[0];
+      timeSlot = timeSlotResult.cursor.firstBatch[0] as Prisma.JsonObject;
     }
 
     if (!timeSlot) {
@@ -272,13 +280,11 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slot
               recurringDays: recurringDays || [],
               sessionLink: sessionLink,
               notes: notes || "",
-            }),
+            }) as Prisma.InputJsonValue,
           },
         },
       ],
     });
-
-    console.log("✅ Time slot updated successfully");
 
     return NextResponse.json({
       success: true,

@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 
 export async function GET() {
-  console.log("🧪 Simple static test route accessed");
+
   return NextResponse.json({
     success: true,
     message: "Static test route working",
@@ -10,7 +10,7 @@ export async function GET() {
 }
 
 export async function POST() {
-  console.log("🧪 Simple static POST test route accessed");
+
   return NextResponse.json({
     success: true,
     message: "Static POST test route working",

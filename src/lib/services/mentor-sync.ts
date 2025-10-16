@@ -20,8 +20,6 @@ export async function syncMentorTypes() {
       },
     });
 
-    console.log(`Found ${approvedApplications.length} approved mentor applications`);
-
     let updatedCount = 0;
 
     // Update each user's mentorType based on their approved application
@@ -40,13 +38,11 @@ export async function syncMentorTypes() {
         });
 
         if (result.count > 0) {
-          console.log(`Updated mentorType for ${app.name} (${app.email}) to ${app.mentorType}`);
+
           updatedCount += result.count;
         }
       }
     }
-
-    console.log(`Successfully updated ${updatedCount} mentor records`);
 
     return {
       success: true,
@@ -83,7 +79,7 @@ export async function getMentorStats() {
       prisma.mentorApplication.count({ where: { status: "approved" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: "YOGAMENTOR" } }),
       prisma.user.count({ where: { role: "MENTOR", mentorType: "MEDITATIONMENTOR" } }),
-      prisma.user.count({ where: { role: "MENTOR", mentorType: "DIETPLANNER" as any } }),
+      prisma.user.count({ where: { role: "MENTOR", mentorType: "DIETPLANNER" } }),
     ]);
 
     return {

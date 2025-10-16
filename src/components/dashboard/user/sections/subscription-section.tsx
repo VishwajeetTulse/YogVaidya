@@ -79,15 +79,12 @@ export const SubscriptionSection = ({
   useEffect(() => {
     const fetchBillingHistory = async () => {
       if (userDetails.email) {
-        console.log("Fetching billing history for:", userDetails.email);
         setLoadingHistory(true);
         try {
           const result = await getBillingHistoryAction(userDetails.email);
-          console.log("Billing history result:", result);
 
           if (result.success) {
             setBillingHistory(result.history || []);
-            console.log("Set billing history:", result.history?.length || 0, "records");
           } else {
             console.error("Failed to fetch billing history:", result.error);
             toast.error(`Failed to load payment history: ${result.error}`);
@@ -101,7 +98,6 @@ export const SubscriptionSection = ({
           setLoadingHistory(false);
         }
       } else {
-        console.log("No user email available, skipping billing history fetch");
         setLoadingHistory(false);
         setBillingHistory([]);
       }

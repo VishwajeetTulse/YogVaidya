@@ -45,8 +45,6 @@ export async function getPaymentHistory(
     let skip = 0;
     let hasMore = true;
 
-    console.log(`🔍 Fetching payments for verified email: ${cleanEmail}`);
-
     // Fetch payments in batches until we have enough user payments or no more payments exist
     while (hasMore && allUserPayments.length < limit) {
       try {

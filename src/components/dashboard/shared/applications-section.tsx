@@ -47,7 +47,6 @@ export const ApplicationsSection = () => {
       const roleData = await roleRes.json();
       if (roleData?.user?.role) {
         setCurrentUserRole(roleData.user.role);
-        console.log("🔍 Detected current user role (Applications):", roleData.user.role);
       }
     } catch (roleError) {
       console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
@@ -75,7 +74,6 @@ export const ApplicationsSection = () => {
   const handleStatusUpdate = async (id: string, status: "approved" | "rejected") => {
     setProcessingId(id);
     try {
-      console.log("🔍 Updating application status with role:", currentUserRole);
       const result = await updateMentorApplicationStatusAction(id, status, currentUserRole);
 
       if (result.success) {

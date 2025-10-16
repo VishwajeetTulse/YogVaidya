@@ -86,11 +86,11 @@ export default function SignupPage() {
           }, 1500);
         },
         onError: (ctx) => {
-          console.log("error", ctx);
+
           toast.error("Sign up failed", {
             description: ctx.error.message ?? "Something went wrong.",
           });
-          console.log("error", ctx.error.message);
+
         },
       }
     );

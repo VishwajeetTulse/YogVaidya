@@ -26,7 +26,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
 
     try {
       // First, verify the ticket exists and user has access
-      const ticket = await (prisma as any).ticket?.findUnique({
+      const ticket = await prisma.ticket.findUnique({
         where: { id: ticketId },
         include: {
           user: true,
@@ -49,6 +49,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       }
 
       // Create the message
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const newMessage = await (prisma as any).ticketMessage?.create({
         data: {
           id: crypto.randomUUID(),
@@ -71,7 +72,7 @@ export async function POST(request: NextRequest, { params }: { params: Promise<{
       });
 
       // Update ticket's updatedAt timestamp
-      await (prisma as any).ticket?.update({
+      await prisma.ticket.update({
         where: { id: ticketId },
         data: { updatedAt: new Date() },
       });
@@ -103,7 +104,7 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
 
     try {
       // First, verify the ticket exists and user has access
-      const ticket = await (prisma as any).ticket?.findUnique({
+      const ticket = await prisma.ticket.findUnique({
         where: { id: ticketId },
         include: {
           user: true,
@@ -129,12 +130,17 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
       const canSeeInternal = ["MODERATOR", "ADMIN"].includes(session.user.role);
 
       // Build filter for messages
-      const messageFilter: any = { ticketId };
+      interface MessageFilter {
+        ticketId: string;
+        isInternal?: boolean;
+      }
+      const messageFilter: MessageFilter = { ticketId };
       if (!canSeeInternal) {
         messageFilter.isInternal = false;
       }
 
       // Get all messages
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       const messages = await (prisma as any).ticketMessage?.findMany({
         where: messageFilter,
         include: {

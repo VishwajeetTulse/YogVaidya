@@ -30,14 +30,7 @@ interface User {
 }
 
 export const UsersSection = () => {
-  const { logInfo, logWarning, logError } = useLogger();
-
-  // Debug the logger hook
-  console.log("🔍 useLogger hook initialized (Users Section):", {
-    logInfo: typeof logInfo,
-    logWarning: typeof logWarning,
-    logError: typeof logError,
-  });
+  const { logInfo, logWarning } = useLogger();
 
   const [users, setUsers] = useState<User[]>([]);
   const [currentUserRole, setCurrentUserRole] = useState<string>("ADMIN"); // Default to ADMIN, will be updated
@@ -78,7 +71,6 @@ export const UsersSection = () => {
           const roleData = await roleRes.json();
           if (roleData?.user?.role) {
             setCurrentUserRole(roleData.user.role);
-            console.log("🔍 Detected current user role (Users):", roleData.user.role);
           }
         } catch (roleError) {
           console.warn("Could not detect user role, defaulting to ADMIN:", roleError);
@@ -192,16 +184,12 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ User update API call succeeded");
+
         toast.success("User updated successfully");
 
-        // Log user update with debugging
-        console.log("🔍 Attempting to log user update...");
-        console.log("🔍 logInfo function exists:", typeof logInfo);
-        console.log("🔍 Form data:", formData);
-
+        // Log user update
         try {
-          const logResult = await logInfo(
+          await logInfo(
             "USER_PROFILE_UPDATED",
             currentUserRole,
             `Updated user profile: ${formData.email}`,
@@ -216,7 +204,6 @@ export const UsersSection = () => {
               updateDate: new Date().toISOString(),
             }
           );
-          console.log("✅ User update log result:", logResult);
         } catch (logError) {
           console.error("❌ User update logging failed:", logError);
           toast.error("Failed to log the user update. Check console for details.");
@@ -269,14 +256,13 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
-        console.log("✅ User delete API call succeeded");
+
         toast.success("User deleted successfully");
 
         // Log user deletion with debugging
-        console.log("🔍 Attempting to log user deletion...");
 
         try {
-          const logResult = await logWarning(
+          await logWarning(
             "USER_ACCOUNT_DELETED",
             currentUserRole,
             `Deleted user account: ${userToDelete.email}`,
@@ -288,7 +274,7 @@ export const UsersSection = () => {
               deletionDate: new Date().toISOString(),
             }
           );
-          console.log("✅ User deletion log result:", logResult);
+
         } catch (logError) {
           console.error("❌ User deletion logging failed:", logError);
           toast.error("Failed to log the user deletion. Check console for details.");

@@ -2,11 +2,14 @@
  * Utility functions for handling MongoDB datetime conversions
  */
 
+import type { DateValue } from "@/lib/types/mongodb";
+import { isMongoDate } from "@/lib/types/mongodb";
+
 /**
  * Convert MongoDB datetime object to JavaScript Date
  * Handles both { $date: 'ISO_STRING' } format and regular Date objects
  */
-export function convertMongoDate(mongoDate: any): Date | null {
+export function convertMongoDate(mongoDate: DateValue): Date | null {
   if (!mongoDate) return null;
 
   // If it's already a Date object, return it
@@ -15,7 +18,7 @@ export function convertMongoDate(mongoDate: any): Date | null {
   }
 
   // If it's a MongoDB extended JSON date format
-  if (typeof mongoDate === "object" && mongoDate.$date) {
+  if (isMongoDate(mongoDate)) {
     try {
       return new Date(mongoDate.$date);
     } catch (error) {
@@ -52,7 +55,7 @@ export function convertMongoDate(mongoDate: any): Date | null {
 /**
  * Safely convert MongoDB datetime to ISO string
  */
-export function mongoDateToISOString(mongoDate: any): string | null {
+export function mongoDateToISOString(mongoDate: DateValue): string | null {
   const date = convertMongoDate(mongoDate);
   return date ? date.toISOString() : null;
 }
@@ -60,7 +63,7 @@ export function mongoDateToISOString(mongoDate: any): string | null {
 /**
  * Check if a MongoDB datetime is valid
  */
-export function isValidMongoDate(mongoDate: any): boolean {
+export function isValidMongoDate(mongoDate: DateValue): boolean {
   const date = convertMongoDate(mongoDate);
   return date !== null && !isNaN(date.getTime());
 }

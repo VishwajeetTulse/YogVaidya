@@ -12,6 +12,11 @@ interface SubscriptionBenefitsShowcaseProps {
   isTrialActive?: boolean;
 }
 
+interface MentorInfo {
+  id: string;
+  available?: boolean;
+}
+
 // Real data from our database - accurate plan features and pricing
 const planFeatures = {
   SEED: {
@@ -107,7 +112,8 @@ export default function SubscriptionBenefitsShowcase({
           setRealStats({
             totalActiveSubscriptions: subscriptionData.analytics?.totalActiveSubscriptions || 0,
             totalMentors: mentorData.mentors?.length || 0,
-            availableMentors: mentorData.mentors?.filter((m: any) => m.available)?.length || 0,
+            availableMentors:
+              mentorData.mentors?.filter((m: MentorInfo) => m.available)?.length || 0,
           });
         }
       } catch (error) {

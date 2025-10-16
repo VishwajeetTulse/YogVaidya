@@ -10,11 +10,12 @@ import { Image } from "@tiptap/extension-image";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Calendar, User } from "lucide-react";
+import type { EditorContent as EditorContentType } from "@/lib/types/utils";
 
 interface DietPlanViewerProps {
   title: string;
   description?: string;
-  content: any; // TipTap JSON
+  content: EditorContentType; // TipTap JSON
   createdAt: Date;
   mentorName: string;
   tags?: string[];

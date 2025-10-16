@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef, useCallback } from "react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -41,6 +41,13 @@ import {
 } from "lucide-react";
 import { format } from "date-fns";
 
+interface UserFromAPI {
+  id: string;
+  name?: string | null;
+  email: string;
+  role: string;
+}
+
 interface TicketsProps {
   userRole: "USER" | "MODERATOR" | "ADMIN";
   currentUserId?: string;
@@ -64,7 +71,7 @@ export const TicketsSection = ({ userRole, currentUserId }: TicketsProps) => {
   const [showCreateForm, setShowCreateForm] = useState(false);
 
   // Fetch tickets based on current filters
-  const fetchTickets = async () => {
+  const fetchTickets = useCallback(async () => {
     try {
       setLoading(true);
       const queryParams = new URLSearchParams();
@@ -92,13 +99,13 @@ export const TicketsSection = ({ userRole, currentUserId }: TicketsProps) => {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchTickets();
-  }, [filters]);
+  }, [fetchTickets]);
 
-  const handleFilterChange = (key: keyof TicketFilters, value: any) => {
+  const handleFilterChange = (key: keyof TicketFilters, value: string | number | undefined) => {
     setFilters((prev) => ({
       ...prev,
       [key]: value,
@@ -420,8 +427,8 @@ const TicketCard = ({ ticket, userRole, currentUserId, onUpdate }: TicketCardPro
         const data = await response.json();
         // Filter for moderators only (tickets should be assigned to moderators to resolve)
         const moderators = data.users
-          .filter((user: any) => user.role === "MODERATOR")
-          .map((user: any) => ({
+          .filter((user: UserFromAPI) => user.role === "MODERATOR")
+          .map((user: UserFromAPI) => ({
             id: user.id,
             name: user.name || "Unnamed User",
             email: user.email,

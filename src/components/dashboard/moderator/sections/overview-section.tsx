@@ -73,14 +73,12 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
           throw new Error("Failed to fetch analytics data");
         }
         const analyticsResult = await analyticsResponse.json();
-        console.log("Analytics data:", analyticsResult); // For debugging
 
         // Fetch recent mentor applications
         const applicationsResult = await getMentorApplicationsAction();
         if (!applicationsResult.success) {
           throw new Error("Failed to fetch mentor applications");
         }
-        console.log("Applications data:", applicationsResult); // For debugging
 
         // Make sure we set analyticsData before using it
         setAnalyticsData(analyticsResult);
@@ -149,7 +147,6 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
               (a, b) => new Date(b).getTime() - new Date(a).getTime()
             );
             mostRecentSubDate = new Date(sortedDates[0]);
-            console.log(sortedDates);
           }
           generatedActivities.push({
             id: "subscriptions",

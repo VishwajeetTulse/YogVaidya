@@ -1,4 +1,6 @@
 // Ticket System Types
+import type { TicketMetadata } from "./utils";
+
 export enum TicketStatus {
   OPEN = "OPEN",
   IN_PROGRESS = "IN_PROGRESS",
@@ -46,7 +48,7 @@ export interface Ticket {
   assignedToId: string | null;
   assignedTo: TicketUser | null;
   tags: string[];
-  metadata: any;
+  metadata: TicketMetadata;
   createdAt: string;
   updatedAt: string;
   resolvedAt: string | null;
@@ -58,7 +60,7 @@ export interface CreateTicketRequest {
   description: string;
   category: TicketCategory;
   priority?: TicketPriority;
-  metadata?: any;
+  metadata?: TicketMetadata;
 }
 
 export interface TicketListResponse {

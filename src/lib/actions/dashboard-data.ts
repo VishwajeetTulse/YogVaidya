@@ -4,7 +4,31 @@ import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
-import type { MongoAggregateResult, SessionDocument } from "@/lib/types/common";
+import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
+
+// Helper type for joined MongoDB results (with mentor lookup)
+interface SessionWithMentorLookup extends SessionBookingDocument {
+  mentor?: Array<{ name: string | null }>;
+}
+
+interface ScheduleWithMentorLookup extends ScheduleDocument {
+  mentor?: Array<{ name: string | null }>;
+}
+
+// Processed session type for dashboard display
+interface ProcessedSession {
+  id: string;
+  scheduledTime: Date;
+  sessionType: string;
+  status: string;
+  title?: string;
+  createdAt: Date;
+  updatedAt: Date;
+  mentor?: { name: string | null } | null;
+  sessionCategory: string;
+  [key: string]: unknown;
+}
 
 export interface DashboardData {
   classesThisWeek: number;
@@ -153,23 +177,21 @@ export async function getUserDashboardData(): Promise<{
       cursor: {},
     });
 
-    let userScheduledSessions =
-      (userScheduledSessionsResult as unknown as MongoAggregateResult<SessionDocument>)?.cursor
-        ?.firstBatch || [];
-    userScheduledSessions = userScheduledSessions.map((session: SessionDocument) => ({
+    const userScheduledSessionsRaw =
+      (userScheduledSessionsResult as unknown as MongoCommandResult<ScheduleWithMentorLookup>)
+        ?.cursor?.firstBatch || [];
+    const userScheduledSessions = userScheduledSessionsRaw.map((session) => ({
       ...session,
       id: session._id.toString(),
       scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
       createdAt: convertMongoDate(session.createdAt) || new Date(),
       updatedAt: convertMongoDate(session.updatedAt) || new Date(),
-      mentor: (session as Record<string, unknown>).mentor
-        ? { name: ((session as Record<string, unknown>).mentor as Record<string, unknown>).name }
-        : null,
+      mentor: session.mentor?.[0] ? { name: session.mentor[0].name } : null,
     }));
 
     // Calculate classes this week based on actual scheduled sessions
     const classesThisWeek = userScheduledSessions.filter(
-      (session: SessionDocument) => session.status === "COMPLETED" || session.scheduledTime <= now
+      (session) => session.status === "COMPLETED" || session.scheduledTime <= now
     ).length;
 
     // Calculate total practice time based on completed sessions
@@ -218,18 +240,25 @@ export async function getUserDashboardData(): Promise<{
       cursor: {},
     });
 
-    let recentSessions = (recentSessionsResult as any)?.cursor?.firstBatch || [];
-    recentSessions = recentSessions.map((session: any) => ({
+    let recentSessions =
+      (recentSessionsResult as unknown as MongoCommandResult<SessionBookingDocument>)?.cursor
+        ?.firstBatch || [];
+    recentSessions = recentSessions.map((session) => ({
       ...session,
       id: session._id.toString(),
-      scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
+      scheduledTime: convertMongoDate(session.scheduledAt) || new Date(),
     }));
 
     // Calculate streak (simplified - count consecutive days with sessions)
     let streakDays = 0;
     if (recentSessions.length > 0) {
       const today = new Date();
-      const sessionDates = recentSessions.map((s: any) => new Date(s.scheduledTime).toDateString());
+      const sessionDates = recentSessions.map((s) => {
+        const scheduledTime = s.scheduledTime;
+        return scheduledTime instanceof Date
+          ? scheduledTime.toDateString()
+          : new Date(scheduledTime as string).toDateString();
+      });
 
       // Count consecutive days from today backwards
       for (let i = 0; i < 30; i++) {
@@ -354,35 +383,39 @@ export async function getUserDashboardData(): Promise<{
     });
 
     // Merge and process both session types
-    const todaySchedule: any[] = [];
+    const todaySchedule: ProcessedSession[] = [];
 
     // Process subscription sessions from Schedule
-    const scheduleSessions = (todayScheduleResult as any)?.cursor?.firstBatch || [];
-    scheduleSessions.forEach((session: any) => {
+    const scheduleSessions =
+      (todayScheduleResult as unknown as MongoCommandResult<ScheduleWithMentorLookup>)?.cursor
+        ?.firstBatch || [];
+    scheduleSessions.forEach((session) => {
       todaySchedule.push({
         ...session,
         id: session._id.toString(),
         scheduledTime: convertMongoDate(session.scheduledTime) || new Date(),
         createdAt: convertMongoDate(session.createdAt) || new Date(),
         updatedAt: convertMongoDate(session.updatedAt) || new Date(),
-        mentor: session.mentor ? { name: session.mentor.name } : null,
+        mentor: session.mentor?.[0] ? { name: session.mentor[0].name } : null,
         sessionCategory: "subscription",
       });
     });
 
     // Process one-to-one sessions from SessionBooking
-    const bookingSessions = (todayBookingsResult as any)?.cursor?.firstBatch || [];
-    bookingSessions.forEach((session: any) => {
+    const bookingSessions =
+      (todayBookingsResult as unknown as MongoCommandResult<SessionWithMentorLookup>)?.cursor
+        ?.firstBatch || [];
+    bookingSessions.forEach((session) => {
       todaySchedule.push({
         ...session,
         id: session._id.toString(),
         scheduledTime: convertMongoDate(session.scheduledAt) || new Date(), // Note: scheduledAt not scheduledTime
         sessionType: session.sessionType,
         status: session.status,
-        title: session.title || `${session.sessionType} Session`,
+        title: `${session.sessionType} Session`, // SessionBooking doesn't have title field
         createdAt: convertMongoDate(session.createdAt) || new Date(),
         updatedAt: convertMongoDate(session.updatedAt) || new Date(),
-        mentor: session.mentor ? { name: session.mentor.name } : null,
+        mentor: session.mentor?.[0] ? { name: session.mentor[0].name } : null,
         sessionCategory: "individual",
       });
     });
@@ -505,35 +538,42 @@ export async function getUserDashboardData(): Promise<{
     });
 
     // Merge and process both session types for upcoming sessions
-    let upcomingSessions: any[] = [];
+    let upcomingSessions: ProcessedSession[] = [];
 
     // Process subscription sessions from Schedule
-    const upcomingScheduleSessions = (upcomingScheduleResult as any)?.cursor?.firstBatch || [];
-    upcomingScheduleSessions.forEach((upcomingSession: any) => {
+    const upcomingScheduleSessions =
+      (upcomingScheduleResult as unknown as MongoCommandResult<ScheduleWithMentorLookup>)?.cursor
+        ?.firstBatch || [];
+    upcomingScheduleSessions.forEach((upcomingSession) => {
       upcomingSessions.push({
         ...upcomingSession,
         id: upcomingSession._id.toString(),
         scheduledTime: convertMongoDate(upcomingSession.scheduledTime) || new Date(),
+        sessionType: upcomingSession.sessionType,
+        status: upcomingSession.status,
+        title: upcomingSession.title,
         createdAt: convertMongoDate(upcomingSession.createdAt) || new Date(),
         updatedAt: convertMongoDate(upcomingSession.updatedAt) || new Date(),
-        mentor: upcomingSession.mentor ? { name: upcomingSession.mentor.name } : null,
+        mentor: upcomingSession.mentor?.[0] ? { name: upcomingSession.mentor[0].name } : null,
         sessionCategory: "subscription",
       });
     });
 
     // Process one-to-one sessions from SessionBooking
-    const upcomingBookingSessions = (upcomingBookingsResult as any)?.cursor?.firstBatch || [];
-    upcomingBookingSessions.forEach((upcomingSession: any) => {
+    const upcomingBookingSessions =
+      (upcomingBookingsResult as unknown as MongoCommandResult<SessionWithMentorLookup>)?.cursor
+        ?.firstBatch || [];
+    upcomingBookingSessions.forEach((upcomingSession) => {
       upcomingSessions.push({
         ...upcomingSession,
         id: upcomingSession._id.toString(),
         scheduledTime: convertMongoDate(upcomingSession.scheduledAt) || new Date(),
         sessionType: upcomingSession.sessionType,
         status: upcomingSession.status,
-        title: upcomingSession.title || `${upcomingSession.sessionType} Session`,
+        title: `${upcomingSession.sessionType} Session`, // SessionBooking doesn't have title field
         createdAt: convertMongoDate(upcomingSession.createdAt) || new Date(),
         updatedAt: convertMongoDate(upcomingSession.updatedAt) || new Date(),
-        mentor: upcomingSession.mentor ? { name: upcomingSession.mentor.name } : null,
+        mentor: upcomingSession.mentor?.[0] ? { name: upcomingSession.mentor[0].name } : null,
         sessionCategory: "individual",
       });
     });
@@ -563,8 +603,14 @@ export async function getUserDashboardData(): Promise<{
       ],
       cursor: {},
     });
+
+    interface CountResult {
+      total: number;
+    }
+
     const currentMonthSessions =
-      (currentMonthSessionsResult as any)?.cursor?.firstBatch?.[0]?.total || 0;
+      (currentMonthSessionsResult as unknown as MongoCommandResult<CountResult>)?.cursor
+        ?.firstBatch?.[0]?.total || 0;
 
     const previousMonthSessionsResult = await prisma.$runCommandRaw({
       aggregate: "schedule",
@@ -583,7 +629,8 @@ export async function getUserDashboardData(): Promise<{
       cursor: {},
     });
     const previousMonthSessions =
-      (previousMonthSessionsResult as any)?.cursor?.firstBatch?.[0]?.total || 0;
+      (previousMonthSessionsResult as unknown as MongoCommandResult<CountResult>)?.cursor
+        ?.firstBatch?.[0]?.total || 0;
 
     // Format the data
     const formatSessionTime = (date: Date) => {
@@ -602,7 +649,7 @@ export async function getUserDashboardData(): Promise<{
         goalsAchieved,
         totalGoals,
         streakDays,
-        todaySchedule: todaySchedule.map((session: any) => ({
+        todaySchedule: todaySchedule.map((session) => ({
           id: session.id,
           title: session.title || `${session.sessionType} Session`,
           mentor: session.mentor?.name || "Mentor",
@@ -611,7 +658,7 @@ export async function getUserDashboardData(): Promise<{
           type: session.sessionType.toLowerCase() as "yoga" | "meditation",
           status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
         })),
-        upcomingSessions: upcomingSessions.map((session: any) => ({
+        upcomingSessions: upcomingSessions.map((session) => ({
           id: session.id,
           title: session.title || `${session.sessionType} Session`,
           mentor: session.mentor?.name || "Mentor",

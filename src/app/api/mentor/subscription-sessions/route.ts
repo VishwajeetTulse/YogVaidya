@@ -4,6 +4,8 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import { prisma } from "@/lib/config/prisma";
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
+import type { ScheduleDocument } from "@/lib/types/sessions";
+import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 // Schema for creating subscription sessions
 const createSubscriptionSessionSchema = z.object({
@@ -23,7 +25,7 @@ const createSubscriptionSessionSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-    console.log("🚀 Creating subscription-based session...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -123,9 +125,6 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log(`📊 Found ${eligibleUsers.length} eligible users for ${sessionType} session`);
-    console.log(`👥 Eligible plans: ${eligiblePlans.join(", ")}`);
-
     // Generate unique ID for the schedule
     const scheduleId = `schedule_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
 
@@ -143,8 +142,8 @@ export async function POST(request: Request) {
       },
     });
 
-    console.log("✅ Group subscription session created:", newSchedule.id);
-    console.log(`👥 Session available for ${eligibleUsers.length} eligible users`);
+
+
 
     // Count by subscription plan for response
     const planCounts = {
@@ -195,7 +194,7 @@ export async function POST(request: Request) {
 // GET - Fetch subscription sessions for the mentor
 export async function GET() {
   try {
-    console.log("🔍 Fetching subscription sessions...");
+
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
@@ -293,7 +292,7 @@ export async function GET() {
       cursor: {},
     });
 
-    let schedules: any[] = [];
+    let schedules: ScheduleDocument[] = [];
     if (
       scheduleResult &&
       typeof scheduleResult === "object" &&
@@ -303,7 +302,8 @@ export async function GET() {
       "firstBatch" in scheduleResult.cursor &&
       Array.isArray(scheduleResult.cursor.firstBatch)
     ) {
-      schedules = scheduleResult.cursor.firstBatch;
+      schedules = (scheduleResult as unknown as MongoCommandResult<ScheduleDocument>).cursor!
+        .firstBatch;
     }
 
     // Convert date strings to Date objects

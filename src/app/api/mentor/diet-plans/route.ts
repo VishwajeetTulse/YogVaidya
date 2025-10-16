@@ -4,6 +4,17 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { sendEmail } from "@/lib/services/email";
 
+// Extended Prisma client type for DietPlan model
+type PrismaWithDietPlan = typeof prisma & {
+  dietPlan: {
+    create: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    findMany: (args?: Record<string, unknown>) => Promise<Array<Record<string, unknown>>>;
+    findUnique: (args: Record<string, unknown>) => Promise<Record<string, unknown> | null>;
+    update: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+    delete: (args: Record<string, unknown>) => Promise<Record<string, unknown>>;
+  };
+};
+
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
@@ -98,14 +109,14 @@ export async function POST(req: NextRequest) {
               <div class="content">
                 <h2>Hi ${student.name},</h2>
                 <p>Your mentor <strong>${mentor.name || "Your mentor"}</strong> has created a personalized diet plan for you!</p>
-                
+
                 <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0;">
                   <h3 style="margin-top: 0; color: #10b981;">${title}</h3>
                   ${description ? `<p>${description}</p>` : ""}
                 </div>
 
                 <p>This plan has been carefully crafted to help you achieve your health and wellness goals.</p>
-                
+
                 <div style="text-align: center;">
                   <a href="${appUrl}/dashboard" class="button">View Your Diet Plan</a>
                 </div>
@@ -140,7 +151,7 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
-    console.log("🔍 GET Diet Plans - User:", session?.user?.id, "Role:", session?.user?.role);
+
 
     if (!session?.user) {
       console.error("❌ Unauthorized - No session");
@@ -150,15 +161,15 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const mentorId = searchParams.get("mentorId");
 
-    console.log("📋 Query params - mentorId:", mentorId);
+
 
     let dietPlans;
 
     try {
       if (session.user.role === "MENTOR" && mentorId === session.user.id) {
         // Mentor viewing their created plans
-        console.log("👨‍🏫 Fetching plans for MENTOR:", session.user.id);
-        dietPlans = await (prisma as any).dietPlan.findMany({
+
+        dietPlans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
           where: { mentorId: session.user.id },
           include: {
             student: {
@@ -169,8 +180,8 @@ export async function GET(req: NextRequest) {
         });
       } else {
         // Student viewing their received plans
-        console.log("🎓 Fetching plans for STUDENT:", session.user.id);
-        dietPlans = await (prisma as any).dietPlan.findMany({
+
+        dietPlans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
           where: {
             studentId: session.user.id,
             isDraft: false, // Students don't see drafts
@@ -195,16 +206,17 @@ export async function GET(req: NextRequest) {
     }
 
     // Transform tags - handle both string and array formats
-    const transformedDietPlans = dietPlans.map((plan: any) => {
-      let tags = [];
+    const transformedDietPlans = dietPlans.map((plan) => {
+      let tags: string[] = [];
 
-      if (plan.tags) {
-        if (typeof plan.tags === "string") {
+      const planTags = plan.tags as string | string[] | undefined;
+      if (planTags) {
+        if (typeof planTags === "string") {
           // Tags stored as comma-separated string
-          tags = plan.tags.split(",").map((t: string) => t.trim());
-        } else if (Array.isArray(plan.tags)) {
+          tags = planTags.split(",").map((t) => t.trim());
+        } else if (Array.isArray(planTags)) {
           // Tags already an array
-          tags = plan.tags;
+          tags = planTags;
         }
       }
 
@@ -214,7 +226,7 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    console.log("✅ Returning", transformedDietPlans.length, "diet plans");
+
     return NextResponse.json({ dietPlans: transformedDietPlans });
   } catch (error) {
     console.error("❌ Error fetching diet plans:", error);

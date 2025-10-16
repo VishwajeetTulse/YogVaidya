@@ -3,6 +3,8 @@
 import React, { useState, useEffect, useTransition, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
+import type { DateValue } from "@/lib/types/utils";
+import { isMongoDate } from "@/lib/types/mongodb";
 import {
   Video,
   Calendar,
@@ -43,7 +45,7 @@ export const SessionsSection = () => {
   // Format sessions data to handle Date/string conversion issues
   const formatMentorSessionsData = (serverData: MentorSessionsData): MentorSessionsData => {
     // Helper function to safely convert to valid Date object
-    const safeToDate = (dateValue: any): Date => {
+    const safeToDate = (dateValue: DateValue): Date => {
       if (!dateValue) {
         console.warn("⚠️ Null/undefined date value found for scheduledTime:", dateValue);
         // Return a date far in the past to indicate an error, not current time
@@ -64,7 +66,7 @@ export const SessionsSection = () => {
       }
 
       // If it's a MongoDB date object with $date property
-      if (typeof dateValue === "object" && dateValue !== null && "$date" in dateValue) {
+      if (isMongoDate(dateValue)) {
         const mongoDate = new Date(dateValue.$date);
         if (!isNaN(mongoDate.getTime())) {
           return mongoDate;
@@ -83,17 +85,6 @@ export const SessionsSection = () => {
     return {
       ...serverData,
       sessions: serverData.sessions.map((session: MentorSessionData) => {
-        console.log("🔍 Processing session:", {
-          id: session.id,
-          status: session.status,
-          scheduledTime: session.scheduledTime,
-          scheduledTimeType: typeof session.scheduledTime,
-          scheduledTimeValue: session.scheduledTime,
-          isValidDate: session.scheduledTime instanceof Date,
-          parsedDate: session.scheduledTime
-            ? new Date(session.scheduledTime).toISOString()
-            : "null",
-        });
         return {
           ...session,
           scheduledTime: safeToDate(session.scheduledTime),
@@ -160,16 +151,6 @@ export const SessionsSection = () => {
 
   // Function to handle start session
   const handleStartSession = (sessionItem: MentorSessionData) => {
-    console.log("🔍 handleStartSession called with:", {
-      sessionItem,
-      sessionItemType: typeof sessionItem,
-      sessionItemKeys: sessionItem ? Object.keys(sessionItem) : "undefined",
-      id: sessionItem?.id,
-      idType: typeof sessionItem?.id,
-      idTrimmed: sessionItem?.id?.trim(),
-      isValid: !!(sessionItem?.id && sessionItem.id.trim()),
-    });
-
     // Check if sessionItem exists
     if (!sessionItem) {
       console.error("❌ sessionItem is undefined/null");
@@ -187,8 +168,6 @@ export const SessionsSection = () => {
       toast.error(`Cannot start session: Invalid session ID (${sessionItem.id})`);
       return;
     }
-
-    console.log("✅ All validations passed, calling UpdateSessionStatus with ID:", sessionItem.id);
 
     try {
       UpdateSessionStatus("ONGOING", sessionItem.id);
@@ -311,10 +290,14 @@ export const SessionsSection = () => {
   };
 
   // Helper function for safe date comparison - now all dates should be valid Date objects
-  const getValidDate = (dateValue: any): Date | null => {
+  const getValidDate = (dateValue: DateValue): Date | null => {
     if (!dateValue) return null;
     if (dateValue instanceof Date) {
       return isNaN(dateValue.getTime()) ? null : dateValue;
+    }
+    if (isMongoDate(dateValue)) {
+      const date = new Date(dateValue.$date);
+      return isNaN(date.getTime()) ? null : date;
     }
     const date = new Date(dateValue);
     return isNaN(date.getTime()) ? null : date;
@@ -348,10 +331,10 @@ export const SessionsSection = () => {
 
   // Separate upcoming sessions by category (handle missing sessionCategory gracefully)
   const upcomingSubscriptionSessions = upcomingSessions.filter(
-    (session) => (session as any).sessionCategory === "subscription"
+    (session) => session.sessionCategory === "subscription"
   );
   const upcomingIndividualSessions = upcomingSessions.filter(
-    (session) => (session as any).sessionCategory === "individual"
+    (session) => session.sessionCategory === "individual"
   );
 
   // Filter sessions for ongoing
@@ -361,10 +344,10 @@ export const SessionsSection = () => {
 
   // Separate ongoing sessions by category
   const ongoingSubscriptionSessions = ongoingSessions.filter(
-    (session) => (session as any).sessionCategory === "subscription"
+    (session) => session.sessionCategory === "subscription"
   );
   const ongoingIndividualSessions = ongoingSessions.filter(
-    (session) => (session as any).sessionCategory === "individual"
+    (session) => session.sessionCategory === "individual"
   );
 
   // Filter sessions for completed
@@ -374,10 +357,10 @@ export const SessionsSection = () => {
 
   // Separate completed sessions by category
   const completedSubscriptionSessions = completedSessions.filter(
-    (session) => (session as any).sessionCategory === "subscription"
+    (session) => session.sessionCategory === "subscription"
   );
   const completedIndividualSessions = completedSessions.filter(
-    (session) => (session as any).sessionCategory === "individual"
+    (session) => session.sessionCategory === "individual"
   );
 
   // Filter sessions for cancelled
@@ -387,10 +370,10 @@ export const SessionsSection = () => {
 
   // Separate cancelled sessions by category
   const cancelledSubscriptionSessions = cancelledSessions.filter(
-    (session) => (session as any).sessionCategory === "subscription"
+    (session) => session.sessionCategory === "subscription"
   );
   const cancelledIndividualSessions = cancelledSessions.filter(
-    (session) => (session as any).sessionCategory === "individual"
+    (session) => session.sessionCategory === "individual"
   );
 
   const renderSessionCard = (
@@ -406,20 +389,6 @@ export const SessionsSection = () => {
     const isCompleted = sessionItem.status === "COMPLETED";
     const isCancelled = sessionItem.status === "CANCELLED";
 
-    if (isValidDate) {
-      console.log(
-        "Time Zone:",
-        scheduledTime.toLocaleString("en-US", {
-          timeZone: "Asia/Kolkata",
-          hour: "numeric",
-          minute: "2-digit",
-          hour12: true,
-        }),
-        scheduledTime
-      );
-    } else {
-      console.log("Invalid or null scheduledTime for session:", sessionItem.id);
-    }
     return (
       <Card key={sessionItem.id} className="p-6">
         <div className="flex items-center justify-between">
@@ -528,7 +497,7 @@ export const SessionsSection = () => {
                 <Button
                   variant="outline"
                   className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
-                  onClick={() => window.open(sessionItem.link, "_blank")}
+                  onClick={() => sessionItem.link && window.open(sessionItem.link, "_blank")}
                 >
                   <ExternalLink className="w-4 h-4 mr-1" />
                   Join Link
@@ -550,7 +519,7 @@ export const SessionsSection = () => {
                 <Button
                   variant="outline"
                   className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
-                  onClick={() => window.open(sessionItem.link, "_blank")}
+                  onClick={() => sessionItem.link && window.open(sessionItem.link, "_blank")}
                 >
                   <ExternalLink className="w-4 h-4 mr-1" />
                   Join Link
@@ -624,7 +593,6 @@ export const SessionsSection = () => {
     return (
       <div className="grid gap-4">
         {sessions.map((sessionItem) => {
-          console.log(sessionItem.status);
           return renderSessionCard(sessionItem);
         })}
       </div>
