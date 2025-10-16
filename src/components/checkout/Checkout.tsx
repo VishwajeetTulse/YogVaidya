@@ -413,12 +413,8 @@ export default function Checkout({ plan }: { plan: string }) {
                         r="10"
                         stroke="currentColor"
                         strokeWidth="4"
-                       />
-                      <path
-                        className="opacity-75"
-                        fill="currentColor"
-                        d="M4 12a8 8 0 018-8v8z"
-                       />
+                      />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
                     </svg>
                     Processing Payment...
                   </span>

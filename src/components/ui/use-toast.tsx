@@ -11,8 +11,6 @@ export function useToast() {
       title: string;
       description: string;
       variant?: "default" | "destructive";
-    }) => {
-
-    },
+    }) => {},
   };
 }

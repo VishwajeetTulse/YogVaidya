@@ -184,7 +184,6 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
-
         toast.success("User updated successfully");
 
         // Log user update
@@ -256,7 +255,6 @@ export const UsersSection = () => {
       const data = await res.json();
 
       if (data.success) {
-
         toast.success("User deleted successfully");
 
         // Log user deletion with debugging
@@ -274,7 +272,6 @@ export const UsersSection = () => {
               deletionDate: new Date().toISOString(),
             }
           );
-
         } catch (logError) {
           console.error("❌ User deletion logging failed:", logError);
           toast.error("Failed to log the user deletion. Check console for details.");

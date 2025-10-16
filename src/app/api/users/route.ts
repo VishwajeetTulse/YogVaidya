@@ -46,14 +46,10 @@ export async function GET(req: NextRequest) {
 // Edit user (name, email, phone, role)
 export async function PATCH(req: NextRequest) {
   try {
-
-
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
 
-
     if (!session?.user) {
-
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
@@ -62,10 +58,7 @@ export async function PATCH(req: NextRequest) {
       where: { id: session.user.id },
     });
 
-
-
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
-
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
@@ -105,8 +98,6 @@ export async function PATCH(req: NextRequest) {
       where: { id },
       data: { name, email, phone, role },
     });
-
-
 
     // Handle password update if provided
     if (password && password.trim() !== "") {
@@ -153,14 +144,10 @@ export async function PATCH(req: NextRequest) {
 // Delete user and their mentor application(s)
 export async function DELETE(req: NextRequest) {
   try {
-
-
     // Check authentication and permissions
     const session = await auth.api.getSession({ headers: req.headers });
 
-
     if (!session?.user) {
-
       return NextResponse.json({ error: "Authentication required" }, { status: 401 });
     }
 
@@ -169,10 +156,7 @@ export async function DELETE(req: NextRequest) {
       where: { id: session.user.id },
     });
 
-
-
     if (!currentUser || (currentUser.role !== "ADMIN" && currentUser.role !== "MODERATOR")) {
-
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
@@ -182,15 +166,11 @@ export async function DELETE(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-
       return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
     }
 
-
-
     // Add protection for admin and moderator accounts
     if ((user.role === "ADMIN" || user.role === "MODERATOR") && currentUser.role !== "ADMIN") {
-
       return NextResponse.json(
         { error: "Only admins can delete admin or moderator accounts" },
         { status: 403 }
@@ -208,8 +188,6 @@ export async function DELETE(req: NextRequest) {
 
     // Finally delete the user
     await prisma.user.delete({ where: { id } });
-
-
 
     return NextResponse.json({ success: true });
   } catch (error) {
@@ -272,8 +250,6 @@ export async function POST(req: NextRequest) {
       phone: phone,
       role: "MODERATOR",
     });
-
-
 
     // Send an email with credentials
     try {

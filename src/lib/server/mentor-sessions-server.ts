@@ -153,7 +153,6 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
 
     // Get mentor's scheduled sessions from both sources
 
-
     // 1. Get sessions from Schedule collection using raw query to handle datetime conversion
     const scheduleResult = await prisma.$runCommandRaw({
       aggregate: "schedule",
@@ -356,7 +355,6 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
 
       // Debug: Check the structure of the first booking
       if (sessionBookings.length > 0) {
-
       }
     }
 

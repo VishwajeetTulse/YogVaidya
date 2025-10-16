@@ -87,7 +87,6 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
       // Auto-complete if we've passed the expected end time
       if (expectedEndTime && expectedEndTime <= currentTime) {
-
         await prisma.schedule.update({
           where: { id: getSessionId(session) },
           data: {
@@ -151,7 +150,6 @@ export async function updateSessionStatuses(): Promise<SessionStatusUpdate[]> {
 
       // Auto-complete if we've passed the expected end time
       if (expectedEndTime && expectedEndTime <= currentTime) {
-
         await prisma.sessionBooking.update({
           where: { id: sessionId },
           data: {

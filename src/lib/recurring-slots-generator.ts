@@ -200,7 +200,6 @@ export async function maintainRecurringSlots(): Promise<{
   error?: string;
 }> {
   try {
-
     const { prisma } = await import("@/lib/config/prisma");
 
     const now = new Date();

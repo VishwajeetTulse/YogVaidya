@@ -43,7 +43,6 @@ export class SessionService {
    */
   static async findSession(sessionId: string): Promise<SessionLookupResult> {
     try {
-
       // 1. Try sessionBooking collection first
       const sessionBookingResult = await prisma.$runCommandRaw({
         find: "sessionBooking",
@@ -147,7 +146,6 @@ export class SessionService {
     additionalUpdates: Record<string, any> = {}
   ): Promise<SessionUpdateResult> {
     try {
-
       // First find the session
       const lookupResult = await this.findSession(sessionId);
 
@@ -223,7 +221,6 @@ export class SessionService {
    * Complete a session (mark as COMPLETED)
    */
   static async completeSession(sessionId: string): Promise<SessionUpdateResult> {
-
     return this.updateSessionStatus(sessionId, "COMPLETED", {});
   }
 

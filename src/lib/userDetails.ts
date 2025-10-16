@@ -175,7 +175,7 @@ export async function printUserDetails(_userId: string): Promise<void> {
   // Debug function - disabled in production
   // Uncomment if needed for development debugging
   return;
-  
+
   /* const result = await getUserDetails(userId);
   if (result.success && result.user) {
 
