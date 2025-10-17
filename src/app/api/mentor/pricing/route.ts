@@ -1,7 +1,13 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+} from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 const pricingSchema = z.object({
   sessionPrice: z.number().min(0).max(10000, "Session price must be between 0 and 10,000"),
@@ -13,10 +19,7 @@ export async function GET(request: NextRequest) {
     // Verify user is authenticated and is a mentor
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User session not found");
     }
 
     const user = await prisma.user.findUnique({
@@ -29,21 +32,16 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can access pricing" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can access pricing");
     }
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        sessionPrice: user.sessionPrice,
-      },
-    });
+    return successResponse(
+      { sessionPrice: user.sessionPrice },
+      200,
+      "Mentor pricing retrieved successfully"
+    );
   } catch (error) {
-    console.error("Error fetching mentor pricing:", error);
-    return NextResponse.json({ success: false, error: "Failed to fetch pricing" }, { status: 500 });
+    return errorResponse(error);
   }
 }
 
@@ -53,10 +51,7 @@ export async function PUT(request: NextRequest) {
     // Verify user is authenticated and is a mentor
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User session not found");
     }
 
     const user = await prisma.user.findUnique({
@@ -65,10 +60,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can update pricing" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can update pricing");
     }
 
     // Parse and validate request body
@@ -86,25 +78,15 @@ export async function PUT(request: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        sessionPrice: updatedUser.sessionPrice,
-      },
-      message: "Pricing updated successfully",
-    });
+    return successResponse(
+      { sessionPrice: updatedUser.sessionPrice },
+      200,
+      "Pricing updated successfully"
+    );
   } catch (error) {
     if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: "Invalid pricing data", details: error.errors },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid pricing data", { errors: error.errors });
     }
-
-    console.error("Error updating mentor pricing:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to update pricing" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }

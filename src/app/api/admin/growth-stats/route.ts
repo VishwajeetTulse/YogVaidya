@@ -1,13 +1,15 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("User session not found");
     }
 
     // Check if user is admin
@@ -17,7 +19,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user || user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      throw new AuthorizationError("Only admins can access this resource");
     }
 
     // Calculate date ranges for current and previous month
@@ -134,18 +136,8 @@ export async function GET(req: NextRequest) {
       isFirstMonth: previousMonthNewSubscribers === 0 && currentMonthNewSubscribers > 0,
     };
 
-    return NextResponse.json({
-      success: true,
-      growthStats,
-    });
+    return successResponse(growthStats, 200, "Growth stats calculated successfully");
   } catch (error) {
-    console.error("Error calculating growth stats:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to calculate growth stats",
-      },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }

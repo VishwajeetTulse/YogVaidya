@@ -1,40 +1,34 @@
 // create a razorpay instance and export it
-import { NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import Razorpay from "razorpay";
 import { auth } from "@/lib/config/auth";
-import { type NextRequest } from "next/server";
 import type { Subscriptions } from "razorpay/dist/types/subscriptions";
 import type { BillingPeriod } from "@/lib/types";
+import { AuthenticationError, ValidationError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
+import { getPlanIds } from "@/lib/subscriptions";
 
 const razorpay = new Razorpay({
   key_id: process.env.RAZORPAY_KEY_ID,
   key_secret: process.env.RAZORPAY_KEY_SECRET,
 });
 
-import { getPlanIds } from "@/lib/subscriptions";
-
 export async function POST(req: NextRequest) {
   try {
     // Check if user is authenticated
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session) {
-      return NextResponse.json({ success: false, message: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("User session not found");
     }
     const { plan = "bloom", billingPeriod = "monthly" } = await req.json();
 
     // Validate plan and billing period
     if (!plan || !["seed", "bloom", "flourish"].includes(plan)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid plan selected" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid plan selected");
     }
 
     if (!["monthly", "annual"].includes(billingPeriod)) {
-      return NextResponse.json(
-        { success: false, message: "Invalid billing period" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid billing period");
     }
 
     const planIds = await getPlanIds();
@@ -42,10 +36,7 @@ export async function POST(req: NextRequest) {
       planIds[plan.toUpperCase() as keyof typeof planIds]?.[billingPeriod as BillingPeriod];
 
     if (!planId) {
-      return NextResponse.json(
-        { success: false, message: "Plan configuration not found" },
-        { status: 400 }
-      );
+      throw new ValidationError("Plan configuration not found");
     }
 
     const subscription: Subscriptions.RazorpaySubscription = await razorpay.subscriptions.create({
@@ -60,15 +51,12 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
+    return successResponse(
       subscription,
-    });
-  } catch (error) {
-    console.error("Subscription creation error:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to create subscription" },
-      { status: 500 }
+      200,
+      "Subscription created successfully"
     );
+  } catch (error) {
+    return errorResponse(error);
   }
 }

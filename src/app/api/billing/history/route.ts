@@ -1,5 +1,7 @@
-import { type NextRequest, NextResponse } from "next/server";
+import { type NextRequest } from "next/server";
 import { getBillingHistoryAction } from "@/lib/actions/billing-actions";
+import { ValidationError, InternalServerError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 export async function GET(request: NextRequest) {
   try {
@@ -7,23 +9,25 @@ export async function GET(request: NextRequest) {
     const email = searchParams.get("email");
 
     if (!email) {
-      return NextResponse.json({ error: "Email parameter is required" }, { status: 400 });
+      throw new ValidationError("Email parameter is required");
     }
 
     const result = await getBillingHistoryAction(email);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      throw new InternalServerError(result.error || "Failed to fetch billing history");
     }
 
-    return NextResponse.json({
-      success: true,
-      history: result.history,
-      count: result.history?.length || 0,
-    });
+    return successResponse(
+      {
+        history: result.history,
+        count: result.history?.length || 0,
+      },
+      200,
+      "Billing history retrieved successfully"
+    );
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return errorResponse(error);
   }
 }
 
@@ -33,22 +37,24 @@ export async function POST(request: NextRequest) {
     const { email } = body;
 
     if (!email) {
-      return NextResponse.json({ error: "Email is required in request body" }, { status: 400 });
+      throw new ValidationError("Email is required in request body");
     }
 
     const result = await getBillingHistoryAction(email);
 
     if (!result.success) {
-      return NextResponse.json({ error: result.error }, { status: 500 });
+      throw new InternalServerError(result.error || "Failed to fetch billing history");
     }
 
-    return NextResponse.json({
-      success: true,
-      history: result.history,
-      count: result.history?.length || 0,
-    });
+    return successResponse(
+      {
+        history: result.history,
+        count: result.history?.length || 0,
+      },
+      200,
+      "Billing history retrieved successfully"
+    );
   } catch (error) {
-    console.error("API Error:", error);
-    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+    return errorResponse(error);
   }
 }

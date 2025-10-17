@@ -1,13 +1,15 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("User session not found");
     }
 
     // Check if user is admin
@@ -17,7 +19,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user || user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      throw new AuthorizationError("Only admins can access this resource");
     }
 
     // Fetch all users with subscription data
@@ -49,18 +51,8 @@ export async function GET(req: NextRequest) {
     // Filter to only show actual customers (USER role)
     const filteredUsers = users.filter((u) => u.role === "USER");
 
-    return NextResponse.json({
-      success: true,
-      users: filteredUsers,
-    });
+    return successResponse(filteredUsers, 200, "User subscriptions retrieved successfully");
   } catch (error) {
-    console.error("Error fetching user subscriptions:", error);
-    return NextResponse.json(
-      {
-        success: false,
-        error: "Failed to fetch user subscriptions",
-      },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }

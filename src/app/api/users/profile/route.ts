@@ -1,7 +1,8 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
+import { AuthenticationError, NotFoundError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 export async function GET() {
   try {
@@ -9,10 +10,7 @@ export async function GET() {
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("User session not found");
     }
 
     // Get user profile data
@@ -33,21 +31,18 @@ export async function GET() {
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      throw new NotFoundError("User profile not found");
     }
 
-    return NextResponse.json({
-      success: true,
-      user: {
+    return successResponse(
+      {
         ...user,
         hasPhone: !!user.phone,
       },
-    });
-  } catch (error) {
-    console.error("Error fetching user profile:", error);
-    return NextResponse.json(
-      { success: false, error: "Failed to fetch user profile" },
-      { status: 500 }
+      200,
+      "User profile retrieved successfully"
     );
+  } catch (error) {
+    return errorResponse(error);
   }
 }
