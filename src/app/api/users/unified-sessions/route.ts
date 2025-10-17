@@ -7,11 +7,14 @@ import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessi
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
 
+import { AuthenticationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function GET(_request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const userId = session.user.id;

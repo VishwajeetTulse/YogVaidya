@@ -1,12 +1,15 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { startAutoTrialForNewUser } from "@/lib/subscriptions";
 import { auth } from "@/lib/config/auth";
+
+import { AuthenticationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function POST(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const trialResult = await startAutoTrialForNewUser(session.user.id);
@@ -32,7 +35,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ success: false, error: errorMessage }, { status: 500 });
     }
 
-    return NextResponse.json({ success: true, data: trialResult });
+    return successResponse(trialResult);
   } catch (error) {
     console.error("Error starting trial:", error);
     const errorMessage = error instanceof Error ? error.message : "An unknown error occurred";

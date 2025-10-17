@@ -7,6 +7,9 @@ import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
 
+import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({
   title: z.string().min(3, "Title must be at least 3 characters"),
@@ -25,10 +28,7 @@ export async function GET(request: NextRequest) {
     // Verify user is authenticated
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is a mentor
@@ -37,10 +37,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can access schedules" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can access schedules");
     }
 
     // Fetch scheduled sessions from database using raw query to handle datetime conversion
@@ -130,10 +127,7 @@ export async function POST(request: NextRequest) {
     // Verify user is authenticated
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is a mentor
@@ -142,10 +136,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can create schedules" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can create schedules");
     }
 
     const body = await request.json();
@@ -226,10 +217,7 @@ export async function PUT(request: NextRequest) {
     // Verify user is authenticated
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is a mentor
@@ -238,10 +226,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can update schedules" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can update schedules");
     }
 
     // Get sessionId from URL parameters
@@ -249,10 +234,7 @@ export async function PUT(request: NextRequest) {
     const sessionId = url.searchParams.get("sessionId");
 
     if (!sessionId) {
-      return NextResponse.json(
-        { success: false, error: "Session ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Session ID is required");
     }
 
     const body = await request.json();
@@ -281,10 +263,7 @@ export async function PUT(request: NextRequest) {
     });
 
     if (!existingSession) {
-      return NextResponse.json(
-        { success: false, error: "Session not found or unauthorized" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Session not found or unauthorized");
     }
 
     // Validate that the session type matches the mentor type
@@ -347,10 +326,7 @@ export async function DELETE(request: NextRequest) {
     // Verify user is authenticated
     const session = await auth.api.getSession({ headers: request.headers });
     if (!session?.user) {
-      return NextResponse.json(
-        { success: false, error: "Authentication required" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Authentication required");
     }
 
     // Check if user is a mentor
@@ -359,19 +335,13 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (!user || user.role !== "MENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can delete schedules" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can delete schedules");
     }
 
     const { sessionId } = await request.json();
 
     if (!sessionId) {
-      return NextResponse.json(
-        { success: false, error: "Session ID is required" },
-        { status: 400 }
-      );
+      throw new ValidationError("Session ID is required");
     }
 
     // Delete the scheduled session from database
@@ -383,10 +353,7 @@ export async function DELETE(request: NextRequest) {
     });
 
     if (deletedSession.count === 0) {
-      return NextResponse.json(
-        { success: false, error: "Session not found or unauthorized" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Session not found or unauthorized");
     }
 
     return NextResponse.json({

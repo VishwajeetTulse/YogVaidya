@@ -1,13 +1,16 @@
-import { NextResponse, type NextRequest } from "next/server";
+import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     // Check if user is admin
@@ -17,7 +20,7 @@ export async function GET(req: NextRequest) {
     });
 
     if (!user || user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      throw new AuthorizationError("Access denied");
     }
 
     // Fetch all users with subscription data

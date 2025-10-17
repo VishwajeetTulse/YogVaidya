@@ -5,6 +5,9 @@ import { z } from "zod";
 import crypto from "crypto";
 import type { Prisma } from "@prisma/client";
 
+import { AuthenticationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {
   _id?: string;
@@ -33,7 +36,7 @@ export async function POST(request: NextRequest) {
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -59,10 +62,7 @@ export async function POST(request: NextRequest) {
 
     if (expectedSignature !== razorpay_signature) {
       console.error("❌ Payment signature verification failed");
-      return NextResponse.json(
-        { success: false, error: "Payment verification failed" },
-        { status: 400 }
-      );
+      throw new ValidationError("Payment verification failed");
     }
 
     console.warn("✅ Payment signature verified");
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (!timeSlot) {
-      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
+      throw new NotFoundError("Time slot not found");
     }
 
     // Cast to TimeSlotData for property access

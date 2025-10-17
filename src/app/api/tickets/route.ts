@@ -7,6 +7,8 @@ import type { Prisma } from "@prisma/client";
 // Import types from our custom types (since Prisma types might not be available yet)
 import { TicketStatus, TicketPriority, TicketCategory } from "@/lib/types/tickets";
 
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Generate a unique ticket number
 async function generateTicketNumber(): Promise<string> {
   const year = new Date().getFullYear();

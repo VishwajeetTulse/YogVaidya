@@ -1,5 +1,3 @@
-import { NextResponse } from "next/server";
-
 export async function GET(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
     const resolvedParams = await params;

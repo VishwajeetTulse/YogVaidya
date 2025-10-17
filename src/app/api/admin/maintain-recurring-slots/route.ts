@@ -6,10 +6,12 @@
  * without waiting for the daily cron job
  */
 
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { maintainRecurringSlots } from "@/lib/recurring-slots-generator";
+
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for statistics data from MongoDB
 interface StatisticsData {
@@ -22,10 +24,7 @@ export async function POST(_request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json(
-        { success: false, error: "Unauthorized - Please log in" },
-        { status: 401 }
-      );
+      throw new AuthenticationError("Unauthorized - Please log in");
     }
 
     // Optional: Check if user is admin/moderator for extra security
@@ -38,10 +37,7 @@ export async function POST(_request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "Access denied - Admin/Moderator/Mentor role required" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Access denied - Admin/Moderator/Mentor role required");
     }
 
     // Run the maintenance function
@@ -90,7 +86,7 @@ export async function GET(_request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { prisma } = await import("@/lib/config/prisma");

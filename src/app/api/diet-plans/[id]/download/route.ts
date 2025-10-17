@@ -1,7 +1,9 @@
-import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+
+import { AuthenticationError, AuthorizationError, NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // TipTap JSON node types
 interface TipTapMark {
@@ -83,7 +85,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { id } = await params;
@@ -108,12 +110,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
     });
 
     if (!dietPlan) {
-      return NextResponse.json({ success: false, error: "Diet plan not found" }, { status: 404 });
+      throw new NotFoundError("Diet plan not found");
     }
 
     // Check authorization
     if (dietPlan.mentorId !== session.user.id && dietPlan.studentId !== session.user.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 403 });
+      throw new AuthorizationError("Unauthorized");
     }
 
     // Convert TipTap JSON to HTML

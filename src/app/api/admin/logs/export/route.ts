@@ -3,6 +3,8 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { logSystemEvent } from "@/lib/utils/logger";
 
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function POST(req: NextRequest) {
   try {
     // Verify authentication and admin role

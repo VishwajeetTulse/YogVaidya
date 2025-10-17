@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function GET(_request: NextRequest) {
   try {
     // Get all mentors with their availability status

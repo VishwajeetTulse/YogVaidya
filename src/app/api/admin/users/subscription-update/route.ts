@@ -1,15 +1,17 @@
 import type { NextRequest } from "next/server";
-import { NextResponse } from "next/server";
 import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+
+import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function PATCH(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: req.headers });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     // Check if user is admin
@@ -19,14 +21,14 @@ export async function PATCH(req: NextRequest) {
     });
 
     if (!user || user.role !== "ADMIN") {
-      return NextResponse.json({ success: false, error: "Access denied" }, { status: 403 });
+      throw new AuthorizationError("Access denied");
     }
 
     const { userId, subscriptionPlan, subscriptionStatus, billingPeriod, autoRenewal } =
       await req.json();
 
     if (!userId) {
-      return NextResponse.json({ success: false, error: "User ID is required" }, { status: 400 });
+      throw new ValidationError("User ID is required");
     }
 
     // Build update data

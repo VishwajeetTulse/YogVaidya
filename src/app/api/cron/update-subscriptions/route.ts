@@ -1,6 +1,7 @@
-import { NextResponse } from "next/server";
 import { batchUpdateSubscriptionStatuses } from "@/lib/subscriptions";
 import { logSystemEvent, logError } from "@/lib/utils/logger";
+
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 /**
  * Cron job endpoint to update subscription statuses

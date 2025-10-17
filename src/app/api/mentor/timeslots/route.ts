@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -6,6 +5,9 @@ import type { Prisma } from "@prisma/client";
 import type { TimeSlotDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
+
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Schema for creating time slots
 const createTimeSlotSchema = z.object({
@@ -34,7 +36,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -60,10 +62,7 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can create time slots" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can create time slots");
     }
 
     // Get mentor application for additional context

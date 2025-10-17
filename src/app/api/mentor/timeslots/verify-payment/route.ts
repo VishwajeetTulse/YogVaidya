@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
 import type { Prisma, SessionType } from "@prisma/client";
+
+import { AuthenticationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -44,10 +46,7 @@ export async function POST(request: Request) {
       .digest("hex");
 
     if (razorpay_signature !== expectedSign) {
-      return NextResponse.json(
-        { success: false, error: "Invalid payment signature" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid payment signature");
     }
 
     const { prisma } = await import("@/lib/config/prisma");
@@ -72,7 +71,7 @@ export async function POST(request: Request) {
     }
 
     if (!timeSlot) {
-      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
+      throw new NotFoundError("Time slot not found");
     }
 
     // Cast to our interface for property access
@@ -94,7 +93,7 @@ export async function POST(request: Request) {
     });
 
     if (!mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Get mentor application for reference

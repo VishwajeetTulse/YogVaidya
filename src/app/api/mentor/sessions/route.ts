@@ -5,12 +5,15 @@ import { prisma } from "@/lib/config/prisma";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
+import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     // Get mentorId from query params or use session user id
@@ -19,7 +22,7 @@ export async function GET(request: NextRequest) {
 
     // Verify the user is authorized to access this mentor's sessions
     if (mentorId !== session.user.id) {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     // Check if user is a mentor
@@ -31,10 +34,7 @@ export async function GET(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can view session bookings" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can view session bookings");
     }
 
     // First, let's check if there are any session bookings at all

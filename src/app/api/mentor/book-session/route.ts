@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import Razorpay from "razorpay";
 import type { Prisma } from "@prisma/client";
+
+import { AuthenticationError, ConflictError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {
@@ -36,7 +38,7 @@ export async function POST(request: Request) {
     const session = await auth.api.getSession({ headers: await headers() });
 
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -72,10 +74,7 @@ export async function POST(request: Request) {
       }
 
       if (!timeSlot) {
-        return NextResponse.json(
-          { success: false, error: "Time slot not available or fully booked" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Time slot not available or fully booked");
       }
 
       // Cast to TimeSlotData for property access
@@ -83,10 +82,7 @@ export async function POST(request: Request) {
 
       // Double-check availability at application level
       if ((slot.currentStudents || 0) >= (slot.maxStudents || 1)) {
-        return NextResponse.json(
-          { success: false, error: "Time slot is fully booked" },
-          { status: 409 }
-        );
+        throw new ConflictError("Time slot is fully booked");
       }
 
       // Get mentor details
@@ -106,10 +102,7 @@ export async function POST(request: Request) {
       });
 
       if (!mentor) {
-        return NextResponse.json(
-          { success: false, error: "Mentor not available" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Mentor not available");
       }
 
       // Check if user already has an active session with this mentor
@@ -147,10 +140,7 @@ export async function POST(request: Request) {
       const sessionPrice = slot.price || mentor.sessionPrice || 500;
 
       if (!sessionPrice || sessionPrice <= 0) {
-        return NextResponse.json(
-          { success: false, error: "Session pricing not set" },
-          { status: 400 }
-        );
+        throw new ValidationError("Session pricing not set");
       }
 
       // Create Razorpay order
@@ -261,10 +251,7 @@ export async function POST(request: Request) {
       }
 
       if (!mentor) {
-        return NextResponse.json(
-          { success: false, error: "Mentor not found or unavailable" },
-          { status: 404 }
-        );
+        throw new NotFoundError("Mentor not found or unavailable");
       }
 
       // Check existing sessions
@@ -299,10 +286,7 @@ export async function POST(request: Request) {
       }
 
       if (!mentor.sessionPrice || mentor.sessionPrice <= 0) {
-        return NextResponse.json(
-          { success: false, error: "Mentor pricing not set" },
-          { status: 400 }
-        );
+        throw new ValidationError("Mentor pricing not set");
       }
 
       const order = await razorpay.orders.create({

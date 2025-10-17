@@ -1,8 +1,10 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
+
+import { AuthenticationError, NotFoundError, ConflictError } from "@/lib/utils/error-handler";
+import { successResponse, errorResponse } from "@/lib/utils/response-handler";
 
 const verifySessionPaymentSchema = z.object({
   razorpay_order_id: z.string(),
@@ -18,7 +20,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -39,10 +41,7 @@ export async function POST(request: Request) {
       .digest("hex");
 
     if (generatedSignature !== razorpay_signature) {
-      return NextResponse.json(
-        { success: false, error: "Payment verification failed" },
-        { status: 400 }
-      );
+      throw new ConflictError("Payment verification failed");
     }
 
     // Payment verified, create session booking in database
@@ -63,7 +62,7 @@ export async function POST(request: Request) {
     });
 
     if (!mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Map MentorType to SessionType
@@ -95,7 +94,6 @@ export async function POST(request: Request) {
         amount: mentor.sessionPrice,
         currency: "INR",
       },
-      // Removed createdAt and updatedAt - let Prisma auto-generate these
     };
 
     // Create the session booking using Prisma to ensure proper date handling
@@ -115,29 +113,14 @@ export async function POST(request: Request) {
       },
     });
 
-    return NextResponse.json({
-      success: true,
-      data: {
-        bookingId: sessionBookingData._id,
-        mentorName: mentor.name,
-        sessionDate,
-        sessionTime,
-        amount: mentor.sessionPrice,
-      },
+    return successResponse({
+      bookingId: sessionBookingData._id,
+      mentorName: mentor.name,
+      sessionDate,
+      sessionTime,
+      amount: mentor.sessionPrice,
     });
   } catch (error) {
-    console.error("Error verifying session payment:", error);
-
-    if (error instanceof z.ZodError) {
-      return NextResponse.json(
-        { success: false, error: "Invalid request data", details: error.errors },
-        { status: 400 }
-      );
-    }
-
-    return NextResponse.json(
-      { success: false, error: "Failed to verify payment and create booking" },
-      { status: 500 }
-    );
+    return errorResponse(error);
   }
 }

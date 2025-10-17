@@ -6,6 +6,9 @@ import { prisma } from "@/lib/config/prisma";
 import { type MentorType } from "@prisma/client";
 import { logError } from "@/lib/utils/logger";
 
+import { ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Create mentor application
 export async function POST(req: NextRequest) {
   const data = await req.formData();
@@ -139,7 +142,7 @@ export async function PATCH(req: NextRequest) {
   try {
     const { id, status } = await req.json();
     if (!id || !status) {
-      return NextResponse.json({ success: false, error: "Missing id or status" }, { status: 400 });
+      throw new ValidationError("Missing id or status");
     }
     const updated = await prisma.mentorApplication.update({
       where: { id },

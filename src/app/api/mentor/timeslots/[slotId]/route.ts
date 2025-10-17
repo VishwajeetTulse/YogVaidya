@@ -1,9 +1,11 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import type { DateValue } from "@/lib/types/utils";
 import { isMongoDate } from "@/lib/types/mongodb";
 import type { Prisma } from "@prisma/client";
+
+import { AuthenticationError, NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // GET /api/mentor/timeslots/[slotId] - Get a specific time slot (public access for booking)
 export async function GET(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
@@ -36,7 +38,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
     }
 
     if (!timeSlot) {
-      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
+      throw new NotFoundError("Time slot not found");
     }
 
     // Get mentor details
@@ -56,7 +58,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ slot
     });
 
     if (!mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Helper function to convert MongoDB date to proper format (consistent with timeslots route)
@@ -122,7 +124,7 @@ export async function DELETE(
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { prisma } = await import("@/lib/config/prisma");
@@ -151,10 +153,7 @@ export async function DELETE(
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not found or you don't have permission to delete it" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Time slot not found or you don't have permission to delete it");
     }
 
     // Check if the time slot is booked
@@ -203,7 +202,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slot
 
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -244,10 +243,7 @@ export async function PUT(request: Request, { params }: { params: Promise<{ slot
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not found or you don't have permission to update it" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Time slot not found or you don't have permission to update it");
     }
 
     // Check if the time slot is booked and prevent certain changes

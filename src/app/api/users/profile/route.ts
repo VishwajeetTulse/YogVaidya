@@ -2,7 +2,7 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
 import { AuthenticationError, NotFoundError } from "@/lib/utils/error-handler";
-import { successResponse, errorResponse } from "@/lib/utils/response-handler";
+import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET() {
   try {

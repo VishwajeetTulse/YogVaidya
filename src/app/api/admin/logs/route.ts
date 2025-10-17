@@ -4,6 +4,9 @@ import { prisma } from "@/lib/config/prisma";
 import crypto from "crypto";
 import { type Prisma } from "@prisma/client";
 
+import { ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Log type definitions
 export type LogEntry = {
   id: string;
@@ -141,10 +144,7 @@ export async function POST(req: NextRequest) {
 
     if (!action || !category || !level) {
 
-      return NextResponse.json(
-        { success: false, error: "Missing required fields" },
-        { status: 400 }
-      );
+      throw new ValidationError("Missing required fields");
     }
 
     // Get IP address and user agent

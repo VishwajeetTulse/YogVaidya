@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -6,6 +5,9 @@ import { prisma } from "@/lib/config/prisma";
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
 import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+
+import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Schema for creating subscription sessions
 const createSubscriptionSessionSchema = z.object({
@@ -27,7 +29,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -49,25 +51,16 @@ export async function POST(request: Request) {
     });
 
     if (!user) {
-      return NextResponse.json(
-        { success: false, error: "Only mentors can create subscription sessions" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only mentors can create subscription sessions");
     }
 
     // Validate mentor type matches session type
     const mentorType = user.mentorType;
     if (sessionType === "YOGA" && mentorType !== "YOGAMENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only Yoga mentors can create yoga sessions" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only Yoga mentors can create yoga sessions");
     }
     if (sessionType === "MEDITATION" && mentorType !== "MEDITATIONMENTOR") {
-      return NextResponse.json(
-        { success: false, error: "Only Meditation mentors can create meditation sessions" },
-        { status: 403 }
-      );
+      throw new AuthorizationError("Only Meditation mentors can create meditation sessions");
     }
 
     // DIET mentors cannot create subscription sessions (they don't have subscription plans)
@@ -85,17 +78,11 @@ export async function POST(request: Request) {
     // Validate scheduledTime format and ensure it's in the future
     const sessionDateTime = convertMongoDate(scheduledTime);
     if (!sessionDateTime || isNaN(sessionDateTime.getTime())) {
-      return NextResponse.json(
-        { success: false, error: "Invalid date and time format" },
-        { status: 400 }
-      );
+      throw new ValidationError("Invalid date and time format");
     }
 
     if (sessionDateTime <= new Date()) {
-      return NextResponse.json(
-        { success: false, error: "Scheduled time must be in the future" },
-        { status: 400 }
-      );
+      throw new ValidationError("Scheduled time must be in the future");
     }
 
     // Determine which subscription plans can access this session
@@ -191,7 +178,7 @@ export async function GET() {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     // Get all schedules created by this mentor

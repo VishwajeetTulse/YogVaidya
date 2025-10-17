@@ -2,7 +2,7 @@ import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
-import { successResponse, errorResponse } from "@/lib/utils/response-handler";
+import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET(req: NextRequest) {
   try {

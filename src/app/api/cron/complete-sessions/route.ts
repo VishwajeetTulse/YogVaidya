@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { updateSessionStatuses } from "@/lib/services/session-status-service";
+
+import { AuthenticationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function POST(_request: Request) {
   try {
@@ -9,7 +11,7 @@ export async function POST(_request: Request) {
     const cronSecret = process.env.CRON_SECRET || "dev-secret";
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     // Use the service to update session statuses

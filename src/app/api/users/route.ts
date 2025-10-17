@@ -3,6 +3,9 @@ import { auth } from "@/lib/config/auth";
 import { authClient } from "@/lib/auth-client";
 import { prisma } from "@/lib/config/prisma";
 
+import { NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // Get all users
 export async function GET(req: NextRequest) {
   try {
@@ -166,7 +169,7 @@ export async function DELETE(req: NextRequest) {
     const user = await prisma.user.findUnique({ where: { id } });
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      throw new NotFoundError("User not found");
     }
 
     // Add protection for admin and moderator accounts

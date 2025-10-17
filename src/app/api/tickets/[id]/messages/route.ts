@@ -3,6 +3,8 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import crypto from "crypto";
 
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 // POST /api/tickets/[id]/messages - Add comment/message to ticket
 export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {

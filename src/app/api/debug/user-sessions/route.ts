@@ -1,6 +1,8 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { getUserSessions } from "@/lib/server/user-sessions-server";
 
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function GET(_request: NextRequest) {
   try {
     const result = await getUserSessions();

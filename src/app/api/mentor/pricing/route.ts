@@ -2,12 +2,8 @@ import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
-import {
-  AuthenticationError,
-  AuthorizationError,
-  ValidationError,
-} from "@/lib/utils/error-handler";
-import { successResponse, errorResponse } from "@/lib/utils/response-handler";
+import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
 const pricingSchema = z.object({
   sessionPrice: z.number().min(0).max(10000, "Session price must be between 0 and 10,000"),

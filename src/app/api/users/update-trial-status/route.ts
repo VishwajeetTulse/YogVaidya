@@ -2,19 +2,22 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 
+import { AuthenticationError, AuthorizationError, NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });
 
     if (!session?.user?.email) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { email } = await request.json();
 
     // Verify that the user can only update their own trial status
     if (email !== session.user.email) {
-      return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
+      throw new AuthorizationError("Forbidden");
     }
 
     // Find the user and check if trial has actually expired
@@ -29,7 +32,7 @@ export async function POST(request: NextRequest) {
     });
 
     if (!user) {
-      return NextResponse.json({ success: false, error: "User not found" }, { status: 404 });
+      throw new NotFoundError("User not found");
     }
 
     // Check if trial is actually expired

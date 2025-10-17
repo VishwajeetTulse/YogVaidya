@@ -1,12 +1,14 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+
+import { AuthenticationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET(request: Request, { params }: { params: Promise<{ mentorId: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { mentorId } = await params;
@@ -26,11 +28,11 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
     });
 
     if (!mentorExists) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     if (mentorExists.role !== "MENTOR") {
-      return NextResponse.json({ success: false, error: "User is not a mentor" }, { status: 400 });
+      throw new ValidationError("User is not a mentor");
     }
 
     // Now get the full mentor data (remove isAvailable requirement for now)
@@ -51,7 +53,7 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
     });
 
     if (!mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Get mentor application details

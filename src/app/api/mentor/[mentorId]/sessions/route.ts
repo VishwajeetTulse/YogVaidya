@@ -1,14 +1,16 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
+import { AuthenticationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 export async function GET(request: Request, { params }: { params: Promise<{ mentorId: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const { mentorId } = await params;

@@ -1,4 +1,3 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -6,6 +5,9 @@ import Razorpay from "razorpay";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 import type { Prisma } from "@prisma/client";
+
+import { AuthenticationError, ConflictError, NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {
@@ -31,7 +33,7 @@ export async function POST(request: Request) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -59,7 +61,7 @@ export async function POST(request: Request) {
     }
 
     if (!timeSlot) {
-      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
+      throw new NotFoundError("Time slot not found");
     }
 
     // Cast to our interface for property access
@@ -67,10 +69,7 @@ export async function POST(request: Request) {
 
     // Check if slot is already booked or at capacity
     if ((slot.currentStudents || 0) >= (slot.maxStudents || 1)) {
-      return NextResponse.json(
-        { success: false, error: "Time slot is fully booked" },
-        { status: 409 }
-      );
+      throw new ConflictError("Time slot is fully booked");
     }
 
     // Check if user already has an active session with this mentor
@@ -100,10 +99,7 @@ export async function POST(request: Request) {
     }
 
     if (existingSessions.length > 0) {
-      return NextResponse.json(
-        { success: false, error: "You already have an active session with this mentor" },
-        { status: 409 }
-      );
+      throw new ConflictError("You already have an active session with this mentor");
     }
 
     // Get mentor details
@@ -122,7 +118,7 @@ export async function POST(request: Request) {
     });
 
     if (!mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Create Razorpay order

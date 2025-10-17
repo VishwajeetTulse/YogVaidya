@@ -1,6 +1,8 @@
-import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+
+import { AuthenticationError, ConflictError, NotFoundError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function POST(request: Request, { params }: { params: Promise<{ slotId: string }> }) {
   try {
@@ -9,7 +11,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     // Check authentication
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
@@ -110,26 +112,20 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
     }
 
     if (!timeSlot) {
-      return NextResponse.json({ success: false, error: "Time slot not found" }, { status: 404 });
+      throw new NotFoundError("Time slot not found");
     }
 
     if (!timeSlot.mentor) {
-      return NextResponse.json({ success: false, error: "Mentor not found" }, { status: 404 });
+      throw new NotFoundError("Mentor not found");
     }
 
     // Check if slot has capacity
     if (timeSlot && timeSlot.currentStudents >= timeSlot.maxStudents) {
-      return NextResponse.json(
-        { success: false, error: "Time slot is fully booked" },
-        { status: 409 }
-      );
+      throw new ConflictError("Time slot is fully booked");
     }
 
     if (!timeSlot) {
-      return NextResponse.json(
-        { success: false, error: "Time slot not available or fully booked" },
-        { status: 404 }
-      );
+      throw new NotFoundError("Time slot not available or fully booked");
     }
 
     // Additional check: Count COMPLETED payment bookings for this time slot using Prisma
@@ -144,10 +140,7 @@ export async function POST(request: Request, { params }: { params: Promise<{ slo
 
     const totalBooked = (timeSlot.currentStudents || 0) + confirmedBookingsCount;
     if (totalBooked >= timeSlot.maxStudents) {
-      return NextResponse.json(
-        { success: false, error: "Time slot is fully booked" },
-        { status: 409 }
-      );
+      throw new ConflictError("Time slot is fully booked");
     }
 
     // DON'T create session booking yet - only create booking data to return

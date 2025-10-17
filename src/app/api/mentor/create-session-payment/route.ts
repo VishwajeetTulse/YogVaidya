@@ -4,6 +4,9 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import Razorpay from "razorpay";
 
+import { AuthenticationError } from "@/lib/utils/error-handler";
+import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
+
 const createPaymentSchema = z.object({
   bookingId: z.string().min(1, "Booking ID is required"),
   amount: z.number().min(1, "Amount must be greater than 0"),
@@ -20,7 +23,7 @@ export async function POST(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
-      return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
+      throw new AuthenticationError("Unauthorized");
     }
 
     const body = await request.json();
