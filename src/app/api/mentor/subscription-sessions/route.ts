@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -7,7 +8,6 @@ import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Schema for creating subscription sessions
 const createSubscriptionSessionSchema = z.object({

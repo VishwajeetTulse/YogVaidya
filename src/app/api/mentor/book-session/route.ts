@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
@@ -5,7 +6,6 @@ import Razorpay from "razorpay";
 import type { Prisma } from "@prisma/client";
 
 import { AuthenticationError, ConflictError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {

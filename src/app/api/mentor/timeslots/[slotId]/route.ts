@@ -1,3 +1,4 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import type { DateValue } from "@/lib/types/utils";
@@ -5,7 +6,6 @@ import { isMongoDate } from "@/lib/types/mongodb";
 import type { Prisma } from "@prisma/client";
 
 import { AuthenticationError, NotFoundError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // GET /api/mentor/timeslots/[slotId] - Get a specific time slot (public access for booking)
 export async function GET(request: Request, { params }: { params: Promise<{ slotId: string }> }) {

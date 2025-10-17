@@ -5,7 +5,6 @@ import crypto from "crypto";
 import { type Prisma } from "@prisma/client";
 
 import { ValidationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Log type definitions
 export type LogEntry = {

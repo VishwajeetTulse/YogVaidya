@@ -4,7 +4,6 @@ import { authClient } from "@/lib/auth-client";
 import { prisma } from "@/lib/config/prisma";
 
 import { NotFoundError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Get all users
 export async function GET(req: NextRequest) {

@@ -8,7 +8,6 @@ import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
 
 import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({

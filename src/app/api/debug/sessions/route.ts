@@ -1,10 +1,10 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { mongoDateToISOString } from "@/lib/utils/datetime-utils";
 import { ObjectId } from "mongodb";
 import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 /**
  * GET /api/debug/sessions

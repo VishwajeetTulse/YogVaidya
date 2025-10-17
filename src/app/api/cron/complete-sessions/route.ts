@@ -1,8 +1,8 @@
+import { NextResponse } from "next/server";
 import { headers } from "next/headers";
 import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function POST(_request: Request) {
   try {

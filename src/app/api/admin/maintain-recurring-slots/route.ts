@@ -6,12 +6,11 @@
  * without waiting for the daily cron job
  */
 
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { maintainRecurringSlots } from "@/lib/recurring-slots-generator";
-
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Interface for statistics data from MongoDB
 interface StatisticsData {

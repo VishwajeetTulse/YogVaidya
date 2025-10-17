@@ -5,7 +5,6 @@ import { TicketStatus } from "@/lib/types/tickets";
 import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
 import type { Prisma } from "@prisma/client";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // PATCH /api/tickets/[id]/status - Update ticket status
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

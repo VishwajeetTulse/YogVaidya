@@ -4,7 +4,6 @@ import { prisma } from "@/lib/config/prisma";
 import { TicketLogger } from "@/lib/utils/ticket-logger";
 import type { Prisma } from "@prisma/client";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET(request: NextRequest) {
   try {

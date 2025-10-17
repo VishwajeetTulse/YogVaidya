@@ -1,9 +1,9 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 
 import { AuthenticationError, AuthorizationError, NotFoundError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // GET - Fetch a single diet plan by ID
 export async function GET(request: Request, { params }: { params: Promise<{ id: string }> }) {

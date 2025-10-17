@@ -6,7 +6,6 @@ import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function GET(request: NextRequest) {
   try {

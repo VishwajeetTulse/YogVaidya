@@ -7,7 +7,6 @@ import { type MentorType } from "@prisma/client";
 import { logError } from "@/lib/utils/logger";
 
 import { ValidationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Create mentor application
 export async function POST(req: NextRequest) {

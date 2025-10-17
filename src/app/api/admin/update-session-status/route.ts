@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 export async function POST(_request: Request) {
   try {

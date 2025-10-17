@@ -2,7 +2,11 @@ import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
-import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+} from "@/lib/utils/error-handler";
 import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
 const pricingSchema = z.object({

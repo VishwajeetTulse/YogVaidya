@@ -51,11 +51,7 @@ export async function POST(req: NextRequest) {
       },
     });
 
-    return successResponse(
-      subscription,
-      200,
-      "Subscription created successfully"
-    );
+    return successResponse(subscription, 200, "Subscription created successfully");
   } catch (error) {
     return errorResponse(error);
   }

@@ -3,7 +3,6 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // PATCH /api/tickets/[id]/assign - Assign ticket to moderator
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {

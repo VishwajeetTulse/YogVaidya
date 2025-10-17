@@ -1,10 +1,10 @@
+import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
 import { z } from "zod";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 const updatePhoneSchema = z.object({
   phoneNumber: z

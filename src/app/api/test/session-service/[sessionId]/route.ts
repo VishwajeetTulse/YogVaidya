@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
 import { mongoDateToISOString } from "@/lib/utils/datetime-utils";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 /**
  * GET /api/test/session-service/[sessionId]

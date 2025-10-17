@@ -1,6 +1,6 @@
+import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // This route provides the same functionality as get-approved-mentors
 // but at a different endpoint for consistency

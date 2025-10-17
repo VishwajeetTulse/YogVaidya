@@ -4,7 +4,6 @@ import { getSubscriptionAnalytics } from "@/lib/subscriptions";
 import { format, subMonths } from "date-fns";
 import { prisma } from "@/lib/config/prisma";
 
-import { createdResponse, errorResponse, noContentResponse, successResponse } from "@/lib/utils/response-handler";
 
 // Helper function to check if a date is within the last month
 function isWithinLastMonth(date: Date): boolean {
