@@ -42,7 +42,6 @@ export async function GET() {
             select: { isAvailable: true },
           });
           isAvailable = availabilityData?.isAvailable ?? true;
-
         } catch (error) {
           console.error(`Error fetching availability for ${application.email}:`, error);
         }

@@ -72,7 +72,7 @@ export default function MentorCarousel({ mentors, title, colorClass }: MentorCar
                   ? "bg-pink-500"
                   : "bg-purple-500"
             } mr-4`}
-           />
+          />
           <h3 className="text-2xl font-semibold text-gray-900">{title}</h3>
         </div>
       </div>

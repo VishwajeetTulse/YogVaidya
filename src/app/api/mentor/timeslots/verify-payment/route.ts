@@ -27,8 +27,6 @@ const verifyTimeSlotPaymentSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -171,8 +169,6 @@ export async function POST(request: Request) {
         }) as Prisma.InputJsonValue,
       },
     });
-
-
 
     return NextResponse.json({
       success: true,

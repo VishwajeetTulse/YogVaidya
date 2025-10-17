@@ -71,7 +71,6 @@ class AvailabilityStore {
   // Clear all data (for testing/reset)
   clear() {
     this.availabilityMap.clear();
-
   }
 }
 

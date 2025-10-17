@@ -3,7 +3,6 @@ import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
 export async function POST(_request: Request) {
   try {
-
     // Use the service to update session statuses
     const updates = await updateSessionStatuses();
 

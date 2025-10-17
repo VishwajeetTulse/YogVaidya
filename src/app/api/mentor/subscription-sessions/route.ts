@@ -25,8 +25,6 @@ const createSubscriptionSessionSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -142,9 +140,6 @@ export async function POST(request: Request) {
       },
     });
 
-
-
-
     // Count by subscription plan for response
     const planCounts = {
       SEED: eligibleUsers.filter((u) => u.subscriptionPlan === "SEED").length,
@@ -194,8 +189,6 @@ export async function POST(request: Request) {
 // GET - Fetch subscription sessions for the mentor
 export async function GET() {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });

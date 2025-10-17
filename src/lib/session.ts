@@ -20,7 +20,6 @@ export async function UpdateSessionStatus(
     });
 
     if (scheduleSession) {
-
       // Use raw MongoDB operation to ensure proper date handling
       await prisma.$runCommandRaw({
         update: "schedule",
@@ -49,7 +48,6 @@ export async function UpdateSessionStatus(
       .catch(async (error) => {
         // If we get a type conversion error, it's likely due to string dates
         if (error.code === "P2023" && error.message.includes("Failed to convert")) {
-
           // Try to fix the date field for this specific record using raw query
           try {
             await prisma.$runCommandRaw({

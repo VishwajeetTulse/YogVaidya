@@ -13,7 +13,6 @@ import { type TimeSlotDocument } from "@/lib/types/sessions";
 import { ensureDateObject } from "@/lib/utils/date-utils";
 
 export default function MentorsPage() {
-
   // alert('🚀 MentorsPage component loaded!'); // Uncomment to test
 
   const [mentors, setMentors] = useState<Mentor[]>([]);

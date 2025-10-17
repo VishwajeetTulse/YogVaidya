@@ -89,7 +89,6 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
     // 4. Has multiple sessions with the user (indicates ongoing relationship)
     const fetchMentorsFromPaidBookings = async (userId: string): Promise<UserMentorData[]> => {
       try {
-
         // First, let's check if there are any session bookings for this user at all
         const allUserBookings = await prisma.$runCommandRaw({
           aggregate: "sessionBooking",
@@ -118,7 +117,6 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         }
 
         if (allBookings.length > 0) {
-
         }
 
         // Use raw MongoDB aggregation to fetch session bookings with mentor details
@@ -282,9 +280,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
         // Debug: Log the raw result for troubleshooting
         if (mentorsFromBookings.length > 0) {
-
         } else {
-
         }
 
         // Get mentor applications for additional data
@@ -352,7 +348,6 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
 
       if (paidMentors.length > 0) {
-
         return {
           success: true,
           data: {
@@ -396,11 +391,9 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
 
     // If user needs subscription, check for paid mentor bookings first
     if (needsSubscription) {
-
       const paidMentors = await fetchMentorsFromPaidBookings(session.user.id);
 
       if (paidMentors.length > 0) {
-
         return {
           success: true,
           data: {

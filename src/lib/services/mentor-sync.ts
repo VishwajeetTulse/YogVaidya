@@ -38,7 +38,6 @@ export async function syncMentorTypes() {
         });
 
         if (result.count > 0) {
-
           updatedCount += result.count;
         }
       }

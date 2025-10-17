@@ -8,15 +8,12 @@ import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 export async function GET(_request: NextRequest) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
-
 
     // Get user's session bookings with mentor and time slot details
     const sessionBookingsResult = await prisma.$runCommandRaw({
@@ -116,8 +113,6 @@ export async function GET(_request: NextRequest) {
       sessions = (sessionBookingsResult as unknown as MongoCommandResult<SessionBookingDocument>)
         .cursor!.firstBatch;
     }
-
-
 
     // Preserve Date objects instead of converting to ISO strings
     const processedSessions = sessions.map((session) => {

@@ -73,7 +73,6 @@ export async function sendEmail(sessionDetails: Schedule) {
       html: htmlContent,
     });
 
-
     return {
       success: true,
       messageId: info.messageId,

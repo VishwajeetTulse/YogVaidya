@@ -16,11 +16,8 @@ export function useLogger() {
     level: "INFO" | "WARNING" | "ERROR";
     metadata?: Prisma.JsonValue;
   }) => {
-
-
     setIsLogging(true);
     try {
-
       const response = await fetch("/api/admin/logs", {
         method: "POST",
         headers: {
@@ -28,7 +25,6 @@ export function useLogger() {
         },
         body: JSON.stringify(params),
       });
-
 
       if (!response.ok) {
         const errorText = await response.text();

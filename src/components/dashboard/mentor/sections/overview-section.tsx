@@ -4,7 +4,10 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Users, Video, Calendar, ChevronRight } from "lucide-react";
 import { type MentorSectionProps } from "../types";
 import { useState, useEffect } from "react";
-import { getMentorOverviewData, type MentorOverviewData } from "@/lib/server/mentor-overview-server";
+import {
+  getMentorOverviewData,
+  type MentorOverviewData,
+} from "@/lib/server/mentor-overview-server";
 
 export const OverviewSection = ({ userDetails, setActiveSection }: MentorSectionProps) => {
   const [overviewData, setOverviewData] = useState<MentorOverviewData | null>(null);
@@ -129,9 +132,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card
-          className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20 transition-opacity"
-        >
+        <Card className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20 transition-opacity">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
               <Users className="w-5 h-5 text-white" />
@@ -142,9 +143,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           </div>
         </Card>
-        <Card
-          className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30 transition-opacity"
-        >
+        <Card className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30 transition-opacity">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
               <Video className="w-5 h-5 text-white" />
@@ -214,7 +213,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
                     className={`w-2 h-2 rounded-full ${
                       session.sessionType === "YOGA" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
                     }`}
-                   />
+                  />
                   <div>
                     <p className="font-medium">{session.title}</p>
                     <p className="text-sm text-gray-500">

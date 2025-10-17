@@ -14,7 +14,6 @@ export function scheduleEmailReminder(session: Schedule) {
   }
 
   schedule.scheduleJob(reminderTime, async () => {
-
     await sendEmail(session);
   });
 }

@@ -5,8 +5,6 @@ export async function POST(request: NextRequest) {
   try {
     const { email, isAvailable } = await request.json();
 
-
-
     const updatedUser = await prisma.user.updateMany({
       where: { email: email },
       data: { isAvailable: isAvailable },

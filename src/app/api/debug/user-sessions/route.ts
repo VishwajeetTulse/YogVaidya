@@ -3,7 +3,6 @@ import { getUserSessions } from "@/lib/server/user-sessions-server";
 
 export async function GET(_request: NextRequest) {
   try {
-
     const result = await getUserSessions();
 
     return NextResponse.json(result);

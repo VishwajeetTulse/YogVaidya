@@ -114,7 +114,7 @@ const MentorCardCompact: React.FC<{ mentor: MentorCardCompactProps }> = ({ mento
                     "w-1.5 h-1.5 rounded-full bg-white",
                     isActuallyAvailable && "animate-pulse"
                   )}
-                 />
+                />
               </div>
             </div>
           </div>

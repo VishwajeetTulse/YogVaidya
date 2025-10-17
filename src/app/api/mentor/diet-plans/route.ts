@@ -151,8 +151,6 @@ export async function GET(req: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });
 
-
-
     if (!session?.user) {
       console.error("❌ Unauthorized - No session");
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
@@ -160,8 +158,6 @@ export async function GET(req: NextRequest) {
 
     const { searchParams } = new URL(req.url);
     const mentorId = searchParams.get("mentorId");
-
-
 
     let dietPlans;
 
@@ -225,7 +221,6 @@ export async function GET(req: NextRequest) {
         tags,
       };
     });
-
 
     return NextResponse.json({ dietPlans: transformedDietPlans });
   } catch (error) {

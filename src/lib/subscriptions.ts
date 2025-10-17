@@ -303,7 +303,6 @@ async function createUserSubscription(data: CreateSubscriptionData) {
  */
 async function startTrialSubscription(userId: string, plan: SubscriptionPlan = "FLOURISH") {
   try {
-
     const now = new Date();
     const trialEndDate = new Date(now);
     trialEndDate.setDate(trialEndDate.getDate() + TRIAL_PERIOD_DAYS);
@@ -440,7 +439,6 @@ async function cancelUserSubscription(userId: string, silent: boolean = false) {
       try {
         // Cancel at end of billing period (true parameter)
         await razorpay.subscriptions.cancel(razorpaySubscriptionId, true);
-
       } catch (error) {
         razorpayError = error;
         console.error("Error scheduling Razorpay subscription cancellation:", error);

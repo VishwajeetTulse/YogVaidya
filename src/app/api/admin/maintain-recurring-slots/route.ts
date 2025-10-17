@@ -20,8 +20,6 @@ interface StatisticsData {
 
 export async function POST(_request: Request) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json(
@@ -50,8 +48,6 @@ export async function POST(_request: Request) {
     const result = await maintainRecurringSlots();
 
     if (result.success) {
-
-
       return NextResponse.json({
         success: true,
         message: `Maintenance completed successfully`,

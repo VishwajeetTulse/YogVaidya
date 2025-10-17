@@ -11,8 +11,6 @@ import type { MongoCommandResult } from "@/lib/types/mongodb";
  */
 export async function GET() {
   try {
-
-
     // 1. Check sessionBooking collection
     const recentSessions = await prisma.$runCommandRaw({
       find: "sessionBooking",
@@ -60,7 +58,6 @@ export async function GET() {
 
     // Test a known failing session ID
     const failingSessionId = "schedule_1758358728740_egnbxikyh";
-
 
     // Test in sessionBooking collection
     const sessionBookingTest = await prisma.$runCommandRaw({

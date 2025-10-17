@@ -7,10 +7,7 @@ import type { MongoCommandResult } from "@/lib/types/mongodb";
 
 export async function GET(request: NextRequest) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
-
 
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -20,10 +17,8 @@ export async function GET(request: NextRequest) {
     const url = new URL(request.url);
     const mentorId = url.searchParams.get("mentorId") || session.user.id;
 
-
     // Verify the user is authorized to access this mentor's sessions
     if (mentorId !== session.user.id) {
-
       return NextResponse.json({ success: false, error: "Forbidden" }, { status: 403 });
     }
 
@@ -35,16 +30,12 @@ export async function GET(request: NextRequest) {
       },
     });
 
-
-
     if (!user) {
       return NextResponse.json(
         { success: false, error: "Only mentors can view session bookings" },
         { status: 403 }
       );
     }
-
-
 
     // First, let's check if there are any session bookings at all
     const allBookings = await prisma.$runCommandRaw({
@@ -66,9 +57,7 @@ export async function GET(request: NextRequest) {
         .firstBatch;
     }
 
-
     if (totalBookings.length > 0) {
-
     }
 
     // Use MongoDB raw command to fetch session bookings

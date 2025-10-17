@@ -29,8 +29,6 @@ const bookTimeSlotSchema = z.object({
 
 export async function POST(request: Request) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
@@ -143,8 +141,6 @@ export async function POST(request: Request) {
         sessionType: slot.sessionType as string,
       },
     });
-
-
 
     return NextResponse.json({
       success: true,

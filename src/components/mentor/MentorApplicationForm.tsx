@@ -212,7 +212,6 @@ export default function MentorApplicationForm() {
             applicationsResult.applications.length > 0
           ) {
             setExistingApplication(convertDatabaseToForm(applicationsResult.applications[0]));
-
           }
         } catch {}
       } else {

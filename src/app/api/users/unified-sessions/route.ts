@@ -9,15 +9,12 @@ import { isMongoDate } from "@/lib/types/mongodb";
 
 export async function GET(_request: NextRequest) {
   try {
-
-
     const session = await auth.api.getSession({ headers: await headers() });
     if (!session?.user?.id) {
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 
     const userId = session.user.id;
-
 
     // Get sessions from SessionBooking collection (new time slot bookings)
     const sessionBookingsResult = await prisma.$runCommandRaw({
@@ -105,8 +102,6 @@ export async function GET(_request: NextRequest) {
       ).cursor!.firstBatch;
     }
 
-
-
     // Get sessions from Schedule collection (legacy sessions)
     const _scheduleSessionsResult = await prisma.$runCommandRaw({
       aggregate: "schedule",
@@ -178,8 +173,6 @@ export async function GET(_request: NextRequest) {
       );
       return aDate.getTime() - bDate.getTime();
     });
-
-
 
     return NextResponse.json({
       success: true,

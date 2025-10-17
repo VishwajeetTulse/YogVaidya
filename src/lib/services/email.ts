@@ -28,7 +28,6 @@ export async function sendEmail({
       html: html ? text : undefined, // If html is true, use text as HTML content
     });
 
-
     return {
       success: true,
       messageId: info.messageId,

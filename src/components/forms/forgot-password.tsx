@@ -7,7 +7,10 @@ import { Button } from "@/components/ui/button";
 import { Form } from "@/components/ui/form";
 import Link from "next/link";
 import { InputField } from "@/components/Auth/FormFields";
-import { type ForgotPasswordFormValues, forgotPasswordSchema } from "@/lib/schema/forgotPasswordSchema";
+import {
+  type ForgotPasswordFormValues,
+  forgotPasswordSchema,
+} from "@/lib/schema/forgotPasswordSchema";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 

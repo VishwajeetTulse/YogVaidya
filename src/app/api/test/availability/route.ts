@@ -3,8 +3,6 @@ import { prisma } from "@/lib/config/prisma";
 
 export async function GET(_request: NextRequest) {
   try {
-
-
     // Test 1: Check all users with MENTOR role
     const allMentors = await prisma.user.findMany({
       where: { role: "MENTOR" },
@@ -15,8 +13,6 @@ export async function GET(_request: NextRequest) {
         role: true,
       },
     });
-
-
 
     // Test 2: Try to get isAvailable field for each mentor
     const mentorsWithAvailability = [];
@@ -34,8 +30,6 @@ export async function GET(_request: NextRequest) {
           ...mentor,
           isAvailable: isAvailable,
         });
-
-
       } catch (error) {
         console.error(`❌ Error getting availability for ${mentor.name}:`, error);
         mentorsWithAvailability.push({

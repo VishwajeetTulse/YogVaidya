@@ -9,7 +9,10 @@ import { Form } from "@/components/ui/form";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { InputField } from "@/components/Auth/FormFields";
-import { type ResetPasswordFormValues, resetPasswordSchema } from "@/lib/schema/resetPasswordSchema";
+import {
+  type ResetPasswordFormValues,
+  resetPasswordSchema,
+} from "@/lib/schema/resetPasswordSchema";
 import { authClient } from "@/lib/auth-client";
 import { toast } from "sonner";
 

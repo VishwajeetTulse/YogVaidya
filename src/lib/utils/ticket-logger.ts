@@ -86,7 +86,6 @@ export class TicketLogger {
       });
 
       // Console log for development (can be removed in production)
-
     } catch (error) {
       // Fail silently to not disrupt ticket operations
       console.error("Failed to log ticket action:", error);

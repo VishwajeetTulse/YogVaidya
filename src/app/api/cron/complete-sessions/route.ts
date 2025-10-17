@@ -4,13 +4,11 @@ import { updateSessionStatuses } from "@/lib/services/session-status-service";
 
 export async function POST(_request: Request) {
   try {
-
     // Verify this is an internal cron request or from a trusted source
     const authHeader = (await headers()).get("authorization");
     const cronSecret = process.env.CRON_SECRET || "dev-secret";
 
     if (authHeader !== `Bearer ${cronSecret}`) {
-
       return NextResponse.json({ success: false, error: "Unauthorized" }, { status: 401 });
     }
 

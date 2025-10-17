@@ -170,7 +170,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
                       className={`w-2 h-2 rounded-full ${
                         session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
                       }`}
-                     />
+                    />
                     <div>
                       <p className="font-medium">{session.title}</p>
                       <p className="text-sm text-gray-500">
@@ -254,7 +254,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
                       className={`w-2 h-2 rounded-full ${
                         session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
                       }`}
-                     />
+                    />
                     <div>
                       <p className="font-medium">{session.title}</p>
                       <p className="text-sm text-gray-500">
