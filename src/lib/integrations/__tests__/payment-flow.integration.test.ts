@@ -290,6 +290,7 @@ describe('Payment Flow Integration - End-to-End', () => {
       };
 
       const subscription = {
+        id: 'sub_inv_1',
         userId: 'user_inv_1',
         planId: 'pro',
         paymentId: payment.id,
