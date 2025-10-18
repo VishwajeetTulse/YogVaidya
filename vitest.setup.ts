@@ -1,6 +1,6 @@
-import '@testing-library/jest-dom';
-import { expect, afterEach, beforeAll, afterAll, vi } from 'vitest';
-import { cleanup } from '@testing-library/react';
+import "@testing-library/jest-dom";
+import { expect, afterEach, beforeAll, afterAll, vi } from "vitest";
+import { cleanup } from "@testing-library/react";
 
 // Cleanup after each test
 afterEach(() => {
@@ -8,10 +8,10 @@ afterEach(() => {
 });
 
 // Mock next/router
-vi.mock('next/router', () => ({
+vi.mock("next/router", () => ({
   useRouter: () => ({
     query: {},
-    pathname: '/',
+    pathname: "/",
     push: vi.fn(),
     replace: vi.fn(),
     reload: vi.fn(),
@@ -28,7 +28,7 @@ vi.mock('next/router', () => ({
 }));
 
 // Mock next/navigation
-vi.mock('next/navigation', () => ({
+vi.mock("next/navigation", () => ({
   useRouter: () => ({
     push: vi.fn(),
     replace: vi.fn(),
@@ -38,11 +38,11 @@ vi.mock('next/navigation', () => ({
     prefetch: vi.fn(),
   }),
   useSearchParams: () => new URLSearchParams(),
-  usePathname: () => '/',
+  usePathname: () => "/",
 }));
 
 // Mock environment variables
-process.env.NEXT_PUBLIC_API_URL = 'http://localhost:3000';
+process.env.NEXT_PUBLIC_API_URL = "http://localhost:3000";
 
 // Suppress console errors/warnings in tests (optional)
 const originalError = console.error;
@@ -51,9 +51,9 @@ const originalWarn = console.warn;
 beforeAll(() => {
   console.error = (...args: any[]) => {
     if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning: ReactDOM.render') ||
-        args[0].includes('Not implemented: HTMLFormElement.prototype.submit'))
+      typeof args[0] === "string" &&
+      (args[0].includes("Warning: ReactDOM.render") ||
+        args[0].includes("Not implemented: HTMLFormElement.prototype.submit"))
     ) {
       return;
     }
@@ -62,9 +62,8 @@ beforeAll(() => {
 
   console.warn = (...args: any[]) => {
     if (
-      typeof args[0] === 'string' &&
-      (args[0].includes('Warning:') ||
-        args[0].includes('act(...)'))
+      typeof args[0] === "string" &&
+      (args[0].includes("Warning:") || args[0].includes("act(...)"))
     ) {
       return;
     }

@@ -999,6 +999,86 @@ This project is proprietary. All rights reserved.
 
 ---
 
+## 🧪 Testing
+
+### Test Suite Overview
+
+**Total Tests**: 483 ✅ | **Coverage**: Comprehensive | **Framework**: Vitest v3.2.4
+
+#### Test Structure
+
+All tests are organized in a centralized `src/__tests__/` directory:
+
+```
+src/__tests__/
+├── unit/                    # Unit tests (13 files, 267 tests)
+│   ├── api-routes.test.ts                    # API endpoints (30 tests)
+│   ├── auth-security.test.ts                 # JWT, RBAC, MFA (26 tests)
+│   ├── billing-actions.test.ts               # Billing & subscriptions (29 tests)
+│   ├── dashboard-analytics.test.ts           # Analytics logic (20 tests)
+│   ├── email-service.test.ts                 # Email validation (27 tests)
+│   ├── file-upload-security.test.ts          # File security (35 tests)
+│   ├── mentor-logic.test.ts                  # Mentor workflows (28 tests)
+│   ├── prisma-operations.test.ts             # Database ops (23 tests)
+│   ├── razorpay-service.test.ts              # Payment gateway (11 tests)
+│   ├── session-booking.test.ts               # Session logic (24 tests)
+│   ├── session-service.test.ts               # Session data (10 tests)
+│   ├── subscription-management.test.ts       # Subscription lifecycle (28 tests)
+│   └── validation-utilities.test.ts          # Input validation (28 tests)
+│
+└── integration/             # Integration tests (5 files, 216 tests)
+    ├── auth-flow.integration.test.ts         # Login/signup workflows (40 tests)
+    ├── email-notifications.integration.test.ts # Email delivery (34 tests)
+    ├── payment-flow.integration.test.ts      # Payment workflows (12 tests)
+    ├── real-service-integration.test.ts      # Business logic (24 tests)
+    └── session-complete-flow.integration.test.ts # End-to-end sessions (33 tests)
+```
+
+#### Running Tests
+
+```bash
+# Run all tests once
+npm test
+
+# Run tests in watch mode
+npm run test:watch
+
+# Run tests with UI dashboard
+npm run test:ui
+
+# Run tests with coverage report
+npm run test:coverage
+
+# Run specific test file
+npm test -- src/__tests__/unit/auth-security.test.ts
+
+# Run tests matching pattern
+npm test -- --grep "payment"
+```
+
+#### Test Coverage
+
+Current targets:
+- **Statements**: 35%+
+- **Functions**: 35%+
+- **Branches**: 30%+
+- **Lines**: 35%+
+
+#### Key Test Scenarios
+
+✅ **Payment Security**: Double-charge prevention, refund windows, webhook handling
+✅ **Authentication**: JWT validation, session management, RBAC, MFA
+✅ **Data Integrity**: Transactions, constraints, rollback on failure
+✅ **Business Logic**: Subscription renewals, mentor earnings, invoice generation
+✅ **Email**: Verification, templates, delivery retry, rate limiting
+✅ **File Security**: MIME validation, size checks, content scanning
+
+#### Documentation
+
+Detailed test documentation available in: [`src/__tests__/README.md`](../src/__tests__/README.md)
+
+---
+
 ## 🎯 Roadmap
 
 ### Completed ✅
