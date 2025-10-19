@@ -58,7 +58,13 @@ export default function SigninPage() {
   const onSubmit = async (data: SigninFormValues) => {
     setError("");
     setIsLoading(true);
-    const finalRedirect = searchParams.get("from") || "dashboard";
+    
+    // Validate redirect URL - only allow internal routes
+    const fromParam = searchParams.get("from");
+    const allowedRoutes = ["dashboard", "mentors", "checkout", "session-checkout", "timeslot-checkout"];
+    const isValidRedirect = fromParam && allowedRoutes.includes(fromParam);
+    const finalRedirect = isValidRedirect ? fromParam : "dashboard";
+    
     await authClient.signIn.email(
       {
         email: data.email,
@@ -86,7 +92,12 @@ export default function SigninPage() {
   };
 
   const handleGoogleAuth = async () => {
-    const finalRedirect = searchParams.get("from") || "dashboard";
+    // Validate redirect URL - only allow internal routes
+    const fromParam = searchParams.get("from");
+    const allowedRoutes = ["dashboard", "mentors", "checkout", "session-checkout", "timeslot-checkout"];
+    const isValidRedirect = fromParam && allowedRoutes.includes(fromParam);
+    const finalRedirect = isValidRedirect ? fromParam : "dashboard";
+    
     await authClient.signIn.social(
       {
         provider: "google",
