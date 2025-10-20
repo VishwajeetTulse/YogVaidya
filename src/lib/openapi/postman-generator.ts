@@ -28,8 +28,7 @@ interface PostmanRequest {
 }
 
 export function generatePostmanCollection(): PostmanCollection {
-  const baseUrl =
-    process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL || "http://localhost:3000/api";
 
   const requests: PostmanRequest[] = [];
 
@@ -97,8 +96,7 @@ export function generatePostmanCollection(): PostmanCollection {
     info: {
       name: "YogVaidya API",
       description: openApiSpec.info.description,
-      schema:
-        "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+      schema: "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
     },
     item: requests,
     variable: [

@@ -3,10 +3,6 @@ export const metadata = {
   description: "Interactive API documentation",
 };
 
-export default function ApiDocsLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+export default function ApiDocsLayout({ children }: { children: React.ReactNode }) {
   return children;
 }

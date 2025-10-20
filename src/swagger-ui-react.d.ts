@@ -1,4 +1,4 @@
-declare module 'swagger-ui-react' {
+declare module "swagger-ui-react" {
   interface SwaggerUIProps {
     spec?: Record<string, unknown>;
     url?: string;
@@ -17,7 +17,7 @@ declare module 'swagger-ui-react' {
   export default SwaggerUI;
 }
 
-declare module 'swagger-ui-react/swagger-ui.css' {
+declare module "swagger-ui-react/swagger-ui.css" {
   const content: string;
   export default content;
 }
