@@ -137,6 +137,10 @@ model User {
 
 
   @@unique([email])
+  @@index([role])
+  @@index([mentorType])
+  @@index([subscriptionStatus])
+  @@index([createdAt(sort: Desc)])
   @@map("user")
 }
 
@@ -205,6 +209,10 @@ model MentorApplication {
   timeSlots      MentorTimeSlot[]
   sessionBookings SessionBooking[]
 
+  @@index([email])
+  @@index([status])
+  @@index([expertise])
+  @@index([createdAt(sort: Desc)])
   @@map("mentor_application")
 }
 

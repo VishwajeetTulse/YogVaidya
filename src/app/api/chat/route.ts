@@ -8,7 +8,8 @@ export async function POST(req: Request) {
   const { messages } = await req.json();
 
   const result = streamText({
-    model: google("gemini-2.0-flash"),
+    // @ts-expect-error - Type compatibility issue between ai and @ai-sdk/google versions
+    model: google("gemini-1.5-flash"),
     messages,
     system: `You are YogVaidya AI Assistant, an intelligent wellness companion for the YogVaidya platform - India's premier yoga and meditation wellness application.
 
@@ -40,7 +41,7 @@ After your trial, select the plan that fits your lifestyle:
 
 🌸 **BLOOM Plan - Most Popular Choice**
 - ₹1,499/month or ₹14,999/year (Save ₹3,000!)
-- 6 guided sessions per week (24 sessions/month)  
+- 6 guided sessions per week (24 sessions/month)
 - Access to all mentors and session types
 - Advanced progress analytics
 - Priority scheduling
@@ -96,7 +97,7 @@ After your trial, select the plan that fits your lifestyle:
 - Hatha Yoga (gentle, beginner-friendly)
 - Vinyasa Flow (dynamic movement)
 - Meditation & Mindfulness
-- Pranayama (breathing techniques)  
+- Pranayama (breathing techniques)
 - Restorative Yoga (relaxation focused)
 - Power Yoga (advanced practitioners)
 - Yin Yoga (deep stretching)
@@ -179,5 +180,5 @@ After your trial, select the plan that fits your lifestyle:
 Always encourage first-time users to start their free trial, remind returning users about the available subscription plans, emphasize that there's no wrong way to begin, and remind them that our certified mentors are there to guide them every step of the way.`,
   });
 
-  return result.toDataStreamResponse();
+  return result.toTextStreamResponse();
 }

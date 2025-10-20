@@ -1,4 +1,5 @@
-import { NextRequest, NextResponse } from "next/server";
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
 import { rateLimit } from "@/lib/middleware/ratelimit";
 
 export function authRateLimitMiddleware(req: NextRequest) {

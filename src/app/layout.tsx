@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import "@/app/globals.css";
 import "@/lib/prisma-middleware-trial";
 import { Geist, Geist_Mono } from "next/font/google";
 import { Toaster } from "sonner";

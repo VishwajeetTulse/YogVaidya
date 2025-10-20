@@ -2,8 +2,7 @@ import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
 import { sendEmail } from "@/lib/services/email";
-import { rateLimit } from "@/lib/middleware/ratelimit";
-import { type NextRequest } from "next/server";
+import type { NextRequest } from "next/server";
 import { prisma } from "./prisma";
 
 // Helper to get rememberMe from the request body (for sign-in route)

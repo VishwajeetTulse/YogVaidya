@@ -9,8 +9,6 @@ import Navbar from "@/components/layout/Navbar";
 import EnhancedMentorCarousel from "@/components/mentor/EnhancedMentorCarousel";
 import Link from "next/link";
 import { type Mentor } from "@/lib/types/mentor";
-import { type TimeSlotDocument } from "@/lib/types/sessions";
-import { ensureDateObject } from "@/lib/utils/date-utils";
 
 export default function MentorsPage() {
   // alert('🚀 MentorsPage component loaded!'); // Uncomment to test
@@ -20,45 +18,41 @@ export default function MentorsPage() {
   const [error, setError] = useState<string | null>(null);
   const [timeSlotsMap, setTimeSlotsMap] = useState<Record<string, boolean>>({});
 
-  // Fetch mentors' time slots for today and upcoming days
+  // Fetch mentors' time slots for all mentors in ONE batch query
   const fetchMentorTimeSlots = async (mentorIds: string[]) => {
     try {
-      const timeSlotsAvailability: Record<string, boolean> = {};
-
-      // Check each mentor's time slots
-      for (const mentorId of mentorIds) {
-        try {
-          // First, try to get all available slots for this mentor (not just today)
-          const url = `/api/mentor/timeslots?mentorId=${mentorId}&available=true`;
-
-          const response = await fetch(url);
-          const data = await response.json();
-
-          if (data.success && data.data) {
-            // Check if mentor has any available time slots in the future
-            const availableSlots = data.data.filter((slot: TimeSlotDocument) => {
-              const slotDate = ensureDateObject(slot.startTime);
-              const isActive = slot.isActive;
-              const isNotBooked = !slot.isBooked;
-              const isFuture = slotDate > new Date(); // Any future slots
-
-              return isActive && isNotBooked && isFuture;
-            });
-
-            const hasAvailableSlots = availableSlots.length > 0;
-            timeSlotsAvailability[mentorId] = hasAvailableSlots;
-          } else {
-            timeSlotsAvailability[mentorId] = false;
-          }
-        } catch (err) {
-          console.error(`Error fetching time slots for mentor ${mentorId}:`, err);
-          timeSlotsAvailability[mentorId] = false;
-        }
+      if (mentorIds.length === 0) {
+        setTimeSlotsMap({});
+        return;
       }
 
-      setTimeSlotsMap(timeSlotsAvailability);
+      // OPTIMIZATION: Use batch endpoint instead of N individual calls
+      const mentorIdsParam = mentorIds.join(",");
+      const url = `/api/mentor/timeslots/batch?mentorIds=${mentorIdsParam}`;
+
+      const response = await fetch(url);
+      const data = await response.json();
+
+      if (data.success) {
+        // Set availability map from batch response
+        setTimeSlotsMap(data.availability);
+      } else {
+        console.error("Error fetching timeslots:", data.error);
+        // Set all to false if batch fetch fails
+        const defaultMap: Record<string, boolean> = {};
+        mentorIds.forEach((id) => {
+          defaultMap[id] = false;
+        });
+        setTimeSlotsMap(defaultMap);
+      }
     } catch (err) {
       console.error("Error fetching mentor time slots:", err);
+      // Set all to false if fetch fails
+      const defaultMap: Record<string, boolean> = {};
+      mentorIds.forEach((id) => {
+        defaultMap[id] = false;
+      });
+      setTimeSlotsMap(defaultMap);
     }
   };
 
@@ -72,25 +66,8 @@ export default function MentorsPage() {
       if (data.success) {
         setMentors(data.mentors);
 
-        // Fetch time slots for all mentors
+        // Fetch time slots for all mentors (now uses batch endpoint)
         const mentorIds = data.mentors.map((mentor: Mentor) => mentor.id.toString());
-
-        // Temporarily hardcode the time slots data based on server logs
-        // TODO: Fix the fetchMentorTimeSlots function
-        const tempTimeSlotsMap: Record<string, boolean> = {};
-        data.mentors.forEach((mentor: Mentor) => {
-          const mentorId = mentor.id.toString();
-          // Based on server logs:
-          // p27belqfkUe1sppnuFpG4nSupFZj8Fme (Vishwajeet) has 1 slot
-          // WcK4xas9IP8q0y2kJyHCFruYxtmpGAv5 (Rohan) has 0 slots
-          if (mentorId === "p27belqfkUe1sppnuFpG4nSupFZj8Fme") {
-            tempTimeSlotsMap[mentorId] = true; // Has slots
-          } else {
-            tempTimeSlotsMap[mentorId] = false; // No slots
-          }
-        });
-        setTimeSlotsMap(tempTimeSlotsMap);
-
         await fetchMentorTimeSlots(mentorIds);
       } else {
         setError(data.error || "Failed to fetch mentors");
