@@ -50,11 +50,14 @@ export function rateLimit(
 }
 
 // Cleanup old entries to prevent memory leaks (run every 5 minutes)
-setInterval(() => {
-  const now = Date.now();
-  for (const key in rateLimitStore) {
-    if (rateLimitStore[key].resetTime < now) {
-      delete rateLimitStore[key];
+setInterval(
+  () => {
+    const now = Date.now();
+    for (const key in rateLimitStore) {
+      if (rateLimitStore[key].resetTime < now) {
+        delete rateLimitStore[key];
+      }
     }
-  }
-}, 5 * 60 * 1000);
+  },
+  5 * 60 * 1000
+);
