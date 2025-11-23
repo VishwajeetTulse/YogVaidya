@@ -2,7 +2,6 @@ import { NextResponse } from "next/server";
 import { batchUpdateSubscriptionStatuses } from "@/lib/subscriptions";
 import { logSystemEvent, logError } from "@/lib/utils/logger";
 
-
 /**
  * Cron job endpoint to update subscription statuses
  * This endpoint should be called daily to:

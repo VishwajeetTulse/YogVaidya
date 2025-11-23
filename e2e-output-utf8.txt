@@ -1,0 +1,639 @@
+﻿
+Running 220 tests using 8 workers
+
+  Γ£ô    3 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:9:7 ΓÇ║ Admin Access ΓÇ║ should require authentication to access admin dashboard (6.8s)
+  Γ£ô    1 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:37:7 ΓÇ║ Admin Access ΓÇ║ should display admin navigation menu (7.0s)
+  Γ£ô    4 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:64:7 ΓÇ║ Analytics Dashboard ΓÇ║ should display analytics dashboard (7.0s)
+  Γ£ô    2 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:23:7 ΓÇ║ Admin Access ΓÇ║ should display admin dashboard for authorized users (7.1s)
+  Γ£ô    6 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:92:7 ΓÇ║ Analytics Dashboard ΓÇ║ should display session analytics (8.2s)
+  Γ£ô    5 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:52:7 ΓÇ║ Analytics Dashboard ΓÇ║ should navigate to analytics page (8.1s)
+  Γ£ô    9 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:116:7 ΓÇ║ Analytics Dashboard ΓÇ║ should display revenue/billing analytics (4.0s)
+  Γ£ô   10 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:129:7 ΓÇ║ User Management ΓÇ║ should display user list in admin panel (3.9s)
+  Γ£ô   11 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:141:7 ΓÇ║ User Management ΓÇ║ should allow searching for users (3.9s)
+  Γ£ô   12 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:155:7 ΓÇ║ User Management ΓÇ║ should display user details (4.6s)
+  Γ£ô   14 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:179:7 ΓÇ║ User Management ΓÇ║ should allow filtering users by role/status (4.1s)
+  Γ£ô   13 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:166:7 ΓÇ║ User Management ΓÇ║ should allow viewing user profile from admin (4.1s)
+  Γ£ô    7 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:103:7 ΓÇ║ Analytics Dashboard ΓÇ║ should allow filtering analytics by date range (12.5s)
+  Γ£ô    8 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:78:7 ΓÇ║ Analytics Dashboard ΓÇ║ should display user statistics (12.6s)
+  Γ£ô   15 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:194:7 ΓÇ║ Mentor Management ΓÇ║ should access mentor management API (3.3s)
+  Γ£ô   16 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:205:7 ΓÇ║ Mentor Management ΓÇ║ should display mentor list in admin (3.3s)
+  Γ£ô   18 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:229:7 ΓÇ║ Mentor Management ΓÇ║ should display pending mentor applications (3.3s)
+  Γ£ô   19 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:244:7 ΓÇ║ Content Management ΓÇ║ should display diet plans management (3.3s)
+  Γ£ô   20 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:255:7 ΓÇ║ Content Management ΓÇ║ should allow creating new diet plans (3.4s)
+  Γ£ô   21 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:268:7 ΓÇ║ Content Management ΓÇ║ should display subscription plans management (3.7s)
+  Γ£ô   22 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:282:7 ΓÇ║ Content Management ΓÇ║ should allow editing plan details (3.6s)
+  Γ£ô   23 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:297:7 ΓÇ║ Moderation ΓÇ║ should access moderation API (3.1s)
+  Γ£ô   24 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:308:7 ΓÇ║ Moderation ΓÇ║ should display moderation dashboard (3.2s)
+5 payment requests completed in 53ms
+  Γ£ô   31 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:40:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle payment processing load (384ms)
+  Γ£ô   25 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:321:7 ΓÇ║ Moderation ΓÇ║ should display reported content/issues (3.1s)
+  Γ£ÿ   30 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:6:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle concurrent checkout API requests (515ms)
+8 concurrent booking requests completed in 26ms
+  Γ£ô   33 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:106:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle session booking requests under load (312ms)
+  Γ£ÿ   32 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:75:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle mentor search under load (373ms)
+12 filtered mentor requests completed in 9ms
+  Γ£ô   34 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:175:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle mentor listing with various filters (197ms)
+10 diet plan requests completed in 10ms
+  Γ£ô   26 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:336:7 ΓÇ║ System Management ΓÇ║ should access debug/test endpoints (3.1s)
+  Γ£ô   35 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:239:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle diet plan API under load (165ms)
+  Γ£ô   27 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:348:7 ΓÇ║ System Management ΓÇ║ should access test endpoints (3.2s)
+8 billing history requests completed in 17ms
+15 subscription status requests completed in 11ms
+  Γ£ô   36 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:266:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle billing API requests efficiently (197ms)
+  Γ£ô   37 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:293:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle subscription status checks concurrently (199ms)
+6 timeslot creation requests completed in 14ms
+5 profile update requests completed in 15ms
+  Γ£ô   38 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:320:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle timeslot creation requests (198ms)
+  Γ£ô   39 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:355:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle profile update requests (199ms)
+  Γ£ÿ   40 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:389:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should measure API response time distribution (226ms)
+  Γ£ô   17 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:218:7 ΓÇ║ Mentor Management ΓÇ║ should allow approving mentor applications (8.6s)
+  Γ£ô   28 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:359:7 ΓÇ║ System Management ΓÇ║ should access cron/automated tasks (3.3s)
+  Γ£ô   29 [chromium] ΓÇ║ e2e\admin-and-analytics.spec.ts:370:7 ΓÇ║ System Management ΓÇ║ should access tickets/support system (3.7s)
+20 authentication requests completed in 22ms
+  Γ£ô   45 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:141:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle user authentication burst (288ms)
+5 analytics requests completed in 18ms
+  Γ£ô   47 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:212:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle analytics data aggregation under load (300ms)
+  Γ£ô   42 [chromium] ΓÇ║ e2e\api-security.spec.ts:6:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate API authentication headers (2.5s)
+  Γ£ô   46 [chromium] ΓÇ║ e2e\api-security.spec.ts:75:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should implement proper pagination (1.8s)
+  Γ£ô   43 [chromium] ΓÇ║ e2e\api-security.spec.ts:42:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate input parameters in APIs (4.1s)
+  Γ£ô   44 [chromium] ΓÇ║ e2e\api-security.spec.ts:57:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should not expose database errors (4.4s)
+  Γ£ÿ   41 [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:420:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle sustained API load (5.2s)
+  Γ£ô   50 [chromium] ΓÇ║ e2e\api-security.spec.ts:32:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should prevent unauthorized data access (3.9s)
+  Γ£ô   48 [chromium] ΓÇ║ e2e\api-security.spec.ts:84:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate JSON schema in API responses (5.6s)
+  Γ£ô   51 [chromium] ΓÇ║ e2e\api-security.spec.ts:119:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should prevent privilege escalation (4.5s)
+  Γ£ô   53 [chromium] ΓÇ║ e2e\api-security.spec.ts:150:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should implement proper request validation (6.1s)
+  Γ£ô   57 [chromium] ΓÇ║ e2e\api-security.spec.ts:234:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate and limit file upload sizes (3.7s)
+  Γ£ô   55 [chromium] ΓÇ║ e2e\api-security.spec.ts:190:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should not expose internal IDs in responses (6.5s)
+  Γ£ô   54 [chromium] ΓÇ║ e2e\api-security.spec.ts:164:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should prevent race condition attacks (8.2s)
+  Γ£ô   56 [chromium] ΓÇ║ e2e\api-security.spec.ts:209:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should implement proper access control lists (6.4s)
+  Γ£ô   49 [chromium] ΓÇ║ e2e\api-security.spec.ts:102:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should not allow admin operations without authorization (13.7s)
+  Γ£ô   58 [chromium] ΓÇ║ e2e\api-security.spec.ts:173:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate timestamps and prevent replay attacks (7.5s)
+  Γ£ô   60 [chromium] ΓÇ║ e2e\api-security.spec.ts:264:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should validate cache control headers (4.7s)
+  Γ£ô   59 [chromium] ΓÇ║ e2e\api-security.spec.ts:248:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should prevent HTTP header injection (7.7s)
+  Γ£ô   52 [chromium] ΓÇ║ e2e\api-security.spec.ts:138:7 ΓÇ║ Security Audit - API & Data Access ΓÇ║ should sanitize query parameters (15.7s)
+  Γ£ô   62 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:21:7 ΓÇ║ User Signup Flow ΓÇ║ should display signup form with email and password fields (6.9s)
+  Γ£ô   63 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:37:7 ΓÇ║ User Signup Flow ΓÇ║ should show validation error for empty email field (7.6s)
+  Γ£ô   66 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:93:7 ΓÇ║ User Login Flow ΓÇ║ should display signin form on signin page (6.4s)
+  Γ£ô   64 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:49:7 ΓÇ║ User Signup Flow ΓÇ║ should validate email format on signup (6.7s)
+  Γ£ô   68 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:133:7 ΓÇ║ User Login Flow ΓÇ║ should have signup link on signin page (5.1s)
+  Γ£ô   61 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:9:7 ΓÇ║ User Signup Flow ΓÇ║ should navigate to signup page from home (11.0s)
+  Γ£ô   69 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:143:7 ΓÇ║ User Login Flow ΓÇ║ should navigate to signup from signin page (4.2s)
+  Γ£ô   67 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:112:7 ΓÇ║ User Login Flow ΓÇ║ should show error on signin with invalid credentials (6.4s)
+  Γ£ô   70 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:156:7 ΓÇ║ Password Reset Flow ΓÇ║ should display forgot password page (4.8s)
+  Γ£ô   72 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:184:7 ΓÇ║ Password Reset Flow ΓÇ║ should display reset password form with token (4.7s)
+  Γ£ô   75 [chromium] ΓÇ║ e2e\auth-security.spec.ts:27:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should prevent session fixation (3.0s)
+  Γ£ô   74 [chromium] ΓÇ║ e2e\auth-security.spec.ts:6:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should enforce strong password validation (3.7s)
+  Γ£ô   71 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:173:7 ΓÇ║ Password Reset Flow ΓÇ║ should navigate to forgot password from signin (5.6s)
+  Γ£ô   80 [chromium] ΓÇ║ e2e\auth-security.spec.ts:91:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should use secure flag for auth cookies in production (217ms)
+  Γ£ô   76 [chromium] ΓÇ║ e2e\auth-security.spec.ts:35:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should invalidate session on logout (3.2s)
+  Γ£ô   73 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:203:7 ΓÇ║ Password Reset Flow ΓÇ║ should show error for missing/invalid reset token (4.6s)
+  Γ£ô   79 [chromium] ΓÇ║ e2e\auth-security.spec.ts:77:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should use secure HTTP-only cookies (3.4s)
+  Γ£ô   77 [chromium] ΓÇ║ e2e\auth-security.spec.ts:43:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should prevent token leakage in URLs (5.0s)
+  Γ£ô   81 [chromium] ΓÇ║ e2e\auth-security.spec.ts:104:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should use SameSite attribute on cookies (3.4s)
+  Γ£ô   83 [chromium] ΓÇ║ e2e\auth-security.spec.ts:138:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should prevent email enumeration (3.6s)
+  Γ£ô   65 [chromium] ΓÇ║ e2e\auth-and-signup.spec.ts:67:7 ΓÇ║ User Signup Flow ΓÇ║ should successfully complete signup form (16.4s)
+  Γ£ô   78 [chromium] ΓÇ║ e2e\auth-security.spec.ts:56:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should prevent brute force attacks (8.9s)
+  Γ£ô   82 [chromium] ΓÇ║ e2e\auth-security.spec.ts:117:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should protect password reset tokens (9.4s)
+  Γ£ô   84 [chromium] ΓÇ║ e2e\auth-security.spec.ts:152:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should validate JWT tokens properly (9.3s)
+  Γ£ô   88 [chromium] ΓÇ║ e2e\auth-security.spec.ts:223:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should sanitize username/email in templates (6.7s)
+  Γ£ô   86 [chromium] ΓÇ║ e2e\auth-security.spec.ts:177:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should enforce two-factor authentication if enabled (7.7s)
+  Γ£ô   85 [chromium] ΓÇ║ e2e\auth-security.spec.ts:168:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should not accept expired tokens (8.6s)
+  Γ£ô   89 [chromium] ΓÇ║ e2e\auth-security.spec.ts:238:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should validate request origin for state-changing operations (11.9s)
+  Γ£ô   87 [chromium] ΓÇ║ e2e\auth-security.spec.ts:193:7 ΓÇ║ Security Audit - Authentication & Authorization ΓÇ║ should not allow concurrent sessions (15.1s)
+  Γ£ô   92 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:35:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should display three subscription plans (seed, bloom, flourish) (10.3s)
+  Γ£ô   93 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:56:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should display plan details (price, features, duration) (9.6s)
+  Γ£ô   94 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:73:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should allow selecting a plan (seed) (9.2s)
+  Γ£ô   91 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:21:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should display pricing page with subscription plans (11.1s)
+  Γ£ô   95 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:89:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should allow selecting a plan (bloom) (9.6s)
+  Γ£ô   96 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:105:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should allow selecting a plan (flourish) (6.5s)
+  Γ£ô   90 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:9:7 ΓÇ║ Pricing & Plan Selection ΓÇ║ should navigate to pricing page from home (16.6s)
+  Γ£ô   97 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:123:7 ΓÇ║ Checkout Process ΓÇ║ should require authentication before checkout (7.7s)
+  Γ£ô   98 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:136:7 ΓÇ║ Checkout Process ΓÇ║ should redirect unauthenticated users to signin, then checkout works after auth (7.4s)
+  Γ£ô   99 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:164:7 ΓÇ║ Checkout Process ΓÇ║ should validate plan parameter in checkout URL (7.8s)
+  Γ£ô  100 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:179:7 ΓÇ║ Checkout Process ΓÇ║ should display order summary on checkout (7.9s)
+  Γ£ô  101 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:192:7 ΓÇ║ Checkout Process ΓÇ║ should validate required fields before payment (7.4s)
+  Γ£ô  102 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:208:7 ΓÇ║ Checkout Process ΓÇ║ should handle checkout with Razorpay payment gateway (7.7s)
+  Γ£ô  103 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:232:7 ΓÇ║ Session Checkout ΓÇ║ should navigate to session checkout page (7.0s)
+  Γ£ô  104 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:250:7 ΓÇ║ Session Checkout ΓÇ║ should display session details (mentor, time, cost) (5.7s)
+  Γ£ô  105 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:263:7 ΓÇ║ Session Checkout ΓÇ║ should display payment form on session checkout (4.7s)
+  Γ£ô  109 [chromium] ΓÇ║ e2e\dashboard.spec.ts:9:7 ΓÇ║ Profile Completion ΓÇ║ should navigate to complete profile page after signup (3.0s)
+  Γ£ô  107 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:296:7 ΓÇ║ Timeslot Checkout ΓÇ║ should display available time slots in calendar/list format (9.0s)
+  Γ£ô  106 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:278:7 ΓÇ║ Timeslot Checkout ΓÇ║ should navigate to timeslot checkout page (9.5s)
+  Γ£ô  108 [chromium] ΓÇ║ e2e\checkout-and-payment.spec.ts:309:7 ΓÇ║ Timeslot Checkout ΓÇ║ should allow selecting a time slot (9.0s)
+  Γ£ô  114 [chromium] ΓÇ║ e2e\dashboard.spec.ts:104:7 ΓÇ║ Dashboard Navigation ΓÇ║ should navigate to dashboard for authenticated users (7.8s)
+  Γ£ô  110 [chromium] ΓÇ║ e2e\dashboard.spec.ts:23:7 ΓÇ║ Profile Completion ΓÇ║ should display profile completion form fields (10.2s)
+  Γ£ô  112 [chromium] ΓÇ║ e2e\dashboard.spec.ts:58:7 ΓÇ║ Profile Completion ΓÇ║ should allow filling profile information (9.4s)
+  Γ£ô  111 [chromium] ΓÇ║ e2e\dashboard.spec.ts:36:7 ΓÇ║ Profile Completion ΓÇ║ should validate required fields in profile form (10.6s)
+  Γ£ô  117 [chromium] ΓÇ║ e2e\dashboard.spec.ts:159:7 ΓÇ║ Dashboard Sections ΓÇ║ should allow viewing diet plans (4.2s)
+  Γ£ô  116 [chromium] ΓÇ║ e2e\dashboard.spec.ts:145:7 ΓÇ║ Dashboard Sections ΓÇ║ should display diet plans section (4.4s)
+  Γ£ô  118 [chromium] ΓÇ║ e2e\dashboard.spec.ts:172:7 ΓÇ║ Dashboard Sections ΓÇ║ should display mentor section in dashboard (3.1s)
+  Γ£ô  113 [chromium] ΓÇ║ e2e\dashboard.spec.ts:79:7 ΓÇ║ Profile Completion ΓÇ║ should submit completed profile form (12.2s)
+  Γ£ô  121 [chromium] ΓÇ║ e2e\dashboard.spec.ts:216:7 ΓÇ║ Session Management ΓÇ║ should display scheduled sessions (4.9s)
+  Γ£ô  119 [chromium] ΓÇ║ e2e\dashboard.spec.ts:186:7 ΓÇ║ Dashboard Sections ΓÇ║ should display plans/subscription section (7.2s)
+  Γ£ô  115 [chromium] ΓÇ║ e2e\dashboard.spec.ts:124:7 ΓÇ║ Dashboard Navigation ΓÇ║ should display dashboard navigation/menu (11.0s)
+  Γ£ô  120 [chromium] ΓÇ║ e2e\dashboard.spec.ts:200:7 ΓÇ║ Dashboard Sections ΓÇ║ should display timeslots section (8.2s)
+User profile API query time: 10ms
+  Γ£ô  129 [chromium] ΓÇ║ e2e\database-performance.spec.ts:27:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch user profile within time limit (229ms)
+  Γ£ô  122 [chromium] ΓÇ║ e2e\dashboard.spec.ts:230:7 ΓÇ║ Session Management ΓÇ║ should display session details (date, time, mentor) (7.2s)
+  Γ£ô  123 [chromium] ΓÇ║ e2e\dashboard.spec.ts:243:7 ΓÇ║ Session Management ΓÇ║ should allow canceling a session (7.1s)
+  Γ£ÿ  128 [chromium] ΓÇ║ e2e\database-performance.spec.ts:6:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentors list within time limit (294ms)
+Diet plans query time: 17ms
+  Γ£ô  131 [chromium] ΓÇ║ e2e\database-performance.spec.ts:70:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle diet plan retrieval efficiently (216ms)
+  Γ£ÿ  130 [chromium] ΓÇ║ e2e\database-performance.spec.ts:47:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentor sessions with pagination efficiently (271ms)
+Subscription status query time: 13ms
+  Γ£ÿ  132 [chromium] ΓÇ║ e2e\database-performance.spec.ts:90:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should process multiple sequential queries efficiently (267ms)
+  Γ£ô  133 [chromium] ΓÇ║ e2e\database-performance.spec.ts:132:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle subscription data retrieval efficiently (208ms)
+Search query time: 16ms
+  Γ£ô  134 [chromium] ΓÇ║ e2e\database-performance.spec.ts:197:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle search queries efficiently (229ms)
+Complex filter query time: 16ms
+  Γ£ô  135 [chromium] ΓÇ║ e2e\database-performance.spec.ts:219:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle complex filter combinations (211ms)
+3 concurrent database writes completed in 28ms
+  Γ£ô  136 [chromium] ΓÇ║ e2e\database-performance.spec.ts:242:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle concurrent database writes (307ms)
+Analytics dashboard query time: 13ms
+  Γ£ô  137 [chromium] ΓÇ║ e2e\database-performance.spec.ts:273:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should retrieve analytics data efficiently (233ms)
+Active sessions query time: 13ms
+  Γ£ô  125 [chromium] ΓÇ║ e2e\dashboard.spec.ts:272:7 ΓÇ║ Account Settings ΓÇ║ should display user information on profile (7.3s)
+  Γ£ô  138 [chromium] ΓÇ║ e2e\database-performance.spec.ts:293:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle session lookups quickly (272ms)
+  Γ£ô  124 [chromium] ΓÇ║ e2e\dashboard.spec.ts:258:7 ΓÇ║ Account Settings ΓÇ║ should navigate to user profile/account settings (8.4s)
+Bulk data retrieval (100 records) completed in 14ms
+10 concurrent API queries completed in 17ms
+  Γ£ô  139 [chromium] ΓÇ║ e2e\database-performance.spec.ts:313:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle bulk data operations (283ms)
+  Γ£ô  140 [chromium] ΓÇ║ e2e\database-performance.spec.ts:333:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should maintain query performance with concurrent requests (264ms)
+  Γ£ÿ  141 [chromium] ΓÇ║ e2e\database-performance.spec.ts:357:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should measure database connection pool efficiency (288ms)
+  Γ£ô  126 [chromium] ΓÇ║ e2e\dashboard.spec.ts:286:7 ΓÇ║ Account Settings ΓÇ║ should allow updating user information (6.2s)
+Filtered mentor query time: 52ms
+Billing history pagination query time: 33ms
+  Γ£ô  127 [chromium] ΓÇ║ e2e\dashboard.spec.ts:307:7 ΓÇ║ Account Settings ΓÇ║ should display subscription info (5.7s)
+  Γ£ô  146 [chromium] ΓÇ║ e2e\database-performance.spec.ts:112:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle filtered mentor queries efficiently (423ms)
+  Γ£ô  145 [chromium] ΓÇ║ e2e\database-performance.spec.ts:152:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should handle billing history pagination (458ms)
+  Γ£ÿ  147 [chromium] ΓÇ║ e2e\database-performance.spec.ts:174:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should cache frequently accessed data (520ms)
+  Γ£ÿ  152 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:221:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle connection pooling efficiently (405ms)
+Memory after form interactions: 0.0% increase
+  Γ£ô  149 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:150:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory with form interactions (8.5s)
+Memory after dialog interactions: 0.0% increase
+  Γ£ô  150 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:185:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should clean up after dialog interactions (12.8s)
+Event listeners - Initial: 0, Final: 0
+  Γ£ô  151 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:72:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should clean up event listeners properly (11.3s)
+DOM Nodes - Initial: 173, Final: 173
+  Γ£ô  144 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:98:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not have DOM memory leaks (25.1s)
+Resources loaded - Initial page: 29, New page: 36
+  Γ£ÿ  143 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:38:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during rapid API calls (30.5s)
+  Γ£ô  153 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:278:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle resource cleanup on page unload (21.0s)
+Active timers - Initial: 0, Final: 0
+  Γ£ô  156 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:335:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle timer cleanup properly (18.9s)
+  Γ£ÿ  148 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:122:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle repeated image loading without memory leak (33.6s)
+Memory during scroll: 0.0% increase
+  Γ£ô  154 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:247:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory with scroll interactions (24.7s)
+  Γ£ÿ  142 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:6:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during page navigation (37.2s)
+Memory during rapid state changes: 0.0% increase
+  Γ£ô  157 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:364:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during rapid state changes (16.7s)
+  Γ£ÿ  155 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:298:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not accumulate garbage during background operations (30.3s)
+  Γ£ô  158 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:9:7 ΓÇ║ Mentor Browsing ΓÇ║ should navigate to mentors page from home (14.8s)
+  Γ£ô  163 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:61:7 ΓÇ║ Mentor Browsing ΓÇ║ should display mentor profile information (6.7s)
+  Γ£ô  161 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:47:7 ΓÇ║ Mentor Browsing ΓÇ║ should view mentor details when clicking on a mentor (15.1s)
+  Γ£ô  162 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:35:7 ΓÇ║ Mentor Browsing ΓÇ║ should allow filtering or searching mentors (13.0s)
+  Γ£ô  159 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:21:7 ΓÇ║ Mentor Browsing ΓÇ║ should display mentors page with list (17.3s)
+  Γ£ô  164 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:79:7 ΓÇ║ Session Booking Flow ΓÇ║ should display available time slots for a mentor (10.1s)
+  Γ£ô  166 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:130:7 ΓÇ║ Session Booking Flow ΓÇ║ should display session details on checkout page (5.3s)
+  Γ£ô  165 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:116:7 ΓÇ║ Session Booking Flow ΓÇ║ should redirect to checkout when booking a session (7.0s)
+  Γ£ô  167 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:97:7 ΓÇ║ Session Booking Flow ΓÇ║ should allow booking a session (7.7s)
+  Γ£ô  169 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:156:7 ΓÇ║ Timeslot Selection ΓÇ║ should allow selecting a timeslot (6.0s)
+  Γ£ô  170 [chromium] ΓÇ║ e2e\payment-security.spec.ts:6:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not expose payment tokens in URLs (5.8s)
+  Γ£ô  168 [chromium] ΓÇ║ e2e\mentor-and-booking.spec.ts:142:7 ΓÇ║ Timeslot Selection ΓÇ║ should display available timeslots (7.1s)
+  Γ£ô  172 [chromium] ΓÇ║ e2e\payment-security.spec.ts:34:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not display full card numbers (5.2s)
+  Γ£ô  171 [chromium] ΓÇ║ e2e\payment-security.spec.ts:13:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should encrypt sensitive payment data (5.4s)
+  Γ£ô  173 [chromium] ΓÇ║ e2e\payment-security.spec.ts:43:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should validate Razorpay integration security (5.1s)
+  Γ£ô  174 [chromium] ΓÇ║ e2e\payment-security.spec.ts:54:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not expose API secrets (3.1s)
+  Γ£ô  175 [chromium] ΓÇ║ e2e\payment-security.spec.ts:70:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should require HTTPS for payment endpoints (5.1s)
+  Γ£ô  176 [chromium] ΓÇ║ e2e\payment-security.spec.ts:87:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should sanitize payment response data (5.0s)
+  Γ£ô  177 [chromium] ΓÇ║ e2e\payment-security.spec.ts:104:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should prevent payment tampering (5.4s)
+  Γ£ô  179 [chromium] ΓÇ║ e2e\payment-security.spec.ts:135:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not expose payment IDs in error messages (5.2s)
+  Γ£ô  178 [chromium] ΓÇ║ e2e\payment-security.spec.ts:124:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not store sensitive payment data in localStorage (5.3s)
+  Γ£ô  181 [chromium] ΓÇ║ e2e\payment-security.spec.ts:167:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should enforce proper CORS for payment APIs (5.4s)
+  Γ£ÿ  160 [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:396:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should measure peak memory usage (30.3s)
+Homepage load time: 3448ms
+  Γ£ô  183 [chromium] ΓÇ║ e2e\performance.spec.ts:6:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should load homepage within acceptable time (3.7s)
+Mentors page load time: 3748ms | Cards: 0
+  Γ£ô  185 [chromium] ΓÇ║ e2e\performance.spec.ts:28:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should load mentors page with pagination (4.1s)
+  Γ£ô  182 [chromium] ΓÇ║ e2e\payment-security.spec.ts:182:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should not allow payment without proper authentication (6.3s)
+Dashboard load time: 6085ms
+  Γ£ô  184 [chromium] ΓÇ║ e2e\performance.spec.ts:17:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should load dashboard within acceptable time (6.4s)
+5 concurrent requests completed in 2497ms
+  Γ£ô  186 [chromium] ΓÇ║ e2e\performance.spec.ts:44:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle concurrent API requests (6.5s)
+Large list render time: 2017ms
+10 form interactions completed in 553ms
+  Γ£ô  188 [chromium] ΓÇ║ e2e\performance.spec.ts:103:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should maintain performance with form interactions (4.5s)
+  Γ£ô  187 [chromium] ΓÇ║ e2e\performance.spec.ts:71:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should render large lists efficiently (6.0s)
+Checkout page load time: 7238ms
+  Γ£ô  190 [chromium] ΓÇ║ e2e\performance.spec.ts:127:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should load checkout page within time limit (7.5s)
+  Γ£ô  180 [chromium] ΓÇ║ e2e\payment-security.spec.ts:152:7 ΓÇ║ Security Audit - Payment & Sensitive Data ΓÇ║ should validate subscription tampering prevention (16.9s)
+Form submission response time: 2139ms
+  Γ£ô  195 [chromium] ΓÇ║ e2e\performance.spec.ts:230:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle form submission response time (7.7s)
+  Γ£ÿ  193 [chromium] ΓÇ║ e2e\performance.spec.ts:182:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should measure Core Web Vitals indicators (9.9s)
+  Γ£ÿ  196 [chromium] ΓÇ║ e2e\performance.spec.ts:256:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should maintain performance under network latency simulation (6.8s)
+3 API calls batched in 2119ms
+3 images loaded in 94ms
+  Γ£ô  198 [chromium] ΓÇ║ e2e\performance.spec.ts:290:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should batch process API calls efficiently (7.2s)
+  Γ£ô  191 [chromium] ΓÇ║ e2e\performance.spec.ts:138:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle image loading efficiently (17.2s)
+5 scroll interactions completed in 669ms
+  Γ£ô  192 [chromium] ΓÇ║ e2e\performance.spec.ts:161:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should respond to scroll interactions quickly (16.7s)
+4 page navigations completed in 19004ms
+  Γ£ô  189 [chromium] ΓÇ║ e2e\performance.spec.ts:86:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle rapid page navigation (19.5s)
+  Γ£ô  204 [chromium] ΓÇ║ e2e\security-checks.spec.ts:77:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should enforce HTTPS in production (315ms)
+  Γ£ô  199 [chromium] ΓÇ║ e2e\security-checks.spec.ts:6:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent SQL injection in login (4.9s)
+  Γ£ô  200 [chromium] ΓÇ║ e2e\security-checks.spec.ts:21:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent XSS in user profile (5.0s)
+Layout responsive test passed
+  Γ£ô  197 [chromium] ΓÇ║ e2e\performance.spec.ts:272:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should render without layout shift (14.3s)
+  Γ£ô  203 [chromium] ΓÇ║ e2e\security-checks.spec.ts:67:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should have security headers (5.1s)
+  Γ£ô  205 [chromium] ΓÇ║ e2e\security-checks.spec.ts:85:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should validate and sanitize form inputs (4.9s)
+  Γ£ô  201 [chromium] ΓÇ║ e2e\security-checks.spec.ts:35:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent CSRF attacks (8.1s)
+  Γ£ô  202 [chromium] ΓÇ║ e2e\security-checks.spec.ts:54:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should not expose sensitive data in DOM (8.2s)
+  Γ£ÿ  194 [chromium] ΓÇ║ e2e\performance.spec.ts:210:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle memory efficiently during navigation (28.3s)
+  Γ£ô  209 [chromium] ΓÇ║ e2e\security-checks.spec.ts:172:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should sanitize error messages (7.5s)
+  Γ£ô  210 [chromium] ΓÇ║ e2e\security-checks.spec.ts:185:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent cookie theft via XSS (7.8s)
+  Γ£ô  208 [chromium] ΓÇ║ e2e\security-checks.spec.ts:162:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should not allow direct parameter tampering in URLs (11.1s)
+  Γ£ô  211 [chromium] ΓÇ║ e2e\security-checks.spec.ts:203:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should validate file uploads (7.4s)
+  Γ£ô  212 [chromium] ΓÇ║ e2e\security-checks.spec.ts:218:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should not expose API endpoints in client code (7.3s)
+  Γ£ô  213 [chromium] ΓÇ║ e2e\security-checks.spec.ts:243:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent clickjacking with X-Frame-Options (5.6s)
+  Γ£ô  214 [chromium] ΓÇ║ e2e\security-checks.spec.ts:252:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should not log sensitive data (5.2s)
+  Γ£ô  217 [chromium] ΓÇ║ e2e\security-checks.spec.ts:283:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent open redirect vulnerabilities (6.4s)
+  Γ£ô  216 [chromium] ΓÇ║ e2e\security-checks.spec.ts:269:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should have Content Security Policy (6.9s)
+  Γ£ô  215 [chromium] ΓÇ║ e2e\security-checks.spec.ts:227:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should implement proper session timeout (7.1s)
+  Γ£ô  206 [chromium] ΓÇ║ e2e\security-checks.spec.ts:108:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should protect against rate limiting bypass (20.2s)
+  Γ£ô  219 [chromium] ΓÇ║ e2e\security-checks.spec.ts:312:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should enforce strong password requirements (4.5s)
+  Γ£ô  220 [chromium] ΓÇ║ e2e\security-checks.spec.ts:330:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should validate email format properly (4.5s)
+  Γ£ô  218 [chromium] ΓÇ║ e2e\security-checks.spec.ts:295:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should sanitize user-generated content (8.9s)
+  Γ£ô  207 [chromium] ΓÇ║ e2e\security-checks.spec.ts:140:7 ΓÇ║ Security Audit - SQL Injection & OWASP ΓÇ║ should prevent auth boundary bypass (21.8s)
+
+
+  1) [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:6:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle concurrent checkout API requests 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m10[39m
+    Received: [31m0[39m
+
+      30 |     // All requests should succeed
+      31 |     const successCount = results.filter((r: any) => !r.error).length;
+    > 32 |     expect(successCount).toBe(concurrentRequests);
+         |                          ^
+      33 |
+      34 |     // Should complete within reasonable time
+      35 |     expect(totalTime).toBeLessThan(3000);
+        at R:\Github\YogVaidya\e2e\api-load-testing.spec.ts:32:26
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\api-load-testing-Performan-57bc1-rrent-checkout-API-requests-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  2) [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:75:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle mentor search under load 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBe[2m([22m[32mexpected[39m[2m) // Object.is equality[22m
+
+    Expected: [32m15[39m
+    Received: [31m0[39m
+
+       96 |     // All searches should succeed
+       97 |     const successCount = results.filter((r: any) => !r.error).length;
+    >  98 |     expect(successCount).toBe(searches);
+          |                          ^
+       99 |
+      100 |     // Should complete within 2 seconds
+      101 |     expect(totalTime).toBeLessThan(2000);
+        at R:\Github\YogVaidya\e2e\api-load-testing.spec.ts:98:26
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\api-load-testing-Performan-42125-le-mentor-search-under-load-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  3) [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:389:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should measure API response time distribution 
+
+    Error: page.evaluate: TypeError: Failed to execute 'fetch' on 'Window': Failed to parse URL from /api/mentors?limit=10
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at R:\Github\YogVaidya\e2e\api-load-testing.spec.ts:395:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\api-load-testing-Performan-04008--response-time-distribution-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  4) [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:420:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle sustained API load 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m5[39m
+    Received:   [31m0[39m
+
+      439 |
+      440 |     // Should maintain decent throughput
+    > 441 |     expect(requestsPerSecond).toBeGreaterThan(5);
+          |                               ^
+      442 |
+      443 |     console.log(`Sustained load test (5s):
+      444 |       Total requests: ${requestCount}
+        at R:\Github\YogVaidya\e2e\api-load-testing.spec.ts:441:31
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\api-load-testing-Performan-ab12e-d-handle-sustained-API-load-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  5) [chromium] ΓÇ║ e2e\database-performance.spec.ts:6:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentors list within time limit 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBeNull[2m()[22m
+
+    Received: [31mnull[39m
+
+      20 |     // API should respond within 10 seconds (baseline)
+      21 |     expect(queryTime).toBeLessThan(10000);
+    > 22 |     expect(data).not.toBeNull();
+         |                      ^
+      23 |
+      24 |     console.log(`Mentors API query time: ${queryTime}ms`);
+      25 |   });
+        at R:\Github\YogVaidya\e2e\database-performance.spec.ts:22:22
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\database-performance-Perfo-3da26-tors-list-within-time-limit-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  6) [chromium] ΓÇ║ e2e\database-performance.spec.ts:47:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentor sessions with pagination efficiently 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mnot[2m.[22mtoBeNull[2m()[22m
+
+    Received: [31mnull[39m
+
+      63 |     // Paginated query should complete within reasonable time
+      64 |     expect(queryTime).toBeLessThan(10000);
+    > 65 |     expect(data).not.toBeNull();
+         |                      ^
+      66 |
+      67 |     console.log(`Mentor sessions paginated query time: ${queryTime}ms`);
+      68 |   });
+        at R:\Github\YogVaidya\e2e\database-performance.spec.ts:65:22
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\database-performance-Perfo-22956-with-pagination-efficiently-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  7) [chromium] ΓÇ║ e2e\database-performance.spec.ts:90:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should process multiple sequential queries efficiently 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeGreaterThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: > [32m0[39m
+    Received:   [31m0[39m
+
+      105 |     // 3 sequential queries should complete within 20 seconds
+      106 |     expect(totalTime).toBeLessThan(20000);
+    > 107 |     expect(results.length).toBeGreaterThan(0);
+          |                            ^
+      108 |
+      109 |     console.log(`3 sequential database queries completed in ${totalTime}ms`);
+      110 |   });
+        at R:\Github\YogVaidya\e2e\database-performance.spec.ts:107:28
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\database-performance-Perfo-80b90-uential-queries-efficiently-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  8) [chromium] ΓÇ║ e2e\database-performance.spec.ts:174:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should cache frequently accessed data 
+
+    Error: page.evaluate: TypeError: Failed to execute 'fetch' on 'Window': Failed to parse URL from /api/mentors?limit=10
+        at eval (eval at evaluate (:290:30), <anonymous>:2:14)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:2:14)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at R:\Github\YogVaidya\e2e\database-performance.spec.ts:179:16
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\database-performance-Perfo-659f9-he-frequently-accessed-data-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  9) [chromium] ΓÇ║ e2e\database-performance.spec.ts:357:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should measure database connection pool efficiency 
+
+    Error: page.evaluate: TypeError: Failed to execute 'fetch' on 'Window': Failed to parse URL from /api/users/profile
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at R:\Github\YogVaidya\e2e\database-performance.spec.ts:362:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\database-performance-Perfo-a89b6--connection-pool-efficiency-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  10) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:6:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during page navigation 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.goto: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - navigating to "http://localhost:3000/", waiting until "load"[22m
+
+
+      21 |     for (let i = 0; i < 10; i++) {
+      22 |       await page.goto(`${BASE_URL}/mentors`);
+    > 23 |       await page.goto(`${BASE_URL}/`);
+         |                  ^
+      24 |       await page.waitForTimeout(100);
+      25 |     }
+      26 |
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:23:18
+
+    Error Context: test-results\memory-leak-detection-Perf-1371f-mory-during-page-navigation-chromium\error-context.md
+
+  11) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:38:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during rapid API calls 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.evaluate: Test timeout of 30000ms exceeded.
+
+      53 |     // Make rapid API calls
+      54 |     for (let i = 0; i < 20; i++) {
+    > 55 |       await page.evaluate(async () => {
+         |                  ^
+      56 |         return fetch("/api/mentors?limit=10", { method: "GET" })
+      57 |           .then((r) => r.json())
+      58 |           .catch(() => ({}));
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:55:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\memory-leak-detection-Perf-31f16-mory-during-rapid-API-calls-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\memory-leak-detection-Perf-31f16-mory-during-rapid-API-calls-chromium\error-context.md
+
+  12) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:122:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle repeated image loading without memory leak 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.goto: Test timeout of 30000ms exceeded.
+    Call log:
+    [2m  - navigating to "http://localhost:3000/mentors", waiting until "load"[22m
+
+
+      135 |     // Load mentor page multiple times (has images)
+      136 |     for (let i = 0; i < 5; i++) {
+    > 137 |       await page.goto(`${BASE_URL}/mentors`);
+          |                  ^
+      138 |       await page.waitForTimeout(200);
+      139 |     }
+      140 |
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:137:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\memory-leak-detection-Perf-3c60a-loading-without-memory-leak-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\memory-leak-detection-Perf-3c60a-loading-without-memory-leak-chromium\error-context.md
+
+  13) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:221:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle connection pooling efficiently 
+
+    Error: page.evaluate: TypeError: Failed to execute 'fetch' on 'Window': Failed to parse URL from /api/mentors
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at eval (eval at evaluate (:290:30), <anonymous>:2:16)
+        at UtilityScript.evaluate (<anonymous>:292:16)
+        at UtilityScript.<anonymous> (<anonymous>:1:44)
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:226:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\memory-leak-detection-Perf-42e5b-nection-pooling-efficiently-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+  14) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:298:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not accumulate garbage during background operations 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.evaluate: Test timeout of 30000ms exceeded.
+
+      312 |     // Trigger multiple background operations
+      313 |     for (let i = 0; i < 10; i++) {
+    > 314 |       await page.evaluate(async () => {
+          |                  ^
+      315 |         // Simulate background fetch
+      316 |         return fetch("/api/mentors?limit=5", { method: "GET" })
+      317 |           .then((r) => r.json())
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:314:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\memory-leak-detection-Perf-18a21-uring-background-operations-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\memory-leak-detection-Perf-18a21-uring-background-operations-chromium\error-context.md
+
+  15) [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:396:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should measure peak memory usage 
+
+    [31mTest timeout of 30000ms exceeded.[39m
+
+    Error: page.evaluate: Test timeout of 30000ms exceeded.
+
+      410 |
+      411 |       // Perform operations
+    > 412 |       await page.evaluate(async () => {
+          |                  ^
+      413 |         return fetch("/api/mentors", { method: "GET" })
+      414 |           .then((r) => r.json())
+      415 |           .catch(() => ({}));
+        at R:\Github\YogVaidya\e2e\memory-leak-detection.spec.ts:412:18
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\memory-leak-detection-Perf-d73f0-d-measure-peak-memory-usage-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\memory-leak-detection-Perf-d73f0-d-measure-peak-memory-usage-chromium\error-context.md
+
+  16) [chromium] ΓÇ║ e2e\performance.spec.ts:182:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should measure Core Web Vitals indicators 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m1800[39m
+    Received:   [31m3348[39m
+
+      200 |
+      201 |     // FCP should be under 1.8 seconds (Good threshold)
+    > 202 |     expect(metrics.firstContentfulPaint).toBeLessThan(1800);
+          |                                          ^
+      203 |
+      204 |     // DOM interactive should be under 3 seconds
+      205 |     expect(metrics.domInteractive).toBeLessThan(3000);
+        at R:\Github\YogVaidya\e2e\performance.spec.ts:202:42
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\performance-Performance-Te-b0585--Core-Web-Vitals-indicators-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\performance-Performance-Te-b0585--Core-Web-Vitals-indicators-chromium\error-context.md
+
+  17) [chromium] ΓÇ║ e2e\performance.spec.ts:210:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle memory efficiently during navigation 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m3000[39m
+    Received:   [31m7638[39m
+
+      223 |
+      224 |     // Final navigation should still be fast
+    > 225 |     expect(finalLoadTime).toBeLessThan(3000);
+          |                           ^
+      226 |
+      227 |     console.log(`Final page load after multiple navigations: ${finalLoadTime}ms`);
+      228 |   });
+        at R:\Github\YogVaidya\e2e\performance.spec.ts:225:27
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\performance-Performance-Te-53501-ficiently-during-navigation-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\performance-Performance-Te-53501-ficiently-during-navigation-chromium\error-context.md
+
+  18) [chromium] ΓÇ║ e2e\performance.spec.ts:256:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should maintain performance under network latency simulation 
+
+    Error: [2mexpect([22m[31mreceived[39m[2m).[22mtoBeLessThan[2m([22m[32mexpected[39m[2m)[22m
+
+    Expected: < [32m5000[39m
+    Received:   [31m6257[39m
+
+      265 |
+      266 |     // Should still load reasonably fast even with latency
+    > 267 |     expect(throttledLoadTime).toBeLessThan(5000);
+          |                               ^
+      268 |
+      269 |     console.log(`Throttled page load time: ${throttledLoadTime}ms`);
+      270 |   });
+        at R:\Github\YogVaidya\e2e\performance.spec.ts:267:31
+
+    attachment #1: screenshot (image/png) ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+    test-results\performance-Performance-Te-327b3--network-latency-simulation-chromium\test-failed-1.png
+    ΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇΓöÇ
+
+    Error Context: test-results\performance-Performance-Te-327b3--network-latency-simulation-chromium\error-context.md
+
+  18 failed
+    [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:6:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle concurrent checkout API requests 
+    [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:75:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle mentor search under load 
+    [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:389:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should measure API response time distribution 
+    [chromium] ΓÇ║ e2e\api-load-testing.spec.ts:420:7 ΓÇ║ Performance Testing - API Load Testing ΓÇ║ should handle sustained API load 
+    [chromium] ΓÇ║ e2e\database-performance.spec.ts:6:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentors list within time limit 
+    [chromium] ΓÇ║ e2e\database-performance.spec.ts:47:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should fetch mentor sessions with pagination efficiently 
+    [chromium] ΓÇ║ e2e\database-performance.spec.ts:90:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should process multiple sequential queries efficiently 
+    [chromium] ΓÇ║ e2e\database-performance.spec.ts:174:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should cache frequently accessed data 
+    [chromium] ΓÇ║ e2e\database-performance.spec.ts:357:7 ΓÇ║ Performance Testing - Database & API Queries ΓÇ║ should measure database connection pool efficiency 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:6:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during page navigation 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:38:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not leak memory during rapid API calls 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:122:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle repeated image loading without memory leak 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:221:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should handle connection pooling efficiently 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:298:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should not accumulate garbage during background operations 
+    [chromium] ΓÇ║ e2e\memory-leak-detection.spec.ts:396:7 ΓÇ║ Performance Testing - Memory & Resource Leaks ΓÇ║ should measure peak memory usage 
+    [chromium] ΓÇ║ e2e\performance.spec.ts:182:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should measure Core Web Vitals indicators 
+    [chromium] ΓÇ║ e2e\performance.spec.ts:210:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should handle memory efficiently during navigation 
+    [chromium] ΓÇ║ e2e\performance.spec.ts:256:7 ΓÇ║ Performance Testing - Load & Response Times ΓÇ║ should maintain performance under network latency simulation 
+  202 passed (3.8m)

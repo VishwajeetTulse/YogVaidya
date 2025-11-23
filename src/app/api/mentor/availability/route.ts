@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 
-
 export async function PATCH(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });

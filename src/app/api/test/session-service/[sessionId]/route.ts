@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
 import { mongoDateToISOString } from "@/lib/utils/datetime-utils";
 
-
 /**
  * GET /api/test/session-service/[sessionId]
  * Test the session service with a specific session ID

@@ -7,7 +7,11 @@ import { convertMongoDate } from "@/lib/utils/datetime-utils";
 import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
-import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+} from "@/lib/utils/error-handler";
 
 // Schema for creating subscription sessions
 const createSubscriptionSessionSchema = z.object({

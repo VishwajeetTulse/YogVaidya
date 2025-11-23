@@ -4,7 +4,6 @@ import { prisma } from "@/lib/config/prisma";
 import { TicketLogger } from "@/lib/utils/ticket-logger";
 import type { Prisma } from "@prisma/client";
 
-
 export async function GET(request: NextRequest) {
   try {
     const session = await auth.api.getSession({ headers: request.headers });

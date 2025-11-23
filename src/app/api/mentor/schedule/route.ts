@@ -7,7 +7,12 @@ import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
 
-import { AuthenticationError, AuthorizationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  NotFoundError,
+  ValidationError,
+} from "@/lib/utils/error-handler";
 
 // Validation schema for schedule creation
 const createScheduleSchema = z.object({

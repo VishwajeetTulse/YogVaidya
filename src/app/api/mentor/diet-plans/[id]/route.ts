@@ -3,7 +3,6 @@ import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 
-
 export async function DELETE(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
     const session = await auth.api.getSession({ headers: await headers() });

@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { getUserSessions } from "@/lib/server/user-sessions-server";
 
-
 // GET - Fetch user's available sessions based on subscription
 export async function GET() {
   try {

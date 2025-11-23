@@ -4,7 +4,11 @@ import type { Prisma } from "@prisma/client";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 
-import { AuthenticationError, AuthorizationError, ValidationError } from "@/lib/utils/error-handler";
+import {
+  AuthenticationError,
+  AuthorizationError,
+  ValidationError,
+} from "@/lib/utils/error-handler";
 
 export async function PATCH(req: NextRequest) {
   try {

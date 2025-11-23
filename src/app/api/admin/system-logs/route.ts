@@ -2,7 +2,6 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 
-
 export async function GET(request: NextRequest) {
   try {
     // Verify user is authenticated and has proper permissions

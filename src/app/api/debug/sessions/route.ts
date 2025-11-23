@@ -5,7 +5,6 @@ import { ObjectId } from "mongodb";
 import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
 
-
 /**
  * GET /api/debug/sessions
  * Debug sessions to understand the "Session not found" error

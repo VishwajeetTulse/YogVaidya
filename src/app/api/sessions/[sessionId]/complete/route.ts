@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { SessionService } from "@/lib/services/session-service";
 
-
 /**
  * POST /api/sessions/[sessionId]/complete
  * Manually complete a session, including delayed sessions

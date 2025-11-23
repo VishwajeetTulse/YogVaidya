@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 
-
 export async function POST(request: NextRequest) {
   try {
     const { email, isAvailable } = await request.json();

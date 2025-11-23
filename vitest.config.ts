@@ -31,7 +31,12 @@ export default defineConfig({
         statements: 35,
       },
     },
-    include: ["src/**/*.test.ts", "src/**/*.test.tsx"],
+    include: [
+      "src/**/*.test.ts",
+      "src/**/*.test.tsx",
+      "__tests__/**/*.test.ts",
+      "__tests__/**/*.test.tsx",
+    ],
     exclude: ["node_modules", "dist", ".idea", ".git", ".cache"],
   },
   resolve: {

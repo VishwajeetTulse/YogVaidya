@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 
-
 export async function GET() {
   try {
     // Get all approved mentor applications

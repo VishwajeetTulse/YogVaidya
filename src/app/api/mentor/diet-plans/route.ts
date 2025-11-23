@@ -4,7 +4,6 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { sendEmail } from "@/lib/services/email";
 
-
 // Extended Prisma client type for DietPlan model
 type PrismaWithDietPlan = typeof prisma & {
   dietPlan: {

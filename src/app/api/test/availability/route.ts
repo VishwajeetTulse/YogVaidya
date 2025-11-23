@@ -1,7 +1,6 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 
-
 export async function GET(_request: NextRequest) {
   try {
     // Test 1: Check all users with MENTOR role
