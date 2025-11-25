@@ -1,13 +1,13 @@
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { CreditCard, Calendar, AlertCircle, CheckCircle } from "lucide-react";
+import { CreditCard, Calendar, AlertCircle, CheckCircle, Loader2 } from "lucide-react";
 import { type SectionProps } from "../types";
 import { toast } from "sonner";
 import { useState, useEffect } from "react";
 import { getBillingHistoryAction } from "@/lib/actions/billing-actions";
 import { CancelSubscriptionDialog } from "../CancelSubscriptionDialog";
 import { useTrialExpiration } from "@/hooks/use-trial-expiration";
-import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface BillingHistoryItem {
   id: string;
@@ -102,9 +102,7 @@ export const SubscriptionSection = ({
     fetchBillingHistory();
   }, [userDetails.email]);
 
-  if (loadingHistory) {
-    return <DashboardSkeleton />;
-  }
+  // Don't block the entire section on billing history - show subscription info immediately
 
   return (
     <div className="space-y-6">
@@ -352,10 +350,31 @@ export const SubscriptionSection = ({
           <CardTitle className="flex items-center gap-2">
             <Calendar className="h-5 w-5 text-primary" />
             Payment History
+            {loadingHistory && (
+              <Loader2 className="h-4 w-4 animate-spin text-muted-foreground ml-2" />
+            )}
           </CardTitle>
         </CardHeader>
         <CardContent>
-          {billingHistory.length > 0 ? (
+          {loadingHistory ? (
+            <div className="space-y-4">
+              {[1, 2, 3].map((i) => (
+                <div key={i} className="p-6 border rounded-xl">
+                  <div className="flex items-center gap-4">
+                    <Skeleton className="h-12 w-12 rounded-xl" />
+                    <div className="flex-1 space-y-2">
+                      <Skeleton className="h-5 w-32" />
+                      <Skeleton className="h-4 w-24" />
+                    </div>
+                    <div className="text-right space-y-2">
+                      <Skeleton className="h-6 w-20 ml-auto" />
+                      <Skeleton className="h-5 w-16 ml-auto" />
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+          ) : billingHistory.length > 0 ? (
             <div className="space-y-4">
               {(showAllBills ? billingHistory : billingHistory.slice(0, 3)).map((bill) => (
                 <div

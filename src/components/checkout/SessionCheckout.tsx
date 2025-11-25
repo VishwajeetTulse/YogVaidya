@@ -302,7 +302,6 @@ export default function SessionCheckout({ mentorId }: { mentorId: string }) {
         },
       };
 
-      // @ts-expect-error importing Razorpay from cdn
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {

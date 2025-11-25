@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { Card, CardHeader, CardTitle, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
-import { Loader2, FileText, Lock, ExternalLink } from "lucide-react";
+import { FileText, Lock, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { type SectionProps } from "../types";
 import Link from "next/link";

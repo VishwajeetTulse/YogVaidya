@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UnifiedDashboard } from "../shared/unified-dashboard";
+import { UnifiedDashboardWithSuspense } from "../shared/unified-dashboard";
 import { SIDEBAR_MENU_ITEMS } from "../user/constants";
 import { formatDate, getStatusColor } from "../shared/utils";
 import { useState } from "react";
@@ -133,7 +133,7 @@ export default function UserDashboard() {
   useSessionStatusUpdates(true, 60000); // Check every minute
 
   return (
-    <UnifiedDashboard<"user">
+    <UnifiedDashboardWithSuspense<"user">
       role="user"
       dashboardTitle="My Dashboard"
       roleLabel="User"

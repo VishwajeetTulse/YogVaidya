@@ -1,6 +1,7 @@
 import { writeFile, mkdir } from "fs/promises";
 import path from "path";
 import { sendEmail } from "@/lib/services/email";
+import { newMentorApplicationTemplate } from "@/lib/services/email-templates";
 import { prisma } from "@/lib/config/prisma";
 import { type MentorType } from "@prisma/client";
 import { logInfo, logWarning } from "@/lib/utils/logger";
@@ -102,6 +103,40 @@ export async function createMentorApplication({
     `,
     html: true,
   });
+
+  // Send notification to all admins and moderators about the new application
+  try {
+    const adminModerators = await prisma.user.findMany({
+      where: {
+        role: { in: ["ADMIN", "MODERATOR"] },
+      },
+      select: { email: true, name: true },
+    });
+
+    if (adminModerators.length > 0) {
+      const { subject, html } = newMentorApplicationTemplate(
+        name,
+        email,
+        mentorType,
+        `${experience} years`,
+        expertise
+      );
+
+      // Send to all admins/moderators
+      for (const admin of adminModerators) {
+        await sendEmail({
+          to: admin.email,
+          subject,
+          text: html,
+          html: true,
+        });
+      }
+    }
+  } catch (adminEmailError) {
+    console.error("Failed to send mentor application notification to admins:", adminEmailError);
+    // Don't throw - application was created successfully
+  }
+
   return application;
 }
 

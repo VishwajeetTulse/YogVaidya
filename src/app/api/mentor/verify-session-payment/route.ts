@@ -5,6 +5,8 @@ import crypto from "crypto";
 
 import { AuthenticationError, NotFoundError, ConflictError } from "@/lib/utils/error-handler";
 import { successResponse, errorResponse } from "@/lib/utils/response-handler";
+import { sendEmail } from "@/lib/services/email";
+import { sessionBookedTemplate, sessionBookedMentorTemplate } from "@/lib/services/email-templates";
 
 const verifySessionPaymentSchema = z.object({
   razorpay_order_id: z.string(),
@@ -112,6 +114,60 @@ export async function POST(request: Request) {
         paymentDetails: sessionBookingData.paymentDetails,
       },
     });
+
+    // Send session booking confirmation emails
+    try {
+      // Get student details
+      const student = await prisma.user.findUnique({
+        where: { id: session.user.id },
+        select: { name: true, email: true },
+      });
+
+      // Get mentor email
+      const mentorDetails = await prisma.user.findUnique({
+        where: { id: mentorId },
+        select: { name: true, email: true },
+      });
+
+      const sessionDateTime = new Date(`${sessionDate}T${sessionTime}`);
+
+      // Send email to student
+      if (student?.email) {
+        const studentEmail = sessionBookedTemplate(
+          student.name || "there",
+          mentor.name || "Your Mentor",
+          getSessionType(mentor.mentorType),
+          sessionDateTime,
+          "60 minutes"
+        );
+        await sendEmail({
+          to: student.email,
+          subject: studentEmail.subject,
+          text: studentEmail.html,
+          html: true,
+        });
+      }
+
+      // Send email to mentor
+      if (mentorDetails?.email) {
+        const mentorEmail = sessionBookedMentorTemplate(
+          mentor.name || "Mentor",
+          student?.name || "Student",
+          getSessionType(mentor.mentorType),
+          sessionDateTime,
+          "60 minutes"
+        );
+        await sendEmail({
+          to: mentorDetails.email,
+          subject: mentorEmail.subject,
+          text: mentorEmail.html,
+          html: true,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send session booking emails:", emailError);
+      // Don't throw - booking was successful
+    }
 
     return successResponse({
       bookingId: sessionBookingData._id,

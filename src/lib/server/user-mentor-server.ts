@@ -676,6 +676,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         cursor: {},
       });
 
+      // eslint-disable-next-line @typescript-eslint/no-explicit-any
       let mentorSessions: any[] = [];
       if (
         mentorSessionsResult &&
@@ -686,6 +687,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         "firstBatch" in mentorSessionsResult.cursor &&
         Array.isArray(mentorSessionsResult.cursor.firstBatch)
       ) {
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
         mentorSessions = mentorSessionsResult.cursor.firstBatch.map((session: any) => ({
           ...session,
           scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,

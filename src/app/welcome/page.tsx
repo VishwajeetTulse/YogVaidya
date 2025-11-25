@@ -37,7 +37,7 @@ function WelcomeContent() {
         const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
         const profileResult = await profileResponse.json();
 
-        if (profileResult.success && !profileResult.user?.phone) {
+        if (profileResult.success && !profileResult.data?.phone) {
           // User doesn't have phone number, redirect to profile completion
           const from = searchParams.get("from");
           let finalRedirect = "/dashboard";
@@ -61,7 +61,7 @@ function WelcomeContent() {
         const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
         const profileResult = await profileResponse.json();
 
-        if (profileResult.success && profileResult.user?.phone) {
+        if (profileResult.success && profileResult.data?.phone) {
           const from = searchParams.get("from");
           let redirect_url = "/dashboard";
           if (from === "pricing") {

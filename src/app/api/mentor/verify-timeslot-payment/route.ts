@@ -6,6 +6,8 @@ import crypto from "crypto";
 import type { Prisma } from "@prisma/client";
 
 import { AuthenticationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
+import { sendEmail } from "@/lib/services/email";
+import { sessionBookedTemplate, sessionBookedMentorTemplate } from "@/lib/services/email-templates";
 
 // Interface for timeSlot properties from MongoDB
 interface TimeSlotData {
@@ -170,6 +172,62 @@ export async function POST(request: NextRequest) {
     });
 
     console.warn("✅ Time slot student count updated");
+
+    // Send session booking confirmation emails
+    try {
+      // Get student and mentor details for emails
+      const student = await prisma.user.findUnique({
+        where: { id: userId || session.user.id },
+        select: { name: true, email: true },
+      });
+
+      const mentor = await prisma.user.findUnique({
+        where: { id: (mentorId || timeSlot?.mentorId) as string },
+        select: { name: true, email: true },
+      });
+
+      const sessionDate = scheduledAt
+        ? new Date(scheduledAt)
+        : new Date(timeSlot?.startTime as string);
+      const durationStr = `${duration || 60} minutes`;
+
+      // Send email to student
+      if (student?.email) {
+        const studentEmail = sessionBookedTemplate(
+          student.name || "there",
+          mentor?.name || "Your Mentor",
+          (sessionType || timeSlot?.sessionType || "Session") as string,
+          sessionDate,
+          durationStr
+        );
+        await sendEmail({
+          to: student.email,
+          subject: studentEmail.subject,
+          text: studentEmail.html,
+          html: true,
+        });
+      }
+
+      // Send email to mentor
+      if (mentor?.email) {
+        const mentorEmail = sessionBookedMentorTemplate(
+          mentor.name || "Mentor",
+          student?.name || "Student",
+          (sessionType || timeSlot?.sessionType || "Session") as string,
+          sessionDate,
+          durationStr
+        );
+        await sendEmail({
+          to: mentor.email,
+          subject: mentorEmail.subject,
+          text: mentorEmail.html,
+          html: true,
+        });
+      }
+    } catch (emailError) {
+      console.error("Failed to send session booking emails:", emailError);
+      // Don't throw - booking was successful
+    }
 
     return NextResponse.json({
       success: true,

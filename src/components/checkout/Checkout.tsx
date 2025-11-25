@@ -20,6 +20,7 @@ export default function Checkout({ plan }: { plan: string }) {
   const { data: session } = useSession();
   const [loading, setLoading] = useState(false);
   const [billingPeriod, setBillingPeriod] = useState<"monthly" | "annual">("monthly");
+  const [razorpayLoaded, setRazorpayLoaded] = useState(false);
 
   // Apply discount for annual billing
   const applyDiscount = (price: number) => {
@@ -117,19 +118,14 @@ export default function Checkout({ plan }: { plan: string }) {
       return;
     }
 
+    // Check if Razorpay script is loaded
+    if (!razorpayLoaded || typeof window.Razorpay === "undefined") {
+      toast.error("Payment system is loading. Please try again in a moment.");
+      return;
+    }
+
     setLoading(true);
     try {
-      // Check if user has phone number before proceeding with checkout
-      const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
-      const profileResult = await profileResponse.json();
-
-      if (profileResult.success && !profileResult.user?.phone) {
-        // User doesn't have phone number, redirect to profile completion
-        setLoading(false);
-        router.push(`/complete-profile?redirectTo=${encodeURIComponent("/checkout?plan=" + plan)}`);
-        return;
-      }
-
       const response = await fetch("/api/subscription", {
         method: "POST",
         headers: {
@@ -144,9 +140,16 @@ export default function Checkout({ plan }: { plan: string }) {
 
       const data = await response.json();
 
+      // Check if API response is successful
+      if (!data.success || !data.data) {
+        throw new Error(data.error || "Failed to create subscription");
+      }
+
+      const subscription = data.data;
+
       const options = {
         key: process.env.NEXT_PUBLIC_RAZORPAY_KEY_ID,
-        subscription_id: data.subscription.id,
+        subscription_id: subscription.id,
         name: "Yoga Vaidya",
         description: `${selectedPlan.name} Plan Subscription`,
         handler: async function (response: RazorpayResponse) {
@@ -172,7 +175,7 @@ export default function Checkout({ plan }: { plan: string }) {
               subscriptionPlan: plan.toUpperCase() as "SEED" | "BLOOM" | "FLOURISH",
               billingPeriod: billingPeriod,
               razorpaySubscriptionId: response.razorpay_subscription_id,
-              razorpayCustomerId: data.customer?.id,
+              razorpayCustomerId: subscription.customer_id,
               paymentAmount: applyDiscount(selectedPlan.price),
               autoRenewal: true,
             });
@@ -201,7 +204,6 @@ export default function Checkout({ plan }: { plan: string }) {
           color: selectedPlan.bgColor.replace("bg-[", "").replace("]", ""),
         },
       };
-      // @ts-expect-error importing  Razorpay from cdn
       const razorpay = new window.Razorpay(options);
       razorpay.on("payment.failed", function (response: RazorpayResponse) {
         toast.error("Payment failed. Please try again.");
@@ -454,7 +456,12 @@ export default function Checkout({ plan }: { plan: string }) {
         </div>
       </div>
 
-      <Script id="razorpay-checkout-js" src="https://checkout.razorpay.com/v1/checkout.js" />
+      <Script 
+        id="razorpay-checkout-js" 
+        src="https://checkout.razorpay.com/v1/checkout.js" 
+        onLoad={() => setRazorpayLoaded(true)}
+        onError={() => toast.error("Failed to load payment system. Please refresh the page.")}
+      />
     </>
   );
 }

@@ -6,6 +6,12 @@ import Razorpay from "razorpay";
 import type { UpdateSubscriptionData, CreateSubscriptionData } from "./types";
 import { prisma } from "./config/prisma";
 import { logSubscriptionEvent, logPaymentEvent, logError } from "./utils/logger";
+import { sendEmail } from "./services/email";
+import {
+  subscriptionActivatedTemplate,
+  subscriptionExpiringSoonTemplate,
+  subscriptionExpiredTemplate,
+} from "./services/email-templates";
 
 // Type helpers for Prisma enums
 const PlanTypes = {
@@ -273,6 +279,27 @@ async function createUserSubscription(data: CreateSubscriptionData) {
           paymentDate: now.toISOString(),
         }
       );
+    }
+
+    // Send subscription activated email
+    try {
+      const planNames = { SEED: "Seed", BLOOM: "Bloom", FLOURISH: "Flourish" };
+      const { subject, html } = subscriptionActivatedTemplate(
+        updatedUser.name || "there",
+        planNames[data.subscriptionPlan],
+        paymentAmount,
+        data.billingPeriod,
+        nextBillingDate
+      );
+      await sendEmail({
+        to: updatedUser.email,
+        subject,
+        text: html,
+        html: true,
+      });
+    } catch (emailError) {
+      console.error("Failed to send subscription activated email:", emailError);
+      // Don't throw - subscription was created successfully
     }
 
     return { success: true, user: updatedUser };
@@ -1285,6 +1312,133 @@ export async function batchUpdateSubscriptionStatuses() {
   }
 }
 
+/**
+ * Send subscription expiring soon emails to users
+ * Should be run daily via cron job
+ */
+async function sendSubscriptionExpiryReminders() {
+  try {
+    const now = new Date();
+    const planNames = { SEED: "Seed", BLOOM: "Bloom", FLOURISH: "Flourish" };
+
+    // Get users whose subscriptions expire in 7, 3, or 1 days
+    const reminderDays = [7, 3, 1];
+
+    for (const days of reminderDays) {
+      const targetDate = new Date(now);
+      targetDate.setDate(targetDate.getDate() + days);
+      const startOfDay = new Date(targetDate.setHours(0, 0, 0, 0));
+      const endOfDay = new Date(targetDate.setHours(23, 59, 59, 999));
+
+      const expiringUsers = await prisma.user.findMany({
+        where: {
+          subscriptionStatus: "ACTIVE",
+          isTrialActive: false,
+          nextBillingDate: {
+            gte: startOfDay,
+            lte: endOfDay,
+          },
+        },
+        select: {
+          id: true,
+          email: true,
+          name: true,
+          subscriptionPlan: true,
+          nextBillingDate: true,
+          autoRenewal: true,
+        },
+      });
+
+      for (const user of expiringUsers) {
+        if (!user.subscriptionPlan || !user.nextBillingDate) continue;
+
+        try {
+          const { subject, html } = subscriptionExpiringSoonTemplate(
+            user.name || "there",
+            planNames[user.subscriptionPlan as keyof typeof planNames],
+            days,
+            user.nextBillingDate,
+            user.autoRenewal || false
+          );
+
+          await sendEmail({
+            to: user.email,
+            subject,
+            text: html,
+            html: true,
+          });
+
+          console.log(`Sent ${days}-day expiry reminder to ${user.email}`);
+        } catch (emailError) {
+          console.error(`Failed to send expiry reminder to ${user.email}:`, emailError);
+        }
+      }
+    }
+
+    return { success: true, message: "Expiry reminders sent" };
+  } catch (error) {
+    console.error("Error sending subscription expiry reminders:", error);
+    return { success: false, error: "Failed to send expiry reminders" };
+  }
+}
+
+/**
+ * Send subscription expired emails to users
+ * Should be run daily via cron job after batchUpdateSubscriptionStatuses
+ */
+async function sendSubscriptionExpiredEmails() {
+  try {
+    const now = new Date();
+    const yesterday = new Date(now);
+    yesterday.setDate(yesterday.getDate() - 1);
+
+    const planNames = { SEED: "Seed", BLOOM: "Bloom", FLOURISH: "Flourish" };
+
+    // Get users whose subscriptions expired yesterday (recently expired)
+    const expiredUsers = await prisma.user.findMany({
+      where: {
+        subscriptionStatus: "EXPIRED",
+        updatedAt: {
+          gte: yesterday,
+        },
+      },
+      select: {
+        id: true,
+        email: true,
+        name: true,
+        subscriptionPlan: true,
+      },
+    });
+
+    for (const user of expiredUsers) {
+      if (!user.subscriptionPlan) continue;
+
+      try {
+        const { subject, html } = subscriptionExpiredTemplate(
+          user.name || "there",
+          planNames[user.subscriptionPlan as keyof typeof planNames]
+        );
+
+        await sendEmail({
+          to: user.email,
+          subject,
+          text: html,
+          html: true,
+        });
+
+        console.log(`Sent expiration email to ${user.email}`);
+      } catch (emailError) {
+        console.error(`Failed to send expiration email to ${user.email}:`, emailError);
+      }
+    }
+
+    return { success: true, message: "Expiration emails sent" };
+  } catch (error) {
+    console.error("Error sending subscription expired emails:", error);
+    return { success: false, error: "Failed to send expiration emails" };
+  }
+}
+
 // Export only async functions and helper functions
 export {
   createUserSubscription,
@@ -1298,4 +1452,6 @@ export {
   createPlan,
   getPlanIds,
   getPlanPricing,
+  sendSubscriptionExpiryReminders,
+  sendSubscriptionExpiredEmails,
 };

@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { Suspense } from "react";
 import { BaseDashboard } from "./base-dashboard";
 import { GenericSidebar } from "./sidebar-base";
 import { GenericSectionRenderer } from "./generic-section-renderer";
@@ -103,5 +103,16 @@ export const UnifiedDashboard = <T extends string>({
       sidebar={sidebar}
       sectionRenderer={sectionRenderer}
     />
+  );
+};
+
+// Wrapper component with Suspense for useSearchParams
+export const UnifiedDashboardWithSuspense = <T extends string>(
+  props: UnifiedDashboardProps<T>
+) => {
+  return (
+    <Suspense fallback={<BaseDashboard loading={true} activeSection="overview" sidebar={null} sectionRenderer={null} />}>
+      <UnifiedDashboard {...props} />
+    </Suspense>
   );
 };

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UnifiedDashboard } from "../shared/unified-dashboard";
+import { UnifiedDashboardWithSuspense } from "../shared/unified-dashboard";
 import { ADMIN_SIDEBAR_MENU_ITEMS } from "../admin/constants";
 import type { AdminSectionProps } from "../admin/types";
 
@@ -34,7 +34,7 @@ const ADMIN_SECTION_COMPONENTS = {
 
 export default function AdminDashboard() {
   return (
-    <UnifiedDashboard<"admin">
+    <UnifiedDashboardWithSuspense<"admin">
       role="admin"
       dashboardTitle="Admin Dashboard"
       menuItems={ADMIN_SIDEBAR_MENU_ITEMS}

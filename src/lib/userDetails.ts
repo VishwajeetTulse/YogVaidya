@@ -98,6 +98,58 @@ export async function getUserDetails(
       authtype: accounts?.providerId,
     };
 
+    // Check if subscription has expired and update status if needed
+    const now = new Date();
+    let _statusUpdated = false;
+
+    // Check if ACTIVE subscription has expired based on nextBillingDate or subscriptionEndDate
+    if (userDetails.subscriptionStatus === "ACTIVE") {
+      const expiryDate = userDetails.nextBillingDate || userDetails.subscriptionEndDate;
+      if (expiryDate && now > new Date(expiryDate)) {
+        // Subscription has expired, update to EXPIRED
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionStatus: "EXPIRED",
+            updatedAt: now,
+          },
+        });
+        userDetails.subscriptionStatus = "EXPIRED";
+        _statusUpdated = true;
+      }
+    }
+
+    // Check if ACTIVE_UNTIL_END subscription has reached its end
+    if (userDetails.subscriptionStatus === "ACTIVE_UNTIL_END") {
+      const expiryDate = userDetails.subscriptionEndDate || userDetails.nextBillingDate;
+      if (expiryDate && now > new Date(expiryDate)) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            subscriptionStatus: "INACTIVE",
+            updatedAt: now,
+          },
+        });
+        userDetails.subscriptionStatus = "INACTIVE";
+        _statusUpdated = true;
+      }
+    }
+
+    // Check if trial has expired
+    if (userDetails.isTrialActive && userDetails.trialEndDate) {
+      if (now > new Date(userDetails.trialEndDate)) {
+        await prisma.user.update({
+          where: { id: userId },
+          data: {
+            isTrialActive: false,
+            updatedAt: now,
+          },
+        });
+        userDetails.isTrialActive = false;
+        _statusUpdated = true;
+      }
+    }
+
     return { success: true, user: userDetails };
   } catch (error) {
     console.error("Error fetching user details:", error);

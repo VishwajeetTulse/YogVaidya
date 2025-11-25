@@ -10,7 +10,6 @@ import { toast } from "sonner";
 import { useLogger } from "@/hooks/use-logger";
 import {
   Users,
-  RefreshCw,
   CheckCircle,
   AlertTriangle,
   BarChart3,

@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UnifiedDashboard } from "../shared/unified-dashboard";
+import { UnifiedDashboardWithSuspense } from "../shared/unified-dashboard";
 import { MODERATOR_SIDEBAR_MENU_ITEMS } from "../moderator/constants";
 import type { ModeratorSectionProps } from "../moderator/types";
 
@@ -33,7 +33,7 @@ const MODERATOR_SECTION_COMPONENTS = {
 
 export default function ModeratorDashboard() {
   return (
-    <UnifiedDashboard<"moderator">
+    <UnifiedDashboardWithSuspense<"moderator">
       role="moderator"
       dashboardTitle="Moderator Dashboard"
       menuItems={MODERATOR_SIDEBAR_MENU_ITEMS}

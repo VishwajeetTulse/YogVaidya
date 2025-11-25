@@ -29,7 +29,7 @@ function CompleteProfileContent() {
         const response = await fetch("/api/users/profile", { cache: "no-store" });
         const result = await response.json();
 
-        if (result.success && result.user?.phone) {
+        if (result.success && result.data?.phone) {
           // User already has phone number, redirect to intended destination
           router.replace(redirectTo);
           return;

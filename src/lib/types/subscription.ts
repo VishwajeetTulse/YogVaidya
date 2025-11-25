@@ -1,5 +1,14 @@
+/**
+ * Subscription-related types
+ * Types for subscription management, billing, and renewal operations
+ */
+
 import type { SubscriptionPlan, SubscriptionStatus } from "@prisma/client";
+
+// Re-export Prisma subscription types for convenience
 export type { SubscriptionPlan, SubscriptionStatus };
+
+// Billing period options
 export type BillingPeriod = "monthly" | "annual";
 
 // Types for subscription update operations
@@ -20,6 +29,7 @@ export interface UpdateSubscriptionData {
   autoRenewal?: boolean;
 }
 
+// Types for subscription creation
 export interface CreateSubscriptionData {
   userId: string;
   subscriptionPlan: SubscriptionPlan;

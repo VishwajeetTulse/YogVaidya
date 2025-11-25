@@ -1,9 +1,11 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { Calendar } from "lucide-react";
+import { Calendar, AlertTriangle } from "lucide-react";
 import { Card } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import { type UserDetails } from "@/lib/userDetails";
+import Link from "next/link";
 
 interface SubscriptionCountdownProps {
   userDetails: UserDetails | null;
@@ -19,17 +21,36 @@ interface TimeRemaining {
 export const SubscriptionCountdown: React.FC<SubscriptionCountdownProps> = ({ userDetails }) => {
   const [timeRemaining, setTimeRemaining] = useState<TimeRemaining | null>(null);
   const [isActive, setIsActive] = useState(false);
+  const [isExpired, setIsExpired] = useState(false);
 
   useEffect(() => {
-    // Check if user has an active subscription and next billing date
-    // Don't show countdown during trial period
+    // Don't show for mentors - they don't need subscriptions
+    // Don't show during trial period
     if (
       !userDetails ||
-      userDetails.subscriptionStatus !== "ACTIVE" ||
-      !userDetails.nextBillingDate ||
+      userDetails.role === "MENTOR" ||
       userDetails.isTrialActive
     ) {
       setIsActive(false);
+      setIsExpired(false);
+      return;
+    }
+
+    // Check if subscription is expired or inactive
+    if (
+      userDetails.subscriptionStatus === "EXPIRED" ||
+      userDetails.subscriptionStatus === "INACTIVE"
+    ) {
+      setIsExpired(true);
+      setIsActive(true);
+      setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
+      return;
+    }
+
+    // For active subscriptions, show countdown
+    if (userDetails.subscriptionStatus !== "ACTIVE" || !userDetails.nextBillingDate) {
+      setIsActive(false);
+      setIsExpired(false);
       return;
     }
 
@@ -49,9 +70,11 @@ export const SubscriptionCountdown: React.FC<SubscriptionCountdownProps> = ({ us
 
         // Only show the countdown when 10 days or less remaining
         setIsActive(days <= 10);
+        setIsExpired(false);
       } else {
         setTimeRemaining({ days: 0, hours: 0, minutes: 0, seconds: 0 });
-        setIsActive(true); // Show when expired
+        setIsActive(true);
+        setIsExpired(true);
       }
     };
 
@@ -64,8 +87,38 @@ export const SubscriptionCountdown: React.FC<SubscriptionCountdownProps> = ({ us
     return () => clearInterval(timer);
   }, [userDetails]);
 
-  // Don't render if user doesn't have active subscription
-  if (!isActive || !timeRemaining) {
+  // Don't render if not active
+  if (!isActive) {
+    return null;
+  }
+
+  // Show expired subscription card
+  if (isExpired) {
+    return (
+      <Card className="mx-2 mb-2 p-3 bg-gradient-to-br from-red-50 to-red-100 border border-red-300">
+        <div className="space-y-2">
+          <div className="flex items-center gap-2 text-xs text-red-700">
+            <AlertTriangle className="w-4 h-4" />
+            <span className="font-semibold">Subscription Expired</span>
+          </div>
+          <p className="text-[11px] text-red-600 leading-tight">
+            Your subscription has expired. Renew now to continue accessing all features.
+          </p>
+          <Link href="/pricing">
+            <Button 
+              size="sm" 
+              className="w-full mt-1 bg-red-600 hover:bg-red-700 text-white text-xs h-7"
+            >
+              Renew Subscription
+            </Button>
+          </Link>
+        </div>
+      </Card>
+    );
+  }
+
+  // Show countdown timer (only if timeRemaining is set)
+  if (!timeRemaining) {
     return null;
   }
 

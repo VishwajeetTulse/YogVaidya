@@ -1,7 +1,7 @@
 "use client";
 
 import React from "react";
-import { UnifiedDashboard } from "../shared/unified-dashboard";
+import { UnifiedDashboardWithSuspense } from "../shared/unified-dashboard";
 import { MENTOR_SIDEBAR_MENU_ITEMS } from "../mentor/constants";
 import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
 
@@ -43,7 +43,7 @@ export default function MentorDashboard() {
   useSessionStatusUpdates(true, 60000); // Check every minute
 
   return (
-    <UnifiedDashboard<"mentor">
+    <UnifiedDashboardWithSuspense<"mentor">
       role="mentor"
       dashboardTitle="Mentor Dashboard"
       menuItems={MENTOR_SIDEBAR_MENU_ITEMS}

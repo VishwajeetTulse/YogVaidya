@@ -1,6 +1,5 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
 import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { getStudents } from "@/lib/students";
 import { useEffect, useState } from "react";

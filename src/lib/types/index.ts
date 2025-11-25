@@ -12,6 +12,15 @@ export * from "./sessions";
 // API response types
 export * from "./api";
 
+// Subscription types
+export * from "./subscription";
+
+// Ticket types
+export * from "./tickets";
+
+// Mentor types
+export * from "./mentor";
+
 // Utility types (excluding DateValue which is already exported from mongodb)
 export type {
   FilterConditions,

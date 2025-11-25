@@ -234,7 +234,6 @@ export default function TimeSlotCheckout() {
         },
       };
 
-      // @ts-expect-error importing Razorpay from CDN
       const razorpay = new window.Razorpay(options);
       razorpay.open();
     } catch (error) {

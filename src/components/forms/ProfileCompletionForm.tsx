@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -17,7 +17,7 @@ import {
 } from "@/components/ui/form";
 import { toast } from "sonner";
 import { useRouter } from "next/navigation";
-import { Phone, User, ArrowRight } from "lucide-react";
+import { Phone, User, ArrowRight, CheckCircle, RefreshCw } from "lucide-react";
 
 const profileCompletionSchema = z.object({
   phoneNumber: z
@@ -39,7 +39,15 @@ export default function ProfileCompletionForm({
   userName,
   redirectTo = "/dashboard",
 }: ProfileCompletionFormProps) {
-  const [isLoading, setIsLoading] = useState(false);
+  const [_isLoading, _setIsLoading] = useState(false);
+  const [isSendingOTP, setIsSendingOTP] = useState(false);
+  const [isVerifyingOTP, setIsVerifyingOTP] = useState(false);
+  const [otpSent, setOtpSent] = useState(false);
+  const [otp, setOtp] = useState(["", "", "", "", "", ""]);
+  const [countdown, setCountdown] = useState(0);
+  const [phoneNumberToVerify, setPhoneNumberToVerify] = useState("");
+  const [otpMethod, setOtpMethod] = useState<"sms" | "email" | null>(null);
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
   const router = useRouter();
 
   const form = useForm<ProfileCompletionFormValues>({
@@ -49,11 +57,55 @@ export default function ProfileCompletionForm({
     },
   });
 
-  const onSubmit = async (data: ProfileCompletionFormValues) => {
-    setIsLoading(true);
+  // Countdown timer for resend OTP
+  useEffect(() => {
+    if (countdown > 0) {
+      const timer = setTimeout(() => setCountdown(countdown - 1), 1000);
+      return () => clearTimeout(timer);
+    }
+  }, [countdown]);
+
+  // Handle OTP input change
+  const handleOtpChange = (index: number, value: string) => {
+    if (!/^\d*$/.test(value)) return; // Only allow digits
+    
+    const newOtp = [...otp];
+    newOtp[index] = value.slice(-1); // Only keep last digit
+    setOtp(newOtp);
+    
+    // Auto-focus next input
+    if (value && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  // Handle backspace
+  const handleKeyDown = (index: number, e: React.KeyboardEvent<HTMLInputElement>) => {
+    if (e.key === "Backspace" && !otp[index] && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    }
+  };
+
+  // Handle paste
+  const handlePaste = (e: React.ClipboardEvent) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/\D/g, "").slice(0, 6);
+    const newOtp = [...otp];
+    for (let i = 0; i < pastedData.length; i++) {
+      newOtp[i] = pastedData[i];
+    }
+    setOtp(newOtp);
+    // Focus the next empty input or the last one
+    const nextEmptyIndex = newOtp.findIndex(v => !v);
+    inputRefs.current[nextEmptyIndex === -1 ? 5 : nextEmptyIndex]?.focus();
+  };
+
+  // Send OTP
+  const handleSendOTP = async (data: ProfileCompletionFormValues) => {
+    setIsSendingOTP(true);
 
     try {
-      const response = await fetch("/api/users/update-phone", {
+      const response = await fetch("/api/users/send-otp", {
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -66,8 +118,97 @@ export default function ProfileCompletionForm({
       const result = await response.json();
 
       if (result.success) {
-        toast.success("Profile updated successfully!", {
-          description: "Your phone number has been added to your account.",
+        setOtpSent(true);
+        setPhoneNumberToVerify(data.phoneNumber);
+        setCountdown(60); // 60 seconds countdown for resend
+        setOtpMethod(result.method || "sms");
+        
+        // Show appropriate message based on delivery method
+        if (result.method === "email") {
+          toast.success("Verification code sent!", {
+            description: `Code sent to your email (${userEmail}) as SMS is unavailable`,
+          });
+        } else {
+          // Mask phone number for display
+          const maskedPhone = data.phoneNumber.replace(/\d(?=\d{4})/g, "*");
+          toast.success("Verification code sent!", {
+            description: `A 6-digit code has been sent to ${maskedPhone}`,
+          });
+        }
+      } else {
+        toast.error("Failed to send verification code", {
+          description: result.error || "Something went wrong. Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error sending OTP:", error);
+      toast.error("An error occurred", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  // Resend OTP
+  const handleResendOTP = async () => {
+    if (countdown > 0) return;
+    
+    setIsSendingOTP(true);
+    try {
+      const response = await fetch("/api/users/resend-otp", {
+        method: "POST",
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        setCountdown(60);
+        setOtp(["", "", "", "", "", ""]);
+        toast.success("Verification code resent!", {
+          description: `A new code has been sent to ${userEmail}`,
+        });
+      } else {
+        toast.error("Failed to resend code", {
+          description: result.error || "Please try again.",
+        });
+      }
+    } catch (error) {
+      console.error("Error resending OTP:", error);
+      toast.error("An error occurred", {
+        description: "Please try again later.",
+      });
+    } finally {
+      setIsSendingOTP(false);
+    }
+  };
+
+  // Verify OTP
+  const handleVerifyOTP = async () => {
+    const otpString = otp.join("");
+    if (otpString.length !== 6) {
+      toast.error("Please enter the complete 6-digit code");
+      return;
+    }
+
+    setIsVerifyingOTP(true);
+
+    try {
+      const response = await fetch("/api/users/verify-otp", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          otp: otpString,
+        }),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast.success("Phone number verified!", {
+          description: "Your profile has been updated successfully.",
         });
 
         // Redirect to intended destination
@@ -75,18 +216,27 @@ export default function ProfileCompletionForm({
           router.replace(redirectTo);
         }, 1000);
       } else {
-        toast.error("Failed to update profile", {
-          description: result.error || "Something went wrong. Please try again.",
+        toast.error("Verification failed", {
+          description: result.error || "Invalid code. Please try again.",
         });
+        setOtp(["", "", "", "", "", ""]);
+        inputRefs.current[0]?.focus();
       }
     } catch (error) {
-      console.error("Error updating profile:", error);
+      console.error("Error verifying OTP:", error);
       toast.error("An error occurred", {
         description: "Please try again later.",
       });
     } finally {
-      setIsLoading(false);
+      setIsVerifyingOTP(false);
     }
+  };
+
+  // Change phone number (go back to input)
+  const handleChangePhone = () => {
+    setOtpSent(false);
+    setOtp(["", "", "", "", "", ""]);
+    setCountdown(0);
   };
 
   return (
@@ -95,93 +245,187 @@ export default function ProfileCompletionForm({
         <div className="text-center mb-8">
           {/* Icon */}
           <div className="w-20 h-20 bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] rounded-full flex items-center justify-center mx-auto mb-4">
-            <User className="w-10 h-10 text-white" />
+            {otpSent ? (
+              <CheckCircle className="w-10 h-10 text-white" />
+            ) : (
+              <User className="w-10 h-10 text-white" />
+            )}
           </div>
 
           {/* Title */}
           <h1 className="text-2xl font-bold bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] bg-clip-text text-transparent mb-2">
-            Complete Your Profile
+            {otpSent ? "Verify Your Phone" : "Complete Your Profile"}
           </h1>
 
           {/* Subtitle */}
           <p className="text-gray-600">
-            {userName ? `Hi ${userName}! ` : ""}We need your phone number to complete your YogVaidya
-            account setup.
+            {otpSent 
+              ? otpMethod === "email"
+                ? `Enter the 6-digit code sent to your email (${userEmail})`
+                : `Enter the 6-digit code sent to ${phoneNumberToVerify.replace(/\d(?=\d{4})/g, "*")}`
+              : `${userName ? `Hi ${userName}! ` : ""}We need your phone number to complete your YogVaidya account setup.`
+            }
           </p>
         </div>
 
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            {/* Email Display (Read-only) */}
-            {userEmail && (
-              <div className="space-y-2">
-                <label className="text-sm font-medium text-gray-700">Email Address</label>
-                <div className="flex items-center px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
-                  <span className="text-gray-600 text-sm">{userEmail}</span>
+        {!otpSent ? (
+          /* Phone Number Input Form */
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(handleSendOTP)} className="space-y-6">
+              {/* Email Display (Read-only) */}
+              {userEmail && (
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-gray-700">Email Address</label>
+                  <div className="flex items-center px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                    <span className="text-gray-600 text-sm">{userEmail}</span>
+                  </div>
                 </div>
-              </div>
-            )}
-
-            {/* Phone Number Field */}
-            <FormField
-              control={form.control}
-              name="phoneNumber"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel className="text-gray-700 font-medium">Phone Number *</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
-                      <Input
-                        placeholder="+1 (555) 123-4567"
-                        disabled={isLoading}
-                        className="pl-10 h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormMessage className="text-red-500" />
-                </FormItem>
               )}
-            />
 
-            {/* Why We Need This */}
-            <div className="bg-gradient-to-r from-[#76d2fa]/10 to-[#5abe9b]/10 p-4 rounded-lg border border-[#76d2fa]/20">
-              <h3 className="font-medium text-gray-800 mb-2">Why do we need your phone number?</h3>
-              <ul className="text-sm text-gray-600 space-y-1">
-                <li>• Session reminders and updates</li>
-                <li>• Emergency contact for live sessions</li>
-                <li>• Account security and verification</li>
-                <li>• Important subscription notifications</li>
-              </ul>
+              {/* Phone Number Field */}
+              <FormField
+                control={form.control}
+                name="phoneNumber"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel className="text-gray-700 font-medium">Phone Number *</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <Phone className="absolute left-3 top-1/2 transform -translate-y-1/2 h-5 w-5 text-gray-400" />
+                        <Input
+                          placeholder="+91 98765 43210"
+                          disabled={isSendingOTP}
+                          className="pl-10 h-12 rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormMessage className="text-red-500" />
+                  </FormItem>
+                )}
+              />
+
+              {/* Why We Need This */}
+              <div className="bg-gradient-to-r from-[#76d2fa]/10 to-[#5abe9b]/10 p-4 rounded-lg border border-[#76d2fa]/20">
+                <h3 className="font-medium text-gray-800 mb-2">Why do we need your phone number?</h3>
+                <ul className="text-sm text-gray-600 space-y-1">
+                  <li>• Session reminders and updates</li>
+                  <li>• Emergency contact for live sessions</li>
+                  <li>• Account security and verification</li>
+                  <li>• Important subscription notifications</li>
+                </ul>
+              </div>
+
+              {/* Send OTP Button */}
+              <Button
+                type="submit"
+                className="w-full bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] hover:from-[#6bc8f0] hover:to-[#4db390] text-white h-12 rounded-lg font-medium transition-all flex items-center justify-center"
+                disabled={isSendingOTP}
+              >
+                {isSendingOTP ? (
+                  <div className="flex items-center">
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
+                    Sending Code...
+                  </div>
+                ) : (
+                  <div className="flex items-center">
+                    Send Verification Code
+                    <ArrowRight className="w-4 h-4 ml-2" />
+                  </div>
+                )}
+              </Button>
+
+              {/* Note */}
+              <p className="text-xs text-gray-500 text-center">
+                A verification code will be sent to your phone number via SMS.
+              </p>
+            </form>
+          </Form>
+        ) : (
+          /* OTP Verification Form */
+          <div className="space-y-6">
+            {/* Phone number display */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Phone Number</label>
+              <div className="flex items-center justify-between px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+                <span className="text-gray-600 text-sm">{phoneNumberToVerify}</span>
+                <button
+                  type="button"
+                  onClick={handleChangePhone}
+                  className="text-sm text-[#5a9be9] hover:underline font-medium"
+                >
+                  Change
+                </button>
+              </div>
             </div>
 
-            {/* Submit Button */}
+            {/* OTP Input */}
+            <div className="space-y-2">
+              <label className="text-sm font-medium text-gray-700">Verification Code</label>
+              <div className="flex gap-2 justify-center" onPaste={handlePaste}>
+                {otp.map((digit, index) => (
+                  <Input
+                    key={index}
+                    ref={(el) => {
+                      inputRefs.current[index] = el;
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleOtpChange(index, e.target.value)}
+                    onKeyDown={(e) => handleKeyDown(index, e)}
+                    className="w-12 h-14 text-center text-xl font-bold rounded-lg border-gray-300 focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
+                    disabled={isVerifyingOTP}
+                  />
+                ))}
+              </div>
+            </div>
+
+            {/* Resend OTP */}
+            <div className="text-center">
+              {countdown > 0 ? (
+                <p className="text-sm text-gray-500">
+                  Resend code in <span className="font-medium text-[#5a9be9]">{countdown}s</span>
+                </p>
+              ) : (
+                <button
+                  type="button"
+                  onClick={handleResendOTP}
+                  disabled={isSendingOTP}
+                  className="text-sm text-[#5a9be9] hover:underline font-medium flex items-center justify-center mx-auto gap-1"
+                >
+                  <RefreshCw className={`w-4 h-4 ${isSendingOTP ? 'animate-spin' : ''}`} />
+                  Resend Code
+                </button>
+              )}
+            </div>
+
+            {/* Verify Button */}
             <Button
-              type="submit"
+              onClick={handleVerifyOTP}
               className="w-full bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] hover:from-[#6bc8f0] hover:to-[#4db390] text-white h-12 rounded-lg font-medium transition-all flex items-center justify-center"
-              disabled={isLoading}
+              disabled={isVerifyingOTP || otp.some(d => !d)}
             >
-              {isLoading ? (
+              {isVerifyingOTP ? (
                 <div className="flex items-center">
                   <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin mr-2" />
-                  Updating Profile...
+                  Verifying...
                 </div>
               ) : (
                 <div className="flex items-center">
-                  Complete Profile
-                  <ArrowRight className="w-4 h-4 ml-2" />
+                  Verify & Complete Profile
+                  <CheckCircle className="w-4 h-4 ml-2" />
                 </div>
               )}
             </Button>
 
             {/* Note */}
             <p className="text-xs text-gray-500 text-center">
-              By continuing, you agree to provide accurate contact information for your YogVaidya
-              account.
+              Didn&apos;t receive the code? Check your spam folder or request a new code.
             </p>
-          </form>
-        </Form>
+          </div>
+        )}
       </Card>
     </div>
   );

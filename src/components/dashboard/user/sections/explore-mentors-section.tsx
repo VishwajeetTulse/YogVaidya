@@ -1,6 +1,6 @@
 "use client";
 
-import { Users, Award, Loader2 } from "lucide-react";
+import { Users, Award } from "lucide-react";
 import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import Link from "next/link";

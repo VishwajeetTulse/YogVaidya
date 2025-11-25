@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { signOut, useSession } from "@/lib/auth-client";
 import { getUserDetails, type UserDetails } from "@/lib/userDetails";
@@ -7,6 +7,7 @@ import { type BaseHookResult } from "./types";
 
 export const useDashboard = (initialActiveSection = "overview"): BaseHookResult => {
   const router = useRouter();
+  const searchParams = useSearchParams();
   const { data: session } = useSession();
   const [userDetails, setUserDetails] = useState<UserDetails | null>(null);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,23 @@ export const useDashboard = (initialActiveSection = "overview"): BaseHookResult 
       fetchUserDetails();
     }
   }, [fetchUserDetails, session]);
+
+  // Handle payment success - refresh data and show success message
+  useEffect(() => {
+    const paymentStatus = searchParams.get("payment");
+    if (paymentStatus === "success" && session?.user?.id) {
+      // Show success message
+      toast.success("Payment Successful! 🎉", {
+        description: "Your subscription has been activated. Enjoy your wellness journey!",
+      });
+      
+      // Refresh user details to get updated subscription status
+      fetchUserDetails();
+      
+      // Clean up URL parameter
+      router.replace("/dashboard", { scroll: false });
+    }
+  }, [searchParams, session?.user?.id, fetchUserDetails, router]);
 
   const handleSignOut = async () => {
     try {

@@ -1,7 +1,9 @@
 import { betterAuth } from "better-auth";
 import { prismaAdapter } from "better-auth/adapters/prisma";
 import { nextCookies } from "better-auth/next-js";
+import { createAuthMiddleware } from "better-auth/api";
 import { sendEmail } from "@/lib/services/email";
+import { welcomeEmailTemplate } from "@/lib/services/email-templates";
 import type { NextRequest } from "next/server";
 import { prisma } from "./prisma";
 
@@ -55,6 +57,28 @@ export const auth = betterAuth({
         ? { maxAge: 60 * 60 * 24 * 30 } // 30 days
         : {};
     },
+  },
+  hooks: {
+    after: createAuthMiddleware(async (ctx) => {
+      // Send welcome email on new user registration
+      if (ctx.path.startsWith("/sign-up")) {
+        const newSession = ctx.context.newSession;
+        if (newSession?.user) {
+          try {
+            const { subject, html } = welcomeEmailTemplate(newSession.user.name || "there");
+            await sendEmail({
+              to: newSession.user.email,
+              subject,
+              text: html,
+              html: true,
+            });
+          } catch (error) {
+            console.error("Failed to send welcome email:", error);
+            // Don't throw - user is still registered successfully
+          }
+        }
+      }
+    }),
   },
   plugins: [nextCookies()],
   user: {
