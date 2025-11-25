@@ -120,7 +120,7 @@ export default function Checkout({ plan }: { plan: string }) {
     setLoading(true);
     try {
       // Check if user has phone number before proceeding with checkout
-      const profileResponse = await fetch("/api/users/profile");
+      const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
       const profileResult = await profileResponse.json();
 
       if (profileResult.success && !profileResult.user?.phone) {

@@ -185,7 +185,7 @@ export const TicketsSection = ({ userRole, currentUserId }: TicketsProps) => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
@@ -219,7 +219,7 @@ export const TicketsSection = ({ userRole, currentUserId }: TicketsProps) => {
       </div>
 
       {/* Filters and Search */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-6 gap-4">
           {/* Search */}
           <div className="lg:col-span-2">
@@ -540,7 +540,7 @@ const TicketCard = ({ ticket, userRole, currentUserId, onUpdate }: TicketCardPro
 
   return (
     <Card
-      className={`p-6 hover:shadow-md transition-shadow ${
+      className={`p-6 shadow-sm hover:shadow-md transition-shadow ${
         isAssignedToMe ? "border-2 border-blue-500 bg-blue-50/30" : ""
       }`}
     >

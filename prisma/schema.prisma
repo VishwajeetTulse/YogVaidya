@@ -381,7 +381,7 @@ model DietPlan {
   student         User            @relation("StudentDietPlans", fields: [studentId], references: [id], onDelete: Cascade)
   mentorId        String
   mentor          User            @relation("MentorDietPlans", fields: [mentorId], references: [id], onDelete: Cascade)
-  sessionId       String?         @db.ObjectId // Optional - link to specific booking
+  sessionId       String?         // Optional - link to specific booking
   session         SessionBooking? @relation("SessionDietPlans", fields: [sessionId], references: [id], onDelete: SetNull)
 
   // Content - TipTap stores as JSON

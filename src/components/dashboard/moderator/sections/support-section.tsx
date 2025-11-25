@@ -13,25 +13,25 @@ export const SupportSection = () => {
         </p>
       </div>
 
-      <div className="p-3 bg-accent rounded-lg shadow-sm space-y-6">
-        <Card className="p-6 space-y-6 ">
+      <div className="grid md:grid-cols-2 gap-6">
+        <Card className="p-6 shadow-sm">
           <div>
-            <h3 className="font-medium flex items-center">
+            <h3 className="font-medium flex items-center text-gray-900">
               <PhoneCall size={18} className="mr-2 text-primary" />
               Phone Support
             </h3>
             <p className="text-sm text-gray-600 mt-1">Available Mon-Fri, 9am-5pm</p>
-            <p className="font-medium mt-2">+1 (555) 123-4567</p>
+            <p className="font-medium mt-2 text-lg">+1 (555) 123-4567</p>
           </div>
         </Card>
-        <Card className="p-6 space-y-6">
+        <Card className="p-6 shadow-sm">
           <div>
-            <h3 className="font-medium flex items-center">
+            <h3 className="font-medium flex items-center text-gray-900">
               <Mail size={18} className="mr-2 text-primary" />
               Email Support
             </h3>
             <p className="text-sm text-gray-600 mt-1">24/7 response within 24 hours</p>
-            <p className="font-medium mt-2">support@yogavaidya.com</p>
+            <p className="font-medium mt-2 text-lg">support@yogavaidya.com</p>
           </div>
         </Card>
       </div>

@@ -15,6 +15,7 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import {
   Dialog,
   DialogContent,
@@ -162,7 +163,7 @@ export const TicketsSection = () => {
   const totalPages = Math.ceil(totalTickets / itemsPerPage);
 
   return (
-    <div className="p-6 space-y-6">
+    <div className="space-y-8">
       {/* Header */}
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Help & Support</h1>
@@ -172,7 +173,7 @@ export const TicketsSection = () => {
       </div>
 
       {/* Contact Information */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm border-none">
         <h3 className="text-lg font-semibold mb-4">Contact Information</h3>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -301,7 +302,7 @@ export const TicketsSection = () => {
       </div>
 
       {/* Filters */}
-      <Card className="p-4">
+      <Card className="p-4 shadow-sm border-none">
         <div className="flex gap-4 items-end">
           <div className="flex-1">
             <Label htmlFor="search">Search</Label>
@@ -365,25 +366,9 @@ export const TicketsSection = () => {
       {/* Tickets List */}
       <div className="space-y-4">
         {loading ? (
-          // Loading skeletons
-          Array.from({ length: 5 }).map((_, i) => (
-            <Card key={i} className="p-6">
-              <div className="space-y-3">
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-1/3" />
-                  <Skeleton className="h-6 w-20" />
-                </div>
-                <Skeleton className="h-4 w-full" />
-                <Skeleton className="h-4 w-2/3" />
-                <div className="flex justify-between">
-                  <Skeleton className="h-4 w-1/4" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
-              </div>
-            </Card>
-          ))
+          <DashboardSkeleton />
         ) : tickets.length === 0 ? (
-          <Card className="p-12 text-center">
+          <Card className="p-12 text-center shadow-sm border-none">
             <TicketIcon className="h-12 w-12 mx-auto text-gray-400 mb-4" />
             <h3 className="text-lg font-medium text-gray-900 mb-2">No tickets found</h3>
             <p className="text-gray-600 mb-4">
@@ -397,7 +382,10 @@ export const TicketsSection = () => {
           </Card>
         ) : (
           tickets.map((ticket) => (
-            <Card key={ticket.id} className="p-6 hover:shadow-md transition-shadow">
+            <Card
+              key={ticket.id}
+              className="p-6 shadow-sm border-none hover:shadow-md transition-shadow"
+            >
               <div className="space-y-4">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">

@@ -8,6 +8,7 @@ import MentorCardCompact from "../mentor-card-compact";
 import { type Mentor } from "@/lib/types/mentor";
 import { type TimeSlotDocument } from "@/lib/types/sessions";
 import { ensureDateObject } from "@/lib/utils/date-utils";
+import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
 
 interface TransformedMentor {
   id: string | number;
@@ -137,60 +138,35 @@ export const ExploreMentorsSection = () => {
     // Remove real-time polling - we only use time slot availability now
   }, [fetchMentors]); // Remove mentors.length dependency to avoid infinite loop
 
-  // Separate effect for refreshing time slots when mentors change
-  useEffect(() => {
-    if (mentors.length > 0) {
-      const mentorIds = mentors.map((m: TransformedMentor) => m.id.toString());
-      fetchMentorTimeSlots(mentorIds);
-    }
-  }, [mentors]); // This will trigger when mentors are first loaded
-
-  // Update mentors when timeSlotsMap changes
-  useEffect(() => {
-    if (mentors.length > 0 && Object.keys(timeSlotsMap).length > 0) {
-      setMentors((prevMentors) =>
-        prevMentors.map((mentor) => {
-          const hasTimeSlotsToday = timeSlotsMap[mentor.id.toString()] ?? false;
-          return {
-            ...mentor,
-            hasTimeSlotsToday: hasTimeSlotsToday,
-          };
-        })
-      );
-    }
-  }, [timeSlotsMap, mentors]); // This will trigger when timeSlotsMap is updated
+  // Helper to inject availability
+  const getMentorWithAvailability = (mentor: TransformedMentor) => ({
+    ...mentor,
+    hasTimeSlotsToday: timeSlotsMap[mentor.id.toString()] ?? false,
+  });
 
   // Categorize mentors by type
   const categorizedMentors = {
-    liveSession: mentors.filter((mentor) => mentor.mentorType === "YOGAMENTOR"),
-    dietPlanning: mentors.filter((mentor) => mentor.mentorType === "DIETPLANNER"),
-    meditation: mentors.filter((mentor) => mentor.mentorType === "MEDITATIONMENTOR"),
+    liveSession: mentors
+      .filter((mentor) => mentor.mentorType === "YOGAMENTOR")
+      .map(getMentorWithAvailability),
+    dietPlanning: mentors
+      .filter((mentor) => mentor.mentorType === "DIETPLANNER")
+      .map(getMentorWithAvailability),
+    meditation: mentors
+      .filter((mentor) => mentor.mentorType === "MEDITATIONMENTOR")
+      .map(getMentorWithAvailability),
   };
 
   const totalMentors = mentors.length;
-  const _availableMentors = mentors.filter((mentor) => mentor.hasTimeSlotsToday).length;
+  const _availableMentors = mentors.filter((mentor) => timeSlotsMap[mentor.id.toString()]).length;
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">Explore Mentors</h1>
-          <p className="text-gray-600 mt-2">
-            Discover experienced yoga and meditation mentors to guide your journey.
-          </p>
-        </div>
-
-        <div className="flex flex-col items-center justify-center py-20">
-          <Loader2 className="w-8 h-8 animate-spin text-gray-400 mb-4" />
-          <p className="text-gray-500">Loading mentors...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Explore Mentors</h1>
           <p className="text-gray-600 mt-2">
@@ -213,7 +189,7 @@ export const ExploreMentorsSection = () => {
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Explore Mentors</h1>
         <p className="text-gray-600 mt-2">
@@ -223,7 +199,7 @@ export const ExploreMentorsSection = () => {
 
       {/* Stats Section */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-6">
-        <div className="bg-gradient-to-r from-blue-50 to-blue-100 p-4 rounded-lg">
+        <div className="bg-blue-50 p-4 rounded-lg border border-blue-100">
           <div className="flex items-center">
             <Users className="w-5 h-5 text-blue-600 mr-2" />
             <div>
@@ -233,7 +209,7 @@ export const ExploreMentorsSection = () => {
           </div>
         </div>
 
-        <div className="bg-gradient-to-r from-purple-50 to-purple-100 p-4 rounded-lg">
+        <div className="bg-purple-50 p-4 rounded-lg border border-purple-100">
           <div className="flex items-center">
             <Award className="w-5 h-5 text-purple-600 mr-2" />
             <div>
@@ -246,8 +222,8 @@ export const ExploreMentorsSection = () => {
 
       {totalMentors === 0 ? (
         <div className="flex flex-col items-center justify-center py-20 px-8">
-          <div className="w-24 h-24 bg-gradient-to-br from-[#ff7dac] to-[#876aff] rounded-full flex items-center justify-center mb-6">
-            <Users className="w-12 h-12 text-white" />
+          <div className="w-24 h-24 bg-purple-100 rounded-full flex items-center justify-center mb-6">
+            <Users className="w-12 h-12 text-purple-600" />
           </div>
           <h2 className="text-2xl font-bold text-gray-900 mb-4">No Mentors Available</h2>
           <p className="text-gray-500 text-center max-w-md mb-6">
@@ -255,7 +231,7 @@ export const ExploreMentorsSection = () => {
             meditation guides!
           </p>
           <Link href="/mentors/apply">
-            <Button className="bg-gradient-to-r from-[#ff7dac] to-[#876aff] text-white">
+            <Button className="bg-purple-600 hover:bg-purple-700 text-white">
               Apply to Become a Mentor
             </Button>
           </Link>
@@ -271,10 +247,7 @@ export const ExploreMentorsSection = () => {
                   Yoga Mentors ({categorizedMentors.liveSession.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
-                  >
+                  <Button size="sm" variant="outline" className="text-xs">
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>
@@ -297,10 +270,7 @@ export const ExploreMentorsSection = () => {
                   Diet Planning Experts ({categorizedMentors.dietPlanning.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
-                  >
+                  <Button size="sm" variant="outline" className="text-xs">
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>
@@ -323,10 +293,7 @@ export const ExploreMentorsSection = () => {
                   Meditation Guides ({categorizedMentors.meditation.length})
                 </h2>
                 <Link href="/mentors">
-                  <Button
-                    size="sm"
-                    className="bg-gradient-to-r from-[#76d2fa] to-[#876aff] text-white text-xs"
-                  >
+                  <Button size="sm" variant="outline" className="text-xs">
                     <Users className="w-3 h-3 mr-1" />
                     Explore All Mentors
                   </Button>

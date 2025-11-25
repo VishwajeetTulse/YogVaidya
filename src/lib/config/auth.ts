@@ -11,7 +11,7 @@ async function getRememberMeFromRequest(req: NextRequest): Promise<boolean> {
     if (req.method === "POST") {
       const contentType = req.headers.get("content-type") || "";
       if (contentType.includes("application/json")) {
-        const body = await req.json();
+        const body = await req.clone().json();
         return !!body.rememberMe;
       }
     }
@@ -74,7 +74,6 @@ export const auth = betterAuth({
       mentorType: {
         type: "string",
         required: false,
-        defaultValue: "",
         input: false,
       },
     },

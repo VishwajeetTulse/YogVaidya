@@ -99,14 +99,14 @@ export const SharedSettingsSection = ({
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Settings</h1>
         <p className="text-gray-600 mt-2">{getPageDescription()}</p>
       </div>
 
       {/* Profile Information */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <div className="flex items-center space-x-2 mb-4">
           <User className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">Profile Information</h2>
@@ -162,7 +162,7 @@ export const SharedSettingsSection = ({
 
       {/* Password Change Card - Only for credential-based auth */}
       {userDetails.authtype === "credential" && (
-        <Card className="p-6">
+        <Card className="p-6 shadow-sm">
           <div className="flex items-center space-x-2 mb-4">
             <Lock className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">Change Password</h2>
@@ -178,7 +178,7 @@ export const SharedSettingsSection = ({
       )}
 
       {/* Notification Settings */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <div className="flex items-center space-x-2 mb-4">
           <Bell className="h-5 w-5 text-primary" />
           <h2 className="text-xl font-semibold">Notification Settings</h2>
@@ -199,7 +199,7 @@ export const SharedSettingsSection = ({
 
       {/* App Preferences - Only for user role */}
       {role === "user" && (
-        <Card className="p-6">
+        <Card className="p-6 shadow-sm">
           <div className="flex items-center space-x-2 mb-4">
             <Settings className="h-5 w-5 text-primary" />
             <h2 className="text-xl font-semibold">App Preferences</h2>

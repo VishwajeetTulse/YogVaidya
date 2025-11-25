@@ -21,7 +21,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { toast } from "sonner";
 import {
   Search,
@@ -138,9 +138,9 @@ export default function SubscriptionManagementSection() {
         if (growthResult.success) {
           combinedStats = {
             ...combinedStats,
-            growthRate: growthResult.growthStats.growthRate,
-            growthDirection: growthResult.growthStats.growthDirection,
-            isFirstMonth: growthResult.growthStats.isFirstMonth,
+            growthRate: growthResult.data.growthRate,
+            growthDirection: growthResult.data.growthDirection,
+            isFirstMonth: growthResult.data.isFirstMonth,
           };
         }
 
@@ -370,27 +370,16 @@ export default function SubscriptionManagementSection() {
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6 p-6">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          {[1, 2, 3, 4].map((i) => (
-            <Skeleton key={i} className="h-24 rounded-lg" />
-          ))}
-        </div>
-        <Skeleton className="h-96 rounded-lg" />
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#876aff] to-[#76d2fa] bg-clip-text text-transparent">
-            Subscription Management
-          </h1>
-          <p className="text-gray-600">Manage user subscriptions, trials, and billing</p>
+          <h1 className="text-3xl font-bold text-gray-900">Subscription Management</h1>
+          <p className="text-gray-600 mt-2">Manage user subscriptions, trials, and billing</p>
         </div>
         <div className="flex gap-2">
           <Button variant="outline" onClick={fetchUsers} disabled={loading}>
@@ -407,105 +396,97 @@ export default function SubscriptionManagementSection() {
       {/* Stats Cards */}
       {stats && (
         <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
-                  <p className="text-2xl font-bold text-green-600">
-                    {stats.totalActiveSubscriptions}
-                  </p>
-                </div>
-                <div className="p-3 bg-green-100 rounded-full">
-                  <Users className="w-6 h-6 text-green-600" />
-                </div>
+          <Card className="p-6 bg-green-50 border-none shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Active Subscriptions</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {stats.totalActiveSubscriptions}
+                </p>
               </div>
-            </CardContent>
+              <div className="p-2 rounded-full bg-green-100">
+                <Users className="w-6 h-6 text-green-600" />
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Trial Users</p>
-                  <p className="text-2xl font-bold text-blue-600">{stats.totalTrialUsers}</p>
-                </div>
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Clock className="w-6 h-6 text-blue-600" />
-                </div>
+          <Card className="p-6 bg-blue-50 border-none shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Trial Users</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">{stats.totalTrialUsers}</p>
               </div>
-            </CardContent>
+              <div className="p-2 rounded-full bg-blue-100">
+                <Clock className="w-6 h-6 text-blue-600" />
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                  <p className="text-2xl font-bold text-purple-600">
-                    {formatCurrency(stats.monthlyRevenue)}
-                  </p>
-                </div>
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <DollarSign className="w-6 h-6 text-purple-600" />
-                </div>
+          <Card className="p-6 bg-purple-50 border-none shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {formatCurrency(stats.monthlyRevenue)}
+                </p>
               </div>
-            </CardContent>
+              <div className="p-2 rounded-full bg-purple-100">
+                <DollarSign className="w-6 h-6 text-purple-600" />
+              </div>
+            </div>
           </Card>
 
-          <Card>
-            <CardContent className="p-6">
-              <div className="flex items-center justify-between">
-                <div>
-                  <p className="text-sm font-medium text-gray-600">Growth Rate</p>
-                  {growthLoading ? (
-                    <div className="text-2xl font-bold text-gray-400">Loading...</div>
-                  ) : (
-                    <p
-                      className={`text-2xl font-bold ${getGrowthColor(stats?.growthDirection, stats?.isFirstMonth)}`}
-                    >
-                      {formatGrowthRate(
-                        stats?.growthRate,
-                        stats?.growthDirection,
-                        stats?.isFirstMonth
-                      )}
-                    </p>
-                  )}
-                  {stats?.isFirstMonth && (
-                    <p className="text-xs text-blue-500 mt-1">First month tracking</p>
-                  )}
-                </div>
-                <div
-                  className={`p-3 rounded-full ${
-                    stats?.isFirstMonth
-                      ? "bg-blue-100"
-                      : stats?.growthDirection === "up"
-                        ? "bg-green-100"
-                        : stats?.growthDirection === "down"
-                          ? "bg-red-100"
-                          : "bg-gray-100"
-                  }`}
-                >
-                  <TrendingUp
-                    className={`w-6 h-6 ${
+          <Card className="p-6 bg-indigo-50 border-none shadow-sm">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Growth Rate</p>
+                {growthLoading ? (
+                  <div className="text-2xl font-bold text-gray-400">Loading...</div>
+                ) : (
+                  <p
+                    className={`text-3xl font-bold mt-1 ${getGrowthColor(stats?.growthDirection, stats?.isFirstMonth)}`}
+                  >
+                    {formatGrowthRate(
+                      stats?.growthRate,
+                      stats?.growthDirection,
                       stats?.isFirstMonth
-                        ? "text-blue-600"
-                        : stats?.growthDirection === "up"
-                          ? "text-green-600"
-                          : stats?.growthDirection === "down"
-                            ? "text-red-600"
-                            : "text-gray-600"
-                    }`}
-                  />
-                </div>
+                    )}
+                  </p>
+                )}
+                {stats?.isFirstMonth && (
+                  <p className="text-xs text-blue-500 mt-1">First month tracking</p>
+                )}
               </div>
-            </CardContent>
+              <div
+                className={`p-2 rounded-full ${
+                  stats?.isFirstMonth
+                    ? "bg-blue-100"
+                    : stats?.growthDirection === "up"
+                      ? "bg-green-100"
+                      : stats?.growthDirection === "down"
+                        ? "bg-red-100"
+                        : "bg-gray-100"
+                }`}
+              >
+                <TrendingUp
+                  className={`w-6 h-6 ${
+                    stats?.isFirstMonth
+                      ? "text-blue-600"
+                      : stats?.growthDirection === "up"
+                        ? "text-green-600"
+                        : stats?.growthDirection === "down"
+                          ? "text-red-600"
+                          : "text-gray-600"
+                  }`}
+                />
+              </div>
+            </div>
           </Card>
         </div>
       )}
 
       {/* Filters */}
-      <Card>
+      <Card className="shadow-sm">
         <CardContent className="p-6">
           <div className="flex flex-col md:flex-row gap-4">
             <div className="flex-1">
@@ -551,7 +532,7 @@ export default function SubscriptionManagementSection() {
       </Card>
 
       {/* Users Table */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Users ({filteredUsers.length})</CardTitle>
           <CardDescription>Manage user subscriptions and billing</CardDescription>

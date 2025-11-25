@@ -126,7 +126,7 @@ export default function MentorsPage() {
       .map(transformMentorWithRealTimeAvailability),
   };
   return (
-    <div className="bg-gray-100 min-h-screen">
+    <div className="bg-gray-50 min-h-screen">
       {/* Navbar with back button */}
       <Navbar showBackButton={true} />
 
@@ -148,8 +148,8 @@ export default function MentorsPage() {
         {/* Loading State */}
         {loading && (
           <div className="text-center py-20">
-            <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-indigo-600 mx-auto mb-4" />
-            <p className="text-gray-600">Loading mentors...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <p className="text-gray-500">Loading mentors...</p>
           </div>
         )}
 

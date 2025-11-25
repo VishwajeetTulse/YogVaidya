@@ -11,7 +11,8 @@ import {
 import { type AdminSectionProps } from "../types";
 import { useEffect, useState } from "react";
 import { cn } from "@/lib/utils/utils";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
+
 // Define analytics data structure
 interface AnalyticsData {
   users: {
@@ -57,34 +58,6 @@ interface SystemLogsData {
   };
 }
 
-const OverviewLoading = () => (
-  <div className="space-y-6 p-6">
-    <div className="animate-pulse">
-      <Skeleton className="h-8 w-1/3 mb-4" />
-      <Skeleton className="h-6 w-1/2 mb-2" />
-      <Skeleton className="h-6 w-full" />
-    </div>
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-      {Array.from({ length: 3 }).map((_, index) => (
-        <Card key={index} className="p-4 bg-gray-100">
-          <div className="flex items-center gap-3">
-            <Skeleton className="h-10 w-10 rounded-full" />
-            <div>
-              <Skeleton className="h-4 w-24 mb-2" />
-              <Skeleton className="h-6 w-16" />
-            </div>
-          </div>
-        </Card>
-      ))}
-    </div>
-    <div className="animate-pulse">
-      <Skeleton className="h-8 w-1/3 mb-4" />
-      <Skeleton className="h-6 w-full mb-2" />
-      <Skeleton className="h-6 w-full" />
-    </div>
-  </div>
-);
-
 export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionProps) => {
   const [analyticsData, setAnalyticsData] = useState<AnalyticsData | null>(null);
   const [systemLogsData, setSystemLogsData] = useState<SystemLogsData | null>(null);
@@ -127,14 +100,14 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
   }, []);
 
   if (isLoading) {
-    return <OverviewLoading />;
+    return <DashboardSkeleton />;
   }
   if (error) {
     return <div className="p-6 text-red-500">Error loading analytics: {error}</div>;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {userDetails?.name || "Admin"}!
@@ -144,10 +117,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
 
       {/* System Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20">
+        <Card className="p-4 bg-blue-50 border-none shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
-              <Users className="w-5 h-5 text-white" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Total Users</p>
@@ -156,7 +129,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
           </div>
           <div className="mt-2 text-xs text-gray-500">
             <span
-              className="cursor-pointer hover:text-[#76d2fa] transition-colors"
+              className="cursor-pointer hover:text-blue-600 transition-colors"
               onClick={() => setActiveSection("users")}
             >
               Manage users and roles
@@ -164,10 +137,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
             </span>
           </div>
         </Card>
-        <Card className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30">
+        <Card className="p-4 bg-purple-50 border-none shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
-              <UserCheck className="w-5 h-5 text-white" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <UserCheck className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Active Mentors</p>
@@ -178,7 +151,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
             <span
               className={cn(
                 analyticsData?.mentorApplications.pending ? "text-red-500" : "text-gray-500",
-                "cursor-pointer hover:text-[#76d2fa]"
+                "cursor-pointer hover:text-purple-600"
               )}
               onClick={() => setActiveSection("applications")}
             >
@@ -187,10 +160,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
             </span>
           </div>
         </Card>
-        <Card className="p-4 bg-gradient-to-br from-[#98fb98]/20 to-[#90ee90]/10 border border-[#98fb98]/30">
+        <Card className="p-4 bg-green-50 border-none shadow-sm">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#90ee90] to-[#7fd67f] rounded-lg">
-              <BarChart3 className="w-5 h-5 text-white" />
+            <div className="p-2 bg-green-100 rounded-lg">
+              <BarChart3 className="w-5 h-5 text-green-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Activity Logs</p>
@@ -201,7 +174,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
             <span
               className={cn(
                 (systemLogsData?.byLevel?.ERROR ?? 0) > 0 ? "text-red-500" : "text-gray-500",
-                "cursor-pointer hover:text-[#76d2fa] transition-colors"
+                "cursor-pointer hover:text-green-600 transition-colors"
               )}
               onClick={() => setActiveSection("logs")}
             >
@@ -213,7 +186,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: AdminSectionP
       </div>
 
       {/* Recent Activity / Alerts */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
         <div className="space-y-3">
           {analyticsData?.mentorApplications.pending ? (

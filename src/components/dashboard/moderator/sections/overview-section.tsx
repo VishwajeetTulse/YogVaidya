@@ -5,7 +5,7 @@ import { Users, UserCheck, FileText, TrendingUp } from "lucide-react";
 import { type ModeratorSectionProps } from "../types";
 import { useState, useEffect } from "react";
 import { format, formatDistance } from "date-fns";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { toast } from "sonner";
 import { getMentorApplicationsAction } from "@/lib/actions/mentor-application-actions";
 
@@ -184,8 +184,12 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
     fetchData();
   }, []);
 
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {userDetails?.name || "Moderator"}!
@@ -197,119 +201,69 @@ export const OverviewSection = ({ userDetails }: ModeratorSectionProps) => {
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        {loading ? (
-          <>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
+        <>
+          <Card className="p-6 shadow-sm bg-blue-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Total Users</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {analyticsData?.users?.total?.toLocaleString() || 0}
+                </p>
               </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
+              <div className="p-2 rounded-full bg-white bg-opacity-70">
+                <Users className="w-6 h-6 text-blue-600" />
               </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-sm bg-green-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Active Mentors</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {analyticsData?.users?.byRole?.MENTOR?.toLocaleString() || 0}
+                </p>
               </div>
-            </Card>
-            <Card className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="h-10 w-10 rounded-lg" />
-                <div className="space-y-2">
-                  <Skeleton className="h-4 w-24" />
-                  <Skeleton className="h-6 w-16" />
-                </div>
+              <div className="p-2 rounded-full bg-white bg-opacity-70">
+                <UserCheck className="w-6 h-6 text-green-600" />
               </div>
-            </Card>
-          </>
-        ) : (
-          <>
-            <Card className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
-                  <Users className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Total Users</p>
-                  <p className="text-xl font-semibold">
-                    {analyticsData?.users?.total?.toLocaleString() || 0}
-                  </p>
-                </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-sm bg-amber-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Pending Applications</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {analyticsData?.mentorApplications?.pending?.toLocaleString() || 0}
+                </p>
               </div>
-            </Card>
-            <Card className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
-                  <UserCheck className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Active Mentors</p>
-                  <p className="text-xl font-semibold">
-                    {analyticsData?.users?.byRole?.MENTOR?.toLocaleString() || 0}
-                  </p>
-                </div>
+              <div className="p-2 rounded-full bg-white bg-opacity-70">
+                <FileText className="w-6 h-6 text-amber-600" />
               </div>
-            </Card>
-            <Card className="p-4 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
-                  <FileText className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Pending Applications</p>
-                  <p className="text-xl font-semibold">
-                    {analyticsData?.mentorApplications?.pending?.toLocaleString() || 0}
-                  </p>
-                </div>
+            </div>
+          </Card>
+
+          <Card className="p-6 shadow-sm bg-purple-50">
+            <div className="flex justify-between items-start">
+              <div>
+                <p className="text-sm font-medium text-gray-500">Active Subscriptions</p>
+                <p className="text-3xl font-bold mt-1 text-gray-900">
+                  {analyticsData?.subscriptions?.total?.toLocaleString() || 0}
+                </p>
               </div>
-            </Card>
-            <Card className="p-4 bg-gradient-to-br from-[#a3e635]/10 to-[#65a30d]/10 border border-[#a3e635]/20">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-gradient-to-br from-[#a3e635] to-[#65a30d] rounded-lg">
-                  <TrendingUp className="w-5 h-5 text-white" />
-                </div>
-                <div>
-                  <p className="text-sm text-gray-500">Active Subscriptions</p>
-                  <p className="text-xl font-semibold">
-                    {analyticsData?.subscriptions?.total?.toLocaleString() || 0}
-                  </p>
-                </div>
+              <div className="p-2 rounded-full bg-white bg-opacity-70">
+                <TrendingUp className="w-6 h-6 text-purple-600" />
               </div>
-            </Card>
-          </>
-        )}
+            </div>
+          </Card>
+        </>
       </div>
 
       {/* Recent Activity */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-4">Recent Activity</h2>
-        {loading ? (
-          <div className="space-y-3">
-            {[1, 2, 3].map((i) => (
-              <div key={i} className="flex items-center justify-between p-3 rounded-lg border">
-                <div className="space-y-2">
-                  <Skeleton className="h-5 w-48" />
-                  <Skeleton className="h-4 w-64" />
-                </div>
-                <Skeleton className="h-4 w-20" />
-              </div>
-            ))}
-          </div>
-        ) : activities.length > 0 ? (
+        {activities.length > 0 ? (
           <div className="space-y-3">
             {activities.slice(0, 3).map((activity) => (
               <div

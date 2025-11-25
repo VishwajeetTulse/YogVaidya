@@ -34,7 +34,7 @@ function WelcomeContent() {
         }
 
         // Then check if user has phone number
-        const profileResponse = await fetch("/api/users/profile");
+        const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
         const profileResult = await profileResponse.json();
 
         if (profileResult.success && !profileResult.user?.phone) {
@@ -58,7 +58,7 @@ function WelcomeContent() {
         toast.error("An error occurred while setting up your account.");
       } finally {
         // Only redirect if user has phone number
-        const profileResponse = await fetch("/api/users/profile");
+        const profileResponse = await fetch("/api/users/profile", { cache: "no-store" });
         const profileResult = await profileResponse.json();
 
         if (profileResult.success && profileResult.user?.phone) {
@@ -82,7 +82,7 @@ function WelcomeContent() {
   }, [router, searchParams]);
 
   return (
-    <div className="flex items-center justify-center min-h-screen bg-gradient-to-br from-[#76d2fa]/10 to-[#5abe9b]/10">
+    <div className="flex items-center justify-center min-h-screen bg-gray-50">
       <div className="text-center">
         {/* Animated loading spinner with YogVaidya colors */}
         <div className="relative w-20 h-20 mx-auto mb-6">
@@ -92,9 +92,7 @@ function WelcomeContent() {
           <div className="absolute top-1/2 left-1/2 transform -translate-x-1/2 -translate-y-1/2 w-3 h-3 bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] rounded-full animate-pulse" />
         </div>
 
-        <h1 className="text-3xl font-bold bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] bg-clip-text text-transparent mb-3">
-          Setting up your account...
-        </h1>
+        <h1 className="text-3xl font-bold text-gray-900 mb-3">Setting up your account...</h1>
         <p className="text-gray-600 text-lg">
           Please wait while we get things ready for your wellness journey.
         </p>
@@ -112,10 +110,6 @@ function WelcomeContent() {
           />
         </div>
       </div>
-
-      {/* Background decorative elements */}
-      <div className="absolute top-10 right-10 w-32 h-32 bg-[#76d2fa]/5 rounded-full blur-3xl" />
-      <div className="absolute bottom-10 left-10 w-40 h-40 bg-[#5abe9b]/5 rounded-full blur-3xl" />
     </div>
   );
 }

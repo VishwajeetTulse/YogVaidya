@@ -1,6 +1,7 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { getStudents } from "@/lib/students";
 import { useEffect, useState } from "react";
 import { Users } from "lucide-react";
@@ -34,27 +35,7 @@ export const StudentsSection = () => {
     fetchStudents();
   }, [session]);
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
-          <p className="text-gray-600 mt-2">Connect with and track your students&apos; progress.</p>
-        </div>
-
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {[...Array(6)].map((_, index) => (
-            <Card key={index} className="p-6 border border-purple-100">
-              <div className="text-center">
-                <Skeleton className="w-16 h-16 rounded-full mx-auto mb-4" />
-                <Skeleton className="h-6 w-32 mx-auto mb-2" />
-                <Skeleton className="h-4 w-40 mx-auto mb-3" />
-                <Skeleton className="h-4 w-36 mx-auto" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   if (error) {
@@ -81,7 +62,7 @@ export const StudentsSection = () => {
     );
   }
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">My Students</h1>
         <p className="text-gray-600 mt-2">Connect with and track your students&apos; progress.</p>
@@ -91,11 +72,11 @@ export const StudentsSection = () => {
         {students.map((student) => (
           <Card
             key={student.id}
-            className="p-6 border border-purple-100 hover:border-purple-200 transition-colors"
+            className="p-6 border-none shadow-sm hover:shadow-md transition-shadow"
           >
             <div className="text-center">
-              <div className="w-16 h-16 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-full mx-auto mb-4 flex items-center justify-center">
-                <span className="text-white font-semibold">
+              <div className="w-16 h-16 bg-purple-100 rounded-full mx-auto mb-4 flex items-center justify-center">
+                <span className="text-purple-600 font-semibold text-xl">
                   {student.name ? student.name.charAt(0).toUpperCase() : "?"}
                 </span>
               </div>
@@ -107,8 +88,8 @@ export const StudentsSection = () => {
                   : "N/A"}
               </p>
               <div className="flex items-center justify-center gap-4 mt-3 text-sm">
-                <span className="text-[#ff7dac]">
-                  Subsription Plan : {student.subscriptionPlan}
+                <span className="text-purple-600 font-medium">
+                  Subscription Plan : {student.subscriptionPlan}
                 </span>
               </div>
             </div>

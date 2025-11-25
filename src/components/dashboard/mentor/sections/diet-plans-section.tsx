@@ -15,6 +15,7 @@ import { Loader2, Plus, Save, Send, Eye, Trash2, FileText } from "lucide-react";
 import { getMentorStudentsData } from "@/lib/server/mentor-students-server";
 import type { EditorContent } from "@/lib/types/utils";
 import type { JSONContent } from "@tiptap/core";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 
 // Validation schema
 const dietPlanSchema = z.object({
@@ -240,23 +241,22 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
   };
 
   if (isLoadingData) {
-    return (
-      <Card>
-        <CardContent className="flex items-center justify-center py-10">
-          <Loader2 className="h-8 w-8 animate-spin" />
-        </CardContent>
-      </Card>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Check if mentor is a DIETPLANNER
   const isDietPlanner = userDetails.mentorType === "DIETPLANNER";
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Diet Plans</h1>
+        <p className="text-gray-600 mt-2">Create and manage diet plans for your students.</p>
+      </div>
+
       {/* Create New Diet Plan - Only for DIETPLANNER */}
       {!isDietPlanner ? (
-        <Card>
+        <Card className="shadow-sm border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <FileText className="h-5 w-5" />
@@ -272,7 +272,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
               <p className="text-gray-600 mb-4">
                 This feature is exclusively available for <strong>Diet Planner</strong> mentors.
               </p>
-              <div className="bg-blue-50 border border-blue-200 rounded-lg p-4 max-w-md mx-auto">
+              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4 max-w-md mx-auto">
                 <p className="text-sm text-blue-800">
                   <strong>Your Role:</strong>{" "}
                   {userDetails.mentorType === "YOGAMENTOR"
@@ -290,7 +290,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
           </CardContent>
         </Card>
       ) : (
-        <Card>
+        <Card className="shadow-sm border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Plus className="h-5 w-5" />
@@ -436,7 +436,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
 
       {/* Existing Diet Plans */}
       {existingPlans.length > 0 && (
-        <Card>
+        <Card className="shadow-sm border-none">
           <CardHeader>
             <CardTitle className="flex items-center gap-2">
               <Eye className="h-5 w-5" />
@@ -448,7 +448,7 @@ export function DietPlansSection({ userDetails }: MentorSectionProps) {
               {existingPlans.map((plan) => (
                 <div
                   key={plan.id}
-                  className="flex items-center justify-between p-4 border rounded-lg hover:bg-muted/50"
+                  className="flex items-center justify-between p-4 bg-gray-50 border-none rounded-lg hover:bg-gray-100 transition-colors"
                 >
                   <div className="flex-1">
                     <h4 className="font-medium">

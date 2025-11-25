@@ -142,7 +142,7 @@ export const AnalyticsSection = () => {
 
   if (error) {
     return (
-      <div className="space-y-6">
+      <div className="space-y-8">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Admin Analytics</h1>
           <p className="text-gray-600 mt-2">
@@ -205,14 +205,14 @@ export const AnalyticsSection = () => {
           value={analyticsData.users.platformUsers}
           icon={<Users className="h-6 w-6 text-blue-500" />}
           description={`${analyticsData.users.recentSignups} new in the last month`}
-          className="bg-blue-50"
+          className="bg-blue-50 border-none"
         />
         <StatCard
           title="Revenue"
           value={analyticsData.subscriptions.totalRevenue}
           icon={<DollarSign className="h-6 w-6 text-green-500" />}
           description={`₹${analyticsData.subscriptions.monthlyRevenue.toLocaleString()} this month`}
-          className="bg-green-50"
+          className="bg-green-50 border-none"
           isCurrency={true}
         />
         <StatCard
@@ -220,14 +220,14 @@ export const AnalyticsSection = () => {
           value={analyticsData.subscriptions.total}
           icon={<TrendingUp className="h-6 w-6 text-indigo-500" />}
           description={`${Math.round((analyticsData.subscriptions.total / analyticsData.users.payingUsers) * 100)}% of paying users`}
-          className="bg-indigo-50"
+          className="bg-indigo-50 border-none"
         />
         <StatCard
           title="Mentor Applications"
           value={analyticsData.mentorApplications.total}
           icon={<Users className="h-6 w-6 text-purple-500" />}
           description={`${analyticsData.mentorApplications.pending} pending review`}
-          className="bg-purple-50"
+          className="bg-purple-50 border-none"
         />
       </div>
 
@@ -527,7 +527,7 @@ const SubscriptionDistribution = ({
 };
 
 const AnalyticsLoading = () => (
-  <div className="space-y-6">
+  <div className="space-y-8">
     <div>
       <h1 className="text-3xl font-bold text-gray-900">Admin Analytics</h1>
       <p className="text-gray-600 mt-2">Comprehensive platform insights and performance metrics.</p>

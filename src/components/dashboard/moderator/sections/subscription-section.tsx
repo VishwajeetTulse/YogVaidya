@@ -223,14 +223,12 @@ export default function SubscriptionSection() {
   };
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-8">
       {/* Header */}
       <div className="flex justify-between items-center">
         <div>
-          <h1 className="text-3xl font-bold bg-gradient-to-r from-[#876aff] to-[#76d2fa] bg-clip-text text-transparent">
-            Subscriptions
-          </h1>
-          <p className="text-gray-600">View subscription details and provide support</p>
+          <h1 className="text-3xl font-bold text-gray-900">Subscriptions</h1>
+          <p className="text-gray-600 mt-2">View subscription details and provide support</p>
         </div>
         <Button variant="outline" onClick={fetchStats} disabled={statsLoading}>
           <RefreshCw className="w-4 h-4 mr-2" />
@@ -248,71 +246,67 @@ export default function SubscriptionSection() {
       ) : (
         stats && (
           <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Active Subscriptions</p>
-                    <p className="text-2xl font-bold text-green-600">
-                      {stats.totalActiveSubscriptions}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <Users className="w-6 h-6 text-green-600" />
-                  </div>
+            <Card className="p-6 shadow-sm bg-green-50">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Active Subscriptions</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">
+                    {stats.totalActiveSubscriptions}
+                  </p>
                 </div>
-              </CardContent>
+                <div className="p-2 rounded-full bg-white bg-opacity-70">
+                  <Users className="w-6 h-6 text-green-600" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">Total active plans</p>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Trial Users</p>
-                    <p className="text-2xl font-bold text-blue-600">{stats.totalTrialUsers}</p>
-                  </div>
-                  <div className="p-3 bg-blue-100 rounded-full">
-                    <Clock className="w-6 h-6 text-blue-600" />
-                  </div>
+            <Card className="p-6 shadow-sm bg-blue-50">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Trial Users</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">{stats.totalTrialUsers}</p>
                 </div>
-              </CardContent>
+                <div className="p-2 rounded-full bg-white bg-opacity-70">
+                  <Clock className="w-6 h-6 text-blue-600" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">Currently in trial</p>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Monthly Revenue</p>
-                    <p className="text-2xl font-bold text-purple-600">
-                      {formatCurrency(stats.monthlyRevenue)}
-                    </p>
-                  </div>
-                  <div className="p-3 bg-purple-100 rounded-full">
-                    <DollarSign className="w-6 h-6 text-purple-600" />
-                  </div>
+            <Card className="p-6 shadow-sm bg-purple-50">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Monthly Revenue</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">
+                    {formatCurrency(stats.monthlyRevenue)}
+                  </p>
                 </div>
-              </CardContent>
+                <div className="p-2 rounded-full bg-white bg-opacity-70">
+                  <DollarSign className="w-6 h-6 text-purple-600" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">Current month earnings</p>
             </Card>
 
-            <Card>
-              <CardContent className="p-6">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium text-gray-600">Platform Health</p>
-                    <p className="text-2xl font-bold text-green-600">Good</p>
-                  </div>
-                  <div className="p-3 bg-green-100 rounded-full">
-                    <TrendingUp className="w-6 h-6 text-green-600" />
-                  </div>
+            <Card className="p-6 shadow-sm bg-amber-50">
+              <div className="flex justify-between items-start">
+                <div>
+                  <p className="text-sm font-medium text-gray-500">Platform Health</p>
+                  <p className="text-3xl font-bold mt-1 text-gray-900">Good</p>
                 </div>
-              </CardContent>
+                <div className="p-2 rounded-full bg-white bg-opacity-70">
+                  <TrendingUp className="w-6 h-6 text-amber-600" />
+                </div>
+              </div>
+              <p className="text-xs text-gray-600 mt-2">System status</p>
             </Card>
           </div>
         )
       )}
 
       {/* User Lookup */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>User Lookup</CardTitle>
           <CardDescription>Search for a user to view their subscription details</CardDescription>
@@ -405,7 +399,7 @@ export default function SubscriptionSection() {
       </Card>
 
       {/* Support Guidelines */}
-      <Card>
+      <Card className="shadow-sm">
         <CardHeader>
           <CardTitle>Support Guidelines</CardTitle>
           <CardDescription>Quick reference for subscription support</CardDescription>

@@ -44,6 +44,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 
 // Form validation schema for time slots
 const timeSlotSchema = z.object({
@@ -148,7 +149,7 @@ export const ScheduleSection = () => {
   const { data: session } = useSession();
   const [timeSlots, setTimeSlots] = useState<TimeSlot[]>([]);
   const [subscriptionSessions, setSubscriptionSessions] = useState<SubscriptionSession[]>([]);
-  const [loading, setLoading] = useState(false);
+  const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [subscriptionSubmitting, setSubscriptionSubmitting] = useState(false);
@@ -442,8 +443,12 @@ export const ScheduleSection = () => {
     });
   };
 
+  if (loading && timeSlots.length === 0 && subscriptionSessions.length === 0) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Schedule & Sessions</h1>
         <p className="text-gray-600 mt-2">
@@ -469,7 +474,7 @@ export const ScheduleSection = () => {
 
         <TabsContent value="individual" className="space-y-6">
           {/* Create Time Slot Form */}
-          <Card>
+          <Card className="shadow-sm border-none">
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <Plus className="h-5 w-5" />
@@ -695,7 +700,7 @@ export const ScheduleSection = () => {
           </Card>
 
           {/* Available Time Slots List */}
-          <Card>
+          <Card className="shadow-sm border-none">
             <CardHeader>
               <CardTitle className="flex items-center justify-between">
                 <div className="flex items-center gap-2">
@@ -764,18 +769,18 @@ export const ScheduleSection = () => {
                             <div
                               className={`w-12 h-12 rounded-lg flex items-center justify-center ${
                                 slot.sessionType === "YOGA"
-                                  ? "bg-gradient-to-br from-[#76d2fa] to-[#5a9be9]"
+                                  ? "bg-blue-100 text-blue-600"
                                   : slot.sessionType === "MEDITATION"
-                                    ? "bg-gradient-to-br from-[#876aff] to-[#9966cc]"
-                                    : "bg-gradient-to-br from-[#22c55e] to-[#16a34a]"
+                                    ? "bg-purple-100 text-purple-600"
+                                    : "bg-green-100 text-green-600"
                               }`}
                             >
                               {slot.sessionType === "YOGA" ? (
-                                <Video className="w-6 h-6 text-white" />
+                                <Video className="w-6 h-6" />
                               ) : slot.sessionType === "MEDITATION" ? (
-                                <Calendar className="w-6 h-6 text-white" />
+                                <Calendar className="w-6 h-6" />
                               ) : (
-                                <Clock className="w-6 h-6 text-white" />
+                                <Clock className="w-6 h-6" />
                               )}
                             </div>
                             <div className="flex-1">

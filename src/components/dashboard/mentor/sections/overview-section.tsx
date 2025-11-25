@@ -1,6 +1,6 @@
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
-import { Skeleton } from "@/components/ui/skeleton";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { Users, Video, Calendar, ChevronRight } from "lucide-react";
 import { type MentorSectionProps } from "../types";
 import { useState, useEffect } from "react";
@@ -47,78 +47,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
   };
 
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Welcome back, {userDetails?.name || "Mentor"}!
-            </h1>
-            <p className="text-gray-600 mt-2">Loading your teaching dashboard...</p>
-          </div>
-        </div>
-
-        {/* Loading Stats Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-          {[...Array(2)].map((_, index) => (
-            <Card key={`loading-stats-${index}`} className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-9 h-9 rounded-lg" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-20 mb-2" />
-                  <Skeleton className="h-6 w-8" />
-                </div>
-              </div>
-            </Card>
-          ))}
-        </div>
-
-        {/* Loading Today's Schedule */}
-        <Card className="p-6">
-          <div className="flex items-center gap-2 mb-4">
-            <Skeleton className="w-5 h-5" />
-            <Skeleton className="h-6 w-32" />
-          </div>
-          <div className="space-y-3">
-            {[...Array(2)].map((_, index) => (
-              <div
-                key={`loading-schedule-${index}`}
-                className="flex items-center justify-between p-3 bg-gray-50 rounded-lg"
-              >
-                <div className="flex items-center gap-3">
-                  <Skeleton className="w-2 h-2 rounded-full" />
-                  <div>
-                    <Skeleton className="h-4 w-40 mb-2" />
-                    <Skeleton className="h-3 w-32" />
-                  </div>
-                </div>
-                <Skeleton className="h-6 w-16 rounded-full" />
-              </div>
-            ))}
-          </div>
-        </Card>
-
-        {/* Loading Quick Actions */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {[...Array(3)].map((_, index) => (
-            <Card key={`loading-action-${index}`} className="p-4">
-              <div className="flex items-center gap-3">
-                <Skeleton className="w-8 h-8" />
-                <div className="flex-1">
-                  <Skeleton className="h-4 w-24 mb-1" />
-                  <Skeleton className="h-3 w-20" />
-                </div>
-                <Skeleton className="w-4 h-4" />
-              </div>
-            </Card>
-          ))}
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">
@@ -132,10 +65,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
 
       {/* Quick Stats */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
-        <Card className="p-4 bg-gradient-to-br from-[#76d2fa]/10 to-[#5a9be9]/10 border border-[#76d2fa]/20 transition-opacity">
+        <Card className="p-4 bg-blue-50 border-none shadow-sm transition-opacity">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#76d2fa] to-[#5a9be9] rounded-lg">
-              <Users className="w-5 h-5 text-white" />
+            <div className="p-2 bg-blue-100 rounded-lg">
+              <Users className="w-5 h-5 text-blue-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Active Students</p>
@@ -143,10 +76,10 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           </div>
         </Card>
-        <Card className="p-4 bg-gradient-to-br from-[#FFCCEA]/20 to-[#ffa6c5]/10 border border-[#FFCCEA]/30 transition-opacity">
+        <Card className="p-4 bg-purple-50 border-none shadow-sm transition-opacity">
           <div className="flex items-center gap-3">
-            <div className="p-2 bg-gradient-to-br from-[#ffa6c5] to-[#ff7dac] rounded-lg">
-              <Video className="w-5 h-5 text-white" />
+            <div className="p-2 bg-purple-100 rounded-lg">
+              <Video className="w-5 h-5 text-purple-600" />
             </div>
             <div>
               <p className="text-sm text-gray-500">Sessions This Week</p>
@@ -154,7 +87,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
             </div>
           </div>
         </Card>
-        {/* 
+        {/*
         <Card className={`p-4 bg-gradient-to-br from-[#876aff]/10 to-[#a792fb]/10 border border-[#876aff]/20 transition-opacity`}>
           <div className="flex items-center gap-3">
             <div className="p-2 bg-gradient-to-br from-[#876aff] to-[#a792fb] rounded-lg">
@@ -180,7 +113,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
       </div>
 
       {/* Today's Schedule */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           Today&apos;s Sessions
@@ -204,14 +137,14 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
                 key={session.id}
                 className={`flex items-center justify-between p-3 rounded-lg border ${
                   session.sessionType === "YOGA"
-                    ? "bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30"
-                    : "bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30"
+                    ? "bg-blue-50 border-blue-100"
+                    : "bg-purple-50 border-purple-100"
                 }`}
               >
                 <div className="flex items-center gap-3">
                   <div
                     className={`w-2 h-2 rounded-full ${
-                      session.sessionType === "YOGA" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                      session.sessionType === "YOGA" ? "bg-blue-400" : "bg-purple-400"
                     }`}
                   />
                   <div>
@@ -257,11 +190,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
         <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30"
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-blue-50 border-none shadow-sm"
           onClick={() => setActiveSection("schedule")}
         >
           <div className="flex items-center gap-3">
-            <Video className="w-8 h-8 text-[#76d2fa]" />
+            <Video className="w-8 h-8 text-blue-600" />
             <div>
               <p className="font-medium">Schedule Session</p>
               <p className="text-sm text-gray-500">Create new class</p>
@@ -270,11 +203,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: MentorSection
           </div>
         </Card>
         <Card
-          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30"
+          className="p-4 cursor-pointer hover:shadow-md transition-shadow bg-purple-50 border-none shadow-sm"
           onClick={() => setActiveSection("students")}
         >
           <div className="flex items-center gap-3">
-            <Users className="w-8 h-8 text-[#ff7dac]" />
+            <Users className="w-8 h-8 text-purple-600" />
             <div>
               <p className="font-medium">View Students</p>
               <p className="text-sm text-gray-500">Manage your students</p>

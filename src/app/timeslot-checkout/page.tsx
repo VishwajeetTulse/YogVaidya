@@ -26,9 +26,10 @@ export default async function TimeSlotCheckoutPage({
   return (
     <Suspense
       fallback={
-        <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+        <div className="flex items-center justify-center min-h-screen bg-gray-50">
           <div className="text-center">
-            <p className="text-gray-600">Loading checkout...</p>
+            <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+            <p className="text-gray-500">Loading checkout...</p>
           </div>
         </div>
       }

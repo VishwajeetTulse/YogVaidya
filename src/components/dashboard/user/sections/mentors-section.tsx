@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { type SectionProps } from "../types";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
 import { getUserMentor, type UserMentorData } from "@/lib/server/user-mentor-server";
+import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
 
 interface UserMentorResponseData {
   subscriptionInfo: {
@@ -80,19 +81,7 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Mentors</h1>
-          <p className="text-gray-600 mt-2">
-            Connect with your personal yoga guides and book sessions.
-          </p>
-        </div>
-        <div className="text-center py-8">
-          <p className="text-gray-500">Loading your mentor information...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Show subscription prompt if user needs subscription

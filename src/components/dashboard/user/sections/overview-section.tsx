@@ -5,6 +5,8 @@ import { type SectionProps } from "../types";
 import { useEffect, useState } from "react";
 import { getUserDashboardData, type DashboardData } from "@/lib/actions/dashboard-data";
 
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
+
 export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps) => {
   const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
@@ -42,8 +44,12 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
     fetchDashboardData();
   }, []);
 
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">
           Welcome back, {userDetails?.name || "Yogi"}!
@@ -59,11 +65,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
 
       {/* Active Trial Banner - No upgrade option during trial */}
       {isOnActiveTrial && (
-        <Card className="p-6 bg-gradient-to-r from-blue-50 to-indigo-50 border border-blue-200">
+        <Card className="p-6 bg-blue-50 border-blue-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-blue-400 to-indigo-500 rounded-full">
-                <Award className="w-6 h-6 text-white" />
+              <div className="p-3 bg-blue-100 rounded-full">
+                <Award className="w-6 h-6 text-blue-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-blue-900">
@@ -84,11 +90,11 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
 
       {/* No Access Banner */}
       {hasNoAccess && (
-        <Card className="p-6 bg-gradient-to-r from-red-50 to-pink-50 border border-red-200">
+        <Card className="p-6 bg-red-50 border-red-200 shadow-sm">
           <div className="flex items-center justify-between">
             <div className="flex items-center gap-4">
-              <div className="p-3 bg-gradient-to-br from-red-400 to-pink-500 rounded-full">
-                <Award className="w-6 h-6 text-white" />
+              <div className="p-3 bg-red-100 rounded-full">
+                <Award className="w-6 h-6 text-red-600" />
               </div>
               <div>
                 <h3 className="text-lg font-semibold text-red-900">
@@ -110,7 +116,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
       )}
 
       {/* Today's Schedule - Using real data */}
-      <Card className="p-6">
+      <Card className="p-6 shadow-sm">
         <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
           <Calendar className="w-5 h-5" />
           {hasNoAccess
@@ -161,14 +167,14 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
                   key={session.id}
                   className={`flex items-center justify-between p-3 rounded-lg border ${
                     session.type === "yoga"
-                      ? "bg-gradient-to-r from-[#76d2fa]/20 to-[#5a9be9]/10 border-[#76d2fa]/30"
-                      : "bg-gradient-to-r from-[#FFCCEA]/20 to-[#ffa6c5]/10 border-[#FFCCEA]/30"
+                      ? "bg-blue-50 border-blue-100"
+                      : "bg-purple-50 border-purple-100"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                        session.type === "yoga" ? "bg-blue-400" : "bg-purple-400"
                       }`}
                     />
                     <div>
@@ -234,7 +240,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
       {!hasNoAccess &&
         dashboardData?.upcomingSessions &&
         dashboardData.upcomingSessions.length > 0 && (
-          <Card className="p-6">
+          <Card className="p-6 shadow-sm">
             <h2 className="text-xl font-semibold mb-4 flex items-center gap-2">
               <Calendar className="w-5 h-5" />
               Upcoming Sessions
@@ -245,14 +251,14 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
                   key={session.id}
                   className={`flex items-center justify-between p-3 rounded-lg border ${
                     session.type === "yoga"
-                      ? "bg-gradient-to-r from-[#76d2fa]/10 to-[#5a9be9]/5 border-[#76d2fa]/20"
-                      : "bg-gradient-to-r from-[#FFCCEA]/10 to-[#ffa6c5]/5 border-[#FFCCEA]/20"
+                      ? "bg-blue-50 border-blue-100"
+                      : "bg-purple-50 border-purple-100"
                   }`}
                 >
                   <div className="flex items-center gap-3">
                     <div
                       className={`w-2 h-2 rounded-full ${
-                        session.type === "yoga" ? "bg-[#76d2fa]" : "bg-[#ff7dac]"
+                        session.type === "yoga" ? "bg-blue-400" : "bg-purple-400"
                       }`}
                     />
                     <div>
@@ -282,12 +288,12 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
       {/* Quick Actions */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         <Card
-          className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
+          className={`p-4 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${
             hasNoAccess
-              ? "bg-gradient-to-br from-red-50 to-pink-50 border border-red-200"
+              ? "bg-red-50 border-red-200"
               : isOnActiveTrial
-                ? "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
-                : "bg-gradient-to-br from-[#76d2fa]/5 to-[#5a9be9]/5 border border-[#76d2fa]/30"
+                ? "bg-blue-50 border-blue-200"
+                : "bg-blue-50 border-none"
           }`}
           onClick={() =>
             hasNoAccess ? setActiveSection("subscription") : setActiveSection("classes")
@@ -296,7 +302,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           <div className="flex items-center gap-3">
             <PlayCircle
               className={`w-8 h-8 ${
-                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-[#76d2fa]"
+                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-blue-600"
               }`}
             />
             <div>
@@ -315,12 +321,12 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           </div>
         </Card>
         <Card
-          className={`p-4 cursor-pointer hover:shadow-md transition-shadow ${
+          className={`p-4 cursor-pointer hover:shadow-md transition-shadow shadow-sm ${
             hasNoAccess
-              ? "bg-gradient-to-br from-red-50 to-pink-50 border border-red-200"
+              ? "bg-red-50 border-red-200"
               : isOnActiveTrial
-                ? "bg-gradient-to-br from-blue-50 to-indigo-50 border border-blue-200"
-                : "bg-gradient-to-br from-[#FFCCEA]/10 to-[#ffa6c5]/5 border border-[#FFCCEA]/30"
+                ? "bg-blue-50 border-blue-200"
+                : "bg-purple-50 border-none"
           }`}
           onClick={() =>
             hasNoAccess ? setActiveSection("subscription") : setActiveSection("mentors")
@@ -329,7 +335,7 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
           <div className="flex items-center gap-3">
             <Users
               className={`w-8 h-8 ${
-                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-[#ff7dac]"
+                hasNoAccess ? "text-red-600" : isOnActiveTrial ? "text-blue-600" : "text-purple-600"
               }`}
             />
             <div>

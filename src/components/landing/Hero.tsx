@@ -9,7 +9,7 @@ import { Sparkles } from "lucide-react";
 export default function Hero() {
   return (
     <section className="max-w-7xl mx-auto px-4 pt-10 pb-20 relative">
-      <div className="absolute top-10 left-20">
+      <div className="absolute top-10 right-20">
         <Sparkles className="w-20 h-20 text-emerald-200" />
       </div>
 
@@ -17,7 +17,10 @@ export default function Hero() {
       <div className="text-center mb-10">
         <h1 className="text-5xl md:text-6xl font-bold text-gray-800 mb-6">
           Get better peace <br />
-          of <span className="inline-block bg-green-400 px-4 py-1 rounded-md text-white">mind</span>
+          of{" "}
+          <span className="inline-block bg-green-400 mt-2 px-4 py-1 rounded-md text-white">
+            mind
+          </span>
         </h1>
         <div className="flex justify-center gap-4 flex-wrap">
           <Link href="/signup?from=hero">

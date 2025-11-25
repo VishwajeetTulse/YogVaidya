@@ -624,12 +624,73 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         sessionTypeFilter.sessionType = "YOGA";
       }
 
-      const mentorSessions = await prisma.schedule.findMany({
-        where: {
-          mentorId: mentor.id,
-          ...sessionTypeFilter,
-        },
+      // Use raw query to handle inconsistent date formats in MongoDB
+      interface MatchConditions {
+        mentorId: string;
+        sessionType?: string;
+      }
+
+      const matchConditions: MatchConditions = {
+        mentorId: mentor.id,
+      };
+
+      if (sessionTypeFilter.sessionType) {
+        matchConditions.sessionType = String(sessionTypeFilter.sessionType);
+      }
+
+      const mentorSessionsResult = await prisma.$runCommandRaw({
+        aggregate: "Schedule",
+        pipeline: [
+          {
+            $match: matchConditions as unknown as Prisma.InputJsonValue,
+          },
+          {
+            $addFields: {
+              scheduledTime: {
+                $cond: {
+                  if: { $eq: [{ $type: "$scheduledTime" }, "date"] },
+                  then: "$scheduledTime",
+                  else: {
+                    $dateFromString: {
+                      dateString: "$scheduledTime",
+                      onError: null,
+                    },
+                  },
+                },
+              },
+              updatedAt: {
+                $cond: {
+                  if: { $eq: [{ $type: "$updatedAt" }, "date"] },
+                  then: "$updatedAt",
+                  else: {
+                    $dateFromString: {
+                      dateString: "$updatedAt",
+                      onError: null,
+                    },
+                  },
+                },
+              },
+            },
+          },
+        ],
+        cursor: {},
       });
+
+      let mentorSessions: any[] = [];
+      if (
+        mentorSessionsResult &&
+        typeof mentorSessionsResult === "object" &&
+        "cursor" in mentorSessionsResult &&
+        mentorSessionsResult.cursor &&
+        typeof mentorSessionsResult.cursor === "object" &&
+        "firstBatch" in mentorSessionsResult.cursor &&
+        Array.isArray(mentorSessionsResult.cursor.firstBatch)
+      ) {
+        mentorSessions = mentorSessionsResult.cursor.firstBatch.map((session: any) => ({
+          ...session,
+          scheduledTime: session.scheduledTime ? new Date(session.scheduledTime) : null,
+        }));
+      }
 
       const currentTime = new Date();
       const totalSessions = mentorSessions.length;

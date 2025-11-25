@@ -15,6 +15,7 @@ import {
 import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
 import type { DateValue } from "@/lib/types/utils";
 import { isMongoDate } from "@/lib/types/mongodb";
+import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
 // import { Prisma } from "@prisma/client";
 
 interface SessionData {
@@ -211,17 +212,7 @@ export const ClassesSection = () => {
 
   // Show loading state
   if (loading) {
-    return (
-      <div className="space-y-6">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900">My Classes</h1>
-          <p className="text-gray-600 mt-2">Manage your scheduled and completed yoga sessions.</p>
-        </div>
-        <div className="text-center py-8">
-          <p className="text-gray-500">Loading your sessions...</p>
-        </div>
-      </div>
-    );
+    return <DashboardSkeleton />;
   }
 
   // Filter sessions based on the subscription plan
@@ -268,9 +259,9 @@ export const ClassesSection = () => {
   const cancelledSessions = availableSessions.filter((session) => session.status === "CANCELLED");
 
   const getSessionTypeColor = (type: "YOGA" | "MEDITATION" | "DIET") => {
-    if (type === "YOGA") return "from-[#76d2fa] to-[#5a9be9]";
-    if (type === "MEDITATION") return "from-[#876aff] to-[#9966cc]";
-    return "from-[#4ade80] to-[#22c55e]"; // Green gradient for DIET
+    if (type === "YOGA") return "bg-blue-100 text-blue-600";
+    if (type === "MEDITATION") return "bg-purple-100 text-purple-600";
+    return "bg-green-100 text-green-600"; // Green for DIET
   };
 
   const _getMentorTypeDisplay = (
@@ -327,13 +318,13 @@ export const ClassesSection = () => {
     const canJoin = sessionItem.status === "ONGOING" && isWithinTimeWindow;
 
     return (
-      <Card key={sessionItem.id} className="p-6">
+      <Card key={sessionItem.id} className="p-6 shadow-sm">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-4">
             <div
-              className={`w-16 h-16 bg-gradient-to-br ${getSessionTypeColor(sessionItem.sessionType)} rounded-lg flex items-center justify-center`}
+              className={`w-16 h-16 ${getSessionTypeColor(sessionItem.sessionType)} rounded-lg flex items-center justify-center`}
             >
-              <PlayCircle className="w-8 h-8 text-white" />
+              <PlayCircle className="w-8 h-8" />
             </div>
             <div>
               <h3 className="font-semibold text-lg">{sessionItem.title}</h3>
@@ -372,7 +363,7 @@ export const ClassesSection = () => {
               <>
                 <Button
                   variant="outline"
-                  className="border-[#FFCCEA] text-[#ff7dac] hover:bg-[#FFCCEA]"
+                  className="border-blue-200 text-blue-600 hover:bg-blue-50"
                   onClick={() => {
                     // TODO: Implement reschedule functionality
                     toast.info("Reschedule functionality coming soon!");
@@ -382,7 +373,7 @@ export const ClassesSection = () => {
                 </Button>
                 {canJoin ? (
                   <Button
-                    className={`${isOngoing ? "bg-[#76d2fa] hover:bg-[#5a9be9]" : "bg-[#876aff] hover:bg-[#7c5cff]"}`}
+                    className={`${isOngoing ? "bg-blue-600 hover:bg-blue-700" : "bg-purple-600 hover:bg-purple-700"}`}
                     onClick={() => {
                       if (sessionItem.link) {
                         window.open(sessionItem.link, "_blank");
@@ -436,7 +427,7 @@ export const ClassesSection = () => {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
         <div>
           <div className="flex items-center gap-3">
@@ -462,8 +453,8 @@ export const ClassesSection = () => {
         <button
           className={`pb-2 px-1 border-b-2 font-medium ${
             activeTab === "upcoming"
-              ? "border-[#76d2fa] text-[#76d2fa]"
-              : "border-transparent text-gray-500 hover:text-[#876aff]"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-purple-600"
           }`}
           onClick={() => setActiveTab("upcoming")}
         >
@@ -472,8 +463,8 @@ export const ClassesSection = () => {
         <button
           className={`pb-2 px-1 border-b-2 font-medium ${
             activeTab === "completed"
-              ? "border-[#76d2fa] text-[#76d2fa]"
-              : "border-transparent text-gray-500 hover:text-[#876aff]"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-purple-600"
           }`}
           onClick={() => setActiveTab("completed")}
         >
@@ -482,8 +473,8 @@ export const ClassesSection = () => {
         <button
           className={`pb-2 px-1 border-b-2 font-medium ${
             activeTab === "cancelled"
-              ? "border-[#76d2fa] text-[#76d2fa]"
-              : "border-transparent text-gray-500 hover:text-[#876aff]"
+              ? "border-blue-600 text-blue-600"
+              : "border-transparent text-gray-500 hover:text-purple-600"
           }`}
           onClick={() => setActiveTab("cancelled")}
         >

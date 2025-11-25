@@ -26,7 +26,7 @@ function CompleteProfileContent() {
     // Check if user already has phone number
     const checkUserProfile = async () => {
       try {
-        const response = await fetch("/api/users/profile");
+        const response = await fetch("/api/users/profile", { cache: "no-store" });
         const result = await response.json();
 
         if (result.success && result.user?.phone) {
@@ -46,8 +46,8 @@ function CompleteProfileContent() {
 
   if (isPending || isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-[#76d2fa]/10 to-[#5abe9b]/10 flex items-center justify-center p-4">
-        <div className="w-full max-w-md p-8">
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center p-4">
+        <div className="w-full max-w-md p-8 bg-white rounded-lg shadow-sm">
           <div className="text-center mb-8">
             <Skeleton className="w-20 h-20 rounded-full mx-auto mb-4" />
             <Skeleton className="h-8 w-3/4 mx-auto mb-2" />

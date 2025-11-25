@@ -158,7 +158,7 @@ export default function PlansDashboard() {
                   <Button
                     className={`mt-auto w-full py-6 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-medium`}
                   >
-                    {plan.id === "seed" ? "GET STARTED" : "UPGRADE NOW"}
+                    GET STARTED
                   </Button>
                 </Link>
               </div>

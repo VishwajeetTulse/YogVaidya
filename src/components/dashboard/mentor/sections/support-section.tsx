@@ -90,7 +90,7 @@ export const SupportSection = () => {
               Find answers to the most common questions from mentors like you.
             </p>
             {faqs.map((faq, index) => (
-              <Card key={index}>
+              <Card key={index} className="border-none shadow-sm">
                 <CardContent className="p-6">
                   <div className="flex items-start gap-3">
                     <HelpCircle className="h-5 w-5 text-primary mt-0.5 flex-shrink-0" />
@@ -113,7 +113,7 @@ export const SupportSection = () => {
             </p>
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               {contactOptions.map((contact, index) => (
-                <Card key={index} className="h-full">
+                <Card key={index} className="h-full border-none shadow-sm">
                   <CardContent className="p-6">
                     <div className="flex flex-col space-y-4">
                       <div className="flex items-center gap-3">

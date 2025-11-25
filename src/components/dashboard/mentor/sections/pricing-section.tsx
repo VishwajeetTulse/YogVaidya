@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { toast } from "sonner";
 import { Loader2, IndianRupee } from "lucide-react";
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import {
   Form,
   FormControl,
@@ -100,96 +101,91 @@ export default function PricingSection() {
   };
 
   if (loading) {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle className="flex items-center gap-2">
-            <IndianRupee className="h-5 w-5" />
-            Session Pricing
-          </CardTitle>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center justify-center py-8">
-            <Loader2 className="h-6 w-6 animate-spin" />
-          </div>
-        </CardContent>
-      </Card>
-    );
+    return <DashboardSkeleton />;
   }
 
   const sessionPrice = form.watch("sessionPrice");
 
   return (
-    <Card>
-      <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <IndianRupee className="h-5 w-5" />
-          Session Pricing
-        </CardTitle>
-        <CardDescription>Set your pricing for one-on-one sessions with students</CardDescription>
-      </CardHeader>
-      <CardContent className="space-y-6">
-        <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
-            <FormField
-              control={form.control}
-              name="sessionPrice"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Session Price</FormLabel>
-                  <FormControl>
-                    <div className="relative">
-                      <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
-                      <Input
-                        type="number"
-                        placeholder="0"
-                        min="0"
-                        max="10000"
-                        step="50"
-                        className="pl-9"
-                        {...field}
-                      />
-                    </div>
-                  </FormControl>
-                  <FormDescription>Set your price in Indian Rupees (₹) per session</FormDescription>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+    <div className="space-y-8">
+      <div>
+        <h1 className="text-3xl font-bold text-gray-900">Session Pricing</h1>
+        <p className="text-gray-600 mt-2">Set your pricing for one-on-one sessions.</p>
+      </div>
 
-            {/* Pricing Preview */}
-            <div className="rounded-lg bg-muted/50 p-4">
-              <h4 className="font-medium mb-2">Pricing Preview</h4>
-              <div className="text-2xl font-bold text-primary">
-                ₹{sessionPrice || 0} per session
+      <Card className="border-none shadow-sm">
+        <CardHeader>
+          <CardTitle className="flex items-center gap-2">
+            <IndianRupee className="h-5 w-5" />
+            Pricing Configuration
+          </CardTitle>
+          <CardDescription>Set your pricing for one-on-one sessions with students</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-6">
+          <Form {...form}>
+            <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+              <FormField
+                control={form.control}
+                name="sessionPrice"
+                render={({ field }) => (
+                  <FormItem>
+                    <FormLabel>Session Price</FormLabel>
+                    <FormControl>
+                      <div className="relative">
+                        <IndianRupee className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+                        <Input
+                          type="number"
+                          placeholder="0"
+                          min="0"
+                          max="10000"
+                          step="50"
+                          className="pl-9"
+                          {...field}
+                        />
+                      </div>
+                    </FormControl>
+                    <FormDescription>
+                      Set your price in Indian Rupees (₹) per session
+                    </FormDescription>
+                    <FormMessage />
+                  </FormItem>
+                )}
+              />
+
+              {/* Pricing Preview */}
+              <div className="rounded-lg bg-muted/50 p-4">
+                <h4 className="font-medium mb-2">Pricing Preview</h4>
+                <div className="text-2xl font-bold text-primary">
+                  ₹{sessionPrice || 0} per session
+                </div>
+                <p className="text-sm text-muted-foreground mt-1">
+                  Students will be charged a fixed amount per session regardless of duration
+                </p>
               </div>
-              <p className="text-sm text-muted-foreground mt-1">
-                Students will be charged a fixed amount per session regardless of duration
-              </p>
-            </div>
 
-            <Button type="submit" disabled={updating} className="w-full">
-              {updating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Updating Pricing...
-                </>
-              ) : (
-                "Update Pricing"
-              )}
-            </Button>
-          </form>
-        </Form>
+              <Button type="submit" disabled={updating} className="w-full">
+                {updating ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Updating Pricing...
+                  </>
+                ) : (
+                  "Update Pricing"
+                )}
+              </Button>
+            </form>
+          </Form>
 
-        {/* Additional Information */}
-        <div className="text-sm text-muted-foreground space-y-2">
-          <p>
-            <strong>Note:</strong> Your pricing will be visible to students when they book sessions
-            with you.
-          </p>
-          <p>You can update your pricing anytime. Changes will apply to new bookings only.</p>
-        </div>
-      </CardContent>
-    </Card>
+          {/* Additional Information */}
+          <div className="text-sm text-muted-foreground space-y-2">
+            <p>
+              <strong>Note:</strong> Your pricing will be visible to students when they book
+              sessions with you.
+            </p>
+            <p>You can update your pricing anytime. Changes will apply to new bookings only.</p>
+          </div>
+        </CardContent>
+      </Card>
+    </div>
   );
 }

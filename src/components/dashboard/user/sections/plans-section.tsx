@@ -138,9 +138,9 @@ export const PlansSection = ({
       price: 1999,
       originalPrice: 0,
       description: "Perfect for meditation enthusiasts",
-      gradient: "from-[#76d2fa] to-[#5a9be9]",
-      textColor: "text-[#5a9be9]",
-      icon: <Star className="w-7 h-7 text-white" />,
+      gradient: "bg-blue-50 border-blue-100",
+      textColor: "text-blue-600",
+      icon: <Star className="w-7 h-7 text-blue-600" />,
       features: [
         {
           text: "Live meditation sessions",
@@ -161,9 +161,9 @@ export const PlansSection = ({
       price: 1999,
       originalPrice: 1999,
       description: "Perfect for yoga enthusiasts",
-      gradient: "from-[#CDC1FF] to-[#876aff]",
-      textColor: "text-[#876aff]",
-      icon: <Crown className="w-7 h-7 text-white" />,
+      gradient: "bg-purple-50 border-purple-100",
+      textColor: "text-purple-600",
+      icon: <Crown className="w-7 h-7 text-purple-600" />,
       features: [
         {
           text: "Live yoga sessions",
@@ -184,9 +184,9 @@ export const PlansSection = ({
       price: 4999,
       originalPrice: 4999,
       description: "Complete wellness journey",
-      gradient: "from-[#ffa6c5] to-[#ff7dac]",
-      textColor: "text-[#ff7dac]",
-      icon: <Sparkles className="w-7 h-7 text-white" />,
+      gradient: "bg-green-50 border-green-100",
+      textColor: "text-green-600",
+      icon: <Sparkles className="w-7 h-7 text-green-600" />,
       features: [
         {
           text: "Live yoga sessions",
@@ -208,7 +208,7 @@ export const PlansSection = ({
   ];
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       <div>
         <h1 className="text-3xl font-bold text-gray-900">Upgrade Plans</h1>
         <p className="text-gray-600 mt-2">Choose the perfect plan for your wellness journey.</p>
@@ -247,7 +247,7 @@ export const PlansSection = ({
             onClick={() => setBillingPeriod?.("monthly")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               billingPeriod === "monthly"
-                ? "bg-[#76d2fa] text-white shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "bg-transparent text-gray-600 hover:bg-gray-300/50"
             }`}
           >
@@ -257,7 +257,7 @@ export const PlansSection = ({
             onClick={() => setBillingPeriod?.("annual")}
             className={`px-6 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
               billingPeriod === "annual"
-                ? "bg-[#76d2fa] text-white shadow-md"
+                ? "bg-blue-600 text-white shadow-md"
                 : "bg-transparent text-gray-600 hover:bg-gray-300/50"
             }`}
           >
@@ -281,10 +281,10 @@ export const PlansSection = ({
           {plans.map((plan) => (
             <div
               key={plan.id}
-              className={`bg-gradient-to-b ${
+              className={`${
                 plan.gradient
-              } rounded-3xl overflow-hidden shadow-xl transition-all duration-300 hover:shadow-2xl hover:translate-y-[-8px] h-full relative ${
-                plan.isPopular ? "transform md:scale-105 z-10 ring-4 ring-white/50" : ""
+              } rounded-3xl overflow-hidden shadow-sm border transition-all duration-300 hover:shadow-md h-full relative ${
+                plan.isPopular ? "transform md:scale-105 z-10 ring-4 ring-blue-100" : ""
               }`}
             >
               <div className="p-8 flex flex-col h-full">
@@ -292,32 +292,32 @@ export const PlansSection = ({
                 <div className="mb-6">
                   <div className="flex items-center justify-between mb-4">
                     <div className="flex items-center space-x-3">
-                      <div className="w-12 h-12 rounded-full bg-white/20 flex items-center justify-center">
+                      <div className="w-12 h-12 rounded-full bg-white flex items-center justify-center shadow-sm">
                         {plan.icon}
                       </div>
                       <div>
-                        <h3 className="text-xl font-bold text-white">{plan.name}</h3>
-                        <span className="text-xs font-medium bg-white/20 text-white px-3 py-1 rounded-full uppercase">
+                        <h3 className="text-xl font-bold text-gray-900">{plan.name}</h3>
+                        <span className="text-xs font-medium bg-white text-gray-600 px-3 py-1 rounded-full uppercase border">
                           {plan.badge}
                         </span>
                       </div>
                     </div>
                   </div>
-                  <p className="text-white/90 text-sm">{plan.description}</p>
+                  <p className="text-gray-600 text-sm">{plan.description}</p>
                 </div>
                 {/* Price */}
                 <div className="mb-8">
                   <div className="flex items-end mb-2">
-                    <span className="text-4xl font-bold text-white flex items-center">
+                    <span className="text-4xl font-bold text-gray-900 flex items-center">
                       <IndianRupeeIcon className="w-6 h-6" />
                       {applyDiscount(plan.price)}
                     </span>
-                    <span className="text-white/70 ml-2 mb-1 text-sm">/ month</span>
+                    <span className="text-gray-500 ml-2 mb-1 text-sm">/ month</span>
                   </div>
                   {billingPeriod === "annual" && plan.price > 0 && (
                     <div className="text-white/80 text-sm">
-                      <span className="line-through">₹{plan.price}</span>
-                      <span className="ml-2 bg-green-500/20 text-green-100 px-2 py-1 rounded text-xs">
+                      <span className="line-through text-gray-400">₹{plan.price}</span>
+                      <span className="ml-2 bg-green-100 text-green-700 px-2 py-1 rounded text-xs">
                         Save 20%
                       </span>
                     </div>
@@ -327,10 +327,10 @@ export const PlansSection = ({
                 <div className="space-y-3 mb-8 flex-grow">
                   {plan.features.map((feature, index) => (
                     <div key={index} className="flex items-center">
-                      <div className="w-5 h-5 text-white rounded-full flex items-center justify-center mr-3 flex-shrink-0">
+                      <div className="w-5 h-5 bg-white text-gray-600 rounded-full flex items-center justify-center mr-3 flex-shrink-0 shadow-sm">
                         {feature.icon}
                       </div>
-                      <span className="text-white text-sm">{feature.text}</span>
+                      <span className="text-gray-600 text-sm">{feature.text}</span>
                     </div>
                   ))}
                 </div>
@@ -338,7 +338,7 @@ export const PlansSection = ({
                 {plan.price === 0 ? (
                   <Link href="/dashboard" passHref>
                     <Button
-                      className={`mt-auto w-full py-4 rounded-xl bg-white ${plan.textColor} hover:bg-white/90 transition-all duration-300 font-semibold text-base`}
+                      className={`mt-auto w-full py-4 rounded-xl bg-white border border-gray-200 ${plan.textColor} hover:bg-gray-50 transition-all duration-300 font-semibold text-base shadow-sm`}
                     >
                       GET STARTED FREE
                     </Button>
@@ -373,7 +373,7 @@ export const PlansSection = ({
         </div>
       ) : (
         // Comparison Table View
-        <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-gray-100">
+        <div className="bg-white rounded-2xl shadow-sm overflow-hidden border border-gray-200">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gradient-to-r from-gray-50 to-gray-100">
@@ -383,7 +383,7 @@ export const PlansSection = ({
                     <th key={plan.id} className="text-center p-6 min-w-[200px]">
                       <div className="space-y-2">
                         <div
-                          className={`w-12 h-12 rounded-full bg-gradient-to-br ${plan.gradient} flex items-center justify-center mx-auto`}
+                          className={`w-12 h-12 rounded-full ${plan.gradient} flex items-center justify-center mx-auto`}
                         >
                           {plan.icon}
                         </div>

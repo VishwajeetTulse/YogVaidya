@@ -44,6 +44,7 @@ import {
   type CreateTicketRequest,
 } from "@/lib/types/tickets";
 import type { SectionProps } from "../types";
+import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
 
 export function UserTicketsSection({}: SectionProps) {
   const [tickets, setTickets] = useState<Ticket[]>([]);
@@ -178,6 +179,10 @@ export function UserTicketsSection({}: SectionProps) {
   useEffect(() => {
     fetchTickets();
   }, [fetchTickets]);
+
+  if (loading) {
+    return <DashboardSkeleton />;
+  }
 
   return (
     <div className="space-y-6">
@@ -389,12 +394,7 @@ export function UserTicketsSection({}: SectionProps) {
       </Card>
 
       {/* Tickets List */}
-      {loading ? (
-        <div className="text-center py-8">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto" />
-          <p className="mt-2 text-gray-600">Loading tickets...</p>
-        </div>
-      ) : filteredTickets.length === 0 ? (
+      {filteredTickets.length === 0 ? (
         <Card>
           <CardContent className="text-center py-8">
             <MessageSquare className="h-12 w-12 text-gray-400 mx-auto mb-4" />

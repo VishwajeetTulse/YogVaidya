@@ -28,6 +28,8 @@ import {
 } from "@/components/ui/table";
 import LogsExportSection from "./logs-export-section";
 
+import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
+
 // Type for ticket metadata
 interface TicketMetadata {
   ticketNumber?: string;
@@ -158,12 +160,19 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
     const date = new Date(dateString);
     return date.toLocaleString();
   };
+
+  if (isLoading && logs.length === 0) {
+    return <DashboardSkeleton />;
+  }
+
   return (
-    <div className="w-full p-6 space-y-6">
+    <div className="space-y-8">
       <div className="flex items-center justify-between">
-        <div className="flex items-center space-x-2">
-          <Database className="h-6 w-6 text-primary" />
-          <h2 className="text-2xl font-bold">System Logs</h2>
+        <div>
+          <h1 className="text-3xl font-bold text-gray-900">System Logs</h1>
+          <p className="text-gray-600 mt-2">
+            View and filter system logs and user activities including ticket operations.
+          </p>
         </div>
         <Button
           variant="outline"
@@ -177,14 +186,9 @@ export const LogsSection: React.FC<AdminSectionProps> = () => {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main logs card - takes up 2/3 of the space on large screens */}
-        <Card className="p-4 lg:col-span-3">
-          <div className="text-sm text-muted-foreground mb-4">
-            View and filter system logs and user activities including ticket operations. Monitor
-            authentication events, system operations, user actions, and complete ticket audit trail.
-          </div>
-
+      <div className="grid grid-cols-1 gap-6">
+        {/* Main logs card */}
+        <Card className="p-6 shadow-sm border-none">
           {/* Filters */}
           <div className="flex flex-wrap items-end gap-4 mb-6">
             <div className="space-y-2">
