@@ -2,8 +2,28 @@
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import verify from "@/lib/rzp/verify";
-import { Check, Crown, Sparkles, IndianRupeeIcon, Shield, Clock, Users, Star } from "lucide-react";
+import {
+  Check,
+  Crown,
+  Sparkles,
+  IndianRupeeIcon,
+  Shield,
+  Clock,
+  Users,
+  Star,
+  ArrowRight,
+  ArrowLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { Separator } from "@/components/ui/separator";
 import Script from "next/script";
 import { createUserSubscription } from "@/lib/subscriptions";
 import { useSession } from "@/lib/auth-client";
@@ -36,10 +56,11 @@ export default function Checkout({ plan }: { plan: string }) {
       price: 1999,
       originalPrice: 1999,
       description: "Perfect for meditation enthusiasts",
-      gradient: "from-[#76d2fa] to-[#5a9be9]",
-      textColor: "text-[#5a9be9]",
-      bgColor: "bg-[#5a9be9]",
-      icon: <Star className="w-8 h-8 text-white" />,
+      icon: <Star className="w-6 h-6" />,
+      bgColor: "bg-sky-50",
+      textColor: "text-sky-700",
+      borderColor: "border-sky-200",
+      accentColor: "bg-sky-600",
       features: [
         "Live meditation sessions",
         "Basic meditation guides",
@@ -49,9 +70,9 @@ export default function Checkout({ plan }: { plan: string }) {
         "Community access",
       ],
       benefits: [
-        { icon: <Users className="w-5 h-5" />, text: "Group meditation sessions" },
-        { icon: <Clock className="w-5 h-5" />, text: "Flexible scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" },
+        { icon: <Users className="w-4 h-4" />, text: "Group meditation sessions" },
+        { icon: <Clock className="w-4 h-4" />, text: "Flexible scheduling" },
+        { icon: <Shield className="w-4 h-4" />, text: "Cancel anytime" },
       ],
     },
     bloom: {
@@ -59,10 +80,11 @@ export default function Checkout({ plan }: { plan: string }) {
       price: 1999,
       originalPrice: 1999,
       description: "Most popular plan for your wellness journey",
-      gradient: "from-[#CDC1FF] to-[#876aff]",
-      textColor: "text-[#876aff]",
-      bgColor: "bg-[#876aff]",
-      icon: <Crown className="w-8 h-8 text-white" />,
+      icon: <Crown className="w-6 h-6" />,
+      bgColor: "bg-violet-50",
+      textColor: "text-violet-700",
+      borderColor: "border-violet-200",
+      accentColor: "bg-violet-600",
       features: [
         "Live yoga sessions (General)",
         "Generalized diet plans",
@@ -72,9 +94,9 @@ export default function Checkout({ plan }: { plan: string }) {
         "Community access",
       ],
       benefits: [
-        { icon: <Users className="w-5 h-5" />, text: "Join group sessions" },
-        { icon: <Clock className="w-5 h-5" />, text: "Flexible scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Cancel anytime" },
+        { icon: <Users className="w-4 h-4" />, text: "Join group sessions" },
+        { icon: <Clock className="w-4 h-4" />, text: "Flexible scheduling" },
+        { icon: <Shield className="w-4 h-4" />, text: "Cancel anytime" },
       ],
     },
     flourish: {
@@ -82,10 +104,11 @@ export default function Checkout({ plan }: { plan: string }) {
       price: 4999,
       originalPrice: 4999,
       description: "Perfect for personalized wellness needs",
-      gradient: "from-[#ffa6c5] to-[#ff7dac]",
-      textColor: "text-[#ff7dac]",
-      bgColor: "bg-[#ff7dac]",
-      icon: <Sparkles className="w-8 h-8 text-white" />,
+      icon: <Sparkles className="w-6 h-6" />,
+      bgColor: "bg-pink-50",
+      textColor: "text-pink-700",
+      borderColor: "border-pink-200",
+      accentColor: "bg-pink-600",
       features: [
         "Live yoga sessions (Individual)",
         "Personalized diet plans",
@@ -95,9 +118,9 @@ export default function Checkout({ plan }: { plan: string }) {
         "Premium support",
       ],
       benefits: [
-        { icon: <Users className="w-5 h-5" />, text: "Personal trainer" },
-        { icon: <Clock className="w-5 h-5" />, text: "Priority scheduling" },
-        { icon: <Shield className="w-5 h-5" />, text: "Full support" },
+        { icon: <Users className="w-4 h-4" />, text: "Personal trainer" },
+        { icon: <Clock className="w-4 h-4" />, text: "Priority scheduling" },
+        { icon: <Shield className="w-4 h-4" />, text: "Full support" },
       ],
     },
   };
@@ -201,7 +224,7 @@ export default function Checkout({ plan }: { plan: string }) {
           email: session?.user?.email || "user@example.com",
         },
         theme: {
-          color: selectedPlan.bgColor.replace("bg-[", "").replace("]", ""),
+          color: "#0F172A",
         },
       };
       const razorpay = new window.Razorpay(options);
@@ -225,10 +248,10 @@ export default function Checkout({ plan }: { plan: string }) {
   // Show loading while session is being fetched
   if (session === undefined) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-indigo-600 mx-auto mb-4" />
-          <p className="text-gray-600">Loading...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading...</p>
         </div>
       </div>
     );
@@ -236,229 +259,206 @@ export default function Checkout({ plan }: { plan: string }) {
 
   return (
     <>
-      <div className="min-h-screen bg-gradient-to-br from-gray-50 via-white to-gray-100 py-12 px-4">
-        {/* Background elements */}
-        <div className="absolute inset-0 overflow-hidden pointer-events-none">
-          <div className="absolute -top-20 -right-20 w-64 h-64 bg-blue-400/10 rounded-full blur-3xl" />
-          <div className="absolute -bottom-20 -left-20 w-64 h-64 bg-pink-400/10 rounded-full blur-3xl" />
-        </div>
-
-        <div className="max-w-4xl mx-auto relative">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
-          <div className="text-center mb-12">
-            <div className="inline-flex items-center px-4 py-2 bg-indigo-100 text-indigo-800 rounded-full text-sm font-medium mb-4">
-              <Shield className="w-4 h-4 mr-2" />
-              Secure Checkout
+          <div className="mb-12">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="mb-4 hover:bg-primary/5 hover:text-primary transition-colors"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back
+            </Button>
+            <div className="text-center">
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mb-4">
+                Complete Your Subscription
+              </h1>
+              <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
+                You&apos;re just one step away from starting your wellness journey with Yoga Vaidya
+              </p>
             </div>
-            <h1 className="text-4xl md:text-5xl font-bold text-gray-800 mb-4">
-              Complete Your Subscription
-            </h1>
-            <p className="text-gray-600 text-lg max-w-2xl mx-auto">
-              You&apos;re just one step away from starting your wellness journey with Yoga Vaidya
-            </p>
           </div>
 
-          <div className="grid md:grid-cols-2 gap-8 items-start">
+          <div className="grid md:grid-cols-12 gap-8 items-start">
             {/* Plan Details Card */}
-            <div
-              className={`bg-gradient-to-b ${selectedPlan.gradient} rounded-3xl overflow-hidden shadow-2xl`}
-            >
-              <div className="p-8 text-white">
-                {/* Plan Header */}
-                <div className="flex items-center space-x-4 mb-6">
-                  <div className="w-16 h-16 rounded-full bg-white/20 flex items-center justify-center">
-                    {selectedPlan.icon}
+            <div className="md:col-span-5">
+              <Card
+                className={`sticky top-8 border-2 ${selectedPlan.borderColor} ${selectedPlan.bgColor}`}
+              >
+                <CardHeader>
+                  <div className="flex items-center gap-4">
+                    <div
+                      className={`p-3 rounded-full bg-white shadow-sm ${selectedPlan.textColor}`}
+                    >
+                      {selectedPlan.icon}
+                    </div>
+                    <div>
+                      <CardTitle className={`text-xl ${selectedPlan.textColor}`}>
+                        {selectedPlan.name} Plan
+                      </CardTitle>
+                      <CardDescription className="text-muted-foreground/80">
+                        {selectedPlan.description}
+                      </CardDescription>
+                    </div>
                   </div>
-                  <div>
-                    <span className="text-sm font-semibold bg-white/20 px-4 py-1 rounded-full uppercase">
-                      {selectedPlan.name}
-                    </span>
-                    <p className="text-white/90 mt-2">{selectedPlan.description}</p>
-                  </div>
-                </div>
-
-                {/* Billing Toggle */}
-                <div className="mb-6">
-                  <div className="inline-flex items-center bg-white/20 p-1 rounded-full">
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  {/* Billing Toggle */}
+                  <div className="bg-white/50 p-1 rounded-lg flex">
                     <button
                       onClick={() => setBillingPeriod("monthly")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
                         billingPeriod === "monthly"
-                          ? "bg-white text-gray-800 shadow-md"
-                          : "text-white/80 hover:bg-white/10"
+                          ? "bg-white shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       Monthly
                     </button>
                     <button
                       onClick={() => setBillingPeriod("annual")}
-                      className={`px-4 py-2 rounded-full text-sm font-medium transition-all duration-300 ${
+                      className={`flex-1 py-2 text-sm font-medium rounded-md transition-all ${
                         billingPeriod === "annual"
-                          ? "bg-white text-gray-800 shadow-md"
-                          : "text-white/80 hover:bg-white/10"
+                          ? "bg-white shadow-sm text-foreground"
+                          : "text-muted-foreground hover:text-foreground"
                       }`}
                     >
                       Annual
+                      <span className="ml-1 text-xs text-green-600 font-bold">-20%</span>
                     </button>
                   </div>
-                  {billingPeriod === "annual" && (
-                    <div className="mt-2 text-white/90 text-sm font-medium">
-                      🎉 Save 20% with annual billing!
-                    </div>
-                  )}
-                </div>
 
-                {/* Price */}
-                <div className="mb-8">
-                  <div className="flex items-end mb-2">
-                    <span className="text-5xl font-bold flex items-center">
-                      <IndianRupeeIcon className="w-8 h-8" />
-                      {applyDiscount(selectedPlan.price)}
-                    </span>
-                    <span className="text-white/70 ml-2 mb-1">
-                      / {billingPeriod === "monthly" ? "month" : "year"}
-                    </span>
+                  {/* Price Display */}
+                  <div className="text-center py-4">
+                    <div className="flex items-center justify-center gap-1">
+                      <IndianRupeeIcon className={`w-6 h-6 ${selectedPlan.textColor}`} />
+                      <span className={`text-4xl font-bold ${selectedPlan.textColor}`}>
+                        {applyDiscount(selectedPlan.price)}
+                      </span>
+                      <span className="text-muted-foreground self-end mb-1">
+                        /{billingPeriod === "monthly" ? "mo" : "yr"}
+                      </span>
+                    </div>
+                    {billingPeriod === "annual" && (
+                      <p className="text-sm text-green-600 font-medium mt-2">
+                        You save ₹{selectedPlan.price - applyDiscount(selectedPlan.price)} per year!
+                      </p>
+                    )}
                   </div>
-                  {billingPeriod === "annual" && selectedPlan.price > 0 && (
-                    <p className="text-white/80 text-sm">
-                      <span className="line-through">₹{selectedPlan.price}</span> - You save ₹
-                      {selectedPlan.price - applyDiscount(selectedPlan.price)} per billing period
-                    </p>
-                  )}
-                </div>
 
-                {/* Features */}
-                <div className="space-y-3 mb-8">
-                  <h3 className="text-lg font-semibold mb-4">What&apos;s included:</h3>
-                  {selectedPlan.features.map((feature, index) => (
-                    <div key={index} className="flex items-center">
-                      <Check className="h-5 w-5 mr-3 flex-shrink-0" />
-                      <span className="text-white/90">{feature}</span>
-                    </div>
-                  ))}
-                </div>
+                  <Separator className="bg-black/5" />
 
-                {/* Benefits */}
-                <div className="space-y-3">
-                  <h3 className="text-lg font-semibold mb-4">Key benefits:</h3>
-                  {selectedPlan.benefits.map((benefit, index) => (
-                    <div key={index} className="flex items-center">
-                      <div className="text-white/80 mr-3">{benefit.icon}</div>
-                      <span className="text-white/90">{benefit.text}</span>
-                    </div>
-                  ))}
-                </div>
-              </div>
+                  {/* Features List */}
+                  <div className="space-y-3">
+                    <h3 className="font-medium text-sm text-muted-foreground uppercase tracking-wider">
+                      What&apos;s included
+                    </h3>
+                    <ul className="space-y-3">
+                      {selectedPlan.features.map((feature, index) => (
+                        <li key={index} className="flex items-start gap-3 text-sm">
+                          <Check className={`h-5 w-5 ${selectedPlan.textColor} flex-shrink-0`} />
+                          <span className="text-foreground/80">{feature}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </CardContent>
+              </Card>
             </div>
 
             {/* Checkout Form */}
-            <div className="bg-white rounded-2xl shadow-xl p-8">
-              <h2 className="text-2xl font-bold text-gray-800 mb-6">Payment Summary</h2>
+            <div className="md:col-span-7">
+              <Card className="border-2">
+                <CardHeader>
+                  <CardTitle>Payment Summary</CardTitle>
+                  <CardDescription>Review your order details before proceeding</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6">
+                  <div className="space-y-4">
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Plan</span>
+                      <span className={`font-medium ${selectedPlan.textColor}`}>
+                        {selectedPlan.name}
+                      </span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Billing Cycle</span>
+                      <span className="font-medium capitalize">{billingPeriod}</span>
+                    </div>
+                    <div className="flex justify-between items-center text-sm">
+                      <span className="text-muted-foreground">Subtotal</span>
+                      <span>₹{selectedPlan.price}</span>
+                    </div>
 
-              {/* Order Summary */}
-              <div className="space-y-4 mb-8">
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Plan</span>
-                  <span className="font-semibold">{selectedPlan.name}</span>
-                </div>
-                <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                  <span className="text-gray-600">Billing</span>
-                  <span className="font-semibold capitalize">{billingPeriod}</span>
-                </div>
-                {billingPeriod === "annual" && (
-                  <div className="flex justify-between items-center py-3 border-b border-gray-100">
-                    <span className="text-gray-600">Discount (20%)</span>
-                    <span className="font-semibold text-green-600">
-                      -₹{selectedPlan.price - applyDiscount(selectedPlan.price)}
-                    </span>
+                    {billingPeriod === "annual" && (
+                      <div className="flex justify-between items-center text-sm text-green-600">
+                        <span>Annual Discount (20%)</span>
+                        <span>-₹{selectedPlan.price - applyDiscount(selectedPlan.price)}</span>
+                      </div>
+                    )}
+
+                    <Separator />
+
+                    <div className="flex justify-between items-center">
+                      <span className="text-lg font-semibold">Total Amount</span>
+                      <span className="text-2xl font-bold flex items-center">
+                        <IndianRupeeIcon className="w-5 h-5" />
+                        {applyDiscount(selectedPlan.price)}
+                      </span>
+                    </div>
                   </div>
-                )}
-                <div className="flex justify-between items-center py-4 bg-gray-50 px-4 rounded-lg">
-                  <span className="text-lg font-semibold text-gray-800">Total</span>
-                  <span className="text-2xl font-bold text-gray-800 flex items-center">
-                    <IndianRupeeIcon className="w-6 h-6" />
-                    {applyDiscount(selectedPlan.price)}
-                  </span>
-                </div>
-              </div>
 
-              {/* Security badges */}
-              <div className="flex items-center justify-center space-x-6 mb-8 text-sm text-gray-600">
-                <div className="flex items-center">
-                  <Shield className="w-4 h-4 mr-2 text-green-500" />
-                  Secure Payment
-                </div>
-                <div className="flex items-center">
-                  <Check className="w-4 h-4 mr-2 text-green-500" />
-                  Cancel Anytime
-                </div>
-              </div>
-
-              {/* Checkout Button */}
-              <Button
-                onClick={handleCheckout}
-                disabled={loading}
-                className={`w-full py-6 text-lg font-semibold rounded-xl transition-all duration-300 ${selectedPlan.bgColor} hover:opacity-90 text-white shadow-lg hover:shadow-xl`}
-              >
-                {loading ? (
-                  <span className="flex items-center justify-center">
-                    <svg
-                      className="animate-spin h-5 w-5 mr-3"
-                      xmlns="http://www.w3.org/2000/svg"
-                      fill="none"
-                      viewBox="0 0 24 24"
-                    >
-                      <circle
-                        className="opacity-25"
-                        cx="12"
-                        cy="12"
-                        r="10"
-                        stroke="currentColor"
-                        strokeWidth="4"
-                      />
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8z" />
-                    </svg>
-                    Processing Payment...
-                  </span>
-                ) : (
-                  <>
-                    <Shield className="w-5 h-5 mr-2" />
-                    Complete Secure Payment
-                  </>
-                )}
-              </Button>
-
-              {/* Footer note */}
-              <p className="text-xs text-gray-500 text-center mt-4">
-                By completing this purchase, you agree to our Terms of Service and Privacy Policy.
-                Your subscription will auto-renew unless cancelled.
-              </p>
-            </div>
-          </div>
-
-          {/* Trust indicators */}
-          <div className="mt-12 text-center">
-            <div className="flex flex-wrap items-center justify-center gap-8 text-sm text-gray-600">
-              <div className="flex items-center">
-                <Shield className="w-4 h-4 mr-2 text-green-500" />
-                256-bit SSL Encryption
-              </div>
-              <div className="flex items-center">
-                <Check className="w-4 h-4 mr-2 text-green-500" />
-                Money-back Guarantee
-              </div>
-              <div className="flex items-center">
-                <Clock className="w-4 h-4 mr-2 text-green-500" />
-                24/7 Customer Support
-              </div>
+                  <div
+                    className={`rounded-lg p-4 space-y-3 ${selectedPlan.bgColor} border ${selectedPlan.borderColor}`}
+                  >
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Shield className="w-4 h-4 text-green-600" />
+                      <span>Secure SSL Encryption</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Check className="w-4 h-4 text-green-600" />
+                      <span>Cancel anytime from your dashboard</span>
+                    </div>
+                    <div className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <Clock className="w-4 h-4 text-green-600" />
+                      <span>Instant access to premium features</span>
+                    </div>
+                  </div>
+                </CardContent>
+                <CardFooter className="flex-col gap-4">
+                  <Button
+                    onClick={handleCheckout}
+                    disabled={loading}
+                    className={`w-full h-12 text-lg ${selectedPlan.accentColor} hover:opacity-90 transition-opacity`}
+                    size="lg"
+                  >
+                    {loading ? (
+                      <>
+                        <div className="animate-spin rounded-full h-5 w-5 border-b-2 border-white mr-2" />
+                        Processing...
+                      </>
+                    ) : (
+                      <>
+                        Pay Securely <ArrowRight className="ml-2 h-4 w-4" />
+                      </>
+                    )}
+                  </Button>
+                  <p className="text-xs text-muted-foreground text-center">
+                    By confirming your subscription, you allow Yoga Vaidya to charge your card for
+                    future payments in accordance with our terms.
+                  </p>
+                </CardFooter>
+              </Card>
             </div>
           </div>
         </div>
       </div>
 
-      <Script 
-        id="razorpay-checkout-js" 
-        src="https://checkout.razorpay.com/v1/checkout.js" 
+      <Script
+        id="razorpay-checkout-js"
+        src="https://checkout.razorpay.com/v1/checkout.js"
         onLoad={() => setRazorpayLoaded(true)}
         onError={() => toast.error("Failed to load payment system. Please refresh the page.")}
       />

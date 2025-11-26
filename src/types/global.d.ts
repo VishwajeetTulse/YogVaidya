@@ -8,7 +8,8 @@
 // ============================================
 
 // Response interface available for use if needed
-interface _RazorpayPaymentResponse {
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
+interface RazorpayPaymentResponse {
   razorpay_order_id?: string;
   razorpay_subscription_id?: string;
   razorpay_payment_id?: string;

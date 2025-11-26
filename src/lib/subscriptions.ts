@@ -1368,7 +1368,7 @@ async function sendSubscriptionExpiryReminders() {
             html: true,
           });
 
-          console.log(`Sent ${days}-day expiry reminder to ${user.email}`);
+          console.warn(`Sent ${days}-day expiry reminder to ${user.email}`);
         } catch (emailError) {
           console.error(`Failed to send expiry reminder to ${user.email}:`, emailError);
         }
@@ -1426,7 +1426,7 @@ async function sendSubscriptionExpiredEmails() {
           html: true,
         });
 
-        console.log(`Sent expiration email to ${user.email}`);
+        console.warn(`Sent expiration email to ${user.email}`);
       } catch (emailError) {
         console.error(`Failed to send expiration email to ${user.email}:`, emailError);
       }

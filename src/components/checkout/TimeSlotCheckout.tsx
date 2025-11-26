@@ -1,17 +1,34 @@
 "use client";
 import { useRouter, useSearchParams } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Check, Calendar, Clock, User, IndianRupeeIcon, Mail, ArrowLeft } from "lucide-react";
+import {
+  Check,
+  Calendar,
+  Clock,
+  User,
+  IndianRupeeIcon,
+  Mail,
+  ArrowLeft,
+  ArrowRight,
+  Shield,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
 import Script from "next/script";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
-
 interface RazorpayResponse {
   razorpay_order_id: string;
   razorpay_payment_id: string;
@@ -219,7 +236,7 @@ export default function TimeSlotCheckout() {
           email: session?.user?.email || "user@example.com",
         },
         theme: {
-          color: "#5a9be9",
+          color: "#0F172A",
         },
         modal: {
           ondismiss: function () {
@@ -343,9 +360,9 @@ export default function TimeSlotCheckout() {
 
   if (loadingSlot) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Loading session details...</p>
+          <p className="text-muted-foreground">Loading session details...</p>
         </div>
       </div>
     );
@@ -353,12 +370,10 @@ export default function TimeSlotCheckout() {
 
   if (!timeSlot) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Session not found</p>
-          <Button onClick={() => router.push("/dashboard")} className="mt-4">
-            Back to Dashboard
-          </Button>
+          <p className="text-muted-foreground mb-4">Session not found</p>
+          <Button onClick={() => router.push("/dashboard")}>Back to Dashboard</Button>
         </div>
       </div>
     );
@@ -370,45 +385,55 @@ export default function TimeSlotCheckout() {
   return (
     <>
       <Script src="https://checkout.razorpay.com/v1/checkout.js" />
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-background py-12 px-4 sm:px-6 lg:px-8">
+        <div className="max-w-5xl mx-auto">
           {/* Header */}
           <div className="mb-8">
-            <Button variant="outline" onClick={() => router.back()} className="mb-4">
+            <Button
+              variant="outline"
+              onClick={() => router.back()}
+              className="mb-4 hover:bg-primary/5 hover:text-primary transition-colors"
+            >
               <ArrowLeft className="w-4 h-4 mr-2" />
               Back
             </Button>
             <div className="text-center">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">Book Your Session</h1>
-              <p className="text-gray-600">Complete your booking and payment</p>
+              <h1 className="text-3xl font-bold tracking-tight text-foreground sm:text-4xl mb-4">
+                Book Your Session
+              </h1>
+              <p className="text-lg text-muted-foreground">Complete your booking and payment</p>
             </div>
           </div>
 
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-8">
             {/* Session Details */}
-            <div className="lg:col-span-2 space-y-6">
+            <div className="lg:col-span-8 space-y-6">
               {/* Mentor Info */}
-              <Card>
-                <CardHeader>
+              <Card className="border-2 border-primary/10 shadow-sm">
+                <CardHeader className="rounded-t-xl">
                   <CardTitle className="flex items-center gap-3">
-                    <User className="w-5 h-5 text-blue-600" />
+                    <User className="w-5 h-5 text-primary" />
                     Your Mentor
                   </CardTitle>
                 </CardHeader>
-                <CardContent>
+                <CardContent className="pt-6">
                   <div className="flex items-start gap-4">
-                    <Avatar className="w-16 h-16">
+                    <Avatar className="w-16 h-16 ring-2 ring-background shadow-sm">
                       <AvatarImage src={timeSlot.mentor.image} />
-                      <AvatarFallback>{timeSlot.mentor.name?.charAt(0) || "M"}</AvatarFallback>
+                      <AvatarFallback className="bg-primary/10 text-primary">
+                        {timeSlot.mentor.name?.charAt(0) || "M"}
+                      </AvatarFallback>
                     </Avatar>
                     <div className="flex-1">
                       <h3 className="font-semibold text-lg">{timeSlot.mentor.name}</h3>
-                      <p className="text-gray-600 capitalize">
+                      <p className="text-muted-foreground capitalize">
                         {timeSlot.mentor.mentorType?.toLowerCase().replace("mentor", " Mentor")}
                       </p>
                       <div className="flex items-center gap-2 mt-2">
-                        <Mail className="w-4 h-4 text-gray-400" />
-                        <span className="text-sm text-gray-600">{timeSlot.mentor.email}</span>
+                        <Mail className="w-4 h-4 text-muted-foreground" />
+                        <span className="text-sm text-muted-foreground">
+                          {timeSlot.mentor.email}
+                        </span>
                       </div>
                     </div>
                   </div>
@@ -416,35 +441,42 @@ export default function TimeSlotCheckout() {
               </Card>
 
               {/* Session Details */}
-              <Card>
-                <CardHeader>
+              <Card className="border-2">
+                <CardHeader className="bg-muted/30">
                   <CardTitle className="flex items-center gap-3">
-                    <Calendar className="w-5 h-5 text-blue-600" />
+                    <Calendar className="w-5 h-5 text-primary" />
                     Session Details
                   </CardTitle>
                 </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <CardContent className="space-y-6 pt-6">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Session Type</Label>
-                      <Badge className={`mt-1 ${getSessionTypeColor(timeSlot.sessionType)}`}>
-                        {timeSlot.sessionType}
-                      </Badge>
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Session Type
+                      </Label>
+                      <div className="mt-1">
+                        <Badge
+                          variant="secondary"
+                          className={`text-sm font-medium ${getSessionTypeColor(timeSlot.sessionType)}`}
+                        >
+                          {timeSlot.sessionType}
+                        </Badge>
+                      </div>
                     </div>
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Duration</Label>
-                      <p className="mt-1 flex items-center gap-1">
-                        <Clock className="w-4 h-4 text-gray-400" />
+                      <Label className="text-sm font-medium text-muted-foreground">Duration</Label>
+                      <p className="mt-1 flex items-center gap-2 font-medium">
+                        <Clock className="w-4 h-4 text-muted-foreground" />
                         {getDuration()}
                       </p>
                     </div>
                   </div>
 
                   <div>
-                    <Label className="text-sm font-medium text-gray-700">Date & Time</Label>
-                    <div className="mt-1 p-3 bg-gray-50 rounded-lg">
-                      <p className="font-medium">{startDateTime.date}</p>
-                      <p className="text-sm text-gray-600">
+                    <Label className="text-sm font-medium text-muted-foreground">Date & Time</Label>
+                    <div className="mt-2 p-4 bg-muted/30 rounded-lg border">
+                      <p className="font-medium text-lg">{startDateTime.date}</p>
+                      <p className="text-muted-foreground">
                         {startDateTime.time} - {endDateTime.time}
                       </p>
                     </div>
@@ -452,8 +484,10 @@ export default function TimeSlotCheckout() {
 
                   {timeSlot.notes && (
                     <div>
-                      <Label className="text-sm font-medium text-gray-700">Session Notes</Label>
-                      <p className="mt-1 text-sm text-gray-600 p-3 bg-gray-50 rounded-lg">
+                      <Label className="text-sm font-medium text-muted-foreground">
+                        Session Notes
+                      </Label>
+                      <p className="mt-2 text-sm text-muted-foreground p-4 bg-muted/30 rounded-lg border">
                         {timeSlot.notes}
                       </p>
                     </div>
@@ -475,61 +509,49 @@ export default function TimeSlotCheckout() {
                     value={notes}
                     onChange={(e) => setNotes(e.target.value)}
                     rows={4}
+                    className="resize-none"
                   />
                 </CardContent>
               </Card>
             </div>
 
             {/* Booking Summary */}
-            <div className="lg:col-span-1">
-              <Card className="sticky top-8">
-                <CardHeader>
+            <div className="lg:col-span-4">
+              <Card className="sticky top-8 shadow-lg border-2 border-primary/10">
+                <CardHeader className="rounded-t-xl">
                   <CardTitle className="flex items-center gap-3">
-                    <IndianRupeeIcon className="w-5 h-5 text-green-600" />
+                    <IndianRupeeIcon className="w-5 h-5 text-primary" />
                     Booking Summary
                   </CardTitle>
                 </CardHeader>
                 <CardContent className="space-y-4">
                   <div className="space-y-3">
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Session Fee</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Session Fee</span>
                       <span className="font-medium">
                         ₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}
                       </span>
                     </div>
-                    <div className="flex justify-between">
-                      <span className="text-gray-600">Platform Fee</span>
+                    <div className="flex justify-between text-sm">
+                      <span className="text-muted-foreground">Platform Fee</span>
                       <span className="font-medium">₹0</span>
                     </div>
-                    <hr />
-                    <div className="flex justify-between text-lg font-semibold">
-                      <span>Total Amount</span>
-                      <span className="text-green-600">
+
+                    <Separator />
+
+                    <div className="flex justify-between items-center">
+                      <span className="font-semibold">Total Amount</span>
+                      <span className="text-xl font-bold">
                         ₹{timeSlot.price || timeSlot.mentor.sessionPrice || 999}
                       </span>
                     </div>
                   </div>
-
-                  <div className="space-y-3 pt-4 border-t">
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <span>Secure payment</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <span>Instant confirmation</span>
-                    </div>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <Check className="w-4 h-4 text-green-600" />
-                      <span>24/7 support</span>
-                    </div>
-                  </div>
-
+                </CardContent>
+                <CardFooter className="flex-col gap-4 bg-muted/20 pt-6">
                   <Button
                     onClick={handleBookTimeSlot}
                     disabled={loading}
-                    className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                    size="lg"
+                    className="w-full h-12 text-lg"
                   >
                     {loading ? (
                       <>
@@ -538,16 +560,22 @@ export default function TimeSlotCheckout() {
                       </>
                     ) : (
                       <>
-                        <IndianRupeeIcon className="w-4 h-4 mr-2" />
-                        Pay & Book Session
+                        Pay & Book Session <ArrowRight className="ml-2 h-4 w-4" />
                       </>
                     )}
                   </Button>
 
-                  <p className="text-xs text-gray-500 text-center">
-                    By booking, you agree to our Terms of Service and Privacy Policy
-                  </p>
-                </CardContent>
+                  <div className="flex items-center justify-center gap-4 text-xs text-muted-foreground">
+                    <div className="flex items-center gap-1">
+                      <Shield className="h-3 w-3" />
+                      Secure Payment
+                    </div>
+                    <div className="flex items-center gap-1">
+                      <Check className="h-3 w-3" />
+                      Instant Confirmation
+                    </div>
+                  </div>
+                </CardFooter>
               </Card>
             </div>
           </div>

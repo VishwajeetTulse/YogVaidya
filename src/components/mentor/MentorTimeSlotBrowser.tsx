@@ -141,15 +141,56 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
   const getSessionTypeColor = (type: string) => {
     switch (type) {
       case "YOGA":
-        return "bg-blue-100 text-blue-800 border-blue-200";
+        return "bg-violet-50 text-violet-700 border-violet-200";
       case "MEDITATION":
-        return "bg-purple-100 text-purple-800 border-purple-200";
+        return "bg-sky-50 text-sky-700 border-sky-200";
       case "DIET":
-        return "bg-green-100 text-green-800 border-green-200";
+        return "bg-pink-50 text-pink-700 border-pink-200";
       default:
-        return "bg-gray-100 text-gray-800 border-gray-200";
+        return "bg-slate-50 text-slate-700 border-slate-200";
     }
   };
+
+  const getMentorColor = (type: string) => {
+    const lowerType = type.toLowerCase();
+    if (lowerType.includes("yoga"))
+      return {
+        bg: "bg-violet-50",
+        text: "text-violet-700",
+        border: "border-violet-200",
+        accent: "bg-violet-600",
+        lightBg: "bg-violet-50/50",
+        button: "hover:bg-violet-700",
+      };
+    if (lowerType.includes("meditation"))
+      return {
+        bg: "bg-sky-50",
+        text: "text-sky-700",
+        border: "border-sky-200",
+        accent: "bg-sky-600",
+        lightBg: "bg-sky-50/50",
+        button: "hover:bg-sky-700",
+      };
+    if (lowerType.includes("diet") || lowerType.includes("nutrition"))
+      return {
+        bg: "bg-pink-50",
+        text: "text-pink-700",
+        border: "border-pink-200",
+        accent: "bg-pink-600",
+        lightBg: "bg-pink-50/50",
+        button: "hover:bg-pink-700",
+      };
+    return {
+      bg: "bg-slate-50",
+      text: "text-slate-700",
+      border: "border-slate-200",
+      accent: "bg-slate-600",
+      lightBg: "bg-slate-50/50",
+      button: "hover:bg-slate-700",
+    };
+  };
+
+  const mentorColor = mentorData ? getMentorColor(mentorData.mentorType) : getMentorColor("");
 
   // Get duration with robust date handling
   const getDuration = (startTime: DateValue, endTime: DateValue): string => {
@@ -197,9 +238,10 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
 
   if (loadingMentor) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Loading mentor information...</p>
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+          <p className="text-muted-foreground">Loading mentor information...</p>
         </div>
       </div>
     );
@@ -207,9 +249,9 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
 
   if (!mentorData) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 flex items-center justify-center">
+      <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <p className="text-gray-600">Mentor not found</p>
+          <p className="text-muted-foreground">Mentor not found</p>
           <Button onClick={() => router.push("/dashboard")} className="mt-4">
             Back to Dashboard
           </Button>
@@ -219,37 +261,43 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-purple-50 py-8">
+    <div className="min-h-screen bg-background py-8">
       <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
-          <Button variant="outline" onClick={() => router.push("/dashboard")} className="mb-4">
+          <Button
+            variant="outline"
+            onClick={() => router.push("/dashboard")}
+            className="mb-4 hover:bg-primary/5 hover:text-primary transition-colors"
+          >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Dashboard
           </Button>
         </div>
 
         {/* Mentor Info */}
-        <Card className="mb-8">
+        <Card className={`mb-8 border-2 ${mentorColor.border} shadow-lg shadow-primary/5`}>
           <CardContent className="p-6">
             <div className="flex items-start gap-6">
-              <Avatar className="w-20 h-20">
+              <Avatar className="w-24 h-24 ring-4 ring-background shadow-md">
                 <AvatarImage src={mentorData.image} />
-                <AvatarFallback>{mentorData.name?.charAt(0) || "M"}</AvatarFallback>
+                <AvatarFallback className={`text-2xl ${mentorColor.lightBg} ${mentorColor.text}`}>
+                  {mentorData.name?.charAt(0) || "M"}
+                </AvatarFallback>
               </Avatar>
               <div className="flex-1">
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">{mentorData.name}</h1>
-                <p className="text-gray-600 capitalize mb-3">
+                <h1 className="text-2xl font-bold text-foreground mb-2">{mentorData.name}</h1>
+                <p className={`font-medium ${mentorColor.text} capitalize mb-3`}>
                   {mentorData.mentorType?.toLowerCase().replace("mentor", " Mentor")}
                 </p>
-                <div className="flex items-center gap-4 text-sm text-gray-600">
+                <div className="flex items-center gap-4 text-sm text-muted-foreground">
                   <span className="flex items-center gap-1">
                     <IndianRupee className="w-4 h-4" />₹{mentorData.sessionPrice} per session
                   </span>
                   {mentorData.experience && <span>{mentorData.experience}+ years experience</span>}
                 </div>
                 {mentorData.expertise && (
-                  <p className="text-sm text-gray-600 mt-2">
+                  <p className="text-sm text-muted-foreground mt-2">
                     <strong>Specialization:</strong> {mentorData.expertise}
                   </p>
                 )}
@@ -259,23 +307,26 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
         </Card>
 
         {/* Available Sessions */}
-        <Card>
-          <CardHeader>
+        <Card className="border-2">
+          <CardHeader className="bg-muted/30">
             <CardTitle className="flex items-center gap-3">
-              <Calendar className="w-5 h-5 text-blue-600" />
+              <Calendar className="w-5 h-5 text-primary" />
               Available Sessions
             </CardTitle>
           </CardHeader>
-          <CardContent>
+          <CardContent className="pt-6">
             {loading ? (
               <div className="text-center py-8">
-                <p className="text-gray-600">Loading available sessions...</p>
+                <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary mx-auto mb-4" />
+                <p className="text-muted-foreground">Loading available sessions...</p>
               </div>
             ) : timeSlots.length === 0 ? (
               <div className="text-center py-8">
-                <BookOpen className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                <p className="text-gray-600 text-lg mb-2">No sessions available</p>
-                <p className="text-gray-400">
+                <BookOpen className="w-12 h-12 text-muted-foreground/50 mx-auto mb-4" />
+                <p className="text-lg font-medium text-muted-foreground mb-2">
+                  No sessions available
+                </p>
+                <p className="text-muted-foreground">
                   This mentor hasn&apos;t scheduled any sessions yet. Check back later!
                 </p>
               </div>
@@ -283,50 +334,53 @@ export default function MentorTimeSlotBrowser({ mentorId }: { mentorId: string }
               <div className="grid gap-4">
                 {timeSlots.map((slot) => {
                   const startDateTime = formatDateTime(slot.startTime);
-                  const endDateTime = formatDateTime(slot.endTime);
+                  const _endDateTime = formatDateTime(slot.endTime);
 
                   return (
                     <div
                       key={slot._id}
-                      className="flex items-center justify-between p-4 border border-gray-200 rounded-lg hover:border-blue-300 transition-colors"
+                      className="flex items-center justify-between p-4 border rounded-lg hover:border-primary/50 transition-colors bg-card"
                     >
                       <div className="flex items-center gap-4">
-                        <div className="text-center min-w-[80px]">
-                          <p className="text-sm font-medium text-gray-900">{startDateTime.date}</p>
-                          <p className="text-xs text-gray-500">
-                            {startDateTime.time} - {endDateTime.time}
-                          </p>
+                        <div className="text-center min-w-[80px] p-2 bg-muted/30 rounded-lg">
+                          <p className="text-sm font-bold text-foreground">{startDateTime.date}</p>
+                          <p className="text-xs text-muted-foreground">{startDateTime.time}</p>
                         </div>
 
-                        <div className="flex items-center gap-3">
-                          <Badge className={getSessionTypeColor(slot.sessionType)}>
-                            {slot.sessionType}
-                          </Badge>
-
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <Clock className="w-4 h-4" />
-                            {getDuration(slot.startTime, slot.endTime)}
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-3">
+                            <Badge
+                              variant="secondary"
+                              className={getSessionTypeColor(slot.sessionType)}
+                            >
+                              {slot.sessionType}
+                            </Badge>
+                            <span className="text-sm text-muted-foreground flex items-center gap-1">
+                              <Clock className="w-3 h-3" />
+                              {getDuration(slot.startTime, slot.endTime)}
+                            </span>
                           </div>
 
-                          <div className="flex items-center gap-1 text-sm text-gray-600">
-                            <IndianRupee className="w-4 h-4" />₹{slot.price}
-                          </div>
+                          {slot.notes && (
+                            <p className="text-sm text-muted-foreground max-w-md truncate">
+                              {slot.notes}
+                            </p>
+                          )}
                         </div>
-
-                        {slot.notes && (
-                          <div className="text-sm text-gray-600 max-w-xs truncate">
-                            {slot.notes}
-                          </div>
-                        )}
                       </div>
 
-                      <Button
-                        onClick={() => bookTimeSlot(slot._id)}
-                        disabled={slot.isBooked}
-                        className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700"
-                      >
-                        {slot.isBooked ? "Booked" : "Book Session"}
-                      </Button>
+                      <div className="flex items-center gap-4">
+                        <div className="text-right hidden sm:block">
+                          <p className="text-lg font-bold text-primary">₹{slot.price}</p>
+                        </div>
+                        <Button
+                          onClick={() => bookTimeSlot(slot._id)}
+                          disabled={slot.isBooked}
+                          className={`${mentorColor.accent} ${mentorColor.button} text-white min-w-[120px]`}
+                        >
+                          {slot.isBooked ? "Booked" : "Book Session"}
+                        </Button>
+                      </div>
                     </div>
                   );
                 })}
