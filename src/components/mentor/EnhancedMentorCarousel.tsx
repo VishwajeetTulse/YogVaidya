@@ -336,7 +336,7 @@ const EnhancedMentorCarousel: React.FC<EnhancedMentorCarouselProps> = ({
         <div className="overflow-hidden" ref={emblaRef}>
           <div className="flex">
             {mentors.map((mentor) => (
-              <div key={mentor.id} className="flex-none w-full sm:w-1/2 lg:w-1/3 xl:w-1/4 px-3">
+              <div key={mentor.id} className="flex-none w-full sm:w-1/2 lg:w-1/2 xl:w-1/3 px-4">
                 <MentorCard mentor={mentor} colorClass={colorClass} />
               </div>
             ))}

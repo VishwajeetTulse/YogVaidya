@@ -51,6 +51,7 @@ export default function Navbar({
             <Link
               key={item.href}
               href={item.href}
+              prefetch={item.href.startsWith("/") ? true : false}
               className={`${
                 currentPath === item.href
                   ? "text-indigo-600"

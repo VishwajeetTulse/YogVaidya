@@ -84,16 +84,11 @@ declare module "swagger-ui-react/swagger-ui.css" {
 }
 
 // ============================================
-// CSS Module Declarations
+// Module Declarations (CSS handled in css.d.ts)
 // ============================================
 
-declare module "@/app/globals.css" {
-  export {};
-}
-
-declare module "*.css" {
-  export {};
-}
+// Side-effect module imports
+declare module "@/lib/prisma-middleware-trial";
 
 // ============================================
 // Global Window Extensions

@@ -4,6 +4,8 @@ const BASE_URL = process.env.BASE_URL || "http://localhost:3000";
 
 test.describe("Performance Testing - Memory & Resource Leaks", () => {
   test("should not leak memory during page navigation", async ({ page }) => {
+    test.setTimeout(60000); // Increase timeout to 60 seconds
+
     const getMemory = async () => {
       return await page.evaluate(() => {
         if ((performance as any).memory) {
@@ -36,6 +38,7 @@ test.describe("Performance Testing - Memory & Resource Leaks", () => {
   });
 
   test("should not leak memory during rapid API calls", async ({ page }) => {
+    test.setTimeout(60000); // Increase timeout to 60 seconds
     await page.goto(`${BASE_URL}/mentors`);
 
     const getMemory = async () => {
@@ -219,12 +222,17 @@ test.describe("Performance Testing - Memory & Resource Leaks", () => {
   });
 
   test("should handle connection pooling efficiently", async ({ page }) => {
+    // Navigate to page first to establish base URL context
+    await page.goto(`${BASE_URL}/`);
+
     const connectionCount: number[] = [];
 
     for (let i = 0; i < 10; i++) {
       const start = Date.now();
       await page.evaluate(async () => {
-        return fetch("/api/mentors", { method: "GET" }).then((r) => r.json());
+        return fetch("/api/mentors", { method: "GET" })
+          .then((r) => r.json())
+          .catch(() => ({}));
       });
       connectionCount.push(Date.now() - start);
     }

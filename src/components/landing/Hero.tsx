@@ -66,6 +66,7 @@ export default function Hero() {
               alt="Yoga meditation"
               width={380}
               height={380}
+              priority
               className="object-contain scale-110"
             />
           </div>
