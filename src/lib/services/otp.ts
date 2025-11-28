@@ -16,8 +16,8 @@ const otpStore = new Map<string, { otp: string; expiresAt: Date; phoneNumber: st
  * Generate a random numeric OTP
  */
 function generateOTP(): string {
-  const digits = "0123456789";
-  let otp = "";
+  const digits = '0123456789';
+  let otp = '';
   for (let i = 0; i < OTP_LENGTH; i++) {
     otp += digits[Math.floor(Math.random() * digits.length)];
   }
@@ -52,7 +52,7 @@ export async function sendPhoneOTP({
   try {
     // Clean up expired OTPs periodically
     cleanupExpiredOTPs();
-
+    
     // Generate OTP
     const otp = generateOTP();
     const expiresAt = new Date(Date.now() + OTP_EXPIRY_MINUTES * 60 * 1000);
@@ -67,7 +67,7 @@ export async function sendPhoneOTP({
     // Try to send via SMS first
     if (await isSMSConfigured()) {
       const smsResult = await sendOTPSMS(phoneNumber, otp);
-
+      
       if (smsResult.success) {
         // Mask phone number for display (show last 4 digits)
         const maskedPhone = phoneNumber.replace(/\d(?=\d{4})/g, "*");
@@ -77,14 +77,14 @@ export async function sendPhoneOTP({
           method: "sms",
         };
       }
-
+      
       // If SMS fails, log and fall through to email fallback
       console.error("SMS sending failed, falling back to email:", smsResult.error);
     }
 
     // Fallback: Send OTP via email if SMS is not configured or failed
     console.warn("SMS not configured or failed. Sending OTP via email as fallback.");
-
+    
     const emailResult = await sendEmail({
       to: email,
       subject: "YogVaidya - Phone Verification OTP",
@@ -118,7 +118,7 @@ export async function sendPhoneOTP({
       </div>
       <p>This code will expire in <strong>${OTP_EXPIRY_MINUTES} minutes</strong>.</p>
       <div class="note">
-        <strong>Note:</strong> This OTP was sent to your email because SMS delivery is currently unavailable.
+        <strong>Note:</strong> This OTP was sent to your email because SMS delivery is currently unavailable. 
         The OTP is for verifying your phone number ${phoneNumber}.
       </div>
       <p>If you didn't request this verification, please ignore this email.</p>
@@ -167,7 +167,7 @@ export async function verifyPhoneOTP({
   try {
     // Clean up expired OTPs
     cleanupExpiredOTPs();
-
+    
     // Get stored OTP data
     const otpData = otpStore.get(userId);
 

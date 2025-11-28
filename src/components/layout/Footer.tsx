@@ -39,7 +39,24 @@ export default function Footer() {
     setIsChatOpen(!isChatOpen);
   };
 
-  const { messages, input, handleInputChange, handleSubmit, error } = useChat();
+  const [inputValue, setInputValue] = useState("");
+  const { messages, sendMessage, error } = useChat();
+
+  const onSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!inputValue.trim()) return;
+    sendMessage({ text: inputValue });
+    setInputValue("");
+  };
+
+  // Helper to extract text content from message parts
+  const getMessageText = (message: typeof messages[0]) => {
+    if (!message.parts) return "";
+    return message.parts
+      .filter((part): part is { type: "text"; text: string } => part.type === "text")
+      .map((part) => part.text)
+      .join("");
+  };
 
   return (
     <footer className="bg-gradient-to-r from-[#76d2fa] to-[#5abe9b] text-gray-800 relative">
@@ -269,7 +286,7 @@ export default function Footer() {
                           : "bg-white text-gray-800 border"
                       }`}
                     >
-                      <ReactMarkdown>{message.content}</ReactMarkdown>
+                      <ReactMarkdown>{getMessageText(message)}</ReactMarkdown>
                     </div>
                   </div>
                 ))
@@ -281,12 +298,12 @@ export default function Footer() {
 
             {/* Input Area */}
             <div className="border-t bg-white p-3">
-              <form onSubmit={handleSubmit} className="flex gap-2">
+              <form onSubmit={onSubmit} className="flex gap-2">
                 <input
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
-                  value={input}
+                  value={inputValue}
                   placeholder="Type your message..."
-                  onChange={handleInputChange}
+                  onChange={(e) => setInputValue(e.target.value)}
                 />
                 <Button
                   type="submit"

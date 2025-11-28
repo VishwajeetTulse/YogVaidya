@@ -8,14 +8,13 @@
 // ============================================
 
 // Response interface available for use if needed
-// eslint-disable-next-line @typescript-eslint/no-unused-vars
-interface RazorpayPaymentResponse {
-  razorpay_order_id?: string;
-  razorpay_subscription_id?: string;
-  razorpay_payment_id?: string;
-  razorpay_signature?: string;
-  [key: string]: unknown;
-}
+// interface RazorpayPaymentResponse {
+//   razorpay_order_id?: string;
+//   razorpay_subscription_id?: string;
+//   razorpay_payment_id?: string;
+//   razorpay_signature?: string;
+//   [key: string]: unknown;
+// }
 
 interface RazorpayInstance {
   open: () => void;
@@ -84,11 +83,16 @@ declare module "swagger-ui-react/swagger-ui.css" {
 }
 
 // ============================================
-// Module Declarations (CSS handled in css.d.ts)
+// CSS Module Declarations
 // ============================================
 
-// Side-effect module imports
-declare module "@/lib/prisma-middleware-trial";
+declare module "@/app/globals.css" {
+  export {};
+}
+
+declare module "*.css" {
+  export {};
+}
 
 // ============================================
 // Global Window Extensions
