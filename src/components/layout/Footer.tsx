@@ -1,5 +1,5 @@
 "use client";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { Button } from "@/components/ui/button";
@@ -10,6 +10,8 @@ export default function Footer() {
   const [isChatOpen, setIsChatOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [isClient, setIsClient] = useState(false);
+  const [input, setInput] = useState("");
+  const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Ensure we're on the client side before accessing localStorage
   useEffect(() => {
@@ -39,23 +41,24 @@ export default function Footer() {
     setIsChatOpen(!isChatOpen);
   };
 
-  const [inputValue, setInputValue] = useState("");
-  const { messages, sendMessage, error } = useChat();
+  const { messages, sendMessage, error, status } = useChat({
+    onError: (err) => {
+      console.error("Chat error:", err);
+    },
+  });
 
-  const onSubmit = (e: React.FormEvent) => {
+  // Auto-scroll to bottom when new messages arrive
+  useEffect(() => {
+    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  }, [messages]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!inputValue.trim()) return;
-    sendMessage({ text: inputValue });
-    setInputValue("");
-  };
-
-  // Helper to extract text content from message parts
-  const getMessageText = (message: typeof messages[0]) => {
-    if (!message.parts) return "";
-    return message.parts
-      .filter((part): part is { type: "text"; text: string } => part.type === "text")
-      .map((part) => part.text)
-      .join("");
+    if (!input.trim()) return;
+    
+    const messageText = input;
+    setInput("");
+    await sendMessage({ text: messageText });
   };
 
   return (
@@ -286,7 +289,11 @@ export default function Footer() {
                           : "bg-white text-gray-800 border"
                       }`}
                     >
-                      <ReactMarkdown>{getMessageText(message)}</ReactMarkdown>
+                      {message.parts.map((part, index) =>
+                        part.type === "text" ? (
+                          <ReactMarkdown key={index}>{part.text}</ReactMarkdown>
+                        ) : null
+                      )}
                     </div>
                   </div>
                 ))
@@ -294,16 +301,19 @@ export default function Footer() {
               {error && (
                 <div className="text-red-500 text-sm text-center">Error: {error.message}</div>
               )}
+              {status === "streaming" && (
+                <div className="text-gray-400 text-sm text-center">Typing...</div>
+              )}
             </div>
 
             {/* Input Area */}
             <div className="border-t bg-white p-3">
-              <form onSubmit={onSubmit} className="flex gap-2">
+              <form onSubmit={handleSubmit} className="flex gap-2">
                 <input
                   className="flex-1 px-3 py-2 border border-gray-300 rounded-md text-sm focus:outline-none focus:ring-2 focus:ring-[#76d2fa] focus:border-transparent"
-                  value={inputValue}
+                  value={input}
                   placeholder="Type your message..."
-                  onChange={(e) => setInputValue(e.target.value)}
+                  onChange={(e) => setInput(e.target.value)}
                 />
                 <Button
                   type="submit"

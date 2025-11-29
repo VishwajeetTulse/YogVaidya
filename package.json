@@ -34,8 +34,8 @@
     "delete-session-bookings": "tsx scripts/delete-session-bookings.ts"
   },
   "dependencies": {
-    "@ai-sdk/google": "^1.2.22",
-    "@ai-sdk/react": "^1.2.12",
+    "@ai-sdk/google": "^2.0.44",
+    "@ai-sdk/react": "^2.0.104",
     "@hookform/resolvers": "^5.1.1",
     "@prisma/client": "^6.7.0",
     "@radix-ui/react-avatar": "^1.1.10",
