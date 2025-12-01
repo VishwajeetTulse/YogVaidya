@@ -25,17 +25,12 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      // Explicit redirect URI configuration
-      redirectURI: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
-  advanced: {
-    // Ensure cookies work correctly in production
-    useSecureCookies: process.env.NODE_ENV === "production",
-    crossSubDomainCookies: {
-      enabled: false,
-    },
-  },
+  trustedOrigins: [
+    "https://yog-vaidya.vercel.app",
+    "http://localhost:3000",
+  ],
   plugins: [nextCookies()],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
