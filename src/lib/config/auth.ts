@@ -4,24 +4,7 @@ import { nextCookies } from "better-auth/next-js";
 import { createAuthMiddleware } from "better-auth/api";
 import { sendEmail } from "@/lib/services/email";
 import { welcomeEmailTemplate } from "@/lib/services/email-templates";
-import type { NextRequest } from "next/server";
 import { prisma } from "./prisma";
-
-// Helper to get rememberMe from the request body (for sign-in route)
-async function getRememberMeFromRequest(req: NextRequest): Promise<boolean> {
-  try {
-    if (req.method === "POST") {
-      const contentType = req.headers.get("content-type") || "";
-      if (contentType.includes("application/json")) {
-        const body = await req.clone().json();
-        return !!body.rememberMe;
-      }
-    }
-  } catch {
-    // ignore
-  }
-  return false;
-}
 
 export const auth = betterAuth({
   baseURL: process.env.BETTER_AUTH_URL || "http://localhost:3000",
@@ -42,22 +25,18 @@ export const auth = betterAuth({
     google: {
       clientId: process.env.GOOGLE_CLIENT_ID || "",
       clientSecret: process.env.GOOGLE_CLIENT_SECRET || "",
-      redirectURI: process.env.BETTER_AUTH_URL 
-        ? `${process.env.BETTER_AUTH_URL}/api/auth/callback/google`
-        : "http://localhost:3000/api/auth/callback/google",
+      // Explicit redirect URI configuration
+      redirectURI: `${process.env.BETTER_AUTH_URL || "http://localhost:3000"}/api/auth/callback/google`,
     },
   },
-  cookies: {
-    getCookieOptions: async (ctx: { req: NextRequest }) => {
-      let rememberMe = false;
-      if (ctx.req) {
-        rememberMe = await getRememberMeFromRequest(ctx.req);
-      }
-      return rememberMe
-        ? { maxAge: 60 * 60 * 24 * 30 } // 30 days
-        : {};
+  advanced: {
+    // Ensure cookies work correctly in production
+    useSecureCookies: process.env.NODE_ENV === "production",
+    crossSubDomainCookies: {
+      enabled: false,
     },
   },
+  plugins: [nextCookies()],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {
       // Send welcome email on new user registration
@@ -80,7 +59,6 @@ export const auth = betterAuth({
       }
     }),
   },
-  plugins: [nextCookies()],
   user: {
     additionalFields: {
       phone: {
