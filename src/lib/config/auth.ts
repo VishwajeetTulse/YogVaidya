@@ -31,6 +31,10 @@ export const auth = betterAuth({
     "https://yog-vaidya.vercel.app",
     "http://localhost:3000",
   ],
+  advanced: {
+    cookiePrefix: "better-auth",
+    useSecureCookies: true,
+  },
   plugins: [nextCookies()],
   hooks: {
     after: createAuthMiddleware(async (ctx) => {

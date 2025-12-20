@@ -83,3 +83,7 @@ lerna-debug.log*
 # Other
 .qodo
 
+# Documentation (except README)
+*.md
+!README.md
+!prisma/database/README.md

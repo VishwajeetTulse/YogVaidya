@@ -24,6 +24,8 @@
     "fix-user": "node scripts/fix-user.js",
     "db:push": "npx prisma db push",
     "db:generate": "npx prisma generate",
+    "db:create-indexes": "node prisma/database/create-indexes.mjs",
+    "db:verify-indexes": "node prisma/database/verify-indexes.mjs",
     "truncate-schedule": "node scripts/truncate-schedule.js",
     "truncate-schedule-ts": "tsx scripts/truncate-schedule.ts",
     "truncate-schedule-advanced": "node scripts/truncate-schedule-advanced.js",
