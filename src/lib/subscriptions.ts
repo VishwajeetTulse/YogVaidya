@@ -766,7 +766,7 @@ async function convertRemainingTimeToNewPlan(userId: string, newPlan: Subscripti
 /**
  * Helper function to check if a user has access to a specific feature based on their plan
  */
-function hasFeatureAccess(subscriptionPlan: SubscriptionPlan, feature: string): boolean {
+async function hasFeatureAccess(subscriptionPlan: SubscriptionPlan, feature: string): Promise<boolean> {
   const planFeatures = {
     SEED: ["basic_yoga", "online_support"],
     BLOOM: ["basic_yoga", "online_support", "live_sessions", "general_diet", "ai_chat"],
