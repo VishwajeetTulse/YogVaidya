@@ -228,7 +228,7 @@ export async function GET(request: NextRequest) {
     // Calculate platform users (USER + MENTOR) excluding internal staff (ADMIN + MODERATOR)
     const platformUsers = (usersByRole.USER || 0) + (usersByRole.MENTOR || 0);
 
-    return NextResponse.json({
+    return {
       users: {
         total: roleTotal, // Count all users including admins and moderators
         platformUsers, // Only actual platform users (USER + MENTOR)

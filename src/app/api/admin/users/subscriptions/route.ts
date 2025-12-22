@@ -28,29 +28,32 @@ export async function GET(req: NextRequest) {
       "admin:users:subscriptions",
       async () => {
         return await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        subscriptionPlan: true,
-        subscriptionStatus: true,
-        billingPeriod: true,
-        subscriptionStartDate: true,
-        subscriptionEndDate: true,
-        trialUsed: true,
-        isTrialActive: true,
-        trialEndDate: true,
-        paymentAmount: true,
-        autoRenewal: true,
-        createdAt: true,
-        updatedAt: true,
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            subscriptionPlan: true,
+            subscriptionStatus: true,
+            billingPeriod: true,
+            subscriptionStartDate: true,
+            subscriptionEndDate: true,
+            trialUsed: true,
+            isTrialActive: true,
+            trialEndDate: true,
+            paymentAmount: true,
+            autoRenewal: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+          orderBy: {
+            createdAt: "desc",
+          },
+        });
       },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+      CACHE_TTL.SHORT
+    );
 
     // Filter to only show actual customers (USER role)
     const filteredUsers = users.filter((u) => u.role === "USER");
