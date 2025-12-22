@@ -180,12 +180,18 @@ export async function GET(request: Request) {
     const sessionType = searchParams.get("sessionType");
     const available = searchParams.get("available");
 
-    const { prisma } = await import("@/lib/config/prisma");
+    // Create cache key based on query params
+    const cacheKey = `timeslots:${mentorId || 'all'}:${date || 'all'}:${sessionType || 'all'}:${available || 'all'}`;
 
-    // Build filter for MongoDB query
-    const filter: Record<string, unknown> = {
-      isActive: true,
-    };
+    const timeSlotsData = await withCache(
+      cacheKey,
+      async () => {
+        const { prisma } = await import("@/lib/config/prisma");
+
+        // Build filter for MongoDB query
+        const filter: Record<string, unknown> = {
+          isActive: true,
+        };
 
     if (mentorId) {
       filter.mentorId = mentorId;
@@ -328,9 +334,15 @@ export async function GET(request: Request) {
       });
     }
 
+        return enhancedTimeSlots;
+      },
+      CACHE_TTL.SHORT
+    );
+
     return NextResponse.json({
       success: true,
-      data: enhancedTimeSlots,
+      data: timeSlotsData,
+      count: timeSlotsData.length,
     });
   } catch (error) {
     console.error("Error fetching time slots:", error);
@@ -339,5 +351,18 @@ export async function GET(request: Request) {
       { success: false, error: "Failed to fetch time slots" },
       { status: 500 }
     );
+  }
+}
+
+// POST endpoint to invalidate timeslots cache (wildcard invalidation for all variations)
+export async function POST() {
+  try {
+    // Note: This is a simplified invalidation. In production, you might want to track
+    // all cache keys or use a pattern-based invalidation if your Redis client supports it.
+    await invalidateCache("timeslots:*");
+    return NextResponse.json({ success: true, message: "All timeslot caches invalidated" });
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json({ success: false, error: "Failed to invalidate cache" }, { status: 500 });
   }
 }

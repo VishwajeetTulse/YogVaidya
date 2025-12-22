@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
 import type { Prisma, SessionType } from "@prisma/client";
+import { invalidateBillingHistoryCache } from "@/lib/actions/billing-actions";
 
 import { AuthenticationError, NotFoundError, ValidationError } from "@/lib/utils/error-handler";
 
@@ -168,6 +169,18 @@ export async function POST(request: Request) {
         }) as Prisma.InputJsonValue,
       },
     });
+
+    // Invalidate billing history cache for the user
+    const student = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { email: true },
+    });
+    
+    if (student?.email) {
+      await invalidateBillingHistoryCache(student.email).catch((err) => {
+        console.error("Failed to invalidate billing cache:", err);
+      });
+    }
 
     return NextResponse.json({
       success: true,

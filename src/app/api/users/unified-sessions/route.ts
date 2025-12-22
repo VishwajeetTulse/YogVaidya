@@ -6,6 +6,7 @@ import { prisma } from "@/lib/config/prisma";
 import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
 
@@ -18,8 +19,12 @@ export async function GET(_request: NextRequest) {
 
     const userId = session.user.id;
 
-    // Get sessions from SessionBooking collection (new time slot bookings)
-    const sessionBookingsResult = await prisma.$runCommandRaw({
+    // Cache unified sessions with 1 minute TTL
+    const allSessions = await withCache(
+      `users:unified-sessions:${userId}`,
+      async () => {
+        // Get sessions from SessionBooking collection (new time slot bookings)
+        const sessionBookingsResult = await prisma.$runCommandRaw({
       aggregate: "sessionBooking",
       pipeline: [
         {
@@ -176,12 +181,17 @@ export async function GET(_request: NextRequest) {
       return aDate.getTime() - bDate.getTime();
     });
 
+        return {
+          sessions: allSessions,
+          total: allSessions.length,
+        };
+      },
+      CACHE_TTL.SHORT
+    );
+
     return NextResponse.json({
       success: true,
-      data: {
-        sessions: allSessions,
-        total: allSessions.length,
-      },
+      data: allSessions,
     });
   } catch (error) {
     console.error("Error fetching unified sessions:", error);

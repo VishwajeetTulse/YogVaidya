@@ -112,13 +112,25 @@ export async function POST(req: NextRequest) {
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);
   const email = searchParams.get("email");
+  
+  const { withCache, CACHE_TTL } = await import("@/lib/cache/redis");
+  
   try {
-    let applications;
-    if (email) {
-      applications = await prisma.mentorApplication.findMany({ where: { email } });
-    } else {
-      applications = await prisma.mentorApplication.findMany();
-    }
+    // Cache mentor applications with 1 minute TTL
+    const applications = await withCache(
+      `admin:mentor-applications:${email || 'all'}`,
+      async () => {
+        let apps;
+        if (email) {
+          apps = await prisma.mentorApplication.findMany({ where: { email } });
+        } else {
+          apps = await prisma.mentorApplication.findMany();
+        }
+        return apps;
+      },
+      CACHE_TTL.SHORT
+    );
+    
     return NextResponse.json({ success: true, applications });
   } catch (error) {
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
@@ -143,10 +155,18 @@ export async function PATCH(req: NextRequest) {
     if (!id || !status) {
       throw new ValidationError("Missing id or status");
     }
+    
+    const { invalidateCache } = await import("@/lib/cache/redis");
+    
     const updated = await prisma.mentorApplication.update({
       where: { id },
       data: { status },
     });
+    
+    // Invalidate cache when application is updated
+    await invalidateCache("admin:mentor-applications:all");
+    await invalidateCache(`admin:mentor-applications:${updated.email}`);
+    
     // If approved, update the user's role to MENTOR and phone number
     let redirectUrl = null;
     if (status === "approved") {

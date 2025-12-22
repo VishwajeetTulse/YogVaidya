@@ -3,6 +3,7 @@ import { prisma } from "@/lib/config/prisma";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { sendEmail } from "@/lib/services/email";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 // Extended Prisma client type for DietPlan model
 type PrismaWithDietPlan = typeof prisma & {
@@ -159,13 +160,21 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const mentorId = searchParams.get("mentorId");
 
-    let dietPlans;
+    // Cache diet plans with 1 minute TTL based on role
+    const cacheKey = session.user.role === "MENTOR" && mentorId === session.user.id
+      ? `mentor:diet-plans:${session.user.id}`
+      : `student:diet-plans:${session.user.id}`;
+
+    const dietPlans = await withCache(
+      cacheKey,
+      async () => {
+        let plans;
 
     try {
       if (session.user.role === "MENTOR" && mentorId === session.user.id) {
         // Mentor viewing their created plans
 
-        dietPlans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
+        plans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
           where: { mentorId: session.user.id },
           include: {
             student: {
@@ -177,7 +186,7 @@ export async function GET(req: NextRequest) {
       } else {
         // Student viewing their received plans
 
-        dietPlans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
+        plans = await (prisma as PrismaWithDietPlan).dietPlan.findMany({
           where: {
             studentId: session.user.id,
             isDraft: false, // Students don't see drafts
@@ -190,16 +199,15 @@ export async function GET(req: NextRequest) {
           orderBy: { createdAt: "desc" },
         });
       }
-    } catch (dbError) {
-      console.error("❌ Database error:", dbError);
-      return NextResponse.json(
-        {
-          error: "Database error",
-          details: dbError instanceof Error ? dbError.message : String(dbError),
-        },
-        { status: 500 }
-      );
-    }
+            
+            return plans;
+        } catch (dbError) {
+          console.error("❌ Database error:", dbError);
+          throw dbError;
+        }
+      },
+      CACHE_TTL.SHORT
+    );
 
     // Transform tags - handle both string and array formats
     const transformedDietPlans = dietPlans.map((plan) => {

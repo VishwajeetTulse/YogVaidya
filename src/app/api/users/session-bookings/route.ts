@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
 
@@ -13,12 +14,16 @@ export async function GET() {
 
     const { prisma } = await import("@/lib/config/prisma");
 
-    // For now, since we can't generate the new schema, let's return a placeholder
-    // Once Prisma is regenerated, this will fetch actual session bookings
+    // Cache user session bookings with 1 minute TTL
+    const bookings = await withCache(
+      `users:session-bookings:${session.user.id}`,
+      async () => {
+        // For now, since we can't generate the new schema, let's return a placeholder
+        // Once Prisma is regenerated, this will fetch actual session bookings
 
-    try {
-      // Try to access sessionBooking model
-      const bookings = await prisma.sessionBooking.findMany({
+        try {
+          // Try to access sessionBooking model
+          return await prisma.sessionBooking.findMany({
         where: {
           userId: session.user.id,
         },
@@ -35,20 +40,19 @@ export async function GET() {
         orderBy: {
           scheduledAt: "desc",
         },
-      });
+          });
+        } catch {
+          // If sessionBooking model doesn't exist yet, return empty array
+          return [];
+        }
+      },
+      CACHE_TTL.SHORT
+    );
 
-      return NextResponse.json({
-        success: true,
-        data: bookings,
-      });
-    } catch {
-      // If sessionBooking model doesn't exist yet, return empty array
-
-      return NextResponse.json({
-        success: true,
-        data: [],
-      });
-    }
+    return NextResponse.json({
+      success: true,
+      data: bookings,
+    });
   } catch (error) {
     console.error("Error fetching user bookings:", error);
     return NextResponse.json(

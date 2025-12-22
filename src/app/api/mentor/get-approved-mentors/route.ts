@@ -1,10 +1,15 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 export async function GET() {
   try {
-    // Get all approved mentor applications
-    const approvedApplications = await prisma.mentorApplication.findMany({
+    // Cache the entire mentor list with 5 minute TTL
+    const mentorsData = await withCache(
+      "mentors:approved:list:v2",
+      async () => {
+        // Get all approved mentor applications
+        const approvedApplications = await prisma.mentorApplication.findMany({
       where: {
         status: "approved",
       },
@@ -70,10 +75,15 @@ export async function GET() {
       })
     );
 
+        return mentorsWithUserData;
+      },
+      CACHE_TTL.MEDIUM // 5 minutes
+    );
+
     return NextResponse.json({
       success: true,
-      mentors: mentorsWithUserData,
-      count: mentorsWithUserData.length,
+      mentors: mentorsData,
+      count: mentorsData.length,
     });
   } catch (error) {
     console.error("Error fetching approved mentors:", error);
@@ -83,6 +93,20 @@ export async function GET() {
         error: "Failed to fetch approved mentors",
         details: error instanceof Error ? error.message : "Unknown error",
       },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Invalidate mentors cache
+export async function POST() {
+  try {
+    await invalidateCache("mentors:approved:*");
+    return NextResponse.json({ success: true, message: "Mentors cache cleared" });
+  } catch (error) {
+    console.error("Error clearing mentors cache:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to clear cache" },
       { status: 500 }
     );
   }

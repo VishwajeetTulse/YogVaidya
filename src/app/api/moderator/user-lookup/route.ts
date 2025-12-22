@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 
@@ -35,8 +36,11 @@ export async function GET(req: NextRequest) {
       );
     }
 
-    // Search for user by email
-    const targetUser = await prisma.user.findUnique({
+    // Cache user lookup with 1 minute TTL
+    const targetUser = await withCache(
+      `moderator:user-lookup:${email}`,
+      async () => {
+        return await prisma.user.findUnique({
       where: { email },
       select: {
         id: true,
@@ -55,8 +59,10 @@ export async function GET(req: NextRequest) {
         paymentAmount: true,
         autoRenewal: true,
         createdAt: true,
+        });
       },
-    });
+      CACHE_TTL.SHORT
+    );
 
     if (!targetUser) {
       return NextResponse.json({

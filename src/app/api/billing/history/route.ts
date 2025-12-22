@@ -12,6 +12,7 @@ export async function GET(request: NextRequest) {
       throw new ValidationError("Email parameter is required");
     }
 
+    // Caching is now handled in getBillingHistoryAction for better reusability
     const result = await getBillingHistoryAction(email);
 
     if (!result.success) {

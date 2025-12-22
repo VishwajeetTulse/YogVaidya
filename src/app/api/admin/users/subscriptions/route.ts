@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
@@ -22,8 +23,11 @@ export async function GET(req: NextRequest) {
       throw new AuthorizationError("Only admins can access this resource");
     }
 
-    // Fetch all users with subscription data
-    const users = await prisma.user.findMany({
+    // Cache admin subscriptions data with 1 minute TTL
+    const users = await withCache(
+      "admin:users:subscriptions",
+      async () => {
+        return await prisma.user.findMany({
       select: {
         id: true,
         name: true,

@@ -38,15 +38,18 @@ export async function getPaymentHistory(
 
     const cleanEmail = userEmail.trim();
 
-    // For specific user email, fetch more payments to ensure we get all user's payments
-    // since Razorpay API doesn't support direct email filtering
-    const batchSize = Math.max(limit * 2, 100); // Fetch more to account for filtering
+    // OPTIMIZATION: Start with smaller batch size and adaptive fetching
+    // Most users will have their payments in recent batches
+    const initialBatchSize = 50; // Smaller initial fetch for faster first response
+    const maxBatchSize = 100; // Max batch size for subsequent fetches
     const allUserPayments: PaymentHistoryItem[] = [];
     let skip = 0;
     let hasMore = true;
+    let consecutiveEmptyBatches = 0; // Track empty batches for early termination
 
     // Fetch payments in batches until we have enough user payments or no more payments exist
     while (hasMore && allUserPayments.length < limit) {
+      const batchSize = skip === 0 ? initialBatchSize : maxBatchSize;
       try {
         const payments = await razorpay.payments.all({
           count: batchSize,
@@ -58,18 +61,20 @@ export async function getPaymentHistory(
           break;
         }
 
+        // OPTIMIZATION: Pre-compute target email once
+        const targetEmail = cleanEmail.toLowerCase();
+        
         const userPayments = payments.items
           .filter((payment) => {
             // Comprehensive email matching with the verified clean email
             const paymentEmail = payment.email?.toLowerCase().trim();
-            const targetEmail = cleanEmail.toLowerCase();
 
-            // Direct email match
+            // Direct email match (most common case - check first)
             if (paymentEmail === targetEmail) {
               return true;
             }
 
-            // Check in notes
+            // Check in notes (less common - check after direct match)
             if (payment.notes) {
               const notesEmail = payment.notes.email?.toLowerCase().trim();
               if (notesEmail === targetEmail) {
@@ -108,16 +113,36 @@ export async function getPaymentHistory(
             contact: payment.contact ? String(payment.contact) : null,
           }));
 
+        // OPTIMIZATION: Track consecutive empty batches for early termination
+        if (userPayments.length === 0) {
+          consecutiveEmptyBatches++;
+          // If we've had 2 consecutive batches with no user payments, likely no more exist
+          if (consecutiveEmptyBatches >= 2 && allUserPayments.length > 0) {
+            console.log(`Early termination: ${consecutiveEmptyBatches} consecutive empty batches`);
+            hasMore = false;
+            break;
+          }
+        } else {
+          consecutiveEmptyBatches = 0; // Reset counter when we find user payments
+        }
+        
         allUserPayments.push(...userPayments);
         skip += batchSize;
+
+        // OPTIMIZATION: Stop immediately if we have enough payments
+        if (allUserPayments.length >= limit) {
+          hasMore = false;
+          break;
+        }
 
         // If we got fewer items than requested, we've reached the end
         if (payments.items.length < batchSize) {
           hasMore = false;
         }
 
-        // Safety limit to prevent infinite loops
-        if (skip > 1000) {
+        // Safety limit to prevent infinite loops (reduced from 1000)
+        if (skip > 500) {
+          console.warn(`Safety limit reached at skip ${skip}`);
           hasMore = false;
         }
       } catch (batchError) {

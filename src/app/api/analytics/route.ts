@@ -3,6 +3,7 @@ import { auth } from "@/lib/config/auth";
 import { getSubscriptionAnalytics } from "@/lib/subscriptions";
 import { format, subMonths } from "date-fns";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 // Helper function to check if a date is within the last month
 function isWithinLastMonth(date: Date): boolean {
@@ -27,8 +28,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
-    // Fetch all users for user analytics
-    const allUsers = await prisma.user.findMany({
+    // Cache analytics data with 2 minute TTL (expensive query)
+    const analyticsData = await withCache(
+      "analytics:dashboard:v1",
+      async () => {
+        // Fetch all users for user analytics
+        const allUsers = await prisma.user.findMany({
       select: {
         id: true,
         createdAt: true,
@@ -273,11 +278,34 @@ export async function GET(request: NextRequest) {
       userGrowth: userGrowth,
       // Revenue growth calculation based on actual subscription data will be added in future iteration
       // For now, removing fake revenueGrowth to avoid misleading data
-    });
+    };
+      },
+      CACHE_TTL.SHORT // 1 minute - analytics change frequently
+    );
+
+    return NextResponse.json(analyticsData);
   } catch (error) {
     console.error("Analytics API error:", error);
     return NextResponse.json(
       { error: "Failed to fetch analytics data", details: (error as Error).message },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Invalidate analytics cache
+export async function POST() {
+  try {
+    await invalidateCache("analytics:*");
+    return NextResponse.json({ success: true, message: "Analytics cache cleared" });
+  } catch (error) {
+    console.error("Error clearing analytics cache:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to clear cache" },
+      { status: 500 }
+    );
+  }
+}
       { status: 500 }
     );
   }

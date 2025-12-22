@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 
@@ -36,8 +37,12 @@ export async function GET(request: NextRequest) {
       throw new AuthorizationError("Only mentors can view session bookings");
     }
 
-    // First, let's check if there are any session bookings at all
-    const allBookings = await prisma.$runCommandRaw({
+    // Cache mentor sessions with 1 minute TTL
+    const sessionsData = await withCache(
+      `mentor:sessions:${mentorId}`,
+      async () => {
+        // First, let's check if there are any session bookings at all
+        const allBookings = await prisma.$runCommandRaw({
       find: "sessionBooking",
       filter: {},
     });
@@ -151,9 +156,17 @@ export async function GET(request: NextRequest) {
       updatedAt: booking.updatedAt,
     }));
 
+        return {
+          bookings: processedBookings,
+          totalBookings: processedBookings.length,
+        };
+      },
+      CACHE_TTL.SHORT
+    );
+
     return NextResponse.json({
       success: true,
-      data: processedBookings,
+      data: sessionsData,
     });
   } catch (error) {
     console.error("Error fetching mentor sessions:", error);
@@ -161,5 +174,22 @@ export async function GET(request: NextRequest) {
       { success: false, error: "Failed to fetch sessions" },
       { status: 500 }
     );
+  }
+}
+
+// POST endpoint to invalidate mentor sessions cache
+export async function POST(request: NextRequest) {
+  try {
+    const url = new URL(request.url);
+    const mentorId = url.searchParams.get("mentorId");
+    
+    if (mentorId) {
+      await invalidateCache(`mentor:sessions:${mentorId}`);
+    }
+    
+    return NextResponse.json({ success: true, message: "Cache invalidated" });
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json({ success: false, error: "Failed to invalidate cache" }, { status: 500 });
   }
 }

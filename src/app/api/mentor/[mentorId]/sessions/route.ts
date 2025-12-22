@@ -3,6 +3,7 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
 
@@ -17,8 +18,12 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
 
     const { prisma } = await import("@/lib/config/prisma");
 
-    // Check for existing sessions with this mentor
-    const existingSessions = await prisma.$runCommandRaw({
+    // Cache mentor-specific sessions with 1 minute TTL
+    const sessionData = await withCache(
+      `mentor:${mentorId}:user-sessions:${session.user.id}`,
+      async () => {
+        // Check for existing sessions with this mentor
+        const existingSessions = await prisma.$runCommandRaw({
       find: "sessionBooking",
       filter: {
         userId: session.user.id,
@@ -48,15 +53,20 @@ export async function GET(request: Request, { params }: { params: Promise<{ ment
 
     const completedSessions = sessions.filter((session) => session.status === "COMPLETED");
 
+        return {
+          hasActiveSessions: activeSessions.length > 0,
+          activeSessionsCount: activeSessions.length,
+          completedSessionsCount: completedSessions.length,
+          totalSessionsCount: sessions.length,
+          canBookNewSession: activeSessions.length === 0,
+        };
+      },
+      CACHE_TTL.SHORT
+    );
+
     return NextResponse.json({
       success: true,
-      data: {
-        hasActiveSessions: activeSessions.length > 0,
-        activeSessionsCount: activeSessions.length,
-        completedSessionsCount: completedSessions.length,
-        totalSessionsCount: sessions.length,
-        canBookNewSession: activeSessions.length === 0,
-      },
+      data: sessionData,
     });
   } catch (error) {
     console.error("Error checking user sessions:", error);

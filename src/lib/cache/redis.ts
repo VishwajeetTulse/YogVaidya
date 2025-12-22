@@ -9,20 +9,23 @@ import { Redis } from "@upstash/redis";
 const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
 const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
 
+const isRedisConfigured = !!(REDIS_URL && REDIS_TOKEN && REDIS_URL !== "" && REDIS_TOKEN !== "");
+
 // Log Redis configuration status (without exposing credentials)
-if (!REDIS_URL || !REDIS_TOKEN) {
+if (!isRedisConfigured) {
   console.warn("⚠️ [Redis] Missing credentials - caching will be disabled");
   console.warn("⚠️ [Redis] UPSTASH_REDIS_REST_URL:", REDIS_URL ? "✓ Set" : "✗ Missing");
   console.warn("⚠️ [Redis] UPSTASH_REDIS_REST_TOKEN:", REDIS_TOKEN ? "✓ Set" : "✗ Missing");
 } else {
   console.log("✓ [Redis] Configuration found - caching enabled");
+  console.log("✓ [Redis] URL:", REDIS_URL.substring(0, 30) + "...");
 }
 
-// Initialize Upstash Redis client
-export const redis = new Redis({
-  url: REDIS_URL || "",
-  token: REDIS_TOKEN || "",
-});
+// Initialize Upstash Redis client only if configured
+export const redis = isRedisConfigured ? new Redis({
+  url: REDIS_URL!,
+  token: REDIS_TOKEN!,
+}) : null as any;
 
 /**
  * Cache Time-To-Live (TTL) in seconds
@@ -63,14 +66,14 @@ export async function withCache<T>(
   ttl: number = CACHE_TTL.MEDIUM
 ): Promise<T> {
   // If Redis is not configured, skip caching
-  if (!REDIS_URL || !REDIS_TOKEN) {
+  if (!isRedisConfigured || !redis) {
     console.log(`[Cache DISABLED] Fetching ${key} directly from DB`);
     return fetchFn();
   }
 
   try {
     // Try to get from cache
-    const cached = await redis.get<T>(key);
+    const cached = await redis.get(key) as T | null;
     
     if (cached !== null) {
       console.log(`✓ [Cache HIT] ${key}`);
@@ -85,7 +88,7 @@ export async function withCache<T>(
     // Store in cache (fire and forget - don't block response)
     redis.setex(key, ttl, data).then(() => {
       console.log(`✓ [Cache SET] ${key} (TTL: ${ttl}s)`);
-    }).catch((err) => {
+    }).catch((err: unknown) => {
       console.error(`✗ [Cache Error] Failed to set ${key}:`, err);
     });
     
@@ -101,21 +104,26 @@ export async function withCache<T>(
  * Invalidate cache by key or pattern
  */
 export async function invalidateCache(keyOrPattern: string): Promise<void> {
+  if (!isRedisConfigured || !redis) {
+    console.log(`[Cache DISABLED] Cannot invalidate ${keyOrPattern}`);
+    return;
+  }
+
   try {
     if (keyOrPattern.includes("*")) {
       // Pattern matching - scan and delete
       const keys = await redis.keys(keyOrPattern);
       if (keys.length > 0) {
         await redis.del(...keys);
-        console.log(`[Cache] Invalidated ${keys.length} keys matching ${keyOrPattern}`);
+        console.log(`✓ [Cache] Invalidated ${keys.length} keys matching ${keyOrPattern}`);
       }
     } else {
       // Single key delete
       await redis.del(keyOrPattern);
-      console.log(`[Cache] Invalidated ${keyOrPattern}`);
+      console.log(`✓ [Cache] Invalidated ${keyOrPattern}`);
     }
   } catch (error) {
-    console.error("[Cache Error] Failed to invalidate:", error);
+    console.error("✗ [Cache Error] Failed to invalidate:", error);
   }
 }
 
@@ -178,7 +186,7 @@ export async function msetCache(
  * Check if caching is enabled and configured
  */
 export function isCacheEnabled(): boolean {
-  return !!(process.env.UPSTASH_REDIS_REST_URL && process.env.UPSTASH_REDIS_REST_TOKEN);
+  return isRedisConfigured;
 }
 
 /**

@@ -2,6 +2,7 @@ import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { z } from "zod";
 import crypto from "crypto";
+import { invalidateBillingHistoryCache } from "@/lib/actions/billing-actions";
 
 import { AuthenticationError, NotFoundError, ConflictError } from "@/lib/utils/error-handler";
 import { successResponse, errorResponse } from "@/lib/utils/response-handler";
@@ -167,6 +168,14 @@ export async function POST(request: Request) {
     } catch (emailError) {
       console.error("Failed to send session booking emails:", emailError);
       // Don't throw - booking was successful
+    }
+
+    // Invalidate billing history cache for the user since they made a payment
+    if (student?.email) {
+      await invalidateBillingHistoryCache(student.email).catch((err) => {
+        console.error("Failed to invalidate billing cache:", err);
+        // Don't throw - booking was successful
+      });
     }
 
     return successResponse({

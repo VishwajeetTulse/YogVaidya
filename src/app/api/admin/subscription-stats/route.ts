@@ -1,6 +1,7 @@
 import { type NextRequest } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 import { errorResponse, successResponse } from "@/lib/utils/response-handler";
 
@@ -22,80 +23,97 @@ export async function GET(req: NextRequest) {
       throw new AuthorizationError("Only admins can access this resource");
     }
 
-    // Get subscription statistics
-    const [totalActiveSubscriptions, totalTrialUsers, monthlyRevenue] = await Promise.all([
-      // Active subscriptions count (only for customers with USER role)
-      prisma.user.count({
-        where: {
-          role: "USER", // Only count actual customers
-          OR: [{ subscriptionStatus: "ACTIVE" }, { subscriptionStatus: "ACTIVE_UNTIL_END" }],
-        },
-      }),
+    // Cache admin subscription stats with 1 minute TTL
+    const stats = await withCache(
+      "admin:subscription-stats",
+      async () => {
+        // Get subscription statistics
+        const [totalActiveSubscriptions, totalTrialUsers, monthlyRevenue] = await Promise.all([
+          // Active subscriptions count (only for customers with USER role)
+          prisma.user.count({
+            where: {
+              role: "USER", // Only count actual customers
+              OR: [{ subscriptionStatus: "ACTIVE" }, { subscriptionStatus: "ACTIVE_UNTIL_END" }],
+            },
+          }),
 
-      // Trial users count (only for customers with USER role)
-      prisma.user.count({
-        where: {
-          role: "USER", // Only count actual customers
-          isTrialActive: true,
-        },
-      }),
+          // Trial users count (only for customers with USER role)
+          prisma.user.count({
+            where: {
+              role: "USER", // Only count actual customers
+              isTrialActive: true,
+            },
+          }),
 
-      // Calculate monthly revenue (rough estimate)
-      prisma.user.aggregate({
-        where: {
-          AND: [
-            { role: "USER" }, // Only count actual customers
-            { subscriptionStatus: "ACTIVE" },
-            { paymentAmount: { gt: 0 } },
-            { billingPeriod: "monthly" },
-          ],
-        },
-        _sum: {
-          paymentAmount: true,
-        },
-      }),
-    ]);
+          // Calculate monthly revenue (rough estimate)
+          prisma.user.aggregate({
+            where: {
+              AND: [
+                { role: "USER" }, // Only count actual customers
+                { subscriptionStatus: "ACTIVE" },
+                { paymentAmount: { gt: 0 } },
+                { billingPeriod: "monthly" },
+              ],
+            },
+            _sum: {
+              paymentAmount: true,
+            },
+          }),
+        ]);
 
-    // Get recent activity (simplified)
-    const recentActivity = [
-      {
-        user: "Recent subscription changes",
-        action: "System monitoring active",
-        timestamp: new Date().toISOString(),
+        // Get recent activity (simplified)
+        const recentActivity = [
+          {
+            user: "Recent subscription changes",
+            action: "System monitoring active",
+            timestamp: new Date().toISOString(),
+          },
+        ];
+
+        // Get plan breakdown (only for customers with USER role)
+        const planStats = await prisma.user.groupBy({
+          by: ["subscriptionPlan", "subscriptionStatus"],
+          where: {
+            role: "USER", // Only count actual customers
+          },
+          _count: {
+            id: true,
+          },
+        });
+
+        const planBreakdown: Record<string, Record<string, number>> = {};
+        planStats.forEach((stat) => {
+          const plan = stat.subscriptionPlan || "None";
+          const status = stat.subscriptionStatus || "None";
+
+          if (!planBreakdown[plan]) {
+            planBreakdown[plan] = {};
+          }
+          planBreakdown[plan][status] = stat._count.id;
+        });
+
+        return {
+          totalActiveSubscriptions,
+          totalTrialUsers,
+          monthlyRevenue: monthlyRevenue._sum.paymentAmount || 0,
+          recentActivity,
+          planBreakdown,
+        };
       },
-    ];
-
-    // Get plan breakdown (only for customers with USER role)
-    const planStats = await prisma.user.groupBy({
-      by: ["subscriptionPlan", "subscriptionStatus"],
-      where: {
-        role: "USER", // Only count actual customers
-      },
-      _count: {
-        id: true,
-      },
-    });
-
-    const planBreakdown: Record<string, Record<string, number>> = {};
-    planStats.forEach((stat) => {
-      const plan = stat.subscriptionPlan || "None";
-      const status = stat.subscriptionStatus || "None";
-
-      if (!planBreakdown[plan]) {
-        planBreakdown[plan] = {};
-      }
-      planBreakdown[plan][status] = stat._count.id;
-    });
-
-    const stats = {
-      totalActiveSubscriptions,
-      totalTrialUsers,
-      monthlyRevenue: monthlyRevenue._sum.paymentAmount || 0,
-      recentActivity,
-      planBreakdown,
-    };
+      CACHE_TTL.SHORT
+    );
 
     return successResponse(stats, 200, "Subscription stats retrieved successfully");
+  } catch (error) {
+    return errorResponse(error);
+  }
+}
+
+// POST endpoint to invalidate cache
+export async function POST() {
+  try {
+    await invalidateCache("admin:subscription-stats");
+    return successResponse({ message: "Cache invalidated" }, 200);
   } catch (error) {
     return errorResponse(error);
   }
