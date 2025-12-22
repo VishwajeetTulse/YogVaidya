@@ -2,6 +2,7 @@ import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { authClient } from "@/lib/auth-client";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import { NotFoundError } from "@/lib/utils/error-handler";
 
@@ -23,22 +24,30 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
-    const users = await prisma.user.findMany({
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        phone: true,
-        role: true,
-        createdAt: true,
-        updatedAt: true,
-        subscriptionPlan: true,
-        subscriptionStatus: true,
-        subscriptionStartDate: true,
-        subscriptionEndDate: true,
-        billingPeriod: true,
+    // Use Redis cache with 2 minute TTL for users list
+    const users = await withCache(
+      "admin:users:list",
+      async () => {
+        return await prisma.user.findMany({
+          select: {
+            id: true,
+            name: true,
+            email: true,
+            phone: true,
+            role: true,
+            createdAt: true,
+            updatedAt: true,
+            subscriptionPlan: true,
+            subscriptionStatus: true,
+            subscriptionStartDate: true,
+            subscriptionEndDate: true,
+            billingPeriod: true,
+          },
+        });
       },
-    });
+      CACHE_TTL.SHORT // 1 minute
+    );
+
     return NextResponse.json({ success: true, users });
   } catch (error) {
     return NextResponse.json({ success: false, error: error?.toString() }, { status: 500 });
@@ -136,6 +145,9 @@ export async function PATCH(req: NextRequest) {
       }
     }
 
+    // Invalidate users list cache after update
+    await invalidateCache("admin:users:*");
+
     return NextResponse.json({ success: true, user });
   } catch (error) {
     console.error("❌ Error in PATCH /api/users:", error);
@@ -190,6 +202,9 @@ export async function DELETE(req: NextRequest) {
 
     // Finally delete the user
     await prisma.user.delete({ where: { id } });
+
+    // Invalidate users list cache after deletion
+    await invalidateCache("admin:users:*");
 
     return NextResponse.json({ success: true });
   } catch (error) {

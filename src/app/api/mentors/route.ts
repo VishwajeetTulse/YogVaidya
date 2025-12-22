@@ -1,13 +1,18 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/config/prisma";
 import { cachedJsonResponse, CACHE_CONFIG } from "@/lib/middleware/cache-headers";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 // This route provides the same functionality as get-approved-mentors
 // but at a different endpoint for consistency
 export async function GET() {
   try {
-    // Get all approved mentor applications
-    const approvedApplications = await prisma.mentorApplication.findMany({
+    // Use Redis cache with 5 minute TTL
+    const mentorsData = await withCache(
+      "mentors:approved:list",
+      async () => {
+        // Get all approved mentor applications
+        const approvedApplications = await prisma.mentorApplication.findMany({
       where: {
         status: "approved",
       },
@@ -67,12 +72,17 @@ export async function GET() {
       };
     });
 
+        return mentorsWithUserData;
+      },
+      CACHE_TTL.MEDIUM // 5 minutes
+    );
+
     // Return cached response for mentors list (5 minute cache)
     return cachedJsonResponse(
       {
         success: true,
-        mentors: mentorsWithUserData,
-        count: mentorsWithUserData.length,
+        mentors: mentorsData,
+        count: mentorsData.length,
       },
       CACHE_CONFIG.MENTORS_LIST
     );
@@ -84,6 +94,20 @@ export async function GET() {
         error: "Failed to fetch approved mentors",
         details: error instanceof Error ? error.message : "Unknown error",
       },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Invalidate mentors cache when data changes
+export async function POST() {
+  try {
+    await invalidateCache("mentors:approved:*");
+    return NextResponse.json({ success: true, message: "Cache invalidated" });
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to invalidate cache" },
       { status: 500 }
     );
   }

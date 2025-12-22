@@ -5,6 +5,7 @@ import { headers } from "next/headers";
 import { prisma } from "@/lib/config/prisma";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import { AuthenticationError } from "@/lib/utils/error-handler";
 
@@ -17,8 +18,12 @@ export async function GET(_request: NextRequest) {
 
     const userId = session.user.id;
 
-    // Get user's session bookings with mentor and time slot details
-    const sessionBookingsResult = await prisma.$runCommandRaw({
+    // Use Redis cache with 1 minute TTL for user sessions
+    const sessions = await withCache(
+      `students:sessions:${userId}`,
+      async () => {
+        // Get user's session bookings with mentor and time slot details
+        const sessionBookingsResult = await prisma.$runCommandRaw({
       aggregate: "sessionBooking",
       pipeline: [
         {
@@ -138,20 +143,48 @@ export async function GET(_request: NextRequest) {
     const ongoingSessions = processedSessions.filter((s) => s.status === "ONGOING");
     const completedSessions = processedSessions.filter((s) => s.status === "COMPLETED");
 
+        return {
+          allSessions: processedSessions,
+          upcomingSessions,
+          ongoingSessions,
+          completedSessions,
+          total: processedSessions.length,
+        };
+      },
+      CACHE_TTL.SHORT // 1 minute - sessions change frequently
+    );
+
     return NextResponse.json({
       success: true,
-      data: {
-        allSessions: processedSessions,
-        upcomingSessions,
-        ongoingSessions,
-        completedSessions,
-        total: processedSessions.length,
-      },
+      data: sessions,
     });
   } catch (error) {
     console.error("Error fetching student sessions:", error);
     return NextResponse.json(
       { success: false, error: "Failed to fetch your sessions" },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Invalidate user sessions cache
+export async function POST(_request: NextRequest) {
+  try {
+    const session = await auth.api.getSession({ headers: await headers() });
+    if (!session?.user?.id) {
+      throw new AuthenticationError("Unauthorized");
+    }
+
+    await invalidateCache(`students:sessions:${session.user.id}`);
+    return NextResponse.json({ success: true, message: "Cache invalidated" });
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to invalidate cache" },
+      { status: 500 }
+    );
+  }
+}
       { status: 500 }
     );
   }

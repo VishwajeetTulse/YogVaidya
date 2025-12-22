@@ -1,6 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server";
 import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 
@@ -22,8 +23,12 @@ export async function GET(req: NextRequest) {
       throw new AuthorizationError("Access denied");
     }
 
-    // Get subscription statistics (limited info for moderators)
-    const [totalActiveSubscriptions, totalTrialUsers, monthlyRevenue] = await Promise.all([
+    // Use Redis cache with 2 minute TTL for subscription stats
+    const stats = await withCache(
+      "moderator:subscription-stats",
+      async () => {
+        // Get subscription statistics (limited info for moderators)
+        const [totalActiveSubscriptions, totalTrialUsers, monthlyRevenue] = await Promise.all([
       // Active subscriptions count (only for customers with USER role)
       prisma.user.count({
         where: {
@@ -78,12 +83,15 @@ export async function GET(req: NextRequest) {
       planBreakdown[plan][status] = stat._count.id;
     });
 
-    const stats = {
-      totalActiveSubscriptions,
-      totalTrialUsers,
-      monthlyRevenue: monthlyRevenue._sum.paymentAmount || 0,
-      planBreakdown,
-    };
+        return {
+          totalActiveSubscriptions,
+          totalTrialUsers,
+          monthlyRevenue: monthlyRevenue._sum.paymentAmount || 0,
+          planBreakdown,
+        };
+      },
+      CACHE_TTL.SHORT // 1 minute - stats change frequently
+    );
 
     return NextResponse.json({
       success: true,
@@ -96,6 +104,24 @@ export async function GET(req: NextRequest) {
         success: false,
         error: "Failed to fetch subscription stats",
       },
+      { status: 500 }
+    );
+  }
+}
+
+// POST - Invalidate subscription stats cache
+export async function POST() {
+  try {
+    await invalidateCache("moderator:subscription-stats");
+    return NextResponse.json({ success: true, message: "Cache invalidated" });
+  } catch (error) {
+    console.error("Error invalidating cache:", error);
+    return NextResponse.json(
+      { success: false, error: "Failed to invalidate cache" },
+      { status: 500 }
+    );
+  }
+}
       { status: 500 }
     );
   }
