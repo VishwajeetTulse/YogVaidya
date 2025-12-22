@@ -6,6 +6,7 @@ import type { Prisma } from "@prisma/client";
 import type { TimeSlotDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import { AuthenticationError, AuthorizationError } from "@/lib/utils/error-handler";
 
@@ -93,6 +94,7 @@ export async function POST(request: Request) {
       });
 
       if (result.success) {
+        await invalidateCache("timeslots:*");
         return NextResponse.json({
           success: true,
           message: `Created ${result.slotsCreated} recurring time slots for the next 7 days`,
@@ -139,6 +141,7 @@ export async function POST(request: Request) {
         },
       });
 
+      await invalidateCache("timeslots:*");
       return NextResponse.json({
         success: true,
         message: "Single time slot created successfully",
@@ -351,18 +354,5 @@ export async function GET(request: Request) {
       { success: false, error: "Failed to fetch time slots" },
       { status: 500 }
     );
-  }
-}
-
-// POST endpoint to invalidate timeslots cache (wildcard invalidation for all variations)
-export async function POST() {
-  try {
-    // Note: This is a simplified invalidation. In production, you might want to track
-    // all cache keys or use a pattern-based invalidation if your Redis client supports it.
-    await invalidateCache("timeslots:*");
-    return NextResponse.json({ success: true, message: "All timeslot caches invalidated" });
-  } catch (error) {
-    console.error("Error invalidating cache:", error);
-    return NextResponse.json({ success: false, error: "Failed to invalidate cache" }, { status: 500 });
   }
 }
