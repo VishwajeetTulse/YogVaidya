@@ -21,43 +21,43 @@ export async function GET(request: Request, { params }: { params: Promise<{ id: 
       `diet-plan:${id}`,
       async () => {
         const dietPlan = await prisma.dietPlan.findUnique({
-      where: { id },
-      include: {
-        student: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
+          where: { id },
+          include: {
+            student: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
+            mentor: {
+              select: {
+                id: true,
+                name: true,
+                email: true,
+              },
+            },
           },
-        },
-        mentor: {
-          select: {
-            id: true,
-            name: true,
-            email: true,
-          },
-        },
-      },
-    });
+        });
 
-    if (!dietPlan) {
-      throw new NotFoundError("Diet plan not found");
-    }
+        if (!dietPlan) {
+          throw new NotFoundError("Diet plan not found");
+        }
 
-    // Transform tags - handle both string and array formats
-    let tags: string[] = [];
-    if (dietPlanData.tags) {
-      if (typeof dietPlanData.tags === "string") {
-        tags = (dietPlanData.tags as string).split(",").map((t: string) => t.trim());
-      } else if (Array.isArray(dietPlanData.tags)) {
-        tags = dietPlanData.tags;
-      }
-    }
+        // Transform tags - handle both string and array formats
+        let tags: string[] = [];
+        if (dietPlan.tags) {
+          if (typeof dietPlan.tags === "string") {
+            tags = (dietPlan.tags as string).split(",").map((t: string) => t.trim());
+          } else if (Array.isArray(dietPlan.tags)) {
+            tags = dietPlan.tags;
+          }
+        }
 
-    const transformedDietPlan = {
-      ...dietPlanData,
-      tags,
-    };
+        const transformedDietPlan = {
+          ...dietPlan,
+          tags,
+        };
 
         return transformedDietPlan;
       },

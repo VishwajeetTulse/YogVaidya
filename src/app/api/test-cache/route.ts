@@ -20,6 +20,14 @@ export async function GET() {
       }, { status: 500 });
     }
 
+    // Check if redis is configured
+    if (!redis) {
+      return NextResponse.json({
+        success: false,
+        error: "Redis is not configured",
+      }, { status: 500 });
+    }
+
     // Test basic operations
     const testKey = "test:connection";
     const testValue = {
@@ -68,7 +76,7 @@ export async function GET() {
 
 export async function POST() {
   try {
-    if (!isCacheEnabled()) {
+    if (!isCacheEnabled() || !redis) {
       return NextResponse.json({
         success: false,
         error: "Redis not configured",

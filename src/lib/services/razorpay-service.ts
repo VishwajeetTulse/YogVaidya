@@ -118,7 +118,7 @@ export async function getPaymentHistory(
           consecutiveEmptyBatches++;
           // If we've had 2 consecutive batches with no user payments, likely no more exist
           if (consecutiveEmptyBatches >= 2 && allUserPayments.length > 0) {
-            console.log(`Early termination: ${consecutiveEmptyBatches} consecutive empty batches`);
+            console.warn(`Early termination: ${consecutiveEmptyBatches} consecutive empty batches`);
             hasMore = false;
             break;
           }

@@ -116,14 +116,14 @@ export async function POST(request: Request) {
       },
     });
 
+    // Get student details for emails and cache invalidation
+    const student = await prisma.user.findUnique({
+      where: { id: session.user.id },
+      select: { name: true, email: true },
+    });
+
     // Send session booking confirmation emails
     try {
-      // Get student details
-      const student = await prisma.user.findUnique({
-        where: { id: session.user.id },
-        select: { name: true, email: true },
-      });
-
       // Get mentor email
       const mentorDetails = await prisma.user.findUnique({
         where: { id: mentorId },
