@@ -5,10 +5,23 @@
 
 import { Redis } from "@upstash/redis";
 
+// Check if Redis is properly configured
+const REDIS_URL = process.env.UPSTASH_REDIS_REST_URL;
+const REDIS_TOKEN = process.env.UPSTASH_REDIS_REST_TOKEN;
+
+// Log Redis configuration status (without exposing credentials)
+if (!REDIS_URL || !REDIS_TOKEN) {
+  console.warn("⚠️ [Redis] Missing credentials - caching will be disabled");
+  console.warn("⚠️ [Redis] UPSTASH_REDIS_REST_URL:", REDIS_URL ? "✓ Set" : "✗ Missing");
+  console.warn("⚠️ [Redis] UPSTASH_REDIS_REST_TOKEN:", REDIS_TOKEN ? "✓ Set" : "✗ Missing");
+} else {
+  console.log("✓ [Redis] Configuration found - caching enabled");
+}
+
 // Initialize Upstash Redis client
 export const redis = new Redis({
-  url: process.env.UPSTASH_REDIS_REST_URL || "",
-  token: process.env.UPSTASH_REDIS_REST_TOKEN || "",
+  url: REDIS_URL || "",
+  token: REDIS_TOKEN || "",
 });
 
 /**
@@ -49,29 +62,37 @@ export async function withCache<T>(
   fetchFn: () => Promise<T>,
   ttl: number = CACHE_TTL.MEDIUM
 ): Promise<T> {
+  // If Redis is not configured, skip caching
+  if (!REDIS_URL || !REDIS_TOKEN) {
+    console.log(`[Cache DISABLED] Fetching ${key} directly from DB`);
+    return fetchFn();
+  }
+
   try {
     // Try to get from cache
     const cached = await redis.get<T>(key);
     
     if (cached !== null) {
-      console.log(`[Cache HIT] ${key}`);
+      console.log(`✓ [Cache HIT] ${key}`);
       return cached;
     }
 
-    console.log(`[Cache MISS] ${key}`);
+    console.log(`○ [Cache MISS] ${key} - fetching fresh data`);
     
     // Fetch fresh data
     const data = await fetchFn();
     
     // Store in cache (fire and forget - don't block response)
-    redis.setex(key, ttl, data).catch((err) => {
-      console.error(`[Cache Error] Failed to set ${key}:`, err);
+    redis.setex(key, ttl, data).then(() => {
+      console.log(`✓ [Cache SET] ${key} (TTL: ${ttl}s)`);
+    }).catch((err) => {
+      console.error(`✗ [Cache Error] Failed to set ${key}:`, err);
     });
     
     return data;
   } catch (error) {
     // If Redis fails, log and return fresh data
-    console.error("[Cache Error]", error);
+    console.error("✗ [Cache Error] Redis operation failed:", error);
     return fetchFn();
   }
 }
