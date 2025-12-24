@@ -230,7 +230,14 @@ export async function GET(req: NextRequest) {
       };
     });
 
-    return NextResponse.json({ dietPlans: transformedDietPlans });
+    return NextResponse.json(
+      { dietPlans: transformedDietPlans },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60'
+        }
+      }
+    );
   } catch (error) {
     console.error("❌ Error fetching diet plans:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });

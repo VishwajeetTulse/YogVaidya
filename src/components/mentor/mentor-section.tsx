@@ -30,7 +30,9 @@ export default function MentorsPage() {
       const mentorIdsParam = mentorIds.join(",");
       const url = `/api/mentor/timeslots/batch?mentorIds=${mentorIdsParam}`;
 
-      const response = await fetch(url);
+      const response = await fetch(url, {
+        cache: "default"
+      });
       const data = await response.json();
 
       if (data.success) {
@@ -60,7 +62,9 @@ export default function MentorsPage() {
   const fetchMentors = useCallback(async () => {
     try {
       setLoading(true);
-      const response = await fetch("/api/mentor/get-approved-mentors");
+      const response = await fetch("/api/mentor/get-approved-mentors", {
+        cache: "default"
+      });
       const data = await response.json();
 
       if (data.success) {

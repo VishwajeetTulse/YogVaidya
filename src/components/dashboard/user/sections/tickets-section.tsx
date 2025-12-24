@@ -79,7 +79,9 @@ export function UserTicketsSection({}: SectionProps) {
       if (priorityFilter !== "all") params.append("priority", priorityFilter);
       if (categoryFilter !== "all") params.append("category", categoryFilter);
 
-      const response = await fetch(`/api/tickets?${params}`);
+      const response = await fetch(`/api/tickets?${params}`, {
+        cache: "default"
+      });
       const data = await response.json();
 
       if (response.ok) {

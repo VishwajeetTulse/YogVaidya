@@ -5,6 +5,7 @@ import { prisma } from "@/lib/config/prisma";
 import { getUserSubscription } from "@/lib/subscriptions";
 import { headers } from "next/headers";
 import { type Prisma } from "@prisma/client";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 import type { SessionBookingDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
@@ -59,8 +60,12 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
       return { success: false, error: "Authentication required" };
     }
 
-    // Get user subscription details
-    const subscriptionResult = await getUserSubscription(session.user.id);
+    // Cache user mentor data with 1 minute TTL
+    return await withCache(
+      `user:mentors:${session.user.id}`,
+      async () => {
+        // Get user subscription details
+        const subscriptionResult = await getUserSubscription(session.user.id);
 
     if (!subscriptionResult.success) {
       return { success: false, error: "Failed to get subscription details" };
@@ -740,8 +745,16 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         sessionStats,
       },
     };
+      },
+      CACHE_TTL.SHORT
+    );
   } catch (error) {
     console.error("Error fetching user mentor:", error);
     return { success: false, error: "Failed to fetch mentor information" };
   }
+}
+
+// Invalidate user mentor cache
+export async function invalidateUserMentorCache(userId: string): Promise<void> {
+  await invalidateCache(`user:mentors:${userId}`);
 }

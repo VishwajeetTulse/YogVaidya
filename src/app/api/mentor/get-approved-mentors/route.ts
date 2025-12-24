@@ -80,11 +80,18 @@ export async function GET() {
       CACHE_TTL.MEDIUM // 5 minutes
     );
 
-    return NextResponse.json({
-      success: true,
-      mentors: mentorsData,
-      count: mentorsData.length,
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        mentors: mentorsData,
+        count: mentorsData.length,
+      },
+      {
+        headers: {
+          'Cache-Control': 'public, s-maxage=300, stale-while-revalidate=60'
+        }
+      }
+    );
   } catch (error) {
     console.error("Error fetching approved mentors:", error);
     return NextResponse.json(

@@ -3,6 +3,7 @@ import { auth } from "@/lib/config/auth";
 import { prisma } from "@/lib/config/prisma";
 import { TicketLogger, TicketAction } from "@/lib/utils/ticket-logger";
 import type { Prisma } from "@prisma/client";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 // Import types from our custom types (since Prisma types might not be available yet)
 import { TicketStatus, TicketPriority, TicketCategory } from "@/lib/types/tickets";
@@ -76,59 +77,74 @@ export async function GET(request: NextRequest) {
     if (priority && priority !== "all") whereConditions.priority = priority as TicketPriority;
     if (category && category !== "all") whereConditions.category = category as TicketCategory;
 
-    try {
-      // Try to query the database
-      const [tickets, totalCount] = await Promise.all([
-        prisma.ticket.findMany({
-          where: whereConditions,
-          include: {
-            user: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-            assignedTo: {
-              select: {
-                id: true,
-                name: true,
-                email: true,
-                role: true,
-              },
-            },
-          },
-          orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
-          skip: offset,
-          take: limit,
-        }) || [],
-        prisma.ticket.count({ where: whereConditions }) || 0,
-      ]);
+    // Create cache key based on user role and filters
+    const cacheKey = `tickets:${session.user.id}:${session.user.role}:${status || 'all'}:${priority || 'all'}:${category || 'all'}:${assigned || 'all'}:${page}`;
 
-      return NextResponse.json({
-        tickets: tickets || [],
-        pagination: {
-          page,
-          limit,
-          totalCount: totalCount || 0,
-          totalPages: Math.ceil((totalCount || 0) / limit),
-        },
-      });
-    } catch (dbError) {
-      console.error("Database query failed, returning empty result:", dbError);
+    const result = await withCache(
+      cacheKey,
+      async () => {
+        try {
+          // Try to query the database
+          const [tickets, totalCount] = await Promise.all([
+            prisma.ticket.findMany({
+              where: whereConditions,
+              include: {
+                user: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                  },
+                },
+                assignedTo: {
+                  select: {
+                    id: true,
+                    name: true,
+                    email: true,
+                    role: true,
+                  },
+                },
+              },
+              orderBy: [{ priority: "desc" }, { createdAt: "desc" }],
+              skip: offset,
+              take: limit,
+            }) || [],
+            prisma.ticket.count({ where: whereConditions }) || 0,
+          ]);
 
-      // Return empty response if database query fails
-      return NextResponse.json({
-        tickets: [],
-        pagination: {
-          page: 1,
-          limit: 10,
-          totalCount: 0,
-          totalPages: 0,
-        },
-      });
-    }
+          return {
+            tickets: tickets || [],
+            pagination: {
+              page,
+              limit,
+              totalCount: totalCount || 0,
+              totalPages: Math.ceil((totalCount || 0) / limit),
+            },
+          };
+        } catch (dbError) {
+          console.error("Database query failed, returning empty result:", dbError);
+
+          // Return empty response if database query fails
+          return {
+            tickets: [],
+            pagination: {
+              page: 1,
+              limit: 10,
+              totalCount: 0,
+              totalPages: 0,
+            },
+          };
+        }
+      },
+      CACHE_TTL.SHORT // 1 minute
+    );
+
+    return NextResponse.json(result, {
+      headers: {
+        'Cache-Control': 'public, s-maxage=60, stale-while-revalidate=30'
+      }
+    });
   } catch (error) {
     console.error("Error in tickets GET:", error);
     return NextResponse.json({ error: "Internal server error" }, { status: 500 });
@@ -214,6 +230,9 @@ export async function POST(request: NextRequest) {
           request
         );
       }
+
+      // Invalidate tickets cache for this user
+      await invalidateCache(`tickets:${session.user.id}:*`);
 
       return NextResponse.json(
         {

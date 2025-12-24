@@ -8,6 +8,7 @@ import { headers } from "next/headers";
 import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult, DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 /**
  * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
@@ -75,8 +76,12 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
       return { success: false, error: "Authentication required" };
     }
 
-    // Helper function to fetch paid one-on-one session bookings
-    const fetchPaidSessionBookings = async (userId: string): Promise<UserSessionData[]> => {
+    // Cache user sessions with 1 minute TTL
+    return await withCache(
+      `user:sessions:${session.user.id}`,
+      async () => {
+        // Helper function to fetch paid one-on-one session bookings
+        const fetchPaidSessionBookings = async (userId: string): Promise<UserSessionData[]> => {
       try {
         const sessionBookingsResult = await prisma.$runCommandRaw({
           aggregate: "sessionBooking",
@@ -662,8 +667,18 @@ export async function getUserSessions(): Promise<UserSessionsResponse> {
         isTrialExpired: false, // Active users don't have expired trials
       },
     };
+      },
+      CACHE_TTL.SHORT // 1 minute
+    );
   } catch (error) {
     console.error("Error fetching user sessions:", error);
     return { success: false, error: "Failed to fetch sessions" };
   }
+}
+
+/**
+ * Invalidate user sessions cache
+ */
+export async function invalidateUserSessionsCache(userId: string): Promise<void> {
+  await invalidateCache(`user:sessions:${userId}`);
 }

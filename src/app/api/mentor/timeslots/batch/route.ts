@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 import { prisma } from "@/lib/config/prisma";
+import { withCache, CACHE_TTL } from "@/lib/cache/redis";
 
 /**
  * GET /api/mentor/timeslots/batch
@@ -23,47 +24,56 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "At least one mentor ID is required" }, { status: 400 });
     }
 
-    // Single database query for all mentors' slots
-    const availableSlots = await prisma.mentorTimeSlot.findMany({
-      where: {
-        mentorId: {
-          in: mentorIds,
-        },
-        isActive: true,
-        isBooked: false,
-        startTime: {
-          gte: new Date(), // Only future slots
-        },
-      },
-      select: {
-        mentorId: true,
-        id: true,
-      },
-    });
+    // Cache key based on sorted mentor IDs to ensure consistent cache hits
+    const sortedMentorIds = mentorIds.sort().join(",");
+    const cacheKey = `timeslots:batch:${sortedMentorIds}`;
 
-    // Create availability map: mentorId -> hasAvailableSlots
-    const availability: Record<string, boolean> = {};
-    const mentorSlotSet = new Set(availableSlots.map((slot) => slot.mentorId));
+    const result = await withCache(
+      cacheKey,
+      async () => {
+        // Single database query for all mentors' slots
+        const availableSlots = await prisma.mentorTimeSlot.findMany({
+          where: {
+            mentorId: {
+              in: mentorIds,
+            },
+            isActive: true,
+            isBooked: false,
+            startTime: {
+              gte: new Date(), // Only future slots
+            },
+          },
+          select: {
+            mentorId: true,
+            id: true,
+          },
+        });
 
-    mentorIds.forEach((mentorId) => {
-      availability[mentorId] = mentorSlotSet.has(mentorId);
-    });
+        // Create availability map: mentorId -> hasAvailableSlots
+        const availability: Record<string, boolean> = {};
+        const mentorSlotSet = new Set(availableSlots.map((slot) => slot.mentorId));
 
-    return NextResponse.json(
-      {
-        success: true,
-        availability,
-        totalMentors: mentorIds.length,
-        mentorsWithSlots:
-          availableSlots.length > 0 ? mentorIds.filter((id) => availability[id]).length : 0,
+        mentorIds.forEach((mentorId) => {
+          availability[mentorId] = mentorSlotSet.has(mentorId);
+        });
+
+        return {
+          success: true,
+          availability,
+          totalMentors: mentorIds.length,
+          mentorsWithSlots:
+            availableSlots.length > 0 ? mentorIds.filter((id) => availability[id]).length : 0,
+        };
       },
-      {
-        headers: {
-          // Cache for 1 minute
-          "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
-        },
-      }
+      CACHE_TTL.SHORT
     );
+
+    return NextResponse.json(result, {
+      headers: {
+        // Cache for 1 minute
+        "Cache-Control": "public, s-maxage=60, stale-while-revalidate=300",
+      },
+    });
   } catch (error) {
     console.error("Error fetching batch timeslots:", error);
     return NextResponse.json(

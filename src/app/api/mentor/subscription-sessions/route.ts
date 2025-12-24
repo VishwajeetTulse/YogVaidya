@@ -6,6 +6,7 @@ import { prisma } from "@/lib/config/prisma";
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
 import type { ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 import {
   AuthenticationError,
@@ -159,6 +160,9 @@ export async function POST(request: Request) {
       },
     };
 
+    // Invalidate the subscription sessions cache for this mentor
+    await invalidateCache(`mentor:subscription-sessions:${user.id}`);
+
     return NextResponse.json(response);
   } catch (error) {
     console.error("Error creating subscription session:", error);
@@ -184,6 +188,10 @@ export async function GET() {
     if (!session?.user?.id) {
       throw new AuthenticationError("Unauthorized");
     }
+
+    const result = await withCache(
+      `mentor:subscription-sessions:${session.user.id}`,
+      async () => {
 
     // Get all schedules created by this mentor
     // Use $runCommandRaw to handle corrupted date strings in the database
@@ -351,10 +359,15 @@ export async function GET() {
       })
     );
 
-    return NextResponse.json({
+    return {
       success: true,
       data: enrichedSchedules,
-    });
+    };
+      },
+      CACHE_TTL.SHORT
+    );
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Error fetching subscription sessions:", error);
 

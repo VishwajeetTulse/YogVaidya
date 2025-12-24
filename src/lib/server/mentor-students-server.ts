@@ -3,6 +3,7 @@
 import { auth } from "@/lib/config/auth";
 import { headers } from "next/headers";
 import { getMentorStudents } from "@/lib/server/mentor-overview-server";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 export interface MentorStudentData {
   id: string;
@@ -32,6 +33,10 @@ export async function getMentorStudentsData(): Promise<MentorStudentsResponse> {
       return { success: false, error: "Authentication required" };
     }
 
+    return await withCache(
+      `mentor:students:${session.user.id}`,
+      async () => {
+
     // Verify the user is a mentor (this check is also done in getMentorStudents)
     const mentorStudentsData = await getMentorStudents(session.user.id);
 
@@ -43,8 +48,16 @@ export async function getMentorStudentsData(): Promise<MentorStudentsResponse> {
         students: mentorStudentsData.students as MentorStudentData[],
       },
     };
+      },
+      CACHE_TTL.SHORT
+    );
   } catch (error) {
     console.error("Error fetching mentor students data:", error);
     return { success: false, error: "Failed to fetch students data" };
   }
+}
+
+// Invalidate mentor students cache
+export async function invalidateMentorStudentsCache(mentorId: string): Promise<void> {
+  await invalidateCache(`mentor:students:${mentorId}`);
 }

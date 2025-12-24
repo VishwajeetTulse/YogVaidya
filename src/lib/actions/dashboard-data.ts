@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import { convertMongoDate } from "@/lib/utils/datetime-utils";
 import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
 import type { MongoCommandResult } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 // Helper type for joined MongoDB results (with mentor lookup)
 interface SessionWithMentorLookup extends SessionBookingDocument {
@@ -78,27 +79,31 @@ export async function getUserDashboardData(): Promise<{
       return { success: false, error: "Authentication required" };
     }
 
-    const user = await prisma.user.findUnique({
-      where: { id: session.user.id },
-      include: {
-        // Get user's session data
-        sessions: {
-          where: {
-            createdAt: {
-              gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+    // Cache user dashboard data with 1 minute TTL
+    return await withCache(
+      `dashboard:user:${session.user.id}`,
+      async () => {
+        const user = await prisma.user.findUnique({
+          where: { id: session.user.id },
+          include: {
+            // Get user's session data
+            sessions: {
+              where: {
+                createdAt: {
+                  gte: new Date(Date.now() - 7 * 24 * 60 * 60 * 1000), // Last 7 days
+                },
+              },
+              select: {
+                id: true,
+                createdAt: true,
+              },
             },
           },
-          select: {
-            id: true,
-            createdAt: true,
-          },
-        },
-      },
-    });
+        });
 
-    if (!user) {
-      return { success: false, error: "User not found" };
-    }
+        if (!user) {
+          return { success: false, error: "User not found" };
+        }
 
     // Date calculations (similar to mentor analytics)
     const now = new Date();
@@ -642,44 +647,54 @@ export async function getUserDashboardData(): Promise<{
     };
 
     return {
-      success: true,
-      data: {
-        classesThisWeek,
-        totalPracticeTime,
-        goalsAchieved,
-        totalGoals,
-        streakDays,
-        todaySchedule: todaySchedule.map((session) => ({
-          id: session.id,
-          title: session.title || `${session.sessionType} Session`,
-          mentor: session.mentor?.name || "Mentor",
-          time: formatSessionTime(session.scheduledTime),
-          scheduledTime: session.scheduledTime, // Add full datetime for time-based logic
-          type: session.sessionType.toLowerCase() as "yoga" | "meditation",
-          status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
-        })),
-        upcomingSessions: upcomingSessions.map((session) => ({
-          id: session.id,
-          title: session.title || `${session.sessionType} Session`,
-          mentor: session.mentor?.name || "Mentor",
-          time: formatSessionTime(session.scheduledTime),
-          type: session.sessionType.toLowerCase() as "yoga" | "meditation",
-          status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
-        })),
-        monthlyStats: {
-          currentMonth: {
-            sessions: currentMonthSessions,
-            practiceTime: currentMonthSessions * 45, // 45 minutes per session
-          },
-          previousMonth: {
-            sessions: previousMonthSessions,
-            practiceTime: previousMonthSessions * 45,
+        success: true,
+        data: {
+          classesThisWeek,
+          totalPracticeTime,
+          goalsAchieved,
+          totalGoals,
+          streakDays,
+          todaySchedule: todaySchedule.map((session) => ({
+            id: session.id,
+            title: session.title || `${session.sessionType} Session`,
+            mentor: session.mentor?.name || "Mentor",
+            time: formatSessionTime(session.scheduledTime),
+            scheduledTime: session.scheduledTime, // Add full datetime for time-based logic
+            type: session.sessionType.toLowerCase() as "yoga" | "meditation",
+            status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
+          })),
+          upcomingSessions: upcomingSessions.map((session) => ({
+            id: session.id,
+            title: session.title || `${session.sessionType} Session`,
+            mentor: session.mentor?.name || "Mentor",
+            time: formatSessionTime(session.scheduledTime),
+            type: session.sessionType.toLowerCase() as "yoga" | "meditation",
+            status: session.status as "SCHEDULED" | "ONGOING" | "COMPLETED" | "CANCELLED",
+          })),
+          monthlyStats: {
+            currentMonth: {
+              sessions: currentMonthSessions,
+              practiceTime: currentMonthSessions * 45, // 45 minutes per session
+            },
+            previousMonth: {
+              sessions: previousMonthSessions,
+              practiceTime: previousMonthSessions * 45,
+            },
           },
         },
+      };
       },
-    };
+      CACHE_TTL.SHORT // 1 minute
+    );
   } catch (error) {
     console.error("Error fetching dashboard data:", error);
     return { success: false, error: "Failed to fetch dashboard data" };
   }
+}
+
+/**
+ * Invalidate user dashboard cache
+ */
+export async function invalidateUserDashboardCache(userId: string): Promise<void> {
+  await invalidateCache(`dashboard:user:${userId}`);
 }

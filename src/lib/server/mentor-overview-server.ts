@@ -7,6 +7,7 @@ import { prisma } from "@/lib/config/prisma";
 import type { ScheduleDocument, SessionBookingDocument } from "@/lib/types/sessions";
 import type { DateValue } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 /**
  * Helper function to convert MongoDB extended JSON dates to JavaScript Date objects
@@ -154,6 +155,10 @@ export async function getMentorOverviewData(): Promise<{
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
     }
+
+    return await withCache(
+      `mentor:overview:${session.user.id}`,
+      async () => {
 
     // Verify the user is a mentor
     const user = await prisma.user.findUnique({
@@ -483,9 +488,17 @@ export async function getMentorOverviewData(): Promise<{
       },
     };
 
-    return { success: true, data: overviewData };
+        return { success: true, data: overviewData };
+      },
+      CACHE_TTL.SHORT
+    );
   } catch (error) {
     console.error("Error fetching mentor overview data:", error);
     return { success: false, error: "Failed to fetch overview data" };
   }
+}
+
+// Invalidate mentor overview cache
+export async function invalidateMentorOverviewCache(mentorId: string): Promise<void> {
+  await invalidateCache(`mentor:overview:${mentorId}`);
 }

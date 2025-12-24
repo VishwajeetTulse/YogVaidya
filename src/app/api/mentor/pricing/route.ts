@@ -8,6 +8,7 @@ import {
   ValidationError,
 } from "@/lib/utils/error-handler";
 import { errorResponse, successResponse } from "@/lib/utils/response-handler";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 const pricingSchema = z.object({
   sessionPrice: z.number().min(0).max(10000, "Session price must be between 0 and 10,000"),
@@ -22,6 +23,10 @@ export async function GET(request: NextRequest) {
       throw new AuthenticationError("User session not found");
     }
 
+    const result = await withCache(
+      `mentor:pricing:${session.user.id}`,
+      async () => {
+
     const user = await prisma.user.findUnique({
       where: { id: session.user.id },
       select: {
@@ -35,11 +40,15 @@ export async function GET(request: NextRequest) {
       throw new AuthorizationError("Only mentors can access pricing");
     }
 
-    return successResponse(
-      { sessionPrice: user.sessionPrice },
-      200,
-      "Mentor pricing retrieved successfully"
+    return {
+      sessionPrice: user.sessionPrice,
+      message: "Mentor pricing retrieved successfully",
+    };
+      },
+      CACHE_TTL.MEDIUM
     );
+
+    return successResponse(result, 200);
   } catch (error) {
     return errorResponse(error);
   }
@@ -77,6 +86,9 @@ export async function PUT(request: NextRequest) {
         sessionPrice: true,
       },
     });
+
+    // Invalidate pricing cache
+    await invalidateCache(`mentor:pricing:${user.id}`);
 
     return successResponse(
       { sessionPrice: updatedUser.sessionPrice },

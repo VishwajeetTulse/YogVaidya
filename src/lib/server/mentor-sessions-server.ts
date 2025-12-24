@@ -6,6 +6,7 @@ import { headers } from "next/headers";
 import type { DateValue, MongoCommandResult } from "@/lib/types/mongodb";
 import { isMongoDate } from "@/lib/types/mongodb";
 import type { SessionBookingDocument, ScheduleDocument } from "@/lib/types/sessions";
+import { withCache, CACHE_TTL, invalidateCache } from "@/lib/cache/redis";
 
 // Extended types for aggregated results with joined data
 interface SessionBookingWithStudentData extends SessionBookingDocument {
@@ -134,6 +135,10 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
     if (!session?.user) {
       return { success: false, error: "Authentication required" };
     }
+
+    return await withCache(
+      `mentor:sessions:${session.user.id}`,
+      async () => {
 
     // Get user details and verify they are a mentor
     const user = await prisma.user.findUnique({
@@ -578,8 +583,16 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         totalSessions: allSessions.length,
       },
     };
+      },
+      CACHE_TTL.SHORT
+    );
   } catch (error) {
     console.error("Error fetching mentor sessions:", error);
     return { success: false, error: "Failed to fetch mentor sessions" };
   }
+}
+
+// Invalidate mentor sessions cache
+export async function invalidateMentorSessionsCache(mentorId: string): Promise<void> {
+  await invalidateCache(`mentor:sessions:${mentorId}`);
 }
