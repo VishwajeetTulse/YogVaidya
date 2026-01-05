@@ -103,6 +103,7 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
                 userId: userId,
               },
             },
+            { $limit: 1000 }, // Check up to 1000 bookings (reasonable for existence check)
           ],
           cursor: {},
         });
@@ -136,6 +137,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
                 scheduledAt: { $exists: true },
               },
             },
+            { $sort: { scheduledAt: -1 } },
+            { $limit: 500 }, // Limit session bookings analyzed (reasonable for mentor relationship detection)
             {
               $lookup: {
                 from: "user",
@@ -474,6 +477,8 @@ export async function getUserMentor(): Promise<UserMentorResponse> {
         phone: true,
         createdAt: true,
       },
+      orderBy: { createdAt: "desc" },
+      take: 200,
     });
 
     // Get mentor applications for additional data

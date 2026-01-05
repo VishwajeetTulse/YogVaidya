@@ -24,6 +24,8 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
+    const ADMIN_USERS_LIMIT = 5000;
+
     // Use Redis cache with 2 minute TTL for users list
     const users = await withCache(
       "admin:users:list",
@@ -43,6 +45,8 @@ export async function GET(req: NextRequest) {
             subscriptionEndDate: true,
             billingPeriod: true,
           },
+          orderBy: { createdAt: "desc" },
+          take: ADMIN_USERS_LIMIT,
         });
       },
       CACHE_TTL.SHORT // 1 minute

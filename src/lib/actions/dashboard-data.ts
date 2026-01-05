@@ -142,6 +142,8 @@ export async function getUserDashboardData(): Promise<{
             },
           },
         },
+        { $sort: { scheduledTime: -1 } },
+        { $limit: 100 }, // Limit to 100 sessions per week (reasonable for user dashboard)
         {
           $lookup: {
             from: "users",
@@ -241,6 +243,7 @@ export async function getUserDashboardData(): Promise<{
           },
         },
         { $sort: { scheduledTime: -1 } },
+        { $limit: 200 }, // Limit for streak calculation (reasonable 30-day window)
       ],
       cursor: {},
     });
@@ -293,6 +296,8 @@ export async function getUserDashboardData(): Promise<{
             },
           },
         },
+        { $sort: { scheduledTime: 1 } },
+        { $limit: 50 }, // Max 50 sessions per day (very reasonable limit)
         {
           $lookup: {
             from: "user",
@@ -348,6 +353,8 @@ export async function getUserDashboardData(): Promise<{
             paymentStatus: "COMPLETED", // Only show paid bookings
           },
         },
+        { $sort: { scheduledAt: 1 } },
+        { $limit: 50 }, // Max 50 bookings per day
         {
           $lookup: {
             from: "user",
@@ -448,6 +455,8 @@ export async function getUserDashboardData(): Promise<{
             },
           },
         },
+        { $sort: { scheduledTime: 1 } },
+        { $limit: 100 }, // Max 100 upcoming sessions in 7 days
         {
           $lookup: {
             from: "user",
@@ -503,6 +512,8 @@ export async function getUserDashboardData(): Promise<{
             paymentStatus: "COMPLETED",
           },
         },
+        { $sort: { scheduledAt: 1 } },
+        { $limit: 100 }, // Max 100 upcoming bookings in 7 days
         {
           $lookup: {
             from: "user",

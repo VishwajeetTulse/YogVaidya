@@ -23,6 +23,8 @@ export async function GET(req: NextRequest) {
       throw new AuthorizationError("Only admins can access this resource");
     }
 
+    const ADMIN_SUBSCRIPTIONS_LIMIT = 5000;
+
     // Cache admin subscriptions data with 1 minute TTL
     const users = await withCache(
       "admin:users:subscriptions",
@@ -50,6 +52,7 @@ export async function GET(req: NextRequest) {
           orderBy: {
             createdAt: "desc",
           },
+          take: ADMIN_SUBSCRIPTIONS_LIMIT,
         });
       },
       CACHE_TTL.SHORT

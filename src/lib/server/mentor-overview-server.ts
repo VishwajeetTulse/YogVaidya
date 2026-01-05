@@ -60,6 +60,8 @@ export async function getMentorStudents(mentorId: string) {
           ],
         },
       },
+      orderBy: { createdAt: "desc" },
+      take: 200, // cap to reduce payload for dashboard
       select: {
         id: true,
         name: true,

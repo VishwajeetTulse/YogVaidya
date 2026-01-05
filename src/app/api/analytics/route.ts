@@ -28,6 +28,13 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: "Insufficient permissions" }, { status: 403 });
     }
 
+    const ANALYTICS_USER_LIMIT = 10000; // cap to keep payload bounded
+    const ANALYTICS_LOG_LIMIT = 1000;
+    const ANALYTICS_SCHEDULE_LIMIT = 5000;
+    const ANALYTICS_SCHEDULE_WINDOW_MONTHS = 6;
+    const now = new Date();
+    const scheduleWindowStart = subMonths(now, ANALYTICS_SCHEDULE_WINDOW_MONTHS);
+
     // Cache analytics data with 2 minute TTL (expensive query)
     const analyticsData = await withCache(
       "analytics:dashboard:v1",
@@ -43,6 +50,8 @@ export async function GET(request: NextRequest) {
         subscriptionStatus: true,
         trialUsed: true,
       },
+      orderBy: { createdAt: "desc" },
+      take: ANALYTICS_USER_LIMIT,
     }); // Get recent signups (within last month) - only users and mentors for growth calculation
     const recentSignups = allUsers.filter(
       (user) =>
@@ -93,7 +102,7 @@ export async function GET(request: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
-      take: 1000, // Limit to recent logs for performance
+      take: ANALYTICS_LOG_LIMIT, // Limit to recent logs for performance
     });
 
     const logsByCategory = systemLogs.reduce(
@@ -114,6 +123,9 @@ export async function GET(request: NextRequest) {
 
     // Calculate session scheduling analytics
     const schedules = await prisma.schedule.findMany({
+      where: {
+        scheduledTime: { gte: scheduleWindowStart },
+      },
       select: {
         id: true,
         sessionType: true,
@@ -122,6 +134,8 @@ export async function GET(request: NextRequest) {
         duration: true,
         createdAt: true,
       },
+      orderBy: { scheduledTime: "desc" },
+      take: ANALYTICS_SCHEDULE_LIMIT,
     });
 
     const sessionsByType = schedules.reduce(
@@ -165,6 +179,8 @@ export async function GET(request: NextRequest) {
         status: true,
         createdAt: true,
       },
+      orderBy: { createdAt: "desc" },
+      take: 2000,
     });
 
     const pendingApplications = mentorApplications.filter((app) => app.status === "pending").length;

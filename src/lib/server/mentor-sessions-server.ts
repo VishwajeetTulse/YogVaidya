@@ -156,6 +156,10 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
       return { success: false, error: "Only mentors can access this data" };
     }
 
+    // Safety caps to keep payloads bounded
+    const LEGACY_SESSION_LIMIT = 100;
+    const BOOKING_SESSION_LIMIT = 200;
+
     // Get mentor's scheduled sessions from both sources
 
     // 1. Get sessions from Schedule collection using raw query to handle datetime conversion
@@ -244,9 +248,7 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
         {
           $sort: { scheduledTime: -1 },
         },
-        {
-          $limit: 100,
-        },
+        { $limit: LEGACY_SESSION_LIMIT },
       ],
       cursor: {},
     });
@@ -337,9 +339,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
             timeSlotData: 1, // Include time slot data for duration calculation
           },
         },
-        {
-          $sort: { scheduledTime: -1 },
-        },
+        { $sort: { scheduledTime: -1 } },
+        { $limit: BOOKING_SESSION_LIMIT },
       ],
       cursor: {},
     });
@@ -452,6 +453,8 @@ export async function getMentorSessions(): Promise<MentorSessionsResponse> {
           },
         ],
       },
+      orderBy: { createdAt: "desc" },
+      take: 500, // cap to keep payload small
       select: {
         id: true,
         name: true,

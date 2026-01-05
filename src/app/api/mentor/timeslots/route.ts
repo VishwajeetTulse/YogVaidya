@@ -224,7 +224,8 @@ export async function GET(request: Request) {
     const timeSlotsResult = await prisma.$runCommandRaw({
       find: "mentorTimeSlot",
       filter: filter as unknown as Prisma.InputJsonValue,
-      sort: { startTime: -1 }, // Changed to -1 to show recent time slots first
+      sort: { startTime: -1 }, // show recent first
+      limit: 200, // cap result set to avoid large payloads
     });
 
     // Parse the MongoDB result

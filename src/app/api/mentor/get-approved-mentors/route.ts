@@ -8,72 +8,80 @@ export async function GET() {
     const mentorsData = await withCache(
       "mentors:approved:list:v2",
       async () => {
-        // Get all approved mentor applications
+        // Get all approved mentor applications (only needed fields)
         const approvedApplications = await prisma.mentorApplication.findMany({
-      where: {
-        status: "approved",
-      },
-      orderBy: {
-        createdAt: "desc",
-      },
-    });
+          where: { status: "approved" },
+          orderBy: { createdAt: "desc" },
+          select: {
+            id: true,
+            userId: true,
+            name: true,
+            email: true,
+            phone: true,
+            expertise: true,
+            experience: true,
+            certifications: true,
+            mentorType: true,
+            profile: true,
+            createdAt: true,
+            updatedAt: true,
+          },
+        });
 
-    // For each approved application, get the corresponding user data
-    const mentorsWithUserData = await Promise.all(
-      approvedApplications.map(async (application) => {
-        const user = await prisma.user.findFirst({
+        // Batch fetch corresponding users to avoid N+1 queries
+        const applicationEmails = approvedApplications.map((app) => app.email).filter(Boolean);
+        const applicationUserIds = approvedApplications
+          .map((app) => app.userId)
+          .filter((id): id is string => Boolean(id));
+
+        const users = await prisma.user.findMany({
           where: {
             OR: [
-              { email: application.email },
-              { id: application.userId || "" }, // Use userId if available
+              { email: { in: applicationEmails } },
+              { id: { in: applicationUserIds } },
             ],
           },
           select: {
             id: true,
-            name: true,
+            email: true,
             image: true,
             phone: true,
             role: true,
             mentorType: true,
             sessionPrice: true,
+            isAvailable: true,
           },
         });
 
-        // Get availability separately to avoid TypeScript issues
-        let isAvailable = true; // Default value
-        try {
-          const availabilityData = await prisma.user.findUnique({
-            where: { id: user?.id || "" },
-            select: { isAvailable: true },
-          });
-          isAvailable = availabilityData?.isAvailable ?? true;
-        } catch (error) {
-          console.error(`Error fetching availability for ${application.email}:`, error);
-        }
+        const usersByEmail = new Map(users.map((u) => [u.email, u]));
+        const usersById = new Map(users.map((u) => [u.id, u]));
 
-        return {
-          id: user?.id || application.userId, // Use actual user ID, not application ID
-          name: application.name,
-          email: application.email,
-          phone: application.phone,
-          specialty: application.expertise,
-          experience: application.experience,
-          certifications: application.certifications,
-          image: user?.image || "/assets/default-avatar.svg", // Use user's image or default
-          available: isAvailable, // Use real availability from database
-          description: `${application.expertise} specialist with ${application.experience} of experience`,
-          bio:
-            application.profile ||
-            `Experienced ${application.expertise} practitioner dedicated to helping students achieve their wellness goals through personalized guidance and proven techniques.`,
-          mentorType: application.mentorType,
-          profile: application.profile,
-          sessionPrice: user?.sessionPrice || null,
-          createdAt: application.createdAt,
-          updatedAt: application.updatedAt,
-          userRole: user?.role,
-        };
-      })
-    );
+        const mentorsWithUserData = approvedApplications.map((application) => {
+          const user = usersByEmail.get(application.email) ||
+            (application.userId ? usersById.get(application.userId) : undefined);
+
+          return {
+            id: user?.id || application.userId, // Use actual user ID when available
+            name: application.name,
+            email: application.email,
+            phone: application.phone,
+            specialty: application.expertise,
+            experience: application.experience,
+            certifications: application.certifications,
+            image: user?.image || "/assets/default-avatar.svg",
+            available: user?.isAvailable ?? true,
+            description: `${application.expertise} specialist with ${application.experience} of experience`,
+            bio:
+              application.profile ||
+              `Experienced ${application.expertise} practitioner dedicated to helping students achieve their wellness goals through personalized guidance and proven techniques.`,
+            mentorType: application.mentorType,
+            profile: application.profile,
+            sessionPrice: user?.sessionPrice || null,
+            createdAt: application.createdAt,
+            updatedAt: application.updatedAt,
+            userRole: user?.role,
+          };
+        });
 
         return mentorsWithUserData;
       },

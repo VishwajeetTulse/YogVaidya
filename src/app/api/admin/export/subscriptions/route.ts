@@ -22,7 +22,9 @@ export async function GET(req: NextRequest) {
       throw new AuthorizationError("Access denied");
     }
 
-    // Fetch all users with subscription data
+    const EXPORT_SUBSCRIPTIONS_LIMIT = 20000;
+
+    // Fetch users with subscription data (bounded)
     const users = await prisma.user.findMany({
       select: {
         name: true,
@@ -44,6 +46,7 @@ export async function GET(req: NextRequest) {
       orderBy: {
         createdAt: "desc",
       },
+      take: EXPORT_SUBSCRIPTIONS_LIMIT,
     });
 
     // Filter to only show actual customers (USER role)
