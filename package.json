@@ -6,6 +6,7 @@
     "dev": "next dev",
     "dev:webpack": "NEXT_PRIVATE_WEBPACK_BUILD=1 next dev",
     "build": "prisma generate && next build",
+    "build:analyze": "cross-env ANALYZE=true npm run build",
     "start": "next start",
     "lint": "next lint",
     "lint:fix": "next lint --fix",
@@ -88,11 +89,13 @@
     "sonner": "^2.0.5",
     "swagger-ui-dist": "^5.29.5",
     "swagger-ui-react": "^5.29.5",
+    "swr": "^2.3.8",
     "tailwind-merge": "^3.2.0",
     "tw-animate-css": "^1.2.5",
     "zod": "^3.25.76"
   },
   "devDependencies": {
+    "@next/bundle-analyzer": "^16.1.1",
     "@playwright/test": "^1.56.1",
     "@tailwindcss/postcss": "^4",
     "@testing-library/jest-dom": "^6.9.1",

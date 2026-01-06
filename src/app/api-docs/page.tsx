@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import SwaggerUI from "swagger-ui-react";
+import { SwaggerUIComponent } from "@/components/dynamic-imports";
 import "swagger-ui-react/swagger-ui.css";
 
 /**
@@ -69,7 +69,7 @@ export default function ApiDocsPage() {
 
   return (
     <div style={{ padding: 0, margin: 0 }}>
-      <SwaggerUI spec={spec} persistAuthorization={true} />
+      <SwaggerUIComponent spec={spec} persistAuthorization={true} />
     </div>
   );
 }

@@ -13,9 +13,9 @@ function MentorsLoading() {
   );
 }
 
-// Enable dynamic rendering with reasonable revalidation
-export const dynamic = "force-dynamic";
-export const revalidate = 60; // Revalidate every 60 seconds
+// Enable ISR (Incremental Static Regeneration) instead of force-dynamic
+// This pre-renders the page and revalidates in the background
+export const revalidate = 300; // Revalidate every 5 minutes
 
 const Mentorsection = () => {
   return (

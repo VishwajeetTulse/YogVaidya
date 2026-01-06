@@ -8,11 +8,11 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
 import {
-  getUserSessions,
   type UserSessionData,
   type UserSessionsResponse,
 } from "@/lib/server/user-sessions-server";
 import { useSessionStatusUpdates } from "@/hooks/use-session-status-updates";
+import { useUserSessions } from "@/hooks/use-dashboard-data";
 import type { DateValue } from "@/lib/types/utils";
 import { isMongoDate } from "@/lib/types/mongodb";
 import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
@@ -43,16 +43,114 @@ interface UserSessionsData {
   isTrialExpired?: boolean;
 }
 
+// Helper function to convert server data to component format - moved before usage
+const formatSessionsData = (serverData: UserSessionsResponse["data"]): UserSessionsData => {
+  if (!serverData) {
+    throw new Error("Server data is undefined");
+  }
+
+  // Helper function to safely convert to valid ISO string
+  const safeToISOString = (dateValue: DateValue): string | null => {
+    // Handle null/undefined
+    if (!dateValue) {
+      console.warn("Null/undefined date value found, skipping session");
+      return null;
+    }
+
+    // Handle MongoDB extended JSON date format: {$date: 'ISO_STRING'}
+    if (isMongoDate(dateValue)) {
+      const isoString = dateValue.$date;
+      if (typeof isoString === "string") {
+        const date = new Date(isoString);
+        if (!isNaN(date.getTime())) {
+          return date.toISOString();
+        }
+      }
+      console.warn("Invalid MongoDB date format found, skipping session:", dateValue);
+      return null;
+    }
+
+    // If it's already a string, check if it's a valid ISO date
+    if (typeof dateValue === "string") {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+      // If invalid string, return null to filter out this session
+      console.warn("Invalid date string found, skipping session:", dateValue);
+      return null;
+    }
+
+    // If it's a Date object
+    if (dateValue instanceof Date) {
+      if (!isNaN(dateValue.getTime())) {
+        return dateValue.toISOString();
+      }
+      console.warn("Invalid Date object found, skipping session:", dateValue);
+      return null;
+    }
+
+    // If it's a number (timestamp)
+    if (typeof dateValue === "number") {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date.toISOString();
+      }
+    }
+
+    // If completely invalid, return null to filter out this session
+    console.warn("Invalid date value found, skipping session:", dateValue);
+    return null;
+  };
+
+  return {
+    ...serverData,
+    sessions: serverData.sessions
+      .map((session: UserSessionData) => {
+        const scheduledTime = safeToISOString(session.scheduledTime);
+        if (scheduledTime === null) {
+          return null; // Mark for filtering
+        }
+
+        const manualStartTime = session.manualStartTime
+          ? safeToISOString(session.manualStartTime)
+          : null;
+
+        return {
+          id: session.id,
+          title: session.title,
+          scheduledTime: scheduledTime,
+          manualStartTime: manualStartTime,
+          duration: session.duration || 45,
+          sessionType: session.sessionType,
+          status: session.status,
+          link: session.link || undefined,
+          mentor: {
+            id: session.mentor.id,
+            name: session.mentor.name,
+            mentorType: session.mentor.mentorType,
+          },
+        } as SessionData;
+      })
+      .filter((session) => session !== null) as SessionData[],
+  };
+};
+
 export const ClassesSection = () => {
   const { data: session } = useSession();
-  const [sessionsData, setSessionsData] = useState<UserSessionsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  
+  // Use SWR hook for automatic caching and revalidation
+  const { sessions: rawSessionsData, isLoading: swrLoading, refresh } = useUserSessions(session?.user?.id);
+  
   const [activeTab, setActiveTab] = useState("upcoming");
   const [, setUpdateTrigger] = useState(0); // Force re-render for duration updates
 
   // Enable automatic session status updates
   useSessionStatusUpdates(true, 30000); // Check every 30 seconds for more responsive updates
+  
+  // Format SWR data into component format
+  const sessionsData = rawSessionsData ? formatSessionsData(rawSessionsData) : null;
+  const loading = swrLoading;
 
   // Update duration display every minute for ongoing sessions
   useEffect(() => {
@@ -64,115 +162,16 @@ export const ClassesSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Helper function to load sessions (extracted for reuse)
-  const loadUserSessions = useCallback(async () => {
-    if (!session?.user) return;
-
+  // Refresh function using SWR's mutate
+  const refreshSessionsData = async () => {
     try {
-      const result = await getUserSessions();
-
-      if (result.success && result.data) {
-        setSessionsData(formatSessionsData(result.data));
-      } else {
-        console.error("Failed to load sessions:", result.error);
-        toast.error("Failed to load your sessions");
-      }
+      await refresh();
+      toast.success("Sessions refreshed successfully");
     } catch (error) {
-      console.error("Error loading sessions:", error);
-      toast.error("Failed to load your sessions");
-    } finally {
-      setLoading(false);
+      console.error("Error refreshing sessions:", error);
+      toast.error("Failed to refresh sessions");
     }
-  }, [session?.user]);
-
-  // Helper function to convert server data to component format
-  const formatSessionsData = (serverData: UserSessionsResponse["data"]): UserSessionsData => {
-    if (!serverData) {
-      throw new Error("Server data is undefined");
-    }
-
-    // Helper function to safely convert to valid ISO string
-    const safeToISOString = (dateValue: DateValue): string | null => {
-      // Handle null/undefined
-      if (!dateValue) {
-        console.warn("Null/undefined date value found, skipping session");
-        return null;
-      }
-
-      // Handle MongoDB extended JSON date format: {$date: 'ISO_STRING'}
-      if (isMongoDate(dateValue)) {
-        const isoString = dateValue.$date;
-        if (typeof isoString === "string") {
-          const date = new Date(isoString);
-          if (!isNaN(date.getTime())) {
-            return date.toISOString();
-          }
-        }
-        console.warn("Invalid MongoDB date format found, skipping session:", dateValue);
-        return null;
-      }
-
-      // If it's already a string, check if it's a valid ISO date
-      if (typeof dateValue === "string") {
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-          return date.toISOString();
-        }
-        // If invalid string, return null to filter out this session
-        console.warn("Invalid date string found, skipping session:", dateValue);
-        return null;
-      }
-
-      // If it's a Date object
-      if (dateValue instanceof Date) {
-        if (!isNaN(dateValue.getTime())) {
-          return dateValue.toISOString();
-        }
-        console.warn("Invalid Date object found, skipping session:", dateValue);
-        return null;
-      }
-
-      // If it's a number (timestamp)
-      if (typeof dateValue === "number") {
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-          return date.toISOString();
-        }
-      }
-
-      // If completely invalid, return null to filter out this session
-      console.warn("Invalid date value found, skipping session:", dateValue);
-      return null;
-    };
-
-    return {
-      ...serverData,
-      sessions: serverData.sessions
-        .map((session: UserSessionData) => {
-          const scheduledTime = safeToISOString(session.scheduledTime);
-          if (scheduledTime === null) {
-            return null; // Mark for filtering
-          }
-
-          // Convert manualStartTime if it exists
-          const manualStartTime = session.manualStartTime
-            ? safeToISOString(session.manualStartTime)
-            : null;
-
-          return {
-            ...session,
-            scheduledTime,
-            manualStartTime,
-          };
-        })
-        .filter((session): session is SessionData => session !== null), // Remove invalid sessions
-    };
   };
-
-  // Load user sessions using server action
-  useEffect(() => {
-    loadUserSessions();
-  }, [loadUserSessions]);
 
   // Listen for session status updates and refresh automatically
   useEffect(() => {
@@ -181,7 +180,7 @@ export const ClassesSection = () => {
 
       if (started > 0 || completed > 0) {
         // Refresh sessions data without showing toast to avoid spam
-        loadUserSessions();
+        refresh();
       }
     };
 
@@ -195,20 +194,7 @@ export const ClassesSection = () => {
         handleSessionStatusUpdate as EventListener
       );
     };
-  }, [loadUserSessions]);
-
-  // Refresh function for manual updates
-  const refreshSessions = async () => {
-    startTransition(async () => {
-      try {
-        await loadUserSessions();
-        toast.success("Sessions refreshed successfully");
-      } catch (error) {
-        console.error("Error refreshing sessions:", error);
-        toast.error("Failed to refresh sessions");
-      }
-    });
-  };
+  }, [refresh]);
 
   // Show loading state
   if (loading) {
@@ -440,11 +426,10 @@ export const ClassesSection = () => {
         </div>
         <Button
           variant="outline"
-          onClick={refreshSessions}
-          disabled={isPending}
+          onClick={refreshSessionsData}
           className="flex items-center gap-2"
         >
-          <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
+          <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
       </div>

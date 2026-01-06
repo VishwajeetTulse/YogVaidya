@@ -22,7 +22,8 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { UpdateSessionStatus } from "@/lib/session";
-import { getMentorSessions, type MentorSessionData } from "@/lib/server/mentor-sessions-server";
+import { type MentorSessionData } from "@/lib/server/mentor-sessions-server";
+import { useMentorSessions } from "@/hooks/use-dashboard-data";
 
 interface MentorSessionsData {
   mentorInfo: {
@@ -35,91 +36,71 @@ interface MentorSessionsData {
   totalSessions: number;
 }
 
+// Format sessions data to handle Date/string conversion issues - moved before usage
+const formatMentorSessionsData = (serverData: MentorSessionsData): MentorSessionsData => {
+  // Helper function to safely convert to valid Date object
+  const safeToDate = (dateValue: DateValue): Date => {
+    if (!dateValue) {
+      console.warn("⚠️ Null/undefined date value found for scheduledTime:", dateValue);
+      // Return a date far in the past to indicate an error, not current time
+      return new Date("2000-01-01T00:00:00Z");
+    }
+
+    // If it's already a Date object, return it
+    if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
+      return dateValue;
+    }
+
+    // Try to parse as Date from string
+    if (typeof dateValue === "string") {
+      const date = new Date(dateValue);
+      if (!isNaN(date.getTime())) {
+        return date;
+      }
+    }
+
+    // If it's a MongoDB date object with $date property
+    if (isMongoDate(dateValue)) {
+      const mongoDate = new Date(dateValue.$date);
+      if (!isNaN(mongoDate.getTime())) {
+        return mongoDate;
+      }
+    }
+
+    // Last resort: log the issue and return a past date to indicate error
+    console.error("❌ Unable to parse date value:", {
+      value: dateValue,
+      type: typeof dateValue,
+      stringified: JSON.stringify(dateValue),
+    });
+    return new Date("2000-01-01T00:00:00Z");
+  };
+
+  return {
+    ...serverData,
+    sessions: serverData.sessions.map((session: MentorSessionData) => {
+      return {
+        ...session,
+        scheduledTime: safeToDate(session.scheduledTime),
+        createdAt: safeToDate(session.createdAt),
+        updatedAt: safeToDate(session.updatedAt),
+      };
+    }),
+  };
+};
+
 export const SessionsSection = () => {
   const { data: session } = useSession();
-  const [mentorSessionsData, setMentorSessionsData] = useState<MentorSessionsData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
+  
+  // Use SWR hook for automatic caching with real-time updates
+  const { sessions: rawSessionsData, isLoading: swrLoading, refresh } = useMentorSessions(session?.user?.id);
+  
   const [activeTab, setActiveTab] = useState("upcoming");
   const [, setUpdateTrigger] = useState(0); // Force re-render for duration updates
 
-  // Format sessions data to handle Date/string conversion issues
-  const formatMentorSessionsData = (serverData: MentorSessionsData): MentorSessionsData => {
-    // Helper function to safely convert to valid Date object
-    const safeToDate = (dateValue: DateValue): Date => {
-      if (!dateValue) {
-        console.warn("⚠️ Null/undefined date value found for scheduledTime:", dateValue);
-        // Return a date far in the past to indicate an error, not current time
-        return new Date("2000-01-01T00:00:00Z");
-      }
-
-      // If it's already a Date object, return it
-      if (dateValue instanceof Date && !isNaN(dateValue.getTime())) {
-        return dateValue;
-      }
-
-      // Try to parse as Date from string
-      if (typeof dateValue === "string") {
-        const date = new Date(dateValue);
-        if (!isNaN(date.getTime())) {
-          return date;
-        }
-      }
-
-      // If it's a MongoDB date object with $date property
-      if (isMongoDate(dateValue)) {
-        const mongoDate = new Date(dateValue.$date);
-        if (!isNaN(mongoDate.getTime())) {
-          return mongoDate;
-        }
-      }
-
-      // Last resort: log the issue and return a past date to indicate error
-      console.error("❌ Unable to parse date value:", {
-        value: dateValue,
-        type: typeof dateValue,
-        stringified: JSON.stringify(dateValue),
-      });
-      return new Date("2000-01-01T00:00:00Z");
-    };
-
-    return {
-      ...serverData,
-      sessions: serverData.sessions.map((session: MentorSessionData) => {
-        return {
-          ...session,
-          scheduledTime: safeToDate(session.scheduledTime),
-          createdAt: safeToDate(session.createdAt),
-          updatedAt: safeToDate(session.updatedAt),
-        };
-      }),
-    };
-  };
-
-  // Load mentor sessions using server action
-  const loadMentorSessions = useCallback(async () => {
-    if (!session?.user) return;
-
-    try {
-      const result = await getMentorSessions();
-
-      if (result.success && result.data) {
-        setMentorSessionsData(formatMentorSessionsData(result.data));
-      } else {
-        console.error("Failed to load sessions:", result.error);
-        toast.error("Failed to load your sessions");
-      }
-    } catch (error) {
-      console.error("Error loading sessions:", error);
-      toast.error("Failed to load your sessions");
-    } finally {
-      setLoading(false);
-    }
-  }, [session]);
-
-  useEffect(() => {
-    loadMentorSessions();
-  }, [loadMentorSessions, session]);
+  // Format SWR data into component format
+  const mentorSessionsData = rawSessionsData ? formatMentorSessionsData(rawSessionsData) : null;
+  const loading = swrLoading;
 
   // Update duration display every minute for ongoing sessions
   useEffect(() => {
@@ -131,23 +112,15 @@ export const SessionsSection = () => {
     return () => clearInterval(interval);
   }, []);
 
-  // Refresh function for manual updates
-  const refreshSessions = async () => {
-    startTransition(async () => {
-      try {
-        const result = await getMentorSessions();
-
-        if (result.success && result.data) {
-          setMentorSessionsData(formatMentorSessionsData(result.data));
-          toast.success("Sessions refreshed successfully");
-        } else {
-          toast.error("Failed to refresh sessions");
-        }
-      } catch (error) {
-        console.error("Error refreshing sessions:", error);
-        toast.error("Failed to refresh sessions");
-      }
-    });
+  // Refresh function using SWR's mutate
+  const refreshSessionsData = async () => {
+    try {
+      await refresh();
+      toast.success("Sessions refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing sessions:", error);
+      toast.error("Failed to refresh sessions");
+    }
   };
 
   // Function to handle start session
@@ -172,9 +145,9 @@ export const SessionsSection = () => {
 
     try {
       UpdateSessionStatus("ONGOING", sessionItem.id);
-      // Reload sessions after 1 second to ensure the status is updated
+      // Refresh sessions using SWR
       setTimeout(() => {
-        loadMentorSessions();
+        refresh();
       }, 1000);
       toast.success("Session started successfully");
     } catch (error) {
@@ -198,9 +171,9 @@ export const SessionsSection = () => {
 
       if (result.success) {
         toast.success("Session completed successfully");
-        // Reload sessions to reflect the change
+        // Refresh sessions using SWR
         setTimeout(() => {
-          loadMentorSessions();
+          refresh();
         }, 1000);
       } else {
         throw new Error(result.error || "Failed to complete session");
@@ -538,7 +511,7 @@ export const SessionsSection = () => {
                     try {
                       UpdateSessionStatus("CANCELLED", sessionItem.id);
                       setTimeout(() => {
-                        loadMentorSessions();
+                        refresh();
                       }, 1000);
                       toast.success("Session cancelled");
                     } catch (error) {
@@ -603,11 +576,10 @@ export const SessionsSection = () => {
         </div>
         <Button
           variant="outline"
-          onClick={refreshSessions}
-          disabled={isPending}
+          onClick={refreshSessionsData}
           className="flex items-center gap-2"
         >
-          <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
+          <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
       </div>

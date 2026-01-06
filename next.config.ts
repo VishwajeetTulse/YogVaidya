@@ -1,5 +1,10 @@
 import type { NextConfig } from "next";
 
+// Bundle analyzer for monitoring code splitting
+const withBundleAnalyzer = require("@next/bundle-analyzer")({
+  enabled: process.env.ANALYZE === "true",
+});
+
 const nextConfig: NextConfig = {
   images: {
     remotePatterns: [
@@ -10,6 +15,15 @@ const nextConfig: NextConfig = {
     ],
     // Optimize images for faster loading
     formats: ["image/avif", "image/webp"],
+    // Enable image optimization
+    deviceSizes: [640, 750, 828, 1080, 1200, 1920, 2048, 3840],
+    imageSizes: [16, 32, 48, 64, 96, 128, 256, 384],
+    // Minimize quality for faster loading
+    minimumCacheTTL: 60,
+    // Use sharp for better performance
+    dangerouslyAllowSVG: true,
+    contentDispositionType: "attachment",
+    contentSecurityPolicy: "default-src 'self'; script-src 'none'; sandbox;",
   },
   headers: async () => {
     return [
@@ -62,6 +76,11 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Enable experimental optimizations
+  experimental: {
+    // Optimize package imports to reduce bundle size
+    optimizePackageImports: ["lucide-react", "@radix-ui/react-icons"],
+  },
 };
 
-export default nextConfig;
+export default withBundleAnalyzer(nextConfig);

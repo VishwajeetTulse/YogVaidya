@@ -4,6 +4,7 @@ import "@/app/globals.css";
 import "@/lib/prisma-middleware-trial";
 import { Toaster } from "sonner";
 import { SidebarProvider } from "@/components/ui/sidebar";
+import { SWRProvider } from "@/components/providers/swr-provider";
 
 // Optimize font loading - prevents layout shift
 const inter = Inter({
@@ -33,9 +34,11 @@ export default function RootLayout({
     <html lang="en" className={inter.className}>
       <body className="antialiased">
         <Toaster position="bottom-right" />
-        <SidebarProvider>
-          <main className="h-screen w-screen">{children}</main>
-        </SidebarProvider>
+        <SWRProvider>
+          <SidebarProvider>
+            <main className="h-screen w-screen">{children}</main>
+          </SidebarProvider>
+        </SWRProvider>
       </body>
     </html>
   );

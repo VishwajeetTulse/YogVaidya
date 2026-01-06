@@ -3,39 +3,12 @@ import { Card } from "@/components/ui/card";
 import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 import { Users, Video, Calendar, ChevronRight } from "lucide-react";
 import { type MentorSectionProps } from "../types";
-import { useState, useEffect } from "react";
-import {
-  getMentorOverviewData,
-  type MentorOverviewData,
-} from "@/lib/server/mentor-overview-server";
+import { useMentorDashboard } from "@/hooks/use-dashboard-data";
 
 export const OverviewSection = ({ userDetails, setActiveSection }: MentorSectionProps) => {
-  const [overviewData, setOverviewData] = useState<MentorOverviewData | null>(null);
-  const [loading, setLoading] = useState(true);
-
-  const fetchOverviewData = async () => {
-    try {
-      const result = await getMentorOverviewData();
-      if (result.success && result.data) {
-        setOverviewData(result.data);
-      }
-    } catch (error) {
-      console.error("Error fetching overview data:", error);
-    }
-  };
-
-  useEffect(() => {
-    const loadData = async () => {
-      await fetchOverviewData();
-      setLoading(false);
-    };
-
-    loadData();
-
-    // Refresh data every 5 minutes
-    const interval = setInterval(fetchOverviewData, 5 * 60 * 1000);
-    return () => clearInterval(interval);
-  }, []);
+  // Use SWR hook for automatic caching and real-time updates
+  const { dashboard, isLoading: loading, refresh } = useMentorDashboard(userDetails?.id);
+  const overviewData = dashboard?.data || null;
 
   const formatTime = (date: Date) => {
     return new Date(date).toLocaleTimeString("en-US", {

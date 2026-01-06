@@ -2,14 +2,15 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Calendar, Award, PlayCircle, Users, ChevronRight } from "lucide-react";
 import { type SectionProps } from "../types";
-import { useEffect, useState } from "react";
-import { getUserDashboardData, type DashboardData } from "@/lib/actions/dashboard-data";
+import { type DashboardData } from "@/lib/actions/dashboard-data";
+import { useUserDashboard } from "@/hooks/use-dashboard-data";
 
 import { DashboardSkeleton } from "@/components/dashboard/shared/dashboard-skeleton";
 
 export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps) => {
-  const [dashboardData, setDashboardData] = useState<DashboardData | null>(null);
-  const [loading, setLoading] = useState(true);
+  // Use SWR hook for automatic caching and revalidation
+  const { dashboard, isLoading: loading, refresh } = useUserDashboard(userDetails?.id);
+  const dashboardData = dashboard?.data || null;
 
   // Check user subscription status
   const isOnActiveTrial = userDetails?.isTrialActive === true;
@@ -29,20 +30,6 @@ export const OverviewSection = ({ userDetails, setActiveSection }: SectionProps)
         )
       )
     : 0;
-
-  // Fetch dashboard data
-  useEffect(() => {
-    const fetchDashboardData = async () => {
-      setLoading(true);
-      const result = await getUserDashboardData();
-      if (result.success && result.data) {
-        setDashboardData(result.data);
-      }
-      setLoading(false);
-    };
-
-    fetchDashboardData();
-  }, []);
 
   if (loading) {
     return <DashboardSkeleton />;

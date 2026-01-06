@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useTransition } from "react";
+import React from "react";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import Image from "next/image";
@@ -9,8 +9,9 @@ import { useSession } from "@/lib/auth-client";
 import { toast } from "sonner";
 import { type SectionProps } from "../types";
 import { SubscriptionPrompt } from "../SubscriptionPrompt";
-import { getUserMentor, type UserMentorData } from "@/lib/server/user-mentor-server";
+import { type UserMentorData } from "@/lib/server/user-mentor-server";
 import { DashboardSkeleton } from "../../unified/dashboard-skeleton";
+import { useUserMentors } from "@/hooks/use-dashboard-data";
 
 interface UserMentorResponseData {
   subscriptionInfo: {
@@ -31,52 +32,19 @@ interface UserMentorResponseData {
 
 export const MentorsSection = ({ setActiveSection }: SectionProps) => {
   const { data: session } = useSession();
-  const [mentorData, setMentorData] = useState<UserMentorResponseData | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [isPending, startTransition] = useTransition();
-
-  // Load user mentor data using server action
-  useEffect(() => {
-    const loadUserMentor = async () => {
-      if (!session?.user) return;
-
-      try {
-        const result = await getUserMentor();
-
-        if (result.success && result.data) {
-          setMentorData(result.data);
-        } else {
-          console.error("Failed to load mentor data:", result.error);
-          toast.error("Failed to load your mentor information");
-        }
-      } catch (error) {
-        console.error("Error loading mentor data:", error);
-        toast.error("Failed to load your mentor information");
-      } finally {
-        setLoading(false);
-      }
-    };
-
-    loadUserMentor();
-  }, [session]);
-
-  // Refresh function for manual updates
+  
+  // Use SWR hook for automatic caching
+  const { mentors: mentorData, isLoading: loading, refresh } = useUserMentors(session?.user?.id);
+  
+  // Refresh function with toast notification
   const refreshMentorData = async () => {
-    startTransition(async () => {
-      try {
-        const result = await getUserMentor();
-
-        if (result.success && result.data) {
-          setMentorData(result.data);
-          toast.success("Mentor information refreshed successfully");
-        } else {
-          toast.error("Failed to refresh mentor data");
-        }
-      } catch (error) {
-        console.error("Error refreshing mentor data:", error);
-        toast.error("Failed to refresh mentor data");
-      }
-    });
+    try {
+      await refresh();
+      toast.success("Mentor information refreshed successfully");
+    } catch (error) {
+      console.error("Error refreshing mentor data:", error);
+      toast.error("Failed to refresh mentor data");
+    }
   };
 
   // Show loading state
@@ -243,10 +211,9 @@ export const MentorsSection = ({ setActiveSection }: SectionProps) => {
         <Button
           variant="outline"
           onClick={refreshMentorData}
-          disabled={isPending}
           className="flex items-center gap-2"
         >
-          <RefreshCw className={`w-4 h-4 ${isPending ? "animate-spin" : ""}`} />
+          <RefreshCw className="w-4 h-4" />
           Refresh
         </Button>
       </div>
